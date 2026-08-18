@@ -8,7 +8,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Orbitron:wght@700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
     <!-- SheetJS Library untuk Ekspor & Impor Excel (.xlsx / .csv) -->
-    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script>if (typeof XLSX === 'undefined') { document.write('<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"><\/script>'); }</script>
     <!-- jsPDF & AutoTable Library untuk Ekspor PDF (.pdf) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
@@ -2588,7 +2589,7 @@ function exportExcel() {
     XLSX.utils.book_append_sheet(wb, ws2, 'Analisis Butir Soal');
 
     const fileName = `Rekap_Nilai_Detektif_Fakta_${filterClass === 'all' ? 'Semua_Kelas' : filterClass.replace(/ /g, '_')}_${new Date().toISOString().slice(0,10)}.xlsx`;
-    XLSX.writeFile(wb, fileName);
+    downloadExcelWorkbook(wb, fileName);
 
     sfxCorrect();
     showToast(`Berhasil mengekspor ${records.length} data siswa ke Excel (.xlsx)!`, '📊');
@@ -2910,28 +2911,51 @@ function exportStudentPDF() {
     }
 }
 
+function downloadExcelWorkbook(wb, fileName) {
+    try {
+        const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+        const blob = new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = fileName;
+        a.style.display = 'none';
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(() => {
+            if (a.parentNode) document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }, 1500);
+    } catch (e) {
+        XLSX.writeFile(wb, fileName);
+    }
+}
+
 function exportStudentExcel() {
     sfxClick();
     if (typeof XLSX === 'undefined') {
-        showToast('Pustaka Excel belum siap. Silakan coba lagi...', '⚠️');
+        showToast('Pustaka Excel sedang dimuat. Coba lagi dalam beberapa detik...', '⚠️');
         return;
     }
 
     try {
         const finalScore = Math.round((score / quizData.length) * 100);
+        const sName = studentName || 'Siswa';
+        const sClass = studentClass || 'Kelas';
+
         const sheetData = [
-            ['RAPOR HASIL INVESTIGASI DATA SISWA'],
-            ['KUIS DETEKTIF FAKTA DIGITAL'],
+            ['RAPOR HASIL EVALUASI PEMBELAJARAN SISWA'],
+            ['KUIS DETEKTIF FAKTA DIGITAL (BERPIKIR KOMPUTASIONAL)'],
             [],
-            ['Nama Siswa', studentName],
-            ['Kelas', studentClass],
+            ['Nama Siswa', sName],
+            ['Kelas', sClass],
             ['Nilai Akhir', finalScore],
-            ['Jawaban Benar', `${score} dari ${quizData.length}`],
-            ['Status Kelulusan', finalScore >= 75 ? 'LULUS (TUNTAS)' : 'REMEDIAL'],
-            ['Max Streak', `${maxStreak}x Beruntun`],
-            ['Tanggal Pengerjaan', new Date().toLocaleString('id-ID')],
+            ['Jawaban Benar', `${score} dari ${quizData.length} Soal`],
+            ['Status Kelulusan', finalScore >= 75 ? 'LULUS' : 'REMEDIAL'],
+            ['Max Streak', `${maxStreak}x Jawaban Benar Beruntun`],
+            ['Waktu Pengerjaan', new Date().toLocaleString('id-ID')],
             [],
-            ['No', 'Pertanyaan Soal', 'Hasil Jawaban', 'Kunci Jawaban']
+            ['No', 'Pertanyaan Soal', 'Hasil Analisis', 'Kunci Jawaban Valid']
         ];
 
         shuffledQuizOrder.forEach((origIdx, playIdx) => {
@@ -2949,12 +2973,15 @@ function exportStudentExcel() {
         const ws = XLSX.utils.aoa_to_sheet(sheetData);
         ws['!cols'] = [{ wch: 6 }, { wch: 65 }, { wch: 18 }, { wch: 45 }];
         const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, 'Hasil Kuis Siswa');
+        XLSX.utils.book_append_sheet(wb, ws, 'Rapor Siswa');
 
-        const fileName = `Hasil_Kuis_${studentClass.replace(/ /g, '_')}_${studentName.replace(/ /g, '_')}.xlsx`;
-        XLSX.writeFile(wb, fileName);
+        const safeClass = sClass.replace(/[/\\?%*:|"<> ]/g, '_');
+        const safeName = sName.replace(/[/\\?%*:|"<> ]/g, '_');
+        const fileName = `Rapor_Kuis_${safeClass}_${safeName}.xlsx`;
+
+        downloadExcelWorkbook(wb, fileName);
         sfxCorrect();
-        showToast('Hasil kuis berhasil disimpan ke Excel (.xlsx)!', '📊');
+        showToast('Hasil kuis berhasil diunduh ke Excel (.xlsx)!', '📊');
     } catch (err) {
         sfxWrong();
         showToast('Gagal mengekspor Excel: ' + err.message, '❌');
