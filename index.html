@@ -1273,6 +1273,42 @@ const quizData = [
         ],
         answer: 0,
         explanation: "Membaca Lateral (Lateral Reading) adalah senjata utama literasi digital modern. Daripada membaca satu web dari atas ke bawah (vertikal), bukalah referensi ke samping secara paralel (membuka banyak tab browser) untuk memverifikasi klaim sebuah website!"
+    },
+    {
+        type: 'mcq',
+        q: "Mengapa membaca lateral penting dalam mengecek informasi?",
+        options: [
+            "Agar informasi cepat viral",
+            "Agar kita membandingkan informasi dari beberapa sumber lain",
+            "Agar cukup membaca satu situs saja",
+            "Agar tidak perlu mengecek fakta"
+        ],
+        answer: 1,
+        explanation: "Membaca lateral (lateral reading) penting agar kita tidak terpaku pada satu situs saja, melainkan aktif membandingkan kebenaran data dan kredibilitas fakta dari berbagai sumber lain yang independen."
+    },
+    {
+        type: 'mcq',
+        q: "Langkah pertama saat menerima informasi yang mencurigakan adalah...",
+        options: [
+            "Langsung membagikannya",
+            "Mengecek sumber, tanggal, dan bukti pendukung",
+            "Menghapus semua komentar",
+            "Mempercayainya jika dikirim teman"
+        ],
+        answer: 1,
+        explanation: "Langkah awal paling rasional saat menerima klaim mencurigakan adalah melakukan verifikasi mendasar: mengecek kejelasan penerbit/sumber primer, tanggal rilis berita, serta validitas bukti data pendukung."
+    },
+    {
+        type: 'mcq',
+        q: "Jika menemukan konten yang diduga hoaks, peserta didik dapat...",
+        options: [
+            "Membagikan ke semua grup",
+            "Mengedit agar lebih menarik",
+            "Melaporkan ke kanal aduan seperti Kominfo atau Mafindo",
+            "Mengabaikan semua bukti"
+        ],
+        answer: 2,
+        explanation: "Tindakan proaktif peserta didik saat menemukan konten hoaks adalah melaporkannya ke kanal aduan resmi (seperti aduankonten.id Kominfo atau TurnBackHoax Mafindo) agar segera ditindaklanjuti dan diklarifikasi."
     }
 ];
 
@@ -2654,7 +2690,7 @@ function exportTeacherPDF() {
             r.name,
             r.class || '-',
             r.score,
-            `${r.correct !== undefined ? r.correct : 0} / ${r.total || 12}`,
+            `${r.correct !== undefined ? r.correct : 0} / ${r.total || quizData.length}`,
             r.score >= 75 ? 'LULUS' : 'REMEDIAL',
             r.duration || '-',
             r.time || '-',
@@ -2828,7 +2864,7 @@ function exportStudentPDF() {
         doc.setFontSize(9);
         doc.text(isLulus ? 'STATUS: LULUS' : 'STATUS: REMEDIAL', 164, 63, { align: 'center' });
 
-        // 3. Question Details Table (Clean Typography & Proper Wrapping)
+        // 3. Question Details Table (Dengan Pembahasan & Penjelasan Edukatif)
         const tableBody = shuffledQuizOrder.map((origIdx, playIdx) => {
             const qData = quizData[origIdx];
             const isRight = answeredCorrectly[origIdx];
@@ -2842,34 +2878,36 @@ function exportStudentPDF() {
                 playIdx + 1,
                 qData.q,
                 isRight ? 'BENAR' : 'SALAH',
-                correctAns
+                correctAns,
+                qData.explanation || '-'
             ];
         });
 
         doc.autoTable({
             startY: 80,
-            head: [['No', 'Pertanyaan Soal', 'Hasil', 'Kunci Jawaban Valid']],
+            head: [['No', 'Pertanyaan Soal', 'Hasil', 'Kunci Jawaban Valid', 'Pembahasan & Analisis Edukatif']],
             body: tableBody,
             theme: 'grid',
             headStyles: {
                 fillColor: [79, 70, 229],
                 textColor: [255, 255, 255],
                 fontStyle: 'bold',
-                fontSize: 8.5,
+                fontSize: 8,
                 halign: 'center'
             },
             bodyStyles: {
-                fontSize: 8,
+                fontSize: 7.2,
                 textColor: [30, 41, 59],
-                cellPadding: 3,
+                cellPadding: 2.5,
                 valign: 'middle'
             },
             alternateRowStyles: { fillColor: [248, 250, 252] },
             columnStyles: {
-                0: { cellWidth: 10, halign: 'center', fontStyle: 'bold' },
-                1: { cellWidth: 92 },
-                2: { cellWidth: 20, halign: 'center', fontStyle: 'bold' },
-                3: { cellWidth: 60 }
+                0: { cellWidth: 8, halign: 'center', fontStyle: 'bold' },
+                1: { cellWidth: 56 },
+                2: { cellWidth: 16, halign: 'center', fontStyle: 'bold' },
+                3: { cellWidth: 46 },
+                4: { cellWidth: 56 }
             },
             didParseCell: function(data) {
                 if (data.section === 'body' && data.column.index === 2) {
@@ -2949,7 +2987,7 @@ function exportStudentExcel() {
                     ['Max Streak', `${maxStreak}x Jawaban Benar Beruntun`],
                     ['Waktu Pengerjaan', nowStr],
                     [],
-                    ['No', 'Pertanyaan Soal', 'Hasil Analisis', 'Kunci Jawaban Valid']
+                    ['No', 'Pertanyaan Soal', 'Hasil Analisis', 'Kunci Jawaban Valid', 'Pembahasan & Logika Edukatif']
                 ];
 
                 shuffledQuizOrder.forEach((origIdx, playIdx) => {
@@ -2960,12 +2998,13 @@ function exportStudentExcel() {
                         playIdx + 1,
                         qData.q,
                         isRight ? 'BENAR' : 'SALAH',
-                        correctAns
+                        correctAns,
+                        qData.explanation || '-'
                     ]);
                 });
 
                 const ws = XLSX.utils.aoa_to_sheet(sheetData);
-                ws['!cols'] = [{ wch: 6 }, { wch: 65 }, { wch: 18 }, { wch: 45 }];
+                ws['!cols'] = [{ wch: 6 }, { wch: 55 }, { wch: 16 }, { wch: 40 }, { wch: 60 }];
                 const wb = XLSX.utils.book_new();
                 XLSX.utils.book_append_sheet(wb, ws, 'Rapor Siswa');
 
@@ -3000,21 +3039,22 @@ function exportStudentExcel() {
         </head>
         <body>
             <table>
-                <tr><td colspan="4" class="title">RAPOR HASIL EVALUASI PEMBELAJARAN SISWA</td></tr>
-                <tr><td colspan="4" class="subtitle">Misi Detektif Fakta Digital (Uji Validitas Data & Berpikir Komputasional)</td></tr>
-                <tr><td colspan="4" style="height: 10px;"></td></tr>
-                <tr><td class="info-label">Nama Siswa</td><td colspan="3">${sName}</td></tr>
-                <tr><td class="info-label">Kelas</td><td colspan="3">${sClass}</td></tr>
-                <tr><td class="info-label">Skor Nilai</td><td colspan="3" class="${isLulus ? 'status-lulus' : 'status-remedial'}">${finalScore} (${isLulus ? 'STATUS: LULUS' : 'STATUS: REMEDIAL'})</td></tr>
-                <tr><td class="info-label">Jawaban Benar</td><td colspan="3">${score} dari ${quizData.length} Soal</td></tr>
-                <tr><td class="info-label">Max Streak</td><td colspan="3">${maxStreak}x Jawaban Benar Beruntun</td></tr>
-                <tr><td class="info-label">Waktu Pengerjaan</td><td colspan="3">${nowStr}</td></tr>
-                <tr><td colspan="4" style="height: 14px;"></td></tr>
+                <tr><td colspan="5" class="title">RAPOR HASIL EVALUASI PEMBELAJARAN SISWA</td></tr>
+                <tr><td colspan="5" class="subtitle">Misi Detektif Fakta Digital (Uji Validitas Data & Berpikir Komputasional)</td></tr>
+                <tr><td colspan="5" style="height: 10px;"></td></tr>
+                <tr><td class="info-label">Nama Siswa</td><td colspan="4">${sName}</td></tr>
+                <tr><td class="info-label">Kelas</td><td colspan="4">${sClass}</td></tr>
+                <tr><td class="info-label">Skor Nilai</td><td colspan="4" class="${isLulus ? 'status-lulus' : 'status-remedial'}">${finalScore} (${isLulus ? 'STATUS: LULUS' : 'STATUS: REMEDIAL'})</td></tr>
+                <tr><td class="info-label">Jawaban Benar</td><td colspan="4">${score} dari ${quizData.length} Soal</td></tr>
+                <tr><td class="info-label">Max Streak</td><td colspan="4">${maxStreak}x Jawaban Benar Beruntun</td></tr>
+                <tr><td class="info-label">Waktu Pengerjaan</td><td colspan="4">${nowStr}</td></tr>
+                <tr><td colspan="5" style="height: 14px;"></td></tr>
                 <tr>
-                    <th style="width: 45px;">No</th>
-                    <th style="width: 380px;">Pertanyaan Soal</th>
+                    <th style="width: 40px;">No</th>
+                    <th style="width: 320px;">Pertanyaan Soal</th>
                     <th style="width: 100px;">Hasil Analisis</th>
-                    <th style="width: 280px;">Kunci Jawaban Valid</th>
+                    <th style="width: 250px;">Kunci Jawaban Valid</th>
+                    <th style="width: 350px;">Pembahasan & Logika Edukatif</th>
                 </tr>
         `;
 
@@ -3031,6 +3071,7 @@ function exportStudentExcel() {
                     <td>${qData.q}</td>
                     <td align="center" class="${statusClass}">${statusText}</td>
                     <td>${correctAns}</td>
+                    <td>${qData.explanation || '-'}</td>
                 </tr>
             `;
         });
