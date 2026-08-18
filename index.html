@@ -362,18 +362,46 @@
         .btn-start:hover::after { left: 100%; }
 
         .teacher-link {
-            margin-top: 30px; padding-top: 24px;
+            margin-top: 24px; padding-top: 20px;
             border-top: 1px solid var(--glass-border);
+            display: flex; flex-direction: column; align-items: center; gap: 12px;
         }
-        .teacher-link button {
+        .quick-tools-bar {
+            display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; width: 100%;
+        }
+        .btn-quick {
+            background: rgba(255,255,255,0.04); border: 1px solid var(--glass-border-light);
+            color: var(--text-secondary); padding: 8px 16px; border-radius: 10px;
+            cursor: pointer; font-weight: 600; font-size: 0.85rem;
+            transition: all 0.25s; font-family: var(--font-body); display: inline-flex; align-items: center; gap: 6px;
+        }
+        .btn-quick:hover {
+            border-color: var(--accent); color: var(--accent);
+            box-shadow: 0 0 15px var(--accent-glow);
+        }
+        .teacher-link button.btn-teacher {
             background: transparent; border: 1px solid var(--glass-border-light);
-            color: var(--text-muted); padding: 12px 24px; border-radius: 12px;
-            cursor: pointer; font-weight: 600; font-size: 0.9rem;
+            color: var(--text-muted); padding: 10px 20px; border-radius: 12px;
+            cursor: pointer; font-weight: 600; font-size: 0.88rem;
             transition: all 0.3s; font-family: var(--font-body);
         }
-        .teacher-link button:hover {
+        .teacher-link button.btn-teacher:hover {
             border-color: var(--accent); color: var(--accent);
             box-shadow: 0 0 20px var(--accent-glow);
+        }
+
+        .cb-counter-box {
+            display: inline-flex; align-items: center; gap: 8px;
+            padding: 6px 14px; border-radius: 999px; font-size: 0.82rem; font-weight: 700;
+            margin-bottom: 14px; font-family: var(--font-mono);
+            background: rgba(34, 211, 238, 0.1); border: 1px solid rgba(34, 211, 238, 0.3); color: var(--accent);
+            transition: all 0.3s ease;
+        }
+        .cb-counter-box.complete {
+            background: rgba(16, 185, 129, 0.15); border-color: rgba(16, 185, 129, 0.4); color: var(--success);
+        }
+        .cb-counter-box.warning {
+            background: rgba(245, 158, 11, 0.15); border-color: rgba(245, 158, 11, 0.4); color: var(--warning);
         }
 
         /* ═══ COUNTDOWN SCREEN ═══ */
@@ -897,7 +925,11 @@
             <button class="btn-start" onclick="initiateQuiz()">Mulai Misi Audit 🚀</button>
 
             <div class="teacher-link">
-                <button onclick="openPinModal()">🔐 Akses Panel Guru (Rekap Nilai Real-Time)</button>
+                <div class="quick-tools-bar">
+                    <button class="btn-quick" onclick="copyQuizLink()">📋 Salin Link Kuis</button>
+                    <button class="btn-quick" onclick="toggleFullscreen()">🔲 Layar Penuh</button>
+                </div>
+                <button class="btn-teacher" onclick="openPinModal()">🔐 Akses Panel Guru (Rekap Nilai Real-Time)</button>
             </div>
         </div>
     </div>
@@ -922,7 +954,7 @@
 
             <div class="progress-container">
                 <div class="progress-info">
-                    <span id="progress-label">Soal 1 dari 12</span>
+                    <span id="progress-label">Soal 1 dari 15</span>
                     <span id="progress-pct">0%</span>
                 </div>
                 <div class="progress-bar">
@@ -932,6 +964,7 @@
 
             <div id="q-content" class="q-content">
                 <div id="q-badge" class="q-badge"></div>
+                <div id="cb-counter-box" class="cb-counter-box" style="display:none;"></div>
                 <div id="case-study-box" class="case-study-box" style="display:none;"></div>
                 <div class="q-text" id="q-text"></div>
                 <div class="options-grid" id="options-grid"></div>
@@ -1352,6 +1385,7 @@ function switchScreen(key) {
 }
 
 function goHome() {
+    window.onbeforeunload = null;
     stopBGM();
     stopTimer();
     document.getElementById('input-name').value = '';
@@ -1681,8 +1715,11 @@ async function saveTimerSetting() {
     try {
         await fetch('/api/settings', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ timer_seconds: val })
+            headers: { 
+                'Content-Type': 'application/json',
+                'x-admin-pin': PIN_GURU 
+            },
+            body: JSON.stringify({ timer_seconds: val, pin: PIN_GURU })
         });
     } catch (e) {}
 }
@@ -1945,6 +1982,10 @@ function runCountdown() {
 }
 
 function startQuizActual() {
+    window.onbeforeunload = (e) => {
+        e.preventDefault();
+        return 'Kuis sedang berlangsung. Apakah Anda yakin ingin keluar? Progres Anda akan hilang.';
+    };
     document.getElementById('display-name').textContent = studentName;
     document.getElementById('display-class').textContent = studentClass;
     quizStartTime = Date.now();
@@ -2019,6 +2060,17 @@ function autoSubmitTimeout() {
     spawnRandomEmojis('⏰', 3);
 }
 
+function updateCheckboxCounter(reqCount) {
+    const checkedCount = document.querySelectorAll('input[name="q-opt"]:checked').length;
+    const numEl = document.getElementById('cb-num');
+    const box = document.getElementById('cb-counter-box');
+    if (numEl) numEl.textContent = checkedCount;
+    if (box) {
+        box.classList.toggle('complete', checkedCount === reqCount);
+        box.classList.toggle('warning', checkedCount > reqCount);
+    }
+}
+
 function loadQuestion(index) {
     const origQIdx = shuffledQuizOrder[index];
     const data = quizData[origQIdx];
@@ -2051,10 +2103,26 @@ function loadQuestion(index) {
     if (card) card.classList.toggle('streak-on-fire', streak >= 3);
 
     const badge = document.getElementById('q-badge');
+    const cbBox = document.getElementById('cb-counter-box');
     let inputType = 'radio';
-    if (data.type === 'mcq') { badge.className = 'q-badge mcq'; badge.textContent = '🔘 Pilihan Ganda'; }
-    else if (data.type === 'tf') { badge.className = 'q-badge tf'; badge.textContent = '⚖️ Benar / Salah'; }
-    else { badge.className = 'q-badge checkbox'; badge.textContent = '☑️ Pilih Semua yang Benar'; inputType = 'checkbox'; }
+    const reqCount = Array.isArray(data.answer) ? data.answer.length : 1;
+
+    if (data.type === 'mcq') {
+        badge.className = 'q-badge mcq';
+        badge.textContent = '🔘 Pilihan Ganda (Pilih 1 Jawaban)';
+        cbBox.style.display = 'none';
+    } else if (data.type === 'tf') {
+        badge.className = 'q-badge tf';
+        badge.textContent = '⚖️ Benar / Salah';
+        cbBox.style.display = 'none';
+    } else {
+        badge.className = 'q-badge checkbox';
+        badge.textContent = `☑️ Pilihan Majemuk (Pilih ${reqCount} Jawaban)`;
+        inputType = 'checkbox';
+        cbBox.style.display = 'inline-flex';
+        cbBox.className = 'cb-counter-box';
+        cbBox.innerHTML = `<span>☑️ Terpilih: <strong id="cb-num">0</strong> dari ${reqCount} jawaban wajib</span>`;
+    }
 
     const csBox = document.getElementById('case-study-box');
     if (data.caseStudy) {
@@ -2079,7 +2147,10 @@ function loadQuestion(index) {
         input.type = inputType;
         input.name = 'q-opt';
         input.value = shuffIdx;
-        input.addEventListener('change', () => sfxClick());
+        input.addEventListener('change', () => {
+            sfxClick();
+            if (data.type === 'checkbox') updateCheckboxCounter(reqCount);
+        });
 
         const checkMark = document.createElement('span');
         checkMark.className = 'check-indicator';
@@ -2107,16 +2178,26 @@ function checkAnswer() {
     let selectedShuffleIdxs = [];
     inputs.forEach(inp => {
         if (inp.checked) selectedShuffleIdxs.push(parseInt(inp.value));
-        inp.disabled = true;
     });
 
     if (selectedShuffleIdxs.length === 0) {
         sfxWrong();
-        inputs.forEach(inp => inp.disabled = false);
+        showToast('Silakan pilih jawaban terlebih dahulu!', '⚠️');
         if (TIMER_MAX > 0) startTimer();
         return;
     }
 
+    if (data.type === 'checkbox') {
+        const reqCount = Array.isArray(data.answer) ? data.answer.length : 1;
+        if (selectedShuffleIdxs.length < reqCount) {
+            sfxWrong();
+            showToast(`Pilih ${reqCount} jawaban sebelum mengunci (baru ${selectedShuffleIdxs.length} terpilih)!`, '⚠️');
+            if (TIMER_MAX > 0) startTimer();
+            return;
+        }
+    }
+
+    inputs.forEach(inp => inp.disabled = true);
     labels.forEach(lbl => lbl.classList.add('disabled'));
 
     const selectedOriginals = selectedShuffleIdxs.map(si => currentShuffleMap[si]);
@@ -2210,6 +2291,7 @@ function nextQuestion() {
 }
 
 function finishQuiz() {
+    window.onbeforeunload = null;
     stopBGM();
     stopTimer();
     switchScreen('result');
@@ -2386,7 +2468,10 @@ async function confirmClearData() {
     localStorage.removeItem(STORAGE_KEY);
 
     try {
-        await fetch('/api/scores', { method: 'DELETE' });
+        await fetch('/api/scores', { 
+            method: 'DELETE',
+            headers: { 'x-admin-pin': PIN_GURU }
+        });
     } catch (e) {}
 
     sfxWrong();
@@ -3241,6 +3326,53 @@ function handleImportExcel(event) {
         event.target.value = '';
     };
     reader.readAsArrayBuffer(file);
+}
+
+function copyQuizLink() {
+    sfxClick();
+    const url = window.location.href;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(url).then(() => {
+            sfxCorrect();
+            showToast('Tautan kuis berhasil disalin ke clipboard! 📋', '✅');
+        }).catch(() => fallbackCopyText(url));
+    } else {
+        fallbackCopyText(url);
+    }
+}
+
+function fallbackCopyText(text) {
+    const inp = document.createElement('textarea');
+    inp.value = text;
+    inp.style.position = 'fixed';
+    inp.style.opacity = '0';
+    document.body.appendChild(inp);
+    inp.select();
+    try {
+        document.execCommand('copy');
+        sfxCorrect();
+        showToast('Tautan kuis berhasil disalin ke clipboard! 📋', '✅');
+    } catch (e) {
+        showToast('Salin tautan ini: ' + text, '🔗');
+    }
+    document.body.removeChild(inp);
+}
+
+function toggleFullscreen() {
+    sfxClick();
+    if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().then(() => {
+            showToast('Mode Layar Penuh Aktif 🔲', '📺');
+        }).catch(() => {
+            showToast('Layar penuh tidak didukung di browser ini', 'ℹ️');
+        });
+    } else {
+        if (document.exitFullscreen) {
+            document.exitFullscreen().then(() => {
+                showToast('Keluar dari Layar Penuh', 'ℹ️');
+            }).catch(() => {});
+        }
+    }
 }
 
 // ============================================================
