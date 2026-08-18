@@ -2627,9 +2627,45 @@ function exportTeacherPDF() {
         doc.setFontSize(10);
         doc.setFont('helvetica', 'normal');
         doc.text('Misi Detektif Fakta Digital: Uji Validitas Data & Berpikir Komputasional', 14, 20);
-        doc.text(`Filter Kelas: ${filterClass === 'all' ? 'Semua Kelas (X E 1 - X E 6)' : filterClass} | Tanggal Cetak: ${nowStr}`, 14, 26);
+function exportTeacherPDF() {
+    sfxClick();
+    const allRecords = loadRecords();
+    const filterClass = document.getElementById('filter-class').value;
+    const records = filterClass === 'all' ? allRecords : allRecords.filter(r => r.class === filterClass);
 
-        // Summary Statistics Box
+    if (records.length === 0) {
+        showToast('Tidak ada data siswa untuk diekspor ke PDF!', '⚠️');
+        return;
+    }
+
+    if (!window.jspdf || !window.jspdf.jsPDF) {
+        showToast('Pustaka PDF sedang dimuat. Coba lagi dalam beberapa detik...', '⚠️');
+        return;
+    }
+
+    try {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF('p', 'mm', 'a4');
+        const nowStr = new Date().toLocaleString('id-ID');
+
+        // 1. Header Banner
+        doc.setFillColor(15, 23, 42); // Dark Navy
+        doc.rect(0, 0, 210, 32, 'F');
+        doc.setFillColor(6, 182, 212); // Cyan Accent Line
+        doc.rect(0, 32, 210, 2, 'F');
+
+        doc.setTextColor(34, 211, 238);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(15);
+        doc.text('LAPORAN REKAPITULASI NILAI KUIS SISWA', 14, 13);
+
+        doc.setTextColor(226, 232, 240);
+        doc.setFontSize(9.5);
+        doc.setFont('helvetica', 'normal');
+        doc.text('Misi Detektif Fakta Digital: Uji Validitas Data & Berpikir Komputasional', 14, 20);
+        doc.text(`Filter Kelas: ${filterClass === 'all' ? 'Semua Kelas (X E 1 s/d X E 6)' : filterClass}   |   Dicetak: ${nowStr}`, 14, 26);
+
+        // 2. Summary Statistics Box
         const sorted = [...records].sort((a, b) => b.score - a.score);
         const total = sorted.length;
         const sum = sorted.reduce((acc, r) => acc + (r.score || 0), 0);
@@ -2640,8 +2676,8 @@ function exportTeacherPDF() {
         const lulusPct = total > 0 ? Math.round((lulusCount / total) * 100) : 0;
 
         doc.setFillColor(248, 250, 252);
-        doc.setDrawColor(226, 232, 240);
-        doc.roundedRect(14, 37, 182, 20, 2, 2, 'FD');
+        doc.setDrawColor(203, 213, 225);
+        doc.roundedRect(14, 38, 182, 19, 2, 2, 'FD');
 
         doc.setFontSize(9);
         doc.setTextColor(30, 41, 59);
@@ -2650,9 +2686,9 @@ function exportTeacherPDF() {
         doc.text(`Rata-Rata: ${avg}`, 62, 46);
         doc.text(`Tertinggi: ${highest}`, 104, 46);
         doc.text(`Terendah: ${lowest}`, 146, 46);
-        doc.text(`Tingkat Kelulusan (≥75): ${lulusCount} siswa (${lulusPct}%)`, 20, 52);
+        doc.text(`Tingkat Kelulusan (Nilai >= 75): ${lulusCount} dari ${total} Siswa (${lulusPct}%)`, 20, 52);
 
-        // Student Table
+        // 3. Student Records Table
         const tableBody = sorted.map((r, i) => [
             i + 1,
             r.name,
@@ -2666,36 +2702,46 @@ function exportTeacherPDF() {
         ]);
 
         doc.autoTable({
-            startY: 62,
+            startY: 61,
             head: [['No', 'Nama Siswa', 'Kelas', 'Skor', 'Benar', 'Status', 'Durasi', 'Waktu', 'Tanggal']],
             body: tableBody,
             theme: 'grid',
             headStyles: {
-                fillColor: [99, 102, 241],
+                fillColor: [79, 70, 229],
                 textColor: [255, 255, 255],
                 fontStyle: 'bold',
-                fontSize: 8.5
+                fontSize: 8.5,
+                halign: 'center'
             },
-            bodyStyles: { fontSize: 8, textColor: [30, 41, 59] },
+            bodyStyles: { fontSize: 8, textColor: [30, 41, 59], cellPadding: 2.8 },
             alternateRowStyles: { fillColor: [248, 250, 252] },
             columnStyles: {
                 0: { cellWidth: 10, halign: 'center' },
-                1: { cellWidth: 42 },
+                1: { cellWidth: 42, fontStyle: 'bold' },
                 2: { cellWidth: 16, halign: 'center' },
                 3: { cellWidth: 14, halign: 'center', fontStyle: 'bold' },
                 4: { cellWidth: 18, halign: 'center' },
-                5: { cellWidth: 20, halign: 'center' },
+                5: { cellWidth: 20, halign: 'center', fontStyle: 'bold' },
                 6: { cellWidth: 18, halign: 'center' },
                 7: { cellWidth: 22, halign: 'center' },
                 8: { cellWidth: 22, halign: 'center' }
             },
+            didParseCell: function(data) {
+                if (data.section === 'body' && data.column.index === 5) {
+                    if (data.cell.raw === 'LULUS') {
+                        data.cell.styles.textColor = [16, 185, 129];
+                    } else {
+                        data.cell.styles.textColor = [239, 68, 68];
+                    }
+                }
+            },
             margin: { left: 14, right: 14 }
         });
 
-        // Question Analytics Table on next or same page
+        // 4. Question Analytics Table
         const finalY = doc.lastAutoTable.finalY || 100;
         let startY2 = finalY + 12;
-        if (startY2 > 240) {
+        if (startY2 > 235) {
             doc.addPage();
             startY2 = 20;
         }
@@ -2703,7 +2749,7 @@ function exportTeacherPDF() {
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(11);
         doc.setTextColor(30, 41, 59);
-        doc.text('Analisis Tingkat Ketuntasan Butir Soal', 14, startY2);
+        doc.text('Analisis Ketuntasan Butir Soal', 14, startY2);
 
         const attempts = allRecords.filter(r => r.wrongQuestions !== undefined);
         const qTableBody = quizData.map((q, i) => {
@@ -2712,7 +2758,7 @@ function exportTeacherPDF() {
             const pct = attempts.length > 0 ? Math.round((correctCount / attempts.length) * 100) : 0;
             return [
                 `Soal ${i + 1}`,
-                q.q.substring(0, 75) + (q.q.length > 75 ? '...' : ''),
+                q.q.substring(0, 80) + (q.q.length > 80 ? '...' : ''),
                 `${pct}%`,
                 `${correctCount} Siswa`,
                 `${wrongCount} Siswa`,
@@ -2722,24 +2768,25 @@ function exportTeacherPDF() {
 
         doc.autoTable({
             startY: startY2 + 4,
-            head: [['No Soal', 'Ringkasan Pertanyaan', 'Akurasi', 'Benar', 'Salah', 'Tingkat Kesulitan']],
+            head: [['No Soal', 'Ringkasan Pertanyaan', 'Akurasi', 'Benar', 'Salah', 'Kategori']],
             body: qTableBody,
             theme: 'grid',
             headStyles: {
-                fillColor: [139, 92, 246],
+                fillColor: [124, 58, 237],
                 textColor: [255, 255, 255],
                 fontStyle: 'bold',
-                fontSize: 8.5
+                fontSize: 8.5,
+                halign: 'center'
             },
-            bodyStyles: { fontSize: 7.5, textColor: [30, 41, 59] },
+            bodyStyles: { fontSize: 7.5, textColor: [30, 41, 59], cellPadding: 2.5 },
             alternateRowStyles: { fillColor: [248, 250, 252] },
             columnStyles: {
-                0: { cellWidth: 18, halign: 'center' },
-                1: { cellWidth: 90 },
+                0: { cellWidth: 16, halign: 'center', fontStyle: 'bold' },
+                1: { cellWidth: 92 },
                 2: { cellWidth: 18, halign: 'center', fontStyle: 'bold' },
                 3: { cellWidth: 18, halign: 'center' },
                 4: { cellWidth: 18, halign: 'center' },
-                5: { cellWidth: 20, halign: 'center' }
+                5: { cellWidth: 20, halign: 'center', fontStyle: 'bold' }
             },
             margin: { left: 14, right: 14 }
         });
@@ -2768,43 +2815,60 @@ function exportStudentPDF() {
         const nowStr = new Date().toLocaleString('id-ID');
         const isLulus = finalScore >= 75;
 
-        // Header Background
-        doc.setFillColor(15, 15, 40);
-        doc.rect(0, 0, 210, 36, 'F');
+        // 1. Header Banner
+        doc.setFillColor(15, 23, 42); // Dark Navy
+        doc.rect(0, 0, 210, 34, 'F');
+        doc.setFillColor(6, 182, 212); // Cyan accent bar
+        doc.rect(0, 34, 210, 2, 'F');
 
         doc.setTextColor(34, 211, 238);
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(16);
-        doc.text('RAPOR HASIL INVESTIGASI DATA', 14, 15);
+        doc.text('RAPOR HASIL EVALUASI PEMBELAJARAN', 14, 14);
 
-        doc.setTextColor(241, 245, 249);
-        doc.setFontSize(10);
+        doc.setTextColor(226, 232, 240);
+        doc.setFontSize(9.5);
         doc.setFont('helvetica', 'normal');
-        doc.text('Misi Detektif Fakta Digital: Uji Validitas Data & Berpikir Komputasional', 14, 22);
-        doc.text(`Waktu Penyelesaian: ${nowStr}`, 14, 29);
+        doc.text('Misi Detektif Fakta Digital: Uji Validitas Data & Berpikir Komputasional', 14, 21);
+        doc.text(`Waktu Selesai: ${nowStr}`, 14, 28);
 
-        // Student Info & Score Badge Box
+        // 2. Student Info & Score Badge Box
         doc.setFillColor(248, 250, 252);
-        doc.setDrawColor(226, 232, 240);
-        doc.roundedRect(14, 42, 182, 32, 3, 3, 'FD');
+        doc.setDrawColor(203, 213, 225);
+        doc.roundedRect(14, 40, 182, 34, 3, 3, 'FD');
 
-        doc.setFontSize(11);
+        doc.setFontSize(10.5);
         doc.setTextColor(30, 41, 59);
         doc.setFont('helvetica', 'bold');
-        doc.text(`Nama Siswa : ${studentName}`, 20, 52);
-        doc.text(`Kelas          : ${studentClass}`, 20, 60);
-        doc.text(`Max Streak : 🔥 ${maxStreak}x Beruntun`, 20, 68);
+        doc.text('NAMA SISWA', 20, 49);
+        doc.setFont('helvetica', 'normal');
+        doc.text(`:  ${studentName}`, 55, 49);
 
-        // Score Badge Box
-        doc.setFillColor(isLulus ? 16 : 244, isLulus ? 185 : 63, isLulus ? 129 : 94);
-        doc.roundedRect(138, 46, 50, 24, 2, 2, 'F');
+        doc.setFont('helvetica', 'bold');
+        doc.text('KELAS', 20, 57);
+        doc.setFont('helvetica', 'normal');
+        doc.text(`:  ${studentClass}`, 55, 57);
+
+        doc.setFont('helvetica', 'bold');
+        doc.text('MAX STREAK', 20, 65);
+        doc.setFont('helvetica', 'normal');
+        doc.text(`:  ${maxStreak}x Jawaban Benar Beruntun`, 55, 65);
+
+        // Score Badge Box on Right
+        if (isLulus) {
+            doc.setFillColor(16, 185, 129); // Green
+        } else {
+            doc.setFillColor(239, 68, 68); // Red
+        }
+        doc.roundedRect(138, 44, 52, 26, 2, 2, 'F');
         doc.setTextColor(255, 255, 255);
+        doc.setFont('helvetica', 'bold');
         doc.setFontSize(16);
-        doc.text(`SKOR: ${finalScore}`, 163, 56, { align: 'center' });
+        doc.text(`SKOR: ${finalScore}`, 164, 55, { align: 'center' });
         doc.setFontSize(9);
-        doc.text(isLulus ? 'STATUS: LULUS' : 'STATUS: REMEDIAL', 163, 64, { align: 'center' });
+        doc.text(isLulus ? 'STATUS: LULUS' : 'STATUS: REMEDIAL', 164, 63, { align: 'center' });
 
-        // Question Details Table
+        // 3. Question Details Table (Clean Typography & Proper Wrapping)
         const tableBody = shuffledQuizOrder.map((origIdx, playIdx) => {
             const qData = quizData[origIdx];
             const isRight = answeredCorrectly[origIdx];
@@ -2817,7 +2881,7 @@ function exportStudentPDF() {
             return [
                 playIdx + 1,
                 qData.q,
-                isRight ? 'BENAR ✅' : 'SALAH ❌',
+                isRight ? 'BENAR' : 'SALAH',
                 correctAns
             ];
         });
@@ -2828,21 +2892,46 @@ function exportStudentPDF() {
             body: tableBody,
             theme: 'grid',
             headStyles: {
-                fillColor: [99, 102, 241],
+                fillColor: [79, 70, 229],
                 textColor: [255, 255, 255],
                 fontStyle: 'bold',
-                fontSize: 8.5
+                fontSize: 8.5,
+                halign: 'center'
             },
-            bodyStyles: { fontSize: 7.5, textColor: [30, 41, 59] },
+            bodyStyles: {
+                fontSize: 8,
+                textColor: [30, 41, 59],
+                cellPadding: 3,
+                valign: 'middle'
+            },
             alternateRowStyles: { fillColor: [248, 250, 252] },
             columnStyles: {
-                0: { cellWidth: 10, halign: 'center' },
+                0: { cellWidth: 10, halign: 'center', fontStyle: 'bold' },
                 1: { cellWidth: 92 },
-                2: { cellWidth: 22, halign: 'center', fontStyle: 'bold' },
-                3: { cellWidth: 58 }
+                2: { cellWidth: 20, halign: 'center', fontStyle: 'bold' },
+                3: { cellWidth: 60 }
+            },
+            didParseCell: function(data) {
+                if (data.section === 'body' && data.column.index === 2) {
+                    if (data.cell.raw === 'BENAR') {
+                        data.cell.styles.textColor = [16, 185, 129]; // Green
+                    } else {
+                        data.cell.styles.textColor = [239, 68, 68]; // Red
+                    }
+                }
             },
             margin: { left: 14, right: 14 }
         });
+
+        // 4. Official Footer Note
+        const totalPages = doc.internal.getNumberOfPages();
+        for (let p = 1; p <= totalPages; p++) {
+            doc.setPage(p);
+            doc.setFontSize(8);
+            doc.setTextColor(148, 163, 184);
+            doc.text('Dokumen ini diterbitkan secara otomatis oleh Sistem Evaluasi Detektif Fakta Digital', 14, 290);
+            doc.text(`Halaman ${p} dari ${totalPages}`, 196, 290, { align: 'right' });
+        }
 
         const fileName = `Rapor_Kuis_${studentClass.replace(/ /g, '_')}_${studentName.replace(/ /g, '_')}.pdf`;
         doc.save(fileName);
