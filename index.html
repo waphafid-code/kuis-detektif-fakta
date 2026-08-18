@@ -263,41 +263,40 @@
         .radial-blur-lvl-2 { animation: radialGlowPulse2 0.42s ease-out forwards !important; }
         .radial-blur-lvl-mega { animation: radialGlowPulseMega 0.5s ease-out forwards !important; }
 
-        /* ═══ STREAK FIRE AURA ═══ */
+        /* ═══ STREAK FIRE AURA (STATIC & GPU-ACCELERATED, NO LAG) ═══ */
         .glass-card.streak-on-fire {
-            animation: fireBorderPulse 1.2s infinite ease-in-out !important;
-            border-width: 2px !important;
+            border-color: rgba(245, 158, 11, 0.8) !important;
+            box-shadow: 0 0 20px rgba(245, 158, 11, 0.25) !important;
         }
 
         /* ═══ FLOATING EMOJI REACTIONS ═══ */
         .emoji-reaction {
             position: fixed; z-index: 9999; pointer-events: none;
-            font-size: 3rem;
-            animation: emojiFloat 1.2s ease-out forwards;
-            filter: drop-shadow(0 0 15px rgba(255,255,255,0.6));
+            font-size: 2.2rem;
+            animation: emojiFloat 0.8s ease-out forwards;
         }
 
-        /* ═══ MEGA COMBO HERO BANNER ═══ */
+        /* ═══ MEGA COMBO HERO BANNER (LIGHTWEIGHT & SMOOTH) ═══ */
         .super-combo-hero {
-            position: fixed; top: 38%; left: 50%; z-index: 10000; pointer-events: none;
+            position: fixed; top: 35%; left: 50%; z-index: 10000; pointer-events: none;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
-            animation: comboSlam 1.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+            animation: comboSlam 0.9s cubic-bezier(0.16, 1, 0.3, 1) forwards;
             white-space: nowrap; text-align: center;
+            will-change: transform, opacity;
         }
         .super-combo-hero .combo-badge {
-            background: linear-gradient(135deg, #f59e0b, #ef4444, #ec4899);
-            color: #fff; padding: 12px 30px; border-radius: 999px;
-            font-family: var(--font-display); font-size: clamp(1.4rem, 4vw, 2.2rem);
-            font-weight: 900; letter-spacing: 2px;
-            box-shadow: 0 0 40px rgba(245,158,11,0.8), 0 0 80px rgba(236,72,153,0.5);
-            border: 2px solid rgba(255,255,255,0.8);
+            background: linear-gradient(135deg, #f59e0b, #ec4899);
+            color: #fff; padding: 10px 24px; border-radius: 999px;
+            font-family: var(--font-display); font-size: clamp(1.1rem, 3.5vw, 1.8rem);
+            font-weight: 900; letter-spacing: 1.5px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+            border: 1.5px solid rgba(255,255,255,0.7);
             text-transform: uppercase;
         }
         .super-combo-hero .combo-sub {
-            margin-top: 6px; font-family: var(--font-body); font-weight: 800;
-            font-size: clamp(0.9rem, 2.5vw, 1.3rem); color: #fde047;
-            text-shadow: 0 0 20px rgba(0,0,0,0.9), 0 0 10px rgba(245,158,11,0.8);
-            letter-spacing: 1px;
+            margin-top: 4px; font-family: var(--font-body); font-weight: 800;
+            font-size: clamp(0.8rem, 2.2vw, 1.1rem); color: #fde047;
+            text-shadow: 0 2px 8px rgba(0,0,0,0.9);
         }
 
         /* ═══ HOME SCREEN ═══ */
@@ -1781,39 +1780,35 @@ function triggerStreakVibration(streakCount) {
 function showMegaComboHero(streakVal) {
     let badgeText = `🔥 ${streakVal}X STREAK!`;
     let subText = 'LUAR BIASA! LANJUTKAN!';
-    let emojiList = ['🔥', '⚡', '✨'];
 
     if (streakVal === 2) {
         badgeText = '🔥 2X COMBO!';
         subText = 'ANALISIS TAJAM! TERUS MAJU!';
-        emojiList = ['🔥', '👍'];
     } else if (streakVal === 3) {
         badgeText = '⚡ 3X ON FIRE!';
         subText = 'MENYALA DETEKTIF! FOKUS SEMPURNA!';
-        emojiList = ['⚡', '🔥', '💥'];
     } else if (streakVal === 4) {
         badgeText = '🎯 4X SHARPSHOOTER!';
         subText = 'BIDIKAN FAKTA SELALU AKURAT!';
-        emojiList = ['🎯', '⚡', '🌟'];
     } else if (streakVal === 5) {
         badgeText = '🚀 5X UNSTOPPABLE!';
         subText = 'DETEKTIF SULTAN! TAK TERBENDUNG!';
-        emojiList = ['🚀', '💥', '⚡', '💎'];
     } else if (streakVal === 6) {
         badgeText = '💥 6X HYPER DRIVE!';
         subText = 'KOMPUTASI NALAR LEVEL TINGGI!';
-        emojiList = ['💥', '🔥', '🌟', '🚀'];
     } else if (streakVal >= 7 && streakVal < 10) {
         badgeText = `🌟 ${streakVal}X CYBER GODLIKE!`;
         subText = 'OTAK SUPER KOMPUTER! DETEKTIF GENIUS!';
-        emojiList = ['🌟', '👑', '💎', '🔥', '⚡'];
     } else if (streakVal >= 10) {
         badgeText = `👑 ${streakVal}X LEGENDARY DETECTIVE!`;
         subText = 'PENGUASA AUDIT DATA TERTINGGI!';
-        emojiList = ['👑', '💎', '🌟', '🏆', '🔥', '⚡'];
     }
 
     sfxStreakCombo(streakVal);
+
+    // Hapus hero lama jika masih ada untuk cegah tumpukan DOM
+    const oldHero = document.querySelector('.super-combo-hero');
+    if (oldHero) oldHero.remove();
 
     const hero = document.createElement('div');
     hero.className = 'super-combo-hero';
@@ -1822,20 +1817,7 @@ function showMegaComboHero(streakVal) {
         <div class="combo-sub">${subText}</div>
     `;
     document.body.appendChild(hero);
-    setTimeout(() => hero.remove(), 1300);
-
-    if (streakVal >= 3) {
-        shootConfetti();
-        const count = Math.min(10, streakVal * 2);
-        for (let i = 0; i < count; i++) {
-            setTimeout(() => {
-                const em = emojiList[Math.floor(Math.random() * emojiList.length)];
-                const x = Math.random() * (window.innerWidth - 100) + 50;
-                const y = Math.random() * (window.innerHeight - 200) + 100;
-                showEmojiReaction(em, x, y);
-            }, i * 80);
-        }
-    }
+    setTimeout(() => hero.remove(), 950);
 }
 
 function spawnRandomEmojis(emoji, count) {
