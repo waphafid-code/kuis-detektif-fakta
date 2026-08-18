@@ -95,12 +95,15 @@
         }
 
         .glass-card {
-            background: var(--bg-card);
-            backdrop-filter: blur(24px) saturate(1.2);
+            background: rgba(15, 15, 40, 0.75);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
             border: 1px solid var(--glass-border);
             border-radius: 24px;
             padding: 40px;
             box-shadow: 0 25px 60px -15px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.05);
+            transform: translateZ(0);
+            will-change: transform;
         }
 
         /* ═══ ANIMATIONS ═══ */
@@ -1545,19 +1548,24 @@ function initParticles() {
 
 function drawParticles() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+    const isMobile = window.innerWidth < 768;
     particles.forEach(p => { p.update(); p.draw(); });
-    for (let i = 0; i < particles.length; i++) {
-        for (let j = i + 1; j < particles.length; j++) {
-            const dx = particles[i].x - particles[j].x;
-            const dy = particles[i].y - particles[j].y;
-            const dist = Math.sqrt(dx * dx + dy * dy);
-            if (dist < 120) {
-                ctx.beginPath();
-                ctx.moveTo(particles[i].x, particles[i].y);
-                ctx.lineTo(particles[j].x, particles[j].y);
-                ctx.strokeStyle = `rgba(139, 92, 246, ${0.06 * (1 - dist / 120)})`;
-                ctx.lineWidth = 0.5;
-                ctx.stroke();
+
+    // Hanya gambar garis penghubung partikel di Desktop / Laptop untuk menghemat CPU/Baterai HP
+    if (!isMobile) {
+        for (let i = 0; i < particles.length; i++) {
+            for (let j = i + 1; j < particles.length; j++) {
+                const dx = particles[i].x - particles[j].x;
+                const dy = particles[i].y - particles[j].y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                if (dist < 110) {
+                    ctx.beginPath();
+                    ctx.moveTo(particles[i].x, particles[i].y);
+                    ctx.lineTo(particles[j].x, particles[j].y);
+                    ctx.strokeStyle = `rgba(139, 92, 246, ${0.05 * (1 - dist / 110)})`;
+                    ctx.lineWidth = 0.5;
+                    ctx.stroke();
+                }
             }
         }
     }
