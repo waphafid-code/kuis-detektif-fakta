@@ -13,6 +13,8 @@
     <!-- jsPDF & AutoTable Library untuk Ekspor PDF (.pdf) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+    <!-- Supabase JS Client Library (Cloud Database Online Real-Time) -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
             --bg-deep: #06060f;
@@ -954,7 +956,7 @@
 
             <div class="progress-container">
                 <div class="progress-info">
-                    <span id="progress-label">Soal 1 dari 15</span>
+                    <span id="progress-label">Soal 1 dari 20</span>
                     <span id="progress-pct">0%</span>
                 </div>
                 <div class="progress-bar">
@@ -1147,201 +1149,268 @@
 
 <script>
 // ============================================================
-//  📚 QUIZ DATA (SOAL TIDAK DIUBAH)
+//  📚 QUIZ DATA (20 SOAL DETEKTIF FAKTA & LITERASI DIGITAL)
 // ============================================================
 const quizData = [
     {
         type: 'mcq',
-        q: "Tujuan utama dari dibentuknya 'Ekosistem Periksa Fakta' di era digital adalah...",
+        q: "Organisasi periksa fakta bertugas untuk ...",
         options: [
-            "Menghapus akun-akun buzzer anonim di media sosial secara otomatis menggunakan robot AI.",
-            "Membantu masyarakat mengakses informasi akurat dan mendorong literasi media yang lebih baik.",
-            "Membatasi akses internet bagi pelajar agar fokus belajar di sekolah.",
-            "Melacak lokasi fisik pembuat hoaks menggunakan GPS agar bisa langsung ditangkap.",
-            "Menyensor semua berita kritik sosial agar timeline media sosial terlihat damai."
+            "Membuat konten hiburan di media sosial",
+            "Menyelidiki dan memverifikasi klaim atau informasi",
+            "Menyebarkan semua berita tanpa pemeriksaan",
+            "Menghapus akun pengguna di internet",
+            "Membuat aplikasi pesan instan baru"
         ],
         answer: 1,
-        explanation: "Sama seperti wasit dalam pertandingan sepak bola yang menjaga agar permainan berjalan adil (fair play), ekosistem ini adalah jaring pengaman agar masyarakat (terutama remaja) mendapat informasi yang akurat dan terhindar dari manipulasi data."
-    },
-    {
-        type: 'checkbox',
-        q: "Siapa saja pihak yang harus saling bekerja sama (kolaborasi) dalam 'Ekosistem Periksa Fakta'? (Pilih 3 jawaban benar)",
-        options: [
-            "Organisasi Periksa Fakta (Tim Ahli Independen)",
-            "Platform Media Sosial dan Teknologi (Misal: Instagram, TikTok, Google)",
-            "Pendidikan dan Literasi Media (Sekolah dan Siswa)",
-            "Kelompok Peretas (Hacker) Topeng Hitam",
-            "Jaringan Pemasaran Bisnis Online"
-        ],
-        answer: [0, 1, 2],
-        explanation: "Ekosistem ini tidak bisa berdiri sendiri. Ahli investigasi, platform teknologi tempat info menyebar, dan kita sebagai pelajar (literasi media) harus saling bahu-membahu menekan laju hoaks."
+        explanation: "Organisasi periksa fakta bertugas menyelidiki dan memverifikasi kebenaran klaim atau informasi yang beredar di masyarakat."
     },
     {
         type: 'mcq',
-        caseStudy: "Bima, seorang siswa kelas X, mendapat broadcast pesan WhatsApp: 'PENTING! Kuota Belajar Kemendikbud 100GB & Top Up Diamond Mobile Legends Gratis. Klik link ini: http://kuota-gratis-pelajar.xyz/login'.",
-        q: "Sebagai siswa Informatika yang paham validitas data, apa tindakan komputasional pertama yang paling logis dilakukan Bima?",
+        q: "Apa ciri utama dari judul berita yang bersifat clickbait?",
         options: [
-            "Segera meneruskan pesan tersebut ke grup kelas agar teman-temannya juga dapat kuota.",
-            "Mengklik tautan tersebut lalu memasukkan password email asalkan tidak pakai password utama.",
-            "Tidak mengklik tautan (link) tersebut, dan mengecek info resmi di website/Instagram terverifikasi milik Kemendikbud.",
-            "Membalas pesan broadcast tersebut dengan stiker marah-marah.",
-            "Menyimpan nomor pengirim agar nanti bisa ditagih jika kuotanya tidak masuk."
+            "Menggunakan bahasa formal dan menyajikan data statistik objektif",
+            "Menyajikan ringkasan fakta langsung di bagian awal judul",
+            "Mencantumkan nama penulis dan tanggal publikasi secara jelas",
+            "Menggunakan kalimat sensasional atau provokatif yang menggantung untuk memancing klik",
+            "Mengutip pernyataan narasumber resmi secara lengkap dan utuh"
         ],
-        answer: 2,
-        explanation: "Jangan pernah mengklik URL mencurigakan (Phishing)! Selalu verifikasi silang ke sumber resmi (misalnya berakhiran .go.id). Ini ibarat mengecek statistik resmi petarung MMA dari situs promotor resminya, bukan dari gosip forum internet."
-    },
-    {
-        type: 'checkbox',
-        caseStudy: "Saat scroll TikTok, Dinda menemukan video editan ujaran kebencian yang berpotensi memicu tawuran antarsekolah. Dinda ingin melaporkan konten tersebut ke Kementerian Kominfo.",
-        q: "Apa saja 'barang bukti digital' yang WAJIB disertakan Dinda saat mengirim email ke aduankonten@mail.kominfo.go.id? (Pilih 2 jawaban benar)",
-        options: [
-            "Melampirkan Screen capture (tangkapan layar) dari konten hoaks tersebut.",
-            "Menyertakan URL (link) spesifik dari video TikTok tersebut.",
-            "Menyertakan foto Kartu Pelajar milik Dinda sebagai bukti identitas.",
-            "Mengirimkan nama lengkap dan alamat rumah pembuat video.",
-            "Melampirkan password akun TikTok Dinda agar tim Kominfo bisa mengecek langsung."
-        ],
-        answer: [0, 1],
-        explanation: "Dalam investigasi data, URL (alamat forensik) dan Tangkapan Layar (bukti otentik) adalah instrumen wajib. Identitas pelapor sangat dijaga kerahasiaannya oleh sistem, jadi tidak perlu mengirim password atau KTP/Kartu Pelajar."
-    },
-    {
-        type: 'tf',
-        q: "Organisasi pemeriksa fakta yang independen HARUS menerbitkan proses dan metodologi kerja mereka secara terbuka (transparan) agar masyarakat bisa melihat cara mereka menyimpulkan suatu fakta.",
-        options: ["Benar", "Salah"],
-        answer: 0,
-        explanation: "Transparansi sangat penting! Analologinya seperti teknologi VAR (Video Assistant Referee) di sepak bola; penonton berhak melihat tayangan ulang yang menjadi dasar keputusan wasit agar tidak ada kecurigaan."
+        answer: 3,
+        explanation: "Judul clickbait sengaja dirancang secara berlebihan dan provokatif guna memancing rasa penasaran audiens agar mengklik tautan, meskipun isinya sering kali tidak sesuai dengan judul."
     },
     {
         type: 'mcq',
-        caseStudy: "Saat ada isu viral bahwa 'Ujian Nasional (UN) akan dikembalikan tahun ini', siswa-siswa menjadi panik.",
-        q: "Situs database tepercaya dari MAFINDO yang bisa dicek siswa untuk mencari klarifikasi (cek fakta) hoaks tersebut adalah...",
+        q: "Mengapa organisasi periksa fakta perlu menjelaskan metodologi kerjanya secara transparan?",
         options: [
-            "trustpositif.kominfo.go.id",
-            "turnbackhoax.id",
-            "cybercrime.polri.go.id",
-            "wikipedia.org",
-            "forum.kaskus.co.id"
+            "Agar berita yang diperiksa cepat viral di media sosial",
+            "Agar masyarakat memahami proses investigasi dan dasar kesimpulan verifikasi",
+            "Agar dapat menjual produk komersial atau memasang iklan",
+            "Agar semua warganet wajib mengikuti akun media sosial mereka",
+            "Agar pemeriksa fakta tidak perlu lagi membandingkan berbagai sumber"
         ],
         answer: 1,
-        explanation: "Turnbackhoax.id adalah repositori/perpustakaan publik independen terbesar di Indonesia yang khusus mengarsipkan daftar klarifikasi hoaks dan disinformasi."
-    },
-    {
-        type: 'checkbox',
-        caseStudy: "Terdapat gambar Deepfake (manipulasi wajah menggunakan AI) yang memfitnah seorang guru melakukan tindakan kriminal. Hal ini sudah merugikan dan melanggar ranah hukum pidana (UU ITE).",
-        q: "Ke alamat email mana saja siswa atau sekolah bisa melaporkan kejahatan siber (Cybercrime) ini kepada pihak Kepolisian RI? (Pilih 2 jawaban benar)",
-        options: [
-            "aduankonten@mail.kominfo.go.id",
-            "cybercrime@polri.go.id",
-            "polisionline.net@gmail.com",
-            "lapor@kemdikbud.go.id",
-            "pengaduan@mahkamahagung.go.id"
-        ],
-        answer: [1, 2],
-        explanation: "Untuk urusan hukum pidana (pencemaran nama baik, penipuan siber berat), laporan diarahkan langsung ke penegak hukum yakni pihak Kepolisian melalui email resmi cybercrime@polri.go.id atau polisionline.net@gmail.com."
+        explanation: "Metodologi perlu dijelaskan secara terbuka agar masyarakat mengetahui bagaimana proses pemeriksaan dilakukan dan memahami validitas kesimpulannya."
     },
     {
         type: 'mcq',
-        caseStudy: "Rian merasa lelah selalu berdebat di grup WhatsApp keluarga karena sering ada kerabat yang membagikan info kesehatan palsu. Rian ingin menggunakan Chatbot WhatsApp otomatis untuk memverifikasi info tersebut dengan cepat.",
-        q: "Apa nama Chatbot buatan MAFINDO yang harus disimpan nomornya oleh Rian?",
+        q: "Langkah awal yang paling tepat saat menerima informasi yang memicu emosi berlebihan (marah atau panik) adalah ...",
         options: [
-            "Chatbot Kominfo AI",
-            "Chatbot Kalimasada",
-            "WA CekFakta Pelajar",
-            "Chatbot Anti-Phishing",
-            "Asisten Polisi Siber"
-        ],
-        answer: 1,
-        explanation: "Chatbot otomatis di WhatsApp ini bernama 'Kalimasada' (+628592 1600 500). Tools ini sangat praktis untuk memvalidasi teks atau link hoaks yang beredar di grup perpesanan harian kita."
-    },
-    {
-        type: 'checkbox',
-        q: "Bagaimana cara Platform Media Sosial (seperti Instagram, X, dan TikTok) ikut bertanggung jawab dalam 'Ekosistem Periksa Fakta'? (Pilih 2 jawaban benar)",
-        options: [
-            "Membaca pesan pribadi (DM) semua pengguna untuk mencari kata-kata hoaks.",
-            "Menandai (flagging) konten yang terindikasi hoaks dengan label peringatan visual.",
-            "Mengarahkan pengguna (memberikan tautan) ke sumber informasi resmi yang sudah diverifikasi.",
-            "Memblokir jaringan WiFi pengguna yang sering membagikan hoaks.",
-            "Mengurangi saldo e-wallet pengguna sebagai sanksi denda otomatis."
-        ],
-        answer: [1, 2],
-        explanation: "Platform teknologi bertindak sebagai penyaring cerdas. Mereka memberikan label peringatan (misal: 'False Information' yang menutupi gambar) dan menyediakan tombol konteks agar pengguna diarahkan ke artikel klarifikasi yang benar."
-    },
-    {
-        type: 'mcq',
-        caseStudy: "Di dalam pemrograman, terdapat prinsip logika 'Garbage In, Garbage Out' (GIGO): Jika kita memasukkan data sampah, program akan menghasilkan output sampah.",
-        q: "Jika prinsip ini dianalogikan ke cara otak remaja mencerna media sosial, apa maknanya?",
-        options: [
-            "Remaja harus rutin membersihkan cache dan history memori HP mereka (Garbage).",
-            "Jika otak kita terus diberi input informasi hoaks/palsu, maka sikap dan keputusan yang kita buat di dunia nyata juga akan salah (kacau).",
-            "Kita boleh membaca hoaks asalkan tidak menekan tombol 'Like'.",
-            "Berita politik dan ekonomi selalu berbentuk 'sampah' jadi harus dihindari sama sekali.",
-            "Kapasitas otak manusia akan penuh jika terlalu banyak menonton video edukasi."
-        ],
-        answer: 1,
-        explanation: "Hukum analisis data itu absolut. Mengkonsumsi data fiktif (hoaks) secara terus-menerus akan merusak struktur nalar rasional kita, sehingga pandangan kita terhadap dunia (ekonomi, politik, sosial) menjadi bias dan keliru."
-    },
-    {
-        type: 'checkbox',
-        caseStudy: "Viral sebuah foto di Twitter/X yang mengklaim 'Bintang sepak bola Lionel Messi terlihat sedang makan nasi padang di Sumatera Barat siang ini'.",
-        q: "Sebagai siswa kelas X yang melek digital, tools (alat) komputasional apa yang paling relevan digunakan untuk mengaudit keaslian foto tersebut? (Pilih 3 jawaban benar)",
-        options: [
-            "Mesin Pencari Gambar Terbalik (Google Reverse Image Search / Yandex Images).",
-            "Meneruskan foto tersebut ke Chatbot Verifikasi Fakta (Kalimasada WA).",
-            "Membuka Microsoft Excel untuk menghitung ukuran file gambarnya.",
-            "Mengecek kebenaran berita kedatangan Messi tersebut di Google News (Portal Berita Resmi).",
-            "Menggunakan aplikasi Canva untuk menambahkan filter pada gambar."
-        ],
-        answer: [0, 1, 3],
-        explanation: "Mengaudit gambar palsu butuh logika forensik. Kita bisa menggunakan Reverse Image Search untuk melihat apakah foto itu adalah foto lama yang diedit, mengecek referensi jurnalistik, atau dibantu oleh Chatbot AI periksa fakta."
-    },
-    {
-        type: 'mcq',
-        q: "Keterampilan proaktif untuk memilah fakta saat mengerjakan tugas sekolah—di mana kita tidak langsung mempercayai satu halaman web pertama (vertikal), melainkan membuka beberapa tab baru secara bersamaan untuk membandingkan referensi disebut...",
-        options: [
-            "Keterampilan Membaca Lateral (Lateral Reading)",
-            "Keterampilan Berpikir Algoritmik (Algorithmic Thinking)",
-            "Keterampilan Membaca Cepat (Speed Reading)",
-            "Keterampilan Debugging Web",
-            "Keterampilan Copy-Paste Cerdas"
+            "Menahan diri dan melakukan verifikasi ke sumber terpercaya sebelum menyebarkannya",
+            "Langsung meneruskannya ke semua grup obrolan keluarga",
+            "Memberikan komentar bernada provokatif di media sosial",
+            "Mengajak orang lain untuk segera panik dan memboikot isu tersebut",
+            "Mengunggah tangkapan layar tanpa memverifikasi kebenarannya"
         ],
         answer: 0,
-        explanation: "Membaca Lateral (Lateral Reading) adalah senjata utama literasi digital modern. Daripada membaca satu web dari atas ke bawah (vertikal), bukalah referensi ke samping secara paralel (membuka banyak tab browser) untuk memverifikasi klaim sebuah website!"
+        explanation: "Kunci utama literasi digital adalah bersikap kritis dan tenang. Menahan diri untuk tidak langsung membagikan info serta memeriksa kebenaran faktanya terlebih dahulu."
     },
     {
         type: 'mcq',
-        q: "Mengapa membaca lateral penting dalam mengecek informasi?",
+        q: "Bagaimana jaminan terhadap kerahasiaan pelapor konten hoaks melalui kanal resmi Kominfo?",
         options: [
-            "Agar informasi cepat viral",
-            "Agar kita membandingkan informasi dari beberapa sumber lain",
-            "Agar cukup membaca satu situs saja",
-            "Agar tidak perlu mengecek fakta"
-        ],
-        answer: 1,
-        explanation: "Membaca lateral (lateral reading) penting agar kita tidak terpaku pada satu situs saja, melainkan aktif membandingkan kebenaran data dan kredibilitas fakta dari berbagai sumber lain yang independen."
-    },
-    {
-        type: 'mcq',
-        q: "Langkah pertama saat menerima informasi yang mencurigakan adalah...",
-        options: [
-            "Langsung membagikannya",
-            "Mengecek sumber, tanggal, dan bukti pendukung",
-            "Menghapus semua komentar",
-            "Mempercayainya jika dikirim teman"
-        ],
-        answer: 1,
-        explanation: "Langkah awal paling rasional saat menerima klaim mencurigakan adalah melakukan verifikasi mendasar: mengecek kejelasan penerbit/sumber primer, tanggal rilis berita, serta validitas bukti data pendukung."
-    },
-    {
-        type: 'mcq',
-        q: "Jika menemukan konten yang diduga hoaks, peserta didik dapat...",
-        options: [
-            "Membagikan ke semua grup",
-            "Mengedit agar lebih menarik",
-            "Melaporkan ke kanal aduan seperti Kominfo atau Mafindo",
-            "Mengabaikan semua bukti"
+            "Identitas pelapor wajib dipublikasikan secara terbuka",
+            "Identitas pelapor dibagikan kepada seluruh pengguna internet",
+            "Kerahasiaan identitas pelapor dijamin sepenuhnya",
+            "Pelapor wajib membuat video klarifikasi ke publik",
+            "Pelapor harus menyebarkan isi laporannya ke media sosial"
         ],
         answer: 2,
-        explanation: "Tindakan proaktif peserta didik saat menemukan konten hoaks adalah melaporkannya ke kanal aduan resmi (seperti aduankonten.id Kominfo atau TurnBackHoax Mafindo) agar segera ditindaklanjuti dan diklarifikasi."
+        explanation: "Seseorang yang melaporkan konten hoaks melalui Kominfo tidak perlu khawatir identitasnya diketahui karena kerahasiaan pelapor dijamin agar masyarakat berani melapor."
+    },
+    {
+        type: 'mcq',
+        q: "Fitur 'Reverse Image Search' (pencarian gambar terbalik) pada mesin pencari berguna untuk ...",
+        options: [
+            "Mengedit saturasi warna dan filter pencahayaan foto",
+            "Menghapus gambar dari server internet secara permanen",
+            "Mengetahui asal-usul, waktu unggah pertama kali, dan konteks asli suatu foto",
+            "Meningkatkan kualitas resolusi kamera perangkat ponsel",
+            "Membuat gambar animasi atau stiker otomatis"
+        ],
+        answer: 2,
+        explanation: "Pencarian gambar terbalik memungkinkan kita menelusuri riwayat kemunculan foto di internet untuk mengetahui konteks asli dan mendeteksi apakah gambar tersebut foto lama yang dimanipulasi."
+    },
+    {
+        type: 'mcq',
+        q: "Pendidikan literasi media membantu masyarakat untuk ...",
+        options: [
+            "Membagikan semua informasi yang diterima tanpa filter",
+            "Mengevaluasi dan menyaring informasi secara kritis",
+            "Menghindari penggunaan semua platform media sosial",
+            "Membuat berita tanpa mencantumkan sumber rujukan",
+            "Menghapus berita yang tidak disukai secara sepihak"
+        ],
+        answer: 1,
+        explanation: "Literasi media melatih seseorang mengevaluasi dan menyaring informasi secara kritis, bukan langsung mempercayai atau menyebarkannya."
+    },
+    {
+        type: 'mcq',
+        q: "Kecenderungan seseorang untuk hanya mencari, mempercayai, dan mengingat informasi yang mendukung keyakinan pribadinya disebut ...",
+        options: [
+            "Bias Konfirmasi (Confirmation Bias)",
+            "Validasi Data Otomatis",
+            "Algoritma Pencarian Lateral",
+            "Verifikasi Silang (Cross-Checking)",
+            "Enkripsi Informasi Digital"
+        ],
+        answer: 0,
+        explanation: "Bias Konfirmasi adalah kecenderungan psikologis di mana seseorang cenderung menerima info yang sejalan dengan prasangka/keyakinannya dan menolak bukti valid yang bertentangan."
+    },
+    {
+        type: 'mcq',
+        q: "Jaringan kolaboratif dalam ekosistem periksa fakta dapat meningkatkan ...",
+        options: [
+            "Jumlah pengikut di akun media sosial",
+            "Kecepatan penyebaran konten hoaks di internet",
+            "Efisiensi pemeriksaan fakta yang kompleks",
+            "Jumlah penayangan iklan komersial di web",
+            "Frekuensi pengiriman pesan berantai"
+        ],
+        answer: 2,
+        explanation: "Jaringan kolaboratif memungkinkan berbagai pihak (organisasi pemeriksa fakta, media, platform, komunitas) saling berbagi informasi dan metode sehingga investigasi fakta rumit menjadi jauh lebih efisien."
+    },
+    {
+        type: 'mcq',
+        q: "Mengapa sangat penting untuk memeriksa tanggal publikasi sebuah artikel berita sebelum membagikannya?",
+        options: [
+            "Agar mengetahui umur server situs web tersebut",
+            "Untuk memastikan peristiwa tersebut bukan berita lama yang didaur ulang seolah baru terjadi",
+            "Untuk menghitung statistik jumlah pembaca harian",
+            "Agar diizinkan menyalin seluruh isi berita tanpa izin",
+            "Untuk mempercepat loading halaman web"
+        ],
+        answer: 1,
+        explanation: "Banyak hoaks disebarkan dengan memanfaatkan artikel atau foto lama yang dimunculkan kembali seolah baru saja terjadi demi menciptakan kepanikan atau menggiring opini."
+    },
+    {
+        type: 'mcq',
+        q: "Bentuk manipulasi informasi di mana foto atau video asli disajikan dengan narasi di luar konteks aslinya disebut ...",
+        options: [
+            "Misleading Context (Konteks Menyesatkan)",
+            "Fabricated Content (Konten Palsu Total)",
+            "Satire atau Parodi Murni",
+            "Laporan Jurnalistik Netral",
+            "Data Terbuka Terverifikasi"
+        ],
+        answer: 0,
+        explanation: "Misleading context terjadi ketika materi visualnya nyata/asli, namun narasi pengantarnya dipelintir atau diletakkan di konteks yang salah untuk memperdaya pembaca."
+    },
+    {
+        type: 'mcq',
+        q: "Domain situs web resmi yang paling kredibel untuk informasi kebijakan lembaga pemerintah Indonesia adalah ...",
+        options: [
+            ".com",
+            ".net",
+            ".go.id",
+            ".xyz",
+            ".org.id"
+        ],
+        answer: 2,
+        explanation: "Domain .go.id merupakan ranah khusus instansi pemerintah Republik Indonesia yang mensyaratkan izin dan verifikasi resmi kenegaraan, sehingga menjadi rujukan otoritatif."
+    },
+    {
+        type: 'mcq',
+        q: "Apa bahaya utama dari manipulasi media berbasis kecerdasan buatan seperti Deepfake?",
+        options: [
+            "Menyebabkan ukuran file video menjadi sangat kecil",
+            "Menghasilkan video atau suara manipulatif yang sangat mirip aslinya untuk memfitnah dan menipu publik",
+            "Menghilangkan watermark hak cipta secara otomatis",
+            "Membuat koneksi internet menjadi lambat",
+            "Mengubah video menjadi teks secara instan"
+        ],
+        answer: 1,
+        explanation: "Deepfake memanfaatkan AI untuk memalsukan wajah dan suara figur publik secara meyakinkan sehingga berpotensi tinggi digunakan untuk fitnah politik atau penipuan finansial."
+    },
+    {
+        type: 'mcq',
+        q: "Mengapa 'pesan berantai' (broadcast message) di aplikasi pesan instan sangat rawan memuat hoaks?",
+        options: [
+            "Karena pesan dikirim dalam format terenkripsi",
+            "Karena format pesan selalu memuat gambar berkualitas rendah",
+            "Karena mudah diteruskan berkali-kali tanpa kejelasan sumber primer dan minim verifikasi",
+            "Karena aplikasi perpesanan hanya dapat diakses melalui ponsel",
+            "Karena pesan berantai hanya dibuat oleh akun robot"
+        ],
+        answer: 2,
+        explanation: "Fitur forward memudahkan siapa saja menyebarkan pesan tanpa mengetahui pengunggah aslinya, serta minim kontrol redaksional dan verifikasi fakta."
+    },
+    {
+        type: 'mcq',
+        q: "Prinsip etika digital 'Saring Sebelum Sharing' memiliki makna utama yaitu ...",
+        options: [
+            "Membagikan informasi secepat mungkin agar menjadi yang pertama tahu",
+            "Menghapus seluruh postingan di media sosial setiap hari",
+            "Memeriksa kebenaran, sumber, dan manfaat suatu informasi sebelum membagikannya",
+            "Mengunci akun media sosial dari interaksi orang lain",
+            "Menolak membaca berita apa pun di internet"
+        ],
+        answer: 2,
+        explanation: "Saring Sebelum Sharing adalah pedoman etika digital yang menekankan kebiasaan verifikasi fakta dan pertimbangan dampak moral sebelum menyebarkan konten apa pun."
+    },
+    {
+        type: 'mcq',
+        q: "Melakukan cross-checking (pemeriksaan silang) pada beberapa media berita yang kredibel bertujuan untuk ...",
+        options: [
+            "Membandingkan tata letak desain antarmuka situs",
+            "Memastikan keakuratan informasi dan memperoleh sudut pandang pemberitaan yang objektif",
+            "Menambah riwayat pencarian di peramban internet",
+            "Menemukan media yang menyediakan hadiah kuis",
+            "Mempercepat pengunduhan file berita"
+        ],
+        answer: 1,
+        explanation: "Membaca peristiwa yang sama dari beberapa media terpercaya membantu mengonfirmasi fakta yang sebenarnya dan mengurangi risiko terjebak narasi sepihak atau hoaks."
+    },
+    {
+        type: 'mcq',
+        q: "Kanal resmi Kementerian Kominfo RI bagi masyarakat untuk mengirimkan aduan konten hoaks dan negatif di internet adalah ...",
+        options: [
+            "aduankonten.id",
+            "laporhoaks.com",
+            "cekfaktapalsu.org",
+            "satgashoaks.net",
+            "beritavalid.co.id"
+        ],
+        answer: 0,
+        explanation: "aduankonten.id adalah fasilitas resmi pemerintah (Kominfo) bagi publik untuk mengadukan konten negatif, hoaks, perjudian, pornografi, maupun pelanggaran siber lainnya."
+    },
+    {
+        type: 'mcq',
+        q: "Apa dampak paling berbahaya dari penyebaran hoaks di bidang kesehatan, seperti klaim pengobatan palsu?",
+        options: [
+            "Mengurangi pemakaian kuota data internet pengguna",
+            "Mengancam keselamatan nyawa dan menghambat penanganan medis yang tepat",
+            "Meningkatkan jumlah tenaga dokter di rumah sakit",
+            "Menurunkan harga persediaan obat-obatan di apotek",
+            "Mengubah jadwal operasional puskesmas"
+        ],
+        answer: 1,
+        explanation: "Disinformasi kesehatan dapat membuat masyarakat menolak tindakan medis yang tepat atau mengonsumsi zat berbahaya yang berakibat fatal pada keselamatan jiwa."
+    },
+    {
+        type: 'mcq',
+        q: "Salah satu indikator utama bahwa akun media sosial tokoh publik atau instansi merupakan akun resmi adalah ...",
+        options: [
+            "Memiliki foto profil dengan estetika sangat menarik",
+            "Adanya lencana verifikasi (centang resmi) dan tautan ke situs domain resmi instansi",
+            "Sering membagikan tautan undian berhadiah uang tunai",
+            "Memiliki ribuan komentar tanpa adanya moderasi",
+            "Tidak mencantumkan informasi bio profil apa pun"
+        ],
+        answer: 1,
+        explanation: "Lencana verifikasi dan tautan domain resmi membantu membedakan akun resmi dari akun tiruan (impersonator) yang kerap dibuat untuk melakukan penipuan."
+    },
+    {
+        type: 'mcq',
+        q: "Mengapa konten satir atau parodi terkadang dapat berubah menjadi disinformasi di masyarakat?",
+        options: [
+            "Karena pembuat satir selalu menyertakan bukti hasil riset",
+            "Karena tidak semua orang memahami konteks humor atau sindirannya sehingga dianggap sebagai fakta sungguhan",
+            "Karena konten satir dilarang oleh undang-undang penyiaran",
+            "Karena satir hanya ditulis menggunakan istilah ilmiah asing",
+            "Karena satir dibuat khusus oleh tim periksa fakta"
+        ],
+        answer: 1,
+        explanation: "Konten satir pada dasarnya dibuat sebagai humor atau kritik. Namun saat disebarkan ulang tanpa konteks atau dibaca oleh audiens yang tidak memahaminya, konten tersebut bisa disalahartikan sebagai berita nyata."
     }
 ];
 
@@ -1351,6 +1420,19 @@ const quizData = [
 const STORAGE_KEY = 'detektif_fakta_records_v2';
 const TIMER_SETTING_KEY = 'detektif_fakta_timer';
 const PIN_GURU = '2543';
+
+// ☁️ SUPABASE CLOUD DATABASE CONFIGURATION
+const SUPABASE_URL = 'https://vuegrohnszqtmnthcaqp.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ1ZWdyb2huc3pxdG1udGhjYXFwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcwNTkzMzMsImV4cCI6MjEwMjYzNTMzM30.rna0qJhuPKNdzs02EQILXOOS1_Ce5laiW36aoaeUqF0';
+let supabaseClient = null;
+
+try {
+    if (window.supabase && typeof window.supabase.createClient === 'function') {
+        supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    }
+} catch (err) {
+    console.warn('Supabase init error:', err);
+}
 
 let TIMER_MAX = 30;
 let studentName = '';
@@ -1687,6 +1769,31 @@ async function saveRecord(record) {
     records.push(record);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
 
+    // 1. Simpan ke Cloud Supabase Real-Time Database (Online dari mana saja)
+    if (supabaseClient) {
+        try {
+            const { error } = await supabaseClient.from('quiz_results').insert([{
+                student_name: record.name,
+                student_class: record.class,
+                score: record.score,
+                correct_count: record.correct,
+                total_questions: record.total || quizData.length,
+                wrong_questions: record.wrongQuestions || [],
+                duration: record.duration,
+                time_str: record.time,
+                quiz_date: record.date
+            }]);
+            if (error) {
+                console.warn('Supabase insert warning:', error.message);
+            } else {
+                console.log('✅ Nilai siswa berhasil disimpan ke Cloud Supabase!');
+            }
+        } catch (err) {
+            console.warn('Supabase sync error:', err);
+        }
+    }
+
+    // 2. Cadangan ke server Node.js lokal (jika dijalankan)
     try {
         await fetch('/api/scores', {
             method: 'POST',
@@ -1726,6 +1833,26 @@ async function saveTimerSetting() {
 
 async function checkBackendStatus() {
     const badge = document.getElementById('db-status-badge');
+
+    // 1. Cek Koneksi ke Cloud Supabase
+    if (supabaseClient) {
+        try {
+            const { data, error } = await supabaseClient.from('quiz_results').select('id').limit(1);
+            if (!error) {
+                isBackendOnline = true;
+                if (badge) {
+                    badge.innerHTML = '🟢 <span>Cloud Supabase (Online Real-Time)</span>';
+                    badge.style.background = 'rgba(16,185,129,0.15)';
+                    badge.style.borderColor = 'rgba(16,185,129,0.4)';
+                    badge.style.color = 'var(--success)';
+                }
+                syncWithBackend();
+                return;
+            }
+        } catch (e) {}
+    }
+
+    // 2. Cek Koneksi ke Server MySQL Lokal (opsional jika aktif)
     try {
         const res = await fetch('/api/status');
         if (res.ok) {
@@ -1744,6 +1871,7 @@ async function checkBackendStatus() {
         }
     } catch (e) {}
 
+    // 3. Cadangan Offline (LocalStorage)
     isBackendOnline = false;
     if (badge) {
         badge.innerHTML = '💾 <span>Penyimpanan Lokal (LocalStorage)</span>';
@@ -1754,6 +1882,35 @@ async function checkBackendStatus() {
 }
 
 async function syncWithBackend() {
+    // 1. Sinkronisasi Data Real-Time dari Cloud Supabase
+    if (supabaseClient) {
+        try {
+            const { data, error } = await supabaseClient
+                .from('quiz_results')
+                .select('*')
+                .order('score', { ascending: false });
+            if (!error && Array.isArray(data)) {
+                const formatted = data.map(r => ({
+                    id: r.id,
+                    name: r.student_name,
+                    class: r.student_class,
+                    score: r.score,
+                    correct: r.correct_count,
+                    total: r.total_questions || quizData.length,
+                    wrongQuestions: Array.isArray(r.wrong_questions) ? r.wrong_questions : [],
+                    duration: r.duration,
+                    time: r.time_str,
+                    date: r.quiz_date,
+                    timestamp: new Date(r.created_at).getTime()
+                }));
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(formatted));
+                renderDashboard();
+                return;
+            }
+        } catch (e) {}
+    }
+
+    // 2. Sinkronisasi Data dari Server MySQL Lokal
     try {
         const res = await fetch('/api/scores');
         if (res.ok) {
@@ -2375,7 +2532,7 @@ function buildReview() {
         const isRight = answeredCorrectly[origIdx];
         const div = document.createElement('div');
         div.className = `review-item ${isRight ? 'review-correct' : 'review-wrong'}`;
-        const status = isRight ? '✅' : (isRight === false ? '❌' : '⏭️');
+        const status = isRight ? '✅' : (isRight === false ? '❌' : '⏰');
         let correctAns;
         if (Array.isArray(data.answer)) {
             correctAns = data.answer.map(a => data.options[a]).join(' | ');
@@ -2383,8 +2540,15 @@ function buildReview() {
             correctAns = data.options[data.answer];
         }
         div.innerHTML = `
-            <div class="review-q">${status} Soal #${playIdx + 1}: ${data.q.substring(0, 120)}${data.q.length > 120 ? '...' : ''}</div>
-            <div class="review-answer">Jawaban benar: <span style="color: var(--success); font-weight: 700;">${correctAns}</span></div>
+            <div class="review-q" style="font-weight: 700; font-size: 0.95rem; margin-bottom: 6px; line-height: 1.4;">
+                ${status} <strong>Soal ${playIdx + 1}:</strong> ${data.q}
+            </div>
+            <div class="review-answer" style="margin-bottom: 8px; font-size: 0.88rem;">
+                Kunci Jawaban: <span style="color: var(--success); font-weight: 700;">${correctAns}</span>
+            </div>
+            <div class="review-explanation" style="font-size: 0.85rem; color: var(--text-secondary); line-height: 1.45; background: rgba(255,255,255,0.04); padding: 10px 14px; border-radius: 10px; border-left: 3px solid ${isRight ? 'var(--success)' : 'var(--danger)'};">
+                💡 <strong>Pembahasan:</strong> ${data.explanation}
+            </div>
         `;
         list.appendChild(div);
     });
@@ -2467,6 +2631,14 @@ async function confirmClearData() {
     closeDeleteModal();
     localStorage.removeItem(STORAGE_KEY);
 
+    // 1. Hapus dari Cloud Supabase
+    if (supabaseClient) {
+        try {
+            await supabaseClient.from('quiz_results').delete().neq('id', 0);
+        } catch (e) {}
+    }
+
+    // 2. Hapus dari MySQL Lokal
     try {
         await fetch('/api/scores', { 
             method: 'DELETE',

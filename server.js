@@ -70,7 +70,7 @@ async function initDatabase() {
                 student_class VARCHAR(20) NOT NULL,
                 score INT NOT NULL,
                 correct_count INT NOT NULL,
-                total_questions INT NOT NULL DEFAULT 15,
+                total_questions INT NOT NULL DEFAULT 20,
                 wrong_questions JSON NULL,
                 duration VARCHAR(50) NOT NULL,
                 time_str VARCHAR(20) NOT NULL,
@@ -111,7 +111,7 @@ app.get('/api/status', async (req, res) => {
         status: 'online',
         mysql_connected: isDbConnected,
         database: dbConfig.database,
-        total_questions_default: 15
+        total_questions_default: 20
     });
 });
 
@@ -128,7 +128,7 @@ app.get('/api/scores', async (req, res) => {
             class: r.student_class,
             score: r.score,
             correct: r.correct_count,
-            total: r.total_questions || 15,
+            total: r.total_questions || 20,
             wrongQuestions: typeof r.wrong_questions === 'string' ? JSON.parse(r.wrong_questions) : (r.wrong_questions || []),
             duration: r.duration,
             time: r.time_str,
