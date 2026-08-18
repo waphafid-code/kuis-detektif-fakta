@@ -501,6 +501,31 @@
         .q-badge.tf { background: rgba(236,72,153,0.15); color: #f472b6; }
         .q-badge.checkbox { background: rgba(234,179,8,0.15); color: #facc15; }
 
+        .q-badge.diff-easy { background: rgba(16,185,129,0.15); color: #34d399; border: 1px solid rgba(16,185,129,0.35); }
+        .q-badge.diff-medium { background: rgba(234,179,8,0.15); color: #facc15; border: 1px solid rgba(234,179,8,0.35); }
+        .q-badge.diff-hard { background: rgba(244,63,94,0.15); color: #fb7185; border: 1px solid rgba(244,63,94,0.35); }
+
+        .kkm-pill {
+            display: inline-block; padding: 4px 10px; border-radius: 999px;
+            font-size: 0.75rem; font-weight: 800; text-transform: uppercase;
+        }
+        .kkm-pill.passed { background: rgba(16,185,129,0.15); color: var(--success); border: 1px solid rgba(16,185,129,0.35); }
+        .kkm-pill.remedial { background: rgba(244,63,94,0.15); color: var(--danger); border: 1px solid rgba(244,63,94,0.35); }
+
+        .kkm-status-banner {
+            display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+            padding: 8px 20px; border-radius: 999px; font-weight: 800; font-size: 0.95rem;
+            margin-bottom: 16px;
+        }
+        .kkm-status-banner.passed {
+            background: rgba(16,185,129,0.15); color: var(--success); border: 1px solid rgba(16,185,129,0.4);
+            box-shadow: 0 0 20px rgba(16,185,129,0.2);
+        }
+        .kkm-status-banner.remedial {
+            background: rgba(244,63,94,0.15); color: var(--danger); border: 1px solid rgba(244,63,94,0.4);
+            box-shadow: 0 0 20px rgba(244,63,94,0.2);
+        }
+
         .case-study-box {
             background: linear-gradient(135deg, rgba(234,179,8,0.08), rgba(234,179,8,0.03));
             border-left: 4px solid var(--warning); border-radius: 0 14px 14px 0;
@@ -965,7 +990,10 @@
             </div>
 
             <div id="q-content" class="q-content">
-                <div id="q-badge" class="q-badge"></div>
+                <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 14px;">
+                    <div id="q-badge" class="q-badge"></div>
+                    <div id="q-diff-badge" class="q-badge"></div>
+                </div>
                 <div id="cb-counter-box" class="cb-counter-box" style="display:none;"></div>
                 <div id="case-study-box" class="case-study-box" style="display:none;"></div>
                 <div class="q-text" id="q-text"></div>
@@ -995,6 +1023,9 @@
                 <div class="score-ring-label">SKOR</div>
             </div>
 
+            <div style="display: flex; justify-content: center; margin-bottom: 8px;">
+                <div id="kkm-status-banner" class="kkm-status-banner"></div>
+            </div>
             <h3 class="result-title" id="result-title"></h3>
             <p class="result-desc" id="result-desc"></p>
 
@@ -1014,7 +1045,7 @@
             </div>
 
             <div class="review-section" id="review-section" style="display:none;">
-                <h3>📋 Review Jawaban</h3>
+                <h3>📋 Review Jawaban & Pembahasan</h3>
                 <div id="review-list"></div>
             </div>
 
@@ -1087,7 +1118,7 @@
                 <div class="summary-card">
                     <div class="sc-icon">✅</div>
                     <div class="sc-value" id="sc-lulus">0</div>
-                    <div class="sc-label">Lulus (≥75)</div>
+                    <div class="sc-label">Lulus (KKM ≥ 80)</div>
                 </div>
             </div>
 
@@ -1120,6 +1151,7 @@
                             <th>Nama Siswa</th>
                             <th>Kelas</th>
                             <th>Skor</th>
+                            <th>Status (KKM 80)</th>
                             <th>Benar</th>
                             <th>Durasi</th>
                             <th>Waktu</th>
@@ -2300,6 +2332,7 @@ function loadQuestion(index) {
     if (card) card.classList.toggle('streak-on-fire', streak >= 3);
 
     const badge = document.getElementById('q-badge');
+    const diffBadge = document.getElementById('q-diff-badge');
     const cbBox = document.getElementById('cb-counter-box');
     let inputType = 'radio';
     const reqCount = Array.isArray(data.answer) ? data.answer.length : 1;
@@ -2319,6 +2352,20 @@ function loadQuestion(index) {
         cbBox.style.display = 'inline-flex';
         cbBox.className = 'cb-counter-box';
         cbBox.innerHTML = `<span>☑️ Terpilih: <strong id="cb-num">0</strong> dari ${reqCount} jawaban wajib</span>`;
+    }
+
+    if (diffBadge) {
+        const diff = data.difficulty || 'Medium';
+        if (diff === 'Easy') {
+            diffBadge.className = 'q-badge diff-easy';
+            diffBadge.innerHTML = '🟢 Tingkat: Mudah';
+        } else if (diff === 'Hard') {
+            diffBadge.className = 'q-badge diff-hard';
+            diffBadge.innerHTML = '🔴 Tingkat: Sulit';
+        } else {
+            diffBadge.className = 'q-badge diff-medium';
+            diffBadge.innerHTML = '🟡 Tingkat: Sedang';
+        }
     }
 
     const csBox = document.getElementById('case-study-box');
@@ -2518,12 +2565,14 @@ function finishQuiz() {
     };
     saveRecord(record);
 
+    const KKM = 80;
+    const isPassed = finalScore >= KKM;
+
     const ring = document.getElementById('score-ring');
     const circumference = 2 * Math.PI * 78;
     ring.style.strokeDasharray = circumference;
     ring.style.strokeDashoffset = circumference;
-    if (finalScore >= 85) ring.style.stroke = 'var(--success)';
-    else if (finalScore >= 60) ring.style.stroke = 'var(--primary)';
+    if (isPassed) ring.style.stroke = 'var(--success)';
     else ring.style.stroke = 'var(--danger)';
     setTimeout(() => { ring.style.strokeDashoffset = circumference - (circumference * finalScore / 100); }, 200);
 
@@ -2536,25 +2585,36 @@ function finishQuiz() {
         scoreText.textContent = counter;
     }, 25);
 
+    const kkmBanner = document.getElementById('kkm-status-banner');
+    if (kkmBanner) {
+        if (isPassed) {
+            kkmBanner.className = 'kkm-status-banner passed';
+            kkmBanner.innerHTML = `🎉 STATUS: LULUS KKM (Batas Nilai: ${KKM})`;
+        } else {
+            kkmBanner.className = 'kkm-status-banner remedial';
+            kkmBanner.innerHTML = `⚠️ STATUS: BELUM LULUS / PERLU REMEDIAL (KKM: ${KKM})`;
+        }
+    }
+
     const titleEl = document.getElementById('result-title');
     const descEl = document.getElementById('result-desc');
 
-    if (finalScore >= 85) {
-        titleEl.textContent = '🏆 Detektif Elite — Luar Biasa!';
+    if (finalScore >= 90) {
+        titleEl.textContent = '🏆 Detektif Master — Lulus Sempurna!';
         titleEl.style.color = 'var(--success)';
-        descEl.textContent = 'Analisis logika komputasional Anda sangat tajam! Data telah disimpan ke database.';
+        descEl.textContent = `Luar biasa ${studentName}! Nilai Anda ${finalScore} melampaui batas KKM ${KKM}. Analisis logika komputasional Anda sangat tajam!`;
         sfxVictory(); shootConfetti();
         spawnRandomEmojis('🏆', 6);
-    } else if (finalScore >= 60) {
-        titleEl.textContent = '🕵️ Agen Muda — Kerja Bagus!';
-        titleEl.style.color = 'var(--primary)';
-        descEl.textContent = 'Dasar literasi data Anda sudah jalan. Hati-hati dengan distraktor jawaban!';
-        sfxCorrect();
-        spawnRandomEmojis('👍', 3);
+    } else if (finalScore >= 80) {
+        titleEl.textContent = '🎉 Detektif Kompeten — Lulus KKM!';
+        titleEl.style.color = 'var(--success)';
+        descEl.textContent = `Selamat ${studentName}! Anda dinyatakan LULUS dengan nilai ${finalScore} (Batas KKM: ${KKM}). Terus asah kecakapan literasi digital Anda!`;
+        sfxVictory(); shootConfetti();
+        spawnRandomEmojis('🎉', 4);
     } else {
-        titleEl.textContent = '📉 Butuh Pelatihan — Jangan Menyerah!';
+        titleEl.textContent = '📉 Belum Mencapai KKM — Jangan Menyerah!';
         titleEl.style.color = 'var(--danger)';
-        descEl.textContent = 'Menganalisis keabsahan data butuh kesabaran dan riset mendalam. Ayo coba lagi!';
+        descEl.textContent = `Nilai Anda ${finalScore} belum mencapai batas kelulusan KKM ${KKM}. Silakan pelajari kembali pembahasan soal di bawah dan ikuti remedial.`;
         sfxWrong();
     }
 
@@ -2579,9 +2639,15 @@ function buildReview() {
         } else {
             correctAns = data.options[data.answer];
         }
+
+        const diff = data.difficulty || 'Medium';
+        let diffLabel = diff === 'Easy' ? '🟢 Mudah' : (diff === 'Hard' ? '🔴 Sulit' : '🟡 Sedang');
+        let diffClass = diff === 'Easy' ? 'diff-easy' : (diff === 'Hard' ? 'diff-hard' : 'diff-medium');
+
         div.innerHTML = `
-            <div class="review-q" style="font-weight: 700; font-size: 0.95rem; margin-bottom: 6px; line-height: 1.4;">
-                ${status} <strong>Soal ${playIdx + 1}:</strong> ${data.q}
+            <div class="review-q" style="font-weight: 700; font-size: 0.95rem; margin-bottom: 6px; line-height: 1.4; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px;">
+                <span>${status} <strong>Soal ${playIdx + 1}:</strong> ${data.q}</span>
+                <span class="q-badge ${diffClass}" style="font-size: 0.72rem; padding: 2px 10px; margin: 0;">${diffLabel}</span>
             </div>
             <div class="review-answer" style="margin-bottom: 8px; font-size: 0.88rem;">
                 Kunci Jawaban: <span style="color: var(--success); font-weight: 700;">${correctAns}</span>
@@ -2752,7 +2818,7 @@ function renderDashboard() {
     const avg = total > 0 ? Math.round(records.reduce((s, r) => s + r.score, 0) / total) : 0;
     const highest = total > 0 ? Math.max(...records.map(r => r.score)) : 0;
     const lowest = total > 0 ? Math.min(...records.map(r => r.score)) : '-';
-    const lulus = records.filter(r => r.score >= 75).length;
+    const lulus = records.filter(r => r.score >= 80).length;
 
     document.getElementById('sc-total').textContent = total;
     document.getElementById('sc-avg').textContent = avg;
@@ -2761,28 +2827,31 @@ function renderDashboard() {
     document.getElementById('sc-lulus').textContent = lulus;
 
     const avgEl = document.getElementById('sc-avg');
-    avgEl.style.color = avg >= 75 ? 'var(--success)' : avg >= 50 ? 'var(--warning)' : 'var(--danger)';
+    avgEl.style.color = avg >= 80 ? 'var(--success)' : avg >= 60 ? 'var(--warning)' : 'var(--danger)';
 
     // Tabel data
     const tbody = document.getElementById('dash-tbody');
     tbody.innerHTML = '';
 
     if (records.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><div class="empty-icon">📭</div><p>Belum ada data siswa${filterClass !== 'all' ? ` kelas ${filterClass}` : ''}.<br>Data akan muncul otomatis setelah siswa menyelesaikan kuis.</p></div></td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state"><div class="empty-icon">📭</div><p>Belum ada data siswa${filterClass !== 'all' ? ` kelas ${filterClass}` : ''}.<br>Data akan muncul otomatis setelah siswa menyelesaikan kuis.</p></div></td></tr>`;
     } else {
         const sorted = [...records].sort((a, b) => b.score - a.score || (a.timestamp || 0) - (b.timestamp || 0));
         sorted.forEach((r, i) => {
             const tr = document.createElement('tr');
             if (Date.now() - (r.timestamp || 0) < 10000) tr.classList.add('new-entry');
             let pillClass = 'low';
-            if (r.score >= 85) pillClass = 'high';
+            if (r.score >= 80) pillClass = 'high';
             else if (r.score >= 60) pillClass = 'mid';
+
+            const isPass = r.score >= 80;
 
             tr.innerHTML = `
                 <td style="font-family: var(--font-mono); color: var(--text-muted);">${i + 1}</td>
                 <td style="font-weight: 700;">${r.name}</td>
                 <td><span style="font-family: var(--font-mono); color: var(--accent); font-size: 0.85rem;">${r.class || '-'}</span></td>
                 <td><span class="score-pill ${pillClass}">${r.score}</span></td>
+                <td><span class="kkm-pill ${isPass ? 'passed' : 'remedial'}">${isPass ? 'LULUS' : 'REMEDIAL'}</span></td>
                 <td style="font-family: var(--font-mono);">${r.correct !== undefined ? r.correct : '-'}/${r.total || quizData.length}</td>
                 <td style="color: var(--text-muted); font-size: 0.85rem;">${r.duration || '-'}</td>
                 <td style="color: var(--text-muted); font-size: 0.8rem;">${r.time || '-'}<br><span style="font-size:0.7rem;">${r.date || ''}</span></td>
@@ -2813,11 +2882,14 @@ function renderQuestionAnalytics(records) {
         let barClass = 'good';
         if (pct < 50) barClass = 'bad';
         else if (pct < 75) barClass = 'medium';
+        const diff = q.difficulty || 'Medium';
+        let diffBadgeStr = diff === 'Easy' ? '🟢 Mudah' : (diff === 'Hard' ? '🔴 Sulit' : '🟡 Sedang');
+
         const item = document.createElement('div');
         item.className = 'q-analytics-item';
         item.title = q.q.substring(0, 100);
         item.innerHTML = `
-            <span class="q-label">Soal ${i + 1}</span>
+            <span class="q-label">Soal ${i + 1} (${diffBadgeStr})</span>
             <div class="q-analytics-bar"><div class="q-analytics-fill ${barClass}" style="width: ${pct}%"></div></div>
             <span class="q-analytics-pct" style="color: var(--${barClass === 'good' ? 'success' : barClass === 'medium' ? 'warning' : 'danger'})">${pct}%</span>
         `;
@@ -2844,11 +2916,11 @@ function exportExcel() {
     const sorted = [...records].sort((a, b) => b.score - a.score);
     const sheetData1 = [
         ['REKAPITULASI NILAI MISI AUDIT VALIDITAS DATA'],
-        ['KUIS DETEKTIF FAKTA DIGITAL'],
+        ['KUIS DETEKTIF FAKTA DIGITAL (BATAS KELULUSAN KKM: 80)'],
         [`Filter Kelas: ${filterClass === 'all' ? 'Semua Kelas (X E 1 s/d X E 6)' : filterClass}`],
         [`Waktu Unduh: ${new Date().toLocaleString('id-ID')}`],
         [],
-        ['No', 'Nama Siswa', 'Kelas', 'Nilai Akhir', 'Jawaban Benar', 'Total Soal', 'Ketuntasan', 'Durasi', 'Waktu Selesai', 'Tanggal']
+        ['No', 'Nama Siswa', 'Kelas', 'Nilai Akhir', 'Status KKM (≥80)', 'Jawaban Benar', 'Total Soal', 'Ketuntasan', 'Durasi', 'Waktu Selesai', 'Tanggal']
     ];
 
     sorted.forEach((r, i) => {
@@ -2857,9 +2929,10 @@ function exportExcel() {
             r.name,
             r.class || '-',
             r.score,
+            r.score >= 80 ? 'LULUS' : 'REMEDIAL',
             r.correct !== undefined ? r.correct : 0,
             r.total || quizData.length,
-            r.score >= 75 ? 'LULUS (TUNTAS)' : 'REMEDIAL',
+            r.score >= 80 ? 'LULUS (TUNTAS KKM)' : 'PERLU REMEDIAL',
             r.duration || '-',
             r.time || '-',
             r.date || '-'
@@ -2868,8 +2941,8 @@ function exportExcel() {
 
     const ws1 = XLSX.utils.aoa_to_sheet(sheetData1);
     ws1['!cols'] = [
-        { wch: 6 }, { wch: 30 }, { wch: 12 }, { wch: 14 },
-        { wch: 15 }, { wch: 12 }, { wch: 18 }, { wch: 14 },
+        { wch: 6 }, { wch: 30 }, { wch: 12 }, { wch: 14 }, { wch: 16 },
+        { wch: 15 }, { wch: 12 }, { wch: 22 }, { wch: 14 },
         { wch: 15 }, { wch: 15 }
     ];
 
@@ -2877,7 +2950,7 @@ function exportExcel() {
         ['ANALISIS BUTIR SOAL KUIS DETEKTIF FAKTA DIGITAL'],
         [`Jumlah Responden: ${allRecords.length} Siswa`],
         [],
-        ['No Soal', 'Ringkasan Pertanyaan', 'Tipe Soal', 'Kunci Jawaban', 'Tingkat Ketepatan (%)', 'Jumlah Benar', 'Jumlah Salah']
+        ['No Soal', 'Tingkat Kesulitan', 'Ringkasan Pertanyaan', 'Tipe Soal', 'Kunci Jawaban', 'Tingkat Ketepatan (%)', 'Jumlah Benar', 'Jumlah Salah']
     ];
 
     const attempts = allRecords.filter(r => r.wrongQuestions !== undefined);
@@ -2892,8 +2965,11 @@ function exportExcel() {
             kunciStr = q.options[q.answer];
         }
 
+        const diffStr = q.difficulty === 'Easy' ? 'Mudah' : (q.difficulty === 'Hard' ? 'Sulit' : 'Sedang');
+
         sheetData2.push([
             `Soal ${i + 1}`,
+            diffStr,
             q.q,
             q.type === 'mcq' ? 'Pilihan Ganda' : (q.type === 'tf' ? 'Benar / Salah' : 'Pilihan Majemuk (Checkbox)'),
             kunciStr,
@@ -2905,7 +2981,7 @@ function exportExcel() {
 
     const ws2 = XLSX.utils.aoa_to_sheet(sheetData2);
     ws2['!cols'] = [
-        { wch: 10 }, { wch: 60 }, { wch: 25 }, { wch: 45 },
+        { wch: 10 }, { wch: 18 }, { wch: 60 }, { wch: 25 }, { wch: 45 },
         { wch: 22 }, { wch: 14 }, { wch: 14 }
     ];
 
@@ -2955,7 +3031,7 @@ function exportTeacherPDF() {
         doc.setTextColor(226, 232, 240);
         doc.setFontSize(9.5);
         doc.setFont('helvetica', 'normal');
-        doc.text('Misi Detektif Fakta Digital: Uji Validitas Data & Berpikir Komputasional', 14, 20);
+        doc.text('Misi Detektif Fakta Digital: Uji Validitas Data & Berpikir Komputasional (KKM: 80)', 14, 20);
         doc.text(`Filter Kelas: ${filterClass === 'all' ? 'Semua Kelas (X E 1 s/d X E 6)' : filterClass}   |   Dicetak: ${nowStr}`, 14, 26);
 
         // 2. Summary Statistics Box
@@ -2965,7 +3041,7 @@ function exportTeacherPDF() {
         const avg = total > 0 ? (sum / total).toFixed(1) : 0;
         const highest = total > 0 ? Math.max(...sorted.map(r => r.score || 0)) : 0;
         const lowest = total > 0 ? Math.min(...sorted.map(r => r.score || 0)) : 0;
-        const lulusCount = sorted.filter(r => (r.score || 0) >= 75).length;
+        const lulusCount = sorted.filter(r => (r.score || 0) >= 80).length;
         const lulusPct = total > 0 ? Math.round((lulusCount / total) * 100) : 0;
 
         doc.setFillColor(248, 250, 252);
@@ -2979,7 +3055,7 @@ function exportTeacherPDF() {
         doc.text(`Rata-Rata: ${avg}`, 62, 46);
         doc.text(`Tertinggi: ${highest}`, 104, 46);
         doc.text(`Terendah: ${lowest}`, 146, 46);
-        doc.text(`Tingkat Kelulusan (Nilai >= 75): ${lulusCount} dari ${total} Siswa (${lulusPct}%)`, 20, 52);
+        doc.text(`Tingkat Kelulusan (Nilai >= 80): ${lulusCount} dari ${total} Siswa (${lulusPct}%)`, 20, 52);
 
         // 3. Student Records Table
         const tableBody = sorted.map((r, i) => [
@@ -2988,7 +3064,7 @@ function exportTeacherPDF() {
             r.class || '-',
             r.score,
             `${r.correct !== undefined ? r.correct : 0} / ${r.total || quizData.length}`,
-            r.score >= 75 ? 'LULUS' : 'REMEDIAL',
+            r.score >= 80 ? 'LULUS' : 'REMEDIAL',
             r.duration || '-',
             r.time || '-',
             r.date || '-'
@@ -2996,7 +3072,7 @@ function exportTeacherPDF() {
 
         doc.autoTable({
             startY: 61,
-            head: [['No', 'Nama Siswa', 'Kelas', 'Skor', 'Benar', 'Status', 'Durasi', 'Waktu', 'Tanggal']],
+            head: [['No', 'Nama Siswa', 'Kelas', 'Skor', 'Benar', 'Status (KKM 80)', 'Durasi', 'Waktu', 'Tanggal']],
             body: tableBody,
             theme: 'grid',
             headStyles: {
@@ -3014,10 +3090,10 @@ function exportTeacherPDF() {
                 2: { cellWidth: 16, halign: 'center' },
                 3: { cellWidth: 14, halign: 'center', fontStyle: 'bold' },
                 4: { cellWidth: 18, halign: 'center' },
-                5: { cellWidth: 20, halign: 'center', fontStyle: 'bold' },
+                5: { cellWidth: 24, halign: 'center', fontStyle: 'bold' },
                 6: { cellWidth: 18, halign: 'center' },
-                7: { cellWidth: 22, halign: 'center' },
-                8: { cellWidth: 22, halign: 'center' }
+                7: { cellWidth: 20, halign: 'center' },
+                8: { cellWidth: 20, halign: 'center' }
             },
             didParseCell: function(data) {
                 if (data.section === 'body' && data.column.index === 5) {
@@ -3042,26 +3118,27 @@ function exportTeacherPDF() {
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(11);
         doc.setTextColor(30, 41, 59);
-        doc.text('Analisis Ketuntasan Butir Soal', 14, startY2);
+        doc.text('Analisis Ketuntasan Butir Soal & Tingkat Kesulitan', 14, startY2);
 
         const attempts = allRecords.filter(r => r.wrongQuestions !== undefined);
         const qTableBody = quizData.map((q, i) => {
             const wrongCount = attempts.filter(r => r.wrongQuestions.includes(i)).length;
             const correctCount = attempts.length > 0 ? attempts.length - wrongCount : 0;
             const pct = attempts.length > 0 ? Math.round((correctCount / attempts.length) * 100) : 0;
+            const diffStr = q.difficulty === 'Easy' ? 'Mudah' : (q.difficulty === 'Hard' ? 'Sulit' : 'Sedang');
             return [
                 `Soal ${i + 1}`,
-                q.q.substring(0, 80) + (q.q.length > 80 ? '...' : ''),
+                diffStr,
+                q.q.substring(0, 75) + (q.q.length > 75 ? '...' : ''),
                 `${pct}%`,
                 `${correctCount} Siswa`,
-                `${wrongCount} Siswa`,
-                pct >= 75 ? 'Mudah' : (pct >= 50 ? 'Sedang' : 'Sulit')
+                `${wrongCount} Siswa`
             ];
         });
 
         doc.autoTable({
             startY: startY2 + 4,
-            head: [['No Soal', 'Ringkasan Pertanyaan', 'Akurasi', 'Benar', 'Salah', 'Kategori']],
+            head: [['No Soal', 'Tingkat', 'Ringkasan Pertanyaan', 'Akurasi', 'Benar', 'Salah']],
             body: qTableBody,
             theme: 'grid',
             headStyles: {
@@ -3075,11 +3152,11 @@ function exportTeacherPDF() {
             alternateRowStyles: { fillColor: [248, 250, 252] },
             columnStyles: {
                 0: { cellWidth: 16, halign: 'center', fontStyle: 'bold' },
-                1: { cellWidth: 92 },
-                2: { cellWidth: 18, halign: 'center', fontStyle: 'bold' },
-                3: { cellWidth: 18, halign: 'center' },
-                4: { cellWidth: 18, halign: 'center' },
-                5: { cellWidth: 20, halign: 'center', fontStyle: 'bold' }
+                1: { cellWidth: 18, halign: 'center', fontStyle: 'bold' },
+                2: { cellWidth: 90 },
+                3: { cellWidth: 18, halign: 'center', fontStyle: 'bold' },
+                4: { cellWidth: 20, halign: 'center' },
+                5: { cellWidth: 20, halign: 'center' }
             },
             margin: { left: 14, right: 14 }
         });
@@ -3106,7 +3183,7 @@ function exportStudentPDF() {
         const doc = new jsPDF('p', 'mm', 'a4');
         const finalScore = Math.round((score / quizData.length) * 100);
         const nowStr = new Date().toLocaleString('id-ID');
-        const isLulus = finalScore >= 75;
+        const isLulus = finalScore >= 80;
 
         // 1. Header Banner
         doc.setFillColor(15, 23, 42); // Dark Navy
@@ -3122,7 +3199,7 @@ function exportStudentPDF() {
         doc.setTextColor(226, 232, 240);
         doc.setFontSize(9.5);
         doc.setFont('helvetica', 'normal');
-        doc.text('Misi Detektif Fakta Digital: Uji Validitas Data & Berpikir Komputasional', 14, 21);
+        doc.text('Misi Detektif Fakta Digital: Uji Validitas Data (Standar KKM: 80)', 14, 21);
         doc.text(`Waktu Selesai: ${nowStr}`, 14, 28);
 
         // 2. Student Info & Score Badge Box
@@ -3153,15 +3230,15 @@ function exportStudentPDF() {
         } else {
             doc.setFillColor(239, 68, 68); // Red
         }
-        doc.roundedRect(138, 44, 52, 26, 2, 2, 'F');
+        doc.roundedRect(136, 44, 54, 26, 2, 2, 'F');
         doc.setTextColor(255, 255, 255);
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(16);
-        doc.text(`SKOR: ${finalScore}`, 164, 55, { align: 'center' });
-        doc.setFontSize(9);
-        doc.text(isLulus ? 'STATUS: LULUS' : 'STATUS: REMEDIAL', 164, 63, { align: 'center' });
+        doc.text(`SKOR: ${finalScore}`, 163, 55, { align: 'center' });
+        doc.setFontSize(8.5);
+        doc.text(isLulus ? 'STATUS: LULUS (≥80)' : 'STATUS: REMEDIAL (<80)', 163, 63, { align: 'center' });
 
-        // 3. Question Details Table (Dengan Pembahasan & Penjelasan Edukatif)
+        // 3. Question Details Table (Dengan Pembahasan, Penjelasan Edukatif & Tingkat Kesulitan)
         const tableBody = shuffledQuizOrder.map((origIdx, playIdx) => {
             const qData = quizData[origIdx];
             const isRight = answeredCorrectly[origIdx];
@@ -3171,9 +3248,11 @@ function exportStudentPDF() {
             } else {
                 correctAns = qData.options[qData.answer];
             }
+            const diffStr = qData.difficulty === 'Easy' ? 'Mudah' : (qData.difficulty === 'Hard' ? 'Sulit' : 'Sedang');
+
             return [
                 playIdx + 1,
-                qData.q,
+                `[${diffStr}] ${qData.q}`,
                 isRight ? 'BENAR' : 'SALAH',
                 correctAns,
                 qData.explanation || '-'
@@ -3182,7 +3261,7 @@ function exportStudentPDF() {
 
         doc.autoTable({
             startY: 80,
-            head: [['No', 'Pertanyaan Soal', 'Hasil', 'Kunci Jawaban Valid', 'Pembahasan & Analisis Edukatif']],
+            head: [['No', 'Pertanyaan Soal & Tingkat', 'Hasil', 'Kunci Jawaban Valid', 'Pembahasan & Analisis Edukatif']],
             body: tableBody,
             theme: 'grid',
             headStyles: {
@@ -3267,32 +3346,35 @@ function exportStudentExcel() {
         const safeClass = sClass.replace(/[/\\?%*:|"<> ]/g, '_');
         const safeName = sName.replace(/[/\\?%*:|"<> ]/g, '_');
         const nowStr = new Date().toLocaleString('id-ID');
-        const isLulus = finalScore >= 75;
+        const isLulus = finalScore >= 80;
 
         // Opsi 1: Jika Pustaka XLSX Tersedia di Browser Siswa
         if (typeof XLSX !== 'undefined') {
             try {
                 const sheetData = [
                     ['RAPOR HASIL EVALUASI PEMBELAJARAN SISWA'],
-                    ['KUIS DETEKTIF FAKTA DIGITAL (BERPIKIR KOMPUTASIONAL)'],
+                    ['KUIS DETEKTIF FAKTA DIGITAL (BATAS KELULUSAN KKM: 80)'],
                     [],
                     ['Nama Siswa', sName],
                     ['Kelas', sClass],
                     ['Nilai Akhir', finalScore],
                     ['Jawaban Benar', `${score} dari ${quizData.length} Soal`],
-                    ['Status Kelulusan', isLulus ? 'LULUS' : 'REMEDIAL'],
+                    ['Status Kelulusan', isLulus ? 'LULUS (KOMPETEN)' : 'BELUM LULUS (REMEDIAL)'],
                     ['Max Streak', `${maxStreak}x Jawaban Benar Beruntun`],
                     ['Waktu Pengerjaan', nowStr],
                     [],
-                    ['No', 'Pertanyaan Soal', 'Hasil Analisis', 'Kunci Jawaban Valid', 'Pembahasan & Logika Edukatif']
+                    ['No', 'Tingkat Kesulitan', 'Pertanyaan Soal', 'Hasil Analisis', 'Kunci Jawaban Valid', 'Pembahasan & Logika Edukatif']
                 ];
 
                 shuffledQuizOrder.forEach((origIdx, playIdx) => {
                     const qData = quizData[origIdx];
                     const isRight = answeredCorrectly[origIdx];
                     let correctAns = Array.isArray(qData.answer) ? qData.answer.map(a => qData.options[a]).join(' | ') : qData.options[qData.answer];
+                    const diffStr = qData.difficulty === 'Easy' ? 'Mudah' : (qData.difficulty === 'Hard' ? 'Sulit' : 'Sedang');
+
                     sheetData.push([
                         playIdx + 1,
+                        diffStr,
                         qData.q,
                         isRight ? 'BENAR' : 'SALAH',
                         correctAns,
@@ -3301,7 +3383,8 @@ function exportStudentExcel() {
                 });
 
                 const ws = XLSX.utils.aoa_to_sheet(sheetData);
-                ws['!cols'] = [{ wch: 6 }, { wch: 55 }, { wch: 16 }, { wch: 40 }, { wch: 60 }];
+                ws['!cols'] = [{ wch: 6 }, { wch: 18 }, { wch: 55 }, { wch: 16 }, { wch: 40 }, { wch: 60 }];
+
                 const wb = XLSX.utils.book_new();
                 XLSX.utils.book_append_sheet(wb, ws, 'Rapor Siswa');
 
@@ -3336,19 +3419,20 @@ function exportStudentExcel() {
         </head>
         <body>
             <table>
-                <tr><td colspan="5" class="title">RAPOR HASIL EVALUASI PEMBELAJARAN SISWA</td></tr>
-                <tr><td colspan="5" class="subtitle">Misi Detektif Fakta Digital (Uji Validitas Data & Berpikir Komputasional)</td></tr>
-                <tr><td colspan="5" style="height: 10px;"></td></tr>
-                <tr><td class="info-label">Nama Siswa</td><td colspan="4">${sName}</td></tr>
-                <tr><td class="info-label">Kelas</td><td colspan="4">${sClass}</td></tr>
-                <tr><td class="info-label">Skor Nilai</td><td colspan="4" class="${isLulus ? 'status-lulus' : 'status-remedial'}">${finalScore} (${isLulus ? 'STATUS: LULUS' : 'STATUS: REMEDIAL'})</td></tr>
-                <tr><td class="info-label">Jawaban Benar</td><td colspan="4">${score} dari ${quizData.length} Soal</td></tr>
-                <tr><td class="info-label">Max Streak</td><td colspan="4">${maxStreak}x Jawaban Benar Beruntun</td></tr>
-                <tr><td class="info-label">Waktu Pengerjaan</td><td colspan="4">${nowStr}</td></tr>
-                <tr><td colspan="5" style="height: 14px;"></td></tr>
+                <tr><td colspan="6" class="title">RAPOR HASIL EVALUASI PEMBELAJARAN SISWA</td></tr>
+                <tr><td colspan="6" class="subtitle">Misi Detektif Fakta Digital (Standar Kelulusan KKM: 80)</td></tr>
+                <tr><td colspan="6" style="height: 10px;"></td></tr>
+                <tr><td class="info-label">Nama Siswa</td><td colspan="5">${sName}</td></tr>
+                <tr><td class="info-label">Kelas</td><td colspan="5">${sClass}</td></tr>
+                <tr><td class="info-label">Skor Nilai</td><td colspan="5" class="${isLulus ? 'status-lulus' : 'status-remedial'}">${finalScore} (${isLulus ? 'STATUS: LULUS KKM' : 'STATUS: PERLU REMEDIAL'})</td></tr>
+                <tr><td class="info-label">Jawaban Benar</td><td colspan="5">${score} dari ${quizData.length} Soal</td></tr>
+                <tr><td class="info-label">Max Streak</td><td colspan="5">${maxStreak}x Jawaban Benar Beruntun</td></tr>
+                <tr><td class="info-label">Waktu Pengerjaan</td><td colspan="5">${nowStr}</td></tr>
+                <tr><td colspan="6" style="height: 14px;"></td></tr>
                 <tr>
                     <th style="width: 40px;">No</th>
-                    <th style="width: 320px;">Pertanyaan Soal</th>
+                    <th style="width: 100px;">Tingkat</th>
+                    <th style="width: 300px;">Pertanyaan Soal</th>
                     <th style="width: 100px;">Hasil Analisis</th>
                     <th style="width: 250px;">Kunci Jawaban Valid</th>
                     <th style="width: 350px;">Pembahasan & Logika Edukatif</th>
@@ -3361,10 +3445,12 @@ function exportStudentExcel() {
             let correctAns = Array.isArray(qData.answer) ? qData.answer.map(a => qData.options[a]).join(' | ') : qData.options[qData.answer];
             const statusClass = isRight ? 'status-lulus' : 'status-remedial';
             const statusText = isRight ? 'BENAR' : 'SALAH';
+            const diffStr = qData.difficulty === 'Easy' ? 'Mudah' : (qData.difficulty === 'Hard' ? 'Sulit' : 'Sedang');
 
             htmlContent += `
                 <tr>
                     <td align="center">${playIdx + 1}</td>
+                    <td align="center"><strong>${diffStr}</strong></td>
                     <td>${qData.q}</td>
                     <td align="center" class="${statusClass}">${statusText}</td>
                     <td>${correctAns}</td>
