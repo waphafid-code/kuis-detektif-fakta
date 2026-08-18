@@ -2613,41 +2613,6 @@ function exportTeacherPDF() {
         const doc = new jsPDF('p', 'mm', 'a4');
         const nowStr = new Date().toLocaleString('id-ID');
 
-        // Header Background
-        doc.setFillColor(15, 15, 40);
-        doc.rect(0, 0, 210, 32, 'F');
-
-        // Header Titles
-        doc.setTextColor(34, 211, 238);
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(15);
-        doc.text('LAPORAN REKAPITULASI NILAI KUIS INTERAKTIF', 14, 13);
-
-        doc.setTextColor(241, 245, 249);
-        doc.setFontSize(10);
-        doc.setFont('helvetica', 'normal');
-        doc.text('Misi Detektif Fakta Digital: Uji Validitas Data & Berpikir Komputasional', 14, 20);
-function exportTeacherPDF() {
-    sfxClick();
-    const allRecords = loadRecords();
-    const filterClass = document.getElementById('filter-class').value;
-    const records = filterClass === 'all' ? allRecords : allRecords.filter(r => r.class === filterClass);
-
-    if (records.length === 0) {
-        showToast('Tidak ada data siswa untuk diekspor ke PDF!', '⚠️');
-        return;
-    }
-
-    if (!window.jspdf || !window.jspdf.jsPDF) {
-        showToast('Pustaka PDF sedang dimuat. Coba lagi dalam beberapa detik...', '⚠️');
-        return;
-    }
-
-    try {
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF('p', 'mm', 'a4');
-        const nowStr = new Date().toLocaleString('id-ID');
-
         // 1. Header Banner
         doc.setFillColor(15, 23, 42); // Dark Navy
         doc.rect(0, 0, 210, 32, 'F');
