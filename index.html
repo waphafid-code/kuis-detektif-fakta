@@ -178,138 +178,87 @@
             100% { transform: scale(2.2) rotate(360deg); opacity: 0; }
         }
 
-        .shake-it { animation: shake 0.4s ease; }
-        .flash-correct { animation: correctFlash 0.6s ease-out; }
-        .flash-wrong { animation: wrongFlash 0.6s ease-out; }
+        .shake-it { animation: shake 0.35s ease; }
+        .flash-correct { animation: correctFlash 0.5s ease-out; }
+        .flash-wrong { animation: wrongFlash 0.5s ease-out; }
 
-        /* ═══ ULTRA-DYNAMIC SCREEN VIBRATIONS (SANGAT HEBOH & MENGGELEGAR) ═══ */
+        /* ═══ SMOOTH & RESPONSIVE HAPTIC SCREEN VIBRATIONS (HALUS & NYAMAN DI HP) ═══ */
         @keyframes vibrateLevel1 {
             0%, 100% { transform: translate(0, 0); }
-            20% { transform: translate(-7px, 5px); }
-            40% { transform: translate(7px, -6px); }
-            60% { transform: translate(-6px, -3px); }
-            80% { transform: translate(5px, 4px); }
+            25% { transform: translate(-2px, 1.5px); }
+            50% { transform: translate(2px, -1.5px); }
+            75% { transform: translate(-1.5px, -1px); }
         }
         @keyframes vibrateLevel2 {
-            0%, 100% { transform: translate(0, 0) scale(1) rotate(0deg); }
-            15% { transform: translate(-14px, 9px) scale(1.03) rotate(-1.5deg); }
-            35% { transform: translate(15px, -11px) scale(0.97) rotate(1.6deg); }
-            55% { transform: translate(-12px, -8px) scale(1.02) rotate(-1deg); }
-            75% { transform: translate(9px, 7px) scale(0.99) rotate(0.9deg); }
-            90% { transform: translate(-5px, 3px) rotate(-0.4deg); }
+            0%, 100% { transform: translate(0, 0); }
+            20% { transform: translate(-3.5px, 2px); }
+            40% { transform: translate(3.5px, -2.5px); }
+            60% { transform: translate(-2.5px, -1.5px); }
+            80% { transform: translate(2px, 1.5px); }
         }
         @keyframes vibrateLevel3 {
-            0%, 100% { transform: translate(0, 0) scale(1) rotate(0deg); }
-            10% { transform: translate(-22px, 15px) scale(1.06) rotate(-2.8deg); }
-            25% { transform: translate(24px, -18px) scale(0.95) rotate(3deg); }
-            45% { transform: translate(-19px, -13px) scale(1.04) rotate(-2deg); }
-            65% { transform: translate(16px, 12px) scale(0.98) rotate(1.6deg); }
-            80% { transform: translate(-11px, 7px) scale(1.01) rotate(-0.9deg); }
-            90% { transform: translate(6px, -4px) rotate(0.4deg); }
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            15% { transform: translate(-5px, 3px) scale(1.015); }
+            35% { transform: translate(5px, -3.5px) scale(0.995); }
+            55% { transform: translate(-4px, -2.5px) scale(1.01); }
+            75% { transform: translate(3px, 2.5px); }
+            90% { transform: translate(-1.5px, 1px); }
         }
         @keyframes vibrateLevel4 {
-            0%, 100% { transform: translate(0, 0) scale(1) rotate(0deg); }
-            10% { transform: translate(-30px, 20px) scale(1.08) rotate(-3.8deg); }
-            25% { transform: translate(32px, -24px) scale(0.93) rotate(4deg); }
-            40% { transform: translate(-26px, -18px) scale(1.05) rotate(-2.6deg); }
-            60% { transform: translate(22px, 15px) scale(0.96) rotate(2.2deg); }
-            75% { transform: translate(-15px, 10px) scale(1.02) rotate(-1.3deg); }
-            90% { transform: translate(8px, -5px) rotate(0.5deg); }
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            15% { transform: translate(-6.5px, 4px) scale(1.02); }
+            35% { transform: translate(6.5px, -4.5px) scale(0.99); }
+            55% { transform: translate(-5px, -3px) scale(1.01); }
+            75% { transform: translate(4px, 3px); }
+            90% { transform: translate(-2px, 1px); }
         }
         @keyframes vibrateLevelMega {
-            0%, 100% { transform: translate(0, 0) scale(1) rotate(0deg); filter: none; }
-            8% { transform: translate(-42px, 26px) scale(1.13) rotate(-5.5deg); filter: drop-shadow(0 0 50px var(--accent-glow)) contrast(1.3); }
-            20% { transform: translate(44px, -30px) scale(0.91) rotate(6deg); filter: drop-shadow(0 0 60px var(--primary-glow)) contrast(1.4); }
-            35% { transform: translate(-36px, -24px) scale(1.09) rotate(-4deg); filter: drop-shadow(0 0 55px rgba(245,158,11,0.9)); }
-            50% { transform: translate(30px, 20px) scale(0.94) rotate(3.2deg); }
-            65% { transform: translate(-22px, 15px) scale(1.05) rotate(-2.2deg); }
-            80% { transform: translate(15px, -10px) scale(0.97) rotate(1.2deg); }
-            90% { transform: translate(-8px, 5px) rotate(-0.5deg); }
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            12% { transform: translate(-8.5px, 5px) scale(1.03); }
+            28% { transform: translate(8.5px, -5.5px) scale(0.98); }
+            48% { transform: translate(-6px, -4px) scale(1.015); }
+            68% { transform: translate(5px, 3.5px); }
+            85% { transform: translate(-3px, 2px); }
         }
 
-        .vibrate-lvl-1 { animation: vibrateLevel1 0.32s cubic-bezier(0.36, 0.07, 0.19, 0.97) !important; }
-        .vibrate-lvl-2 { animation: vibrateLevel2 0.42s cubic-bezier(0.36, 0.07, 0.19, 0.97) !important; }
-        .vibrate-lvl-3 { animation: vibrateLevel3 0.52s cubic-bezier(0.36, 0.07, 0.19, 0.97) !important; }
-        .vibrate-lvl-4 { animation: vibrateLevel4 0.62s cubic-bezier(0.36, 0.07, 0.19, 0.97) !important; }
-        .vibrate-lvl-mega { animation: vibrateLevelMega 0.78s cubic-bezier(0.36, 0.07, 0.19, 0.97) !important; }
+        .vibrate-lvl-1 { animation: vibrateLevel1 0.22s ease-out !important; }
+        .vibrate-lvl-2 { animation: vibrateLevel2 0.28s ease-out !important; }
+        .vibrate-lvl-3 { animation: vibrateLevel3 0.34s ease-out !important; }
+        .vibrate-lvl-4 { animation: vibrateLevel4 0.38s ease-out !important; }
+        .vibrate-lvl-mega { animation: vibrateLevelMega 0.44s ease-out !important; }
 
-        /* ═══ RADIAL ZOOM BLUR & SPEED WARP OVERLAY ═══ */
+        /* ═══ LIGHTWEIGHT RADIAL LIGHT FLARE (RINGAN & SMOOTH 60FPS DI HP) ═══ */
         #radial-blur-overlay {
             position: fixed;
             top: 0; left: 0; width: 100vw; height: 100vh;
             pointer-events: none;
             z-index: 9997;
             opacity: 0;
+            will-change: opacity, transform;
             mix-blend-mode: screen;
         }
 
-        @keyframes radialBlurPulse1 {
-            0% {
-                opacity: 0.85;
-                transform: scale(1);
-                filter: blur(5px) brightness(1.3);
-                background: radial-gradient(circle at center, transparent 30%, rgba(34,211,238,0.45) 70%, rgba(139,92,246,0.65) 100%);
-            }
-            50% {
-                opacity: 1;
-                transform: scale(1.08);
-                filter: blur(10px) brightness(1.6);
-                background: radial-gradient(circle at center, transparent 20%, rgba(34,211,238,0.7) 60%, rgba(139,92,246,0.85) 100%);
-            }
-            100% {
-                opacity: 0;
-                transform: scale(1.18);
-                filter: blur(18px) brightness(2.2);
-            }
+        @keyframes radialGlowPulse1 {
+            0% { opacity: 0.6; transform: scale(0.96); background: radial-gradient(circle at center, transparent 35%, rgba(34,211,238,0.25) 75%, rgba(139,92,246,0.35) 100%); }
+            50% { opacity: 0.8; transform: scale(1.03); background: radial-gradient(circle at center, transparent 30%, rgba(34,211,238,0.35) 70%, rgba(139,92,246,0.45) 100%); }
+            100% { opacity: 0; transform: scale(1.08); }
         }
 
-        @keyframes radialBlurPulse2 {
-            0% {
-                opacity: 0.95;
-                transform: scale(0.95);
-                filter: blur(8px) brightness(1.5);
-                background: radial-gradient(circle at center, transparent 25%, rgba(245,158,11,0.55) 55%, rgba(236,72,153,0.85) 90%, #fff 100%),
-                            repeating-conic-gradient(from 0deg, rgba(255,255,255,0.25) 0deg 8deg, transparent 8deg 16deg);
-            }
-            45% {
-                opacity: 1;
-                transform: scale(1.18);
-                filter: blur(16px) brightness(2.1);
-                background: radial-gradient(circle at center, transparent 15%, rgba(245,158,11,0.8) 45%, rgba(236,72,153,1) 85%, #fff 100%),
-                            repeating-conic-gradient(from 0deg, rgba(255,255,255,0.5) 0deg 8deg, transparent 8deg 16deg);
-            }
-            100% {
-                opacity: 0;
-                transform: scale(1.3);
-                filter: blur(26px) brightness(2.8);
-            }
+        @keyframes radialGlowPulse2 {
+            0% { opacity: 0.7; transform: scale(0.95); background: radial-gradient(circle at center, transparent 30%, rgba(245,158,11,0.3) 65%, rgba(236,72,153,0.5) 100%); }
+            50% { opacity: 0.9; transform: scale(1.05); background: radial-gradient(circle at center, transparent 25%, rgba(245,158,11,0.45) 60%, rgba(236,72,153,0.65) 100%); }
+            100% { opacity: 0; transform: scale(1.12); }
         }
 
-        @keyframes radialBlurPulseMega {
-            0% {
-                opacity: 1;
-                transform: scale(0.88);
-                filter: blur(12px) brightness(1.8) contrast(1.4);
-                background: radial-gradient(circle at center, transparent 12%, rgba(34,211,238,0.8) 40%, rgba(236,72,153,0.95) 75%, #ffffff 100%),
-                            repeating-conic-gradient(from 0deg, rgba(255,255,255,0.7) 0deg 6deg, transparent 6deg 12deg);
-            }
-            35% {
-                opacity: 1;
-                transform: scale(1.32);
-                filter: blur(24px) brightness(2.8) contrast(1.6);
-                background: radial-gradient(circle at center, transparent 8%, rgba(34,211,238,1) 30%, rgba(236,72,153,1) 68%, #ffffff 100%),
-                            repeating-conic-gradient(from 0deg, rgba(255,255,255,0.9) 0deg 6deg, transparent 6deg 12deg);
-            }
-            100% {
-                opacity: 0;
-                transform: scale(1.5);
-                filter: blur(40px) brightness(3.5);
-            }
+        @keyframes radialGlowPulseMega {
+            0% { opacity: 0.85; transform: scale(0.94); background: radial-gradient(circle at center, transparent 20%, rgba(34,211,238,0.5) 50%, rgba(236,72,153,0.7) 85%, #fff 100%); }
+            45% { opacity: 1; transform: scale(1.08); background: radial-gradient(circle at center, transparent 15%, rgba(34,211,238,0.6) 45%, rgba(236,72,153,0.85) 80%, #fff 100%); }
+            100% { opacity: 0; transform: scale(1.18); }
         }
 
-        .radial-blur-lvl-1 { animation: radialBlurPulse1 0.45s cubic-bezier(0.1, 0.9, 0.2, 1) forwards !important; }
-        .radial-blur-lvl-2 { animation: radialBlurPulse2 0.6s cubic-bezier(0.1, 0.9, 0.2, 1) forwards !important; }
-        .radial-blur-lvl-mega { animation: radialBlurPulseMega 0.85s cubic-bezier(0.1, 0.9, 0.2, 1) forwards !important; }
+        .radial-blur-lvl-1 { animation: radialGlowPulse1 0.35s ease-out forwards !important; }
+        .radial-blur-lvl-2 { animation: radialGlowPulse2 0.42s ease-out forwards !important; }
+        .radial-blur-lvl-mega { animation: radialGlowPulseMega 0.5s ease-out forwards !important; }
 
         /* ═══ STREAK FIRE AURA ═══ */
         .glass-card.streak-on-fire {
@@ -1588,7 +1537,8 @@ class Particle {
 }
 
 function initParticles() {
-    const count = Math.min(80, Math.floor((canvas.width * canvas.height) / 12000));
+    const isMobile = window.innerWidth < 768;
+    const count = isMobile ? 22 : Math.min(50, Math.floor((canvas.width * canvas.height) / 18000));
     particles = [];
     for (let i = 0; i < count; i++) particles.push(new Particle());
 }
@@ -1750,30 +1700,28 @@ function showEmojiReaction(emoji, x, y) {
 }
 
 function triggerStreakVibration(streakCount) {
-    // 1. Haptic Vibration API (Untuk Smartphone / Tablet Android / Touch devices - Ekstra Heboh)
+    // 1. Haptic Vibration API (Halus, Nyaman, dan Tidak Boros Baterai di HP)
     if ('vibrate' in navigator) {
         try {
             if (streakCount === 1) {
-                navigator.vibrate(80); // Getaran single punchy
+                navigator.vibrate(35); // Denyut mikro halus
             } else if (streakCount === 2) {
-                navigator.vibrate([100, 30, 120]); // Double tap bertenaga
+                navigator.vibrate([35, 25, 40]); // Double-tap renyah
             } else if (streakCount === 3) {
-                navigator.vibrate([140, 35, 150, 35, 180]); // Triple pulse bertenaga tinggi
+                navigator.vibrate([45, 25, 50]); // Triple-tap dinamis
             } else if (streakCount === 4) {
-                navigator.vibrate([180, 40, 190, 40, 220, 40, 260]); // Power rumble bertubi
-            } else if (streakCount >= 5 && streakCount < 7) {
-                navigator.vibrate([220, 35, 230, 35, 250, 35, 280, 40, 350]); // Mega seismic quake
+                navigator.vibrate([50, 25, 60]); // Power combo
             } else {
-                navigator.vibrate([260, 30, 280, 30, 300, 30, 350, 40, 450, 50, 600]); // Godlike shockwave rumble
+                navigator.vibrate([60, 25, 70, 25, 80]); // High streak combo
             }
         } catch (e) {}
     }
 
-    // 2. Visual Screen Shake & Card Rumble (Untuk PC / Laptop - Menggelegar)
+    // 2. Visual Screen Micro-Rumble (Halus & Nyaman di Mata)
     const app = document.getElementById('main-app');
     if (app) {
         app.classList.remove('vibrate-lvl-1', 'vibrate-lvl-2', 'vibrate-lvl-3', 'vibrate-lvl-4', 'vibrate-lvl-mega', 'shake-it');
-        void app.offsetWidth; // Force reflow agar animasi selalu re-trigger
+        void app.offsetWidth; // Force reflow agar animasi re-trigger dengan mulus
 
         if (streakCount === 1) {
             app.classList.add('vibrate-lvl-1');
@@ -1788,7 +1736,7 @@ function triggerStreakVibration(streakCount) {
         }
     }
 
-    // 3. ✨ RADIAL ZOOM BLUR & SPEED WARP EFFECT
+    // 3. ✨ Smooth Radial Light Flare (Ringan 60 FPS di HP)
     const blurOverlay = document.getElementById('radial-blur-overlay');
     if (blurOverlay) {
         blurOverlay.classList.remove('radial-blur-lvl-1', 'radial-blur-lvl-2', 'radial-blur-lvl-mega');
