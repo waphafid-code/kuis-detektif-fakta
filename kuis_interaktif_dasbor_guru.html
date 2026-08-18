@@ -1149,268 +1149,250 @@
 
 <script>
 // ============================================================
-//  📚 QUIZ DATA (20 SOAL DETEKTIF FAKTA & LITERASI DIGITAL)
+//  📚 QUIZ DATA (20 SOAL RESMI DETEKTIF FAKTA & LITERASI DIGITAL)
 // ============================================================
 const quizData = [
     {
         type: 'mcq',
-        q: "Organisasi periksa fakta bertugas untuk ...",
+        q: "Apa yang dimaksud dengan ekosistem periksa fakta?",
         options: [
-            "Membuat konten hiburan di media sosial",
-            "Menyelidiki dan memverifikasi klaim atau informasi",
-            "Menyebarkan semua berita tanpa pemeriksaan",
-            "Menghapus akun pengguna di internet",
-            "Membuat aplikasi pesan instan baru"
+            "Kumpulan berita yang sedang viral di media sosial",
+            "Jaringan organisasi, platform, dan individu yang memverifikasi informasi",
+            "Aplikasi otomatis untuk membuat dan menyebarkan berita",
+            "Kelompok penyebar pesan berantai di grup obrolan",
+            "Situs penyimpanan data statis tanpa pembaruan"
         ],
         answer: 1,
-        explanation: "Organisasi periksa fakta bertugas menyelidiki dan memverifikasi kebenaran klaim atau informasi yang beredar di masyarakat."
+        explanation: "Ekosistem periksa fakta terdiri dari banyak pihak yang saling bekerja sama untuk memeriksa kebenaran informasi. Pihak tersebut dapat berupa organisasi pemeriksa fakta, platform media sosial, komunitas, maupun individu."
     },
     {
         type: 'mcq',
-        q: "Apa ciri utama dari judul berita yang bersifat clickbait?",
+        q: "Tujuan utama dari dibentuknya ekosistem periksa fakta adalah ...",
         options: [
-            "Menggunakan bahasa formal dan menyajikan data statistik objektif",
-            "Menyajikan ringkasan fakta langsung di bagian awal judul",
-            "Mencantumkan nama penulis dan tanggal publikasi secara jelas",
-            "Menggunakan kalimat sensasional atau provokatif yang menggantung untuk memancing klik",
-            "Mengutip pernyataan narasumber resmi secara lengkap dan utuh"
+            "Membuat informasi menjadi cepat viral di internet",
+            "Menghapus seluruh informasi dan artikel di dunia maya",
+            "Menggantikan fungsi utama platform media sosial",
+            "Membantu masyarakat mendapatkan informasi yang akurat dan terpercaya",
+            "Membatasi penggunaan akses internet bagi masyarakat"
         ],
         answer: 3,
-        explanation: "Judul clickbait sengaja dirancang secara berlebihan dan provokatif guna memancing rasa penasaran audiens agar mengklik tautan, meskipun isinya sering kali tidak sesuai dengan judul."
+        explanation: "Periksa fakta membantu masyarakat membedakan informasi yang benar, palsu, tidak akurat, atau menyesatkan. Dengan informasi yang lebih akurat, masyarakat dapat mengambil keputusan dengan lebih bijak."
     },
     {
         type: 'mcq',
-        q: "Mengapa organisasi periksa fakta perlu menjelaskan metodologi kerjanya secara transparan?",
+        caseStudy: "Dita menemukan unggahan di media sosial yang berisi klaim mengejutkan. Ia tidak langsung mempercayainya, tetapi mencari pihak yang kompeten untuk memeriksa klaim tersebut.",
+        q: "Pihak yang paling sesuai untuk melakukan pemeriksaan klaim tersebut adalah ...",
         options: [
-            "Agar berita yang diperiksa cepat viral di media sosial",
+            "Organisasi periksa fakta independen",
+            "Pengirim pesan berantai di media sosial",
+            "Teman yang memiliki banyak pengikut (followers)",
+            "Semua pengguna media sosial tanpa filter",
+            "Pembuat iklan produk komersial"
+        ],
+        answer: 0,
+        explanation: "Organisasi periksa fakta memiliki tugas khusus untuk menyelidiki dan memverifikasi klaim. Banyaknya pengikut atau popularitas seseorang tidak otomatis membuktikan bahwa informasi yang disampaikannya benar."
+    },
+    {
+        type: 'mcq',
+        q: "Mengapa organisasi periksa fakta perlu menjelaskan metode pemeriksaannya secara terbuka?",
+        options: [
+            "Agar mendapatkan lebih banyak pengikut di akun medsos",
+            "Agar berita cepat menjadi viral dan populer",
             "Agar masyarakat memahami proses investigasi dan dasar kesimpulan verifikasi",
-            "Agar dapat menjual produk komersial atau memasang iklan",
-            "Agar semua warganet wajib mengikuti akun media sosial mereka",
-            "Agar pemeriksa fakta tidak perlu lagi membandingkan berbagai sumber"
-        ],
-        answer: 1,
-        explanation: "Metodologi perlu dijelaskan secara terbuka agar masyarakat mengetahui bagaimana proses pemeriksaan dilakukan dan memahami validitas kesimpulannya."
-    },
-    {
-        type: 'mcq',
-        q: "Langkah awal yang paling tepat saat menerima informasi yang memicu emosi berlebihan (marah atau panik) adalah ...",
-        options: [
-            "Menahan diri dan melakukan verifikasi ke sumber terpercaya sebelum menyebarkannya",
-            "Langsung meneruskannya ke semua grup obrolan keluarga",
-            "Memberikan komentar bernada provokatif di media sosial",
-            "Mengajak orang lain untuk segera panik dan memboikot isu tersebut",
-            "Mengunggah tangkapan layar tanpa memverifikasi kebenarannya"
-        ],
-        answer: 0,
-        explanation: "Kunci utama literasi digital adalah bersikap kritis dan tenang. Menahan diri untuk tidak langsung membagikan info serta memeriksa kebenaran faktanya terlebih dahulu."
-    },
-    {
-        type: 'mcq',
-        q: "Bagaimana jaminan terhadap kerahasiaan pelapor konten hoaks melalui kanal resmi Kominfo?",
-        options: [
-            "Identitas pelapor wajib dipublikasikan secara terbuka",
-            "Identitas pelapor dibagikan kepada seluruh pengguna internet",
-            "Kerahasiaan identitas pelapor dijamin sepenuhnya",
-            "Pelapor wajib membuat video klarifikasi ke publik",
-            "Pelapor harus menyebarkan isi laporannya ke media sosial"
+            "Agar pemeriksa fakta tidak perlu lagi menggunakan bukti data",
+            "Agar semua orang langsung percaya tanpa perlu bertanya"
         ],
         answer: 2,
-        explanation: "Seseorang yang melaporkan konten hoaks melalui Kominfo tidak perlu khawatir identitasnya diketahui karena kerahasiaan pelapor dijamin agar masyarakat berani melapor."
+        explanation: "Masyarakat perlu mengetahui bagaimana suatu kesimpulan diperoleh. Dengan menjelaskan metode dan prosesnya, pemeriksaan menjadi lebih transparan dan dapat dipahami oleh orang lain."
     },
     {
         type: 'mcq',
-        q: "Fitur 'Reverse Image Search' (pencarian gambar terbalik) pada mesin pencari berguna untuk ...",
+        q: "Apa peran platform media sosial dalam ekosistem periksa fakta?",
         options: [
-            "Mengedit saturasi warna dan filter pencahayaan foto",
-            "Menghapus gambar dari server internet secara permanen",
-            "Mengetahui asal-usul, waktu unggah pertama kali, dan konteks asli suatu foto",
-            "Meningkatkan kualitas resolusi kamera perangkat ponsel",
-            "Membuat gambar animasi atau stiker otomatis"
+            "Membuat semua informasi pengguna otomatis menjadi benar",
+            "Menyebarkan semua konten pengguna tanpa moderasi",
+            "Menghapus seluruh akun pengguna secara sepihak",
+            "Mengubah isi berita yang sedang viral",
+            "Menandai konten hoaks dan mengarahkan pengguna ke informasi terverifikasi"
         ],
-        answer: 2,
-        explanation: "Pencarian gambar terbalik memungkinkan kita menelusuri riwayat kemunculan foto di internet untuk mengetahui konteks asli dan mendeteksi apakah gambar tersebut foto lama yang dimanipulasi."
+        answer: 4,
+        explanation: "Platform media sosial dapat membantu mengurangi penyebaran informasi palsu dengan memberikan tanda pada konten yang tidak akurat. Platform juga dapat mengarahkan pengguna kepada informasi yang telah diperiksa."
+    },
+    {
+        type: 'checkbox',
+        q: "Pilih tiga pernyataan yang benar tentang manfaat jaringan kolaboratif dalam periksa fakta:",
+        options: [
+            "Berbagi informasi antarorganisasi secara cepat",
+            "Berbagi metode pemeriksaan fakta yang teruji",
+            "Berbagi hasil penelitian dan database investigasi",
+            "Menyebarkan semua informasi tanpa melalui pemeriksaan",
+            "Mengabaikan informasi yang rumit dan sulit diperiksa"
+        ],
+        answer: [0, 1, 2],
+        explanation: "Jaringan kolaboratif membuat pihak-pihak yang terlibat dapat saling berbagi informasi, metode, dan hasil pemeriksaan. Kerja sama seperti ini membantu mempercepat pemeriksaan, terutama ketika informasi yang beredar sangat kompleks atau menyebar dengan cepat."
     },
     {
         type: 'mcq',
-        q: "Pendidikan literasi media membantu masyarakat untuk ...",
+        q: "Pendidikan dan literasi media membantu masyarakat untuk ...",
         options: [
-            "Membagikan semua informasi yang diterima tanpa filter",
+            "Mempercayai semua informasi yang diterima di media sosial",
+            "Membagikan berita secara instan tanpa perlu membaca isinya",
+            "Menghindari seluruh platform media sosial",
             "Mengevaluasi dan menyaring informasi secara kritis",
-            "Menghindari penggunaan semua platform media sosial",
-            "Membuat berita tanpa mencantumkan sumber rujukan",
-            "Menghapus berita yang tidak disukai secara sepihak"
+            "Menghapus semua konten yang tidak disukai secara pribadi"
         ],
-        answer: 1,
-        explanation: "Literasi media melatih seseorang mengevaluasi dan menyaring informasi secara kritis, bukan langsung mempercayai atau menyebarkannya."
+        answer: 3,
+        explanation: "Literasi media mengajarkan seseorang untuk memeriksa isi, sumber, dan tanda-tanda informasi palsu. Seseorang tidak hanya menerima informasi, tetapi juga berpikir dan menilai apakah informasi tersebut dapat dipercaya."
     },
     {
         type: 'mcq',
-        q: "Kecenderungan seseorang untuk hanya mencari, mempercayai, dan mengingat informasi yang mendukung keyakinan pribadinya disebut ...",
+        caseStudy: "Arman menerima pesan berantai yang belum jelas kebenarannya. Ia membuka sumber lain, membandingkan informasi dari berbagai media, dan melihat siapa penerbit aslinya.",
+        q: "Cara investigasi perbandingan sumber yang dilakukan Arman disebut ...",
         options: [
-            "Bias Konfirmasi (Confirmation Bias)",
-            "Validasi Data Otomatis",
-            "Algoritma Pencarian Lateral",
-            "Verifikasi Silang (Cross-Checking)",
-            "Enkripsi Informasi Digital"
+            "Membaca lateral (Lateral Reading)",
+            "Membaca judul (Headline Scanning)",
+            "Menyebarkan informasi (Broadcasting)",
+            "Menghapus informasi (Data Deletion)",
+            "Mengubah isi berita (Editing Content)"
         ],
         answer: 0,
-        explanation: "Bias Konfirmasi adalah kecenderungan psikologis di mana seseorang cenderung menerima info yang sejalan dengan prasangka/keyakinannya dan menolak bukti valid yang bertentangan."
+        explanation: "Membaca lateral dilakukan dengan membandingkan informasi dari beberapa sumber. Cara ini membantu pembaca mengetahui apakah informasi tersebut didukung oleh sumber lain atau hanya berasal dari satu sumber yang belum jelas."
     },
     {
-        type: 'mcq',
-        q: "Jaringan kolaboratif dalam ekosistem periksa fakta dapat meningkatkan ...",
-        options: [
-            "Jumlah pengikut di akun media sosial",
-            "Kecepatan penyebaran konten hoaks di internet",
-            "Efisiensi pemeriksaan fakta yang kompleks",
-            "Jumlah penayangan iklan komersial di web",
-            "Frekuensi pengiriman pesan berantai"
-        ],
-        answer: 2,
-        explanation: "Jaringan kolaboratif memungkinkan berbagai pihak (organisasi pemeriksa fakta, media, platform, komunitas) saling berbagi informasi dan metode sehingga investigasi fakta rumit menjadi jauh lebih efisien."
-    },
-    {
-        type: 'mcq',
-        q: "Mengapa sangat penting untuk memeriksa tanggal publikasi sebuah artikel berita sebelum membagikannya?",
-        options: [
-            "Agar mengetahui umur server situs web tersebut",
-            "Untuk memastikan peristiwa tersebut bukan berita lama yang didaur ulang seolah baru terjadi",
-            "Untuk menghitung statistik jumlah pembaca harian",
-            "Agar diizinkan menyalin seluruh isi berita tanpa izin",
-            "Untuk mempercepat loading halaman web"
-        ],
-        answer: 1,
-        explanation: "Banyak hoaks disebarkan dengan memanfaatkan artikel atau foto lama yang dimunculkan kembali seolah baru saja terjadi demi menciptakan kepanikan atau menggiring opini."
-    },
-    {
-        type: 'mcq',
-        q: "Bentuk manipulasi informasi di mana foto atau video asli disajikan dengan narasi di luar konteks aslinya disebut ...",
-        options: [
-            "Misleading Context (Konteks Menyesatkan)",
-            "Fabricated Content (Konten Palsu Total)",
-            "Satire atau Parodi Murni",
-            "Laporan Jurnalistik Netral",
-            "Data Terbuka Terverifikasi"
-        ],
+        type: 'tf',
+        q: "Komunitas dan individu dapat membantu melawan hoaks dengan membagikan informasi yang sudah diverifikasi dan memperingatkan orang lain.",
+        options: ["Benar", "Salah"],
         answer: 0,
-        explanation: "Misleading context terjadi ketika materi visualnya nyata/asli, namun narasi pengantarnya dipelintir atau diletakkan di konteks yang salah untuk memperdaya pembaca."
+        explanation: "Masyarakat tidak hanya menjadi penerima informasi, tetapi juga dapat membantu menjaga kualitas informasi yang beredar. Membagikan informasi yang telah diperiksa dan memperingatkan orang lain dapat mengurangi penyebaran hoaks."
+    },
+    {
+        type: 'checkbox',
+        caseStudy: "Raka menemukan konten yang diduga hoaks di media sosial dan ingin melaporkannya secara resmi melalui Kementerian Kominfo.",
+        q: "Pilih tiga tindakan yang benar saat Raka melaporkan konten tersebut:",
+        options: [
+            "Menyimpan tangkapan layar (screenshot) konten sebagai bukti visual",
+            "Menyalin URL atau tautan spesifik dari konten hoaks tersebut",
+            "Mengirim laporan bukti ke aduankonten@mail.kominfo.go.id",
+            "Menghapus semua bukti laporan digital dari perangkat",
+            "Menyebarkan ulang konten hoaks agar semakin banyak orang yang melihat"
+        ],
+        answer: [0, 1, 2],
+        explanation: "Tangkapan layar menunjukkan isi konten yang dilaporkan, sedangkan URL membantu menemukan lokasi konten tersebut. Setelah bukti disiapkan, laporan dapat dikirim melalui alamat email pengaduan Kominfo. Menyebarkan ulang konten justru dapat memperluas penyebaran hoaks."
     },
     {
         type: 'mcq',
-        q: "Domain situs web resmi yang paling kredibel untuk informasi kebijakan lembaga pemerintah Indonesia adalah ...",
+        q: "Alamat email resmi yang digunakan untuk mengirim aduan konten hoaks melalui Kominfo adalah ...",
         options: [
-            ".com",
-            ".net",
-            ".go.id",
-            ".xyz",
-            ".org.id"
+            "cybercrime@polri.go.id",
+            "polisionline.net@gmail.com",
+            "turnbackhoax.id/lapor-hoax/",
+            "aduankonten@mail.kominfo.go.id",
+            "info@mediaonline.id"
         ],
-        answer: 2,
-        explanation: "Domain .go.id merupakan ranah khusus instansi pemerintah Republik Indonesia yang mensyaratkan izin dan verifikasi resmi kenegaraan, sehingga menjadi rujukan otoritatif."
+        answer: 3,
+        explanation: "aduankonten@mail.kominfo.go.id merupakan alamat pengaduan konten resmi Kominfo. Saat mengirim laporan, pelapor sebaiknya menyertakan bukti agar konten yang dilaporkan dapat ditemukan dan diperiksa."
     },
     {
-        type: 'mcq',
-        q: "Apa bahaya utama dari manipulasi media berbasis kecerdasan buatan seperti Deepfake?",
-        options: [
-            "Menyebabkan ukuran file video menjadi sangat kecil",
-            "Menghasilkan video atau suara manipulatif yang sangat mirip aslinya untuk memfitnah dan menipu publik",
-            "Menghilangkan watermark hak cipta secara otomatis",
-            "Membuat koneksi internet menjadi lambat",
-            "Mengubah video menjadi teks secara instan"
-        ],
+        type: 'tf',
+        q: "Seseorang yang melaporkan konten hoaks melalui Kominfo wajib menyebarkan identitasnya kepada publik.",
+        options: ["Benar", "Salah"],
         answer: 1,
-        explanation: "Deepfake memanfaatkan AI untuk memalsukan wajah dan suara figur publik secara meyakinkan sehingga berpotensi tinggi digunakan untuk fitnah politik atau penipuan finansial."
+        explanation: "Kerahasiaan pelapor dijamin. Artinya, pelapor tidak diwajibkan mempublikasikan identitasnya kepada masyarakat. Jaminan ini membantu masyarakat merasa lebih aman ketika melaporkan konten yang meragukan."
     },
     {
         type: 'mcq',
-        q: "Mengapa 'pesan berantai' (broadcast message) di aplikasi pesan instan sangat rawan memuat hoaks?",
+        q: "Situs layanan yang digunakan Mafindo untuk menerima laporan aduan hoaks dari masyarakat adalah ...",
         options: [
-            "Karena pesan dikirim dalam format terenkripsi",
-            "Karena format pesan selalu memuat gambar berkualitas rendah",
-            "Karena mudah diteruskan berkali-kali tanpa kejelasan sumber primer dan minim verifikasi",
-            "Karena aplikasi perpesanan hanya dapat diakses melalui ponsel",
-            "Karena pesan berantai hanya dibuat oleh akun robot"
+            "aduankonten@mail.kominfo.go.id",
+            "trustpositif.kominfo.go.id",
+            "https://turnbackhoax.id/lapor-hoax/",
+            "polisionline.net@gmail.com",
+            "cybercrime@polri.go.id"
         ],
         answer: 2,
-        explanation: "Fitur forward memudahkan siapa saja menyebarkan pesan tanpa mengetahui pengunggah aslinya, serta minim kontrol redaksional dan verifikasi fakta."
+        explanation: "TurnBackHoax (turnbackhoax.id/lapor-hoax/) merupakan layanan Mafindo untuk menerima laporan hoaks. Pengguna dapat menyampaikan informasi yang dicurigai palsu melalui halaman pelaporan tersebut."
     },
     {
-        type: 'mcq',
-        q: "Prinsip etika digital 'Saring Sebelum Sharing' memiliki makna utama yaitu ...",
+        type: 'checkbox',
+        q: "Pilih tiga kemampuan penting yang dapat dikembangkan melalui pendidikan literasi media:",
         options: [
-            "Membagikan informasi secepat mungkin agar menjadi yang pertama tahu",
-            "Menghapus seluruh postingan di media sosial setiap hari",
-            "Memeriksa kebenaran, sumber, dan manfaat suatu informasi sebelum membagikannya",
-            "Mengunci akun media sosial dari interaksi orang lain",
-            "Menolak membaca berita apa pun di internet"
+            "Mengevaluasi isi dan konteks informasi secara kritis",
+            "Mengidentifikasi sumber informasi yang dapat diandalkan",
+            "Memahami ciri-ciri dan tanda informasi palsu",
+            "Mempercayai kebenaran berita hanya dari membaca judulnya",
+            "Membagikan semua informasi ke publik tanpa pemeriksaan awal"
         ],
-        answer: 2,
-        explanation: "Saring Sebelum Sharing adalah pedoman etika digital yang menekankan kebiasaan verifikasi fakta dan pertimbangan dampak moral sebelum menyebarkan konten apa pun."
+        answer: [0, 1, 2],
+        explanation: "Literasi media membuat seseorang lebih teliti dalam menerima informasi. Siswa belajar menilai isi informasi, mengenali sumber yang dapat dipercaya, dan memahami ciri-ciri informasi palsu sebelum mengambil tindakan."
     },
     {
-        type: 'mcq',
-        q: "Melakukan cross-checking (pemeriksaan silang) pada beberapa media berita yang kredibel bertujuan untuk ...",
-        options: [
-            "Membandingkan tata letak desain antarmuka situs",
-            "Memastikan keakuratan informasi dan memperoleh sudut pandang pemberitaan yang objektif",
-            "Menambah riwayat pencarian di peramban internet",
-            "Menemukan media yang menyediakan hadiah kuis",
-            "Mempercepat pengunduhan file berita"
-        ],
-        answer: 1,
-        explanation: "Membaca peristiwa yang sama dari beberapa media terpercaya membantu mengonfirmasi fakta yang sebenarnya dan mengurangi risiko terjebak narasi sepihak atau hoaks."
-    },
-    {
-        type: 'mcq',
-        q: "Kanal resmi Kementerian Kominfo RI bagi masyarakat untuk mengirimkan aduan konten hoaks dan negatif di internet adalah ...",
-        options: [
-            "aduankonten.id",
-            "laporhoaks.com",
-            "cekfaktapalsu.org",
-            "satgashoaks.net",
-            "beritavalid.co.id"
-        ],
+        type: 'tf',
+        q: "Platform media sosial dapat memberi tanda peringatan (flagging) atau menghapus konten apabila konten tersebut terbukti tidak akurat.",
+        options: ["Benar", "Salah"],
         answer: 0,
-        explanation: "aduankonten.id adalah fasilitas resmi pemerintah (Kominfo) bagi publik untuk mengadukan konten negatif, hoaks, perjudian, pornografi, maupun pelanggaran siber lainnya."
+        explanation: "Platform memiliki peran untuk membantu mengurangi penyebaran informasi yang tidak akurat. Salah satu caranya adalah memberi tanda peringatan atau menghapus konten yang telah diketahui bermasalah."
     },
     {
         type: 'mcq',
-        q: "Apa dampak paling berbahaya dari penyebaran hoaks di bidang kesehatan, seperti klaim pengobatan palsu?",
+        caseStudy: "Salsa menemukan sebuah unggahan di media sosial yang sangat meragukan dan belum mengetahui apakah unggahan tersebut benar atau palsu.",
+        q: "Tindakan yang paling tepat dilakukan oleh Salsa adalah ...",
         options: [
-            "Mengurangi pemakaian kuota data internet pengguna",
-            "Mengancam keselamatan nyawa dan menghambat penanganan medis yang tepat",
-            "Meningkatkan jumlah tenaga dokter di rumah sakit",
-            "Menurunkan harga persediaan obat-obatan di apotek",
-            "Mengubah jadwal operasional puskesmas"
+            "Langsung membagikannya ke media sosial agar menjadi heboh",
+            "Mengubah dan merekayasa isi unggahan tersebut",
+            "Melaporkannya kepada platform atau organisasi periksa fakta",
+            "Menambahkan komentar spekulatif yang belum terbukti kebenarannya",
+            "Meneruskan pesan ke semua grup obrolan tanpa mengecek fakta"
         ],
-        answer: 1,
-        explanation: "Disinformasi kesehatan dapat membuat masyarakat menolak tindakan medis yang tepat atau mengonsumsi zat berbahaya yang berakibat fatal pada keselamatan jiwa."
+        answer: 2,
+        explanation: "Informasi yang belum jelas sebaiknya tidak langsung disebarkan. Salsa dapat melaporkannya kepada platform atau organisasi periksa fakta agar informasi tersebut diperiksa lebih lanjut."
+    },
+    {
+        type: 'checkbox',
+        q: "Pilih tiga hal yang termasuk elemen penting dalam ekosistem periksa fakta:",
+        options: [
+            "Organisasi independen yang memeriksa dan memverifikasi klaim",
+            "Transparansi dan penjelasan metode pemeriksaan fakta",
+            "Kerja sama platform media sosial dengan organisasi periksa fakta",
+            "Penyebaran informasi secara masif tanpa proses verifikasi",
+            "Pengabaian terhadap kejelasan sumber primer informasi"
+        ],
+        answer: [0, 1, 2],
+        explanation: "Ekosistem periksa fakta membutuhkan pihak yang memeriksa klaim, proses yang transparan, dan kerja sama dengan platform teknologi. Ketiga hal tersebut membantu masyarakat memperoleh informasi yang lebih dapat dipercaya."
+    },
+    {
+        type: 'tf',
+        q: "Berbagi informasi, metode, dan hasil penelitian antarorganisasi dapat membuat proses pemeriksaan fakta menjadi lebih efisien.",
+        options: ["Benar", "Salah"],
+        answer: 0,
+        explanation: "Kerja sama membuat setiap pihak tidak harus memulai pemeriksaan dari awal. Hasil pemeriksaan yang sudah ada dapat membantu pihak lain menangani informasi yang sama atau serupa dengan lebih cepat."
     },
     {
         type: 'mcq',
-        q: "Salah satu indikator utama bahwa akun media sosial tokoh publik atau instansi merupakan akun resmi adalah ...",
+        caseStudy: "Sebuah sekolah ingin membantu siswa menjadi lebih tangguh dan berdaya nalar tinggi dalam menghadapi serbuan hoaks di internet.",
+        q: "Bentuk dukungan dari pihak sekolah yang paling sesuai adalah ...",
         options: [
-            "Memiliki foto profil dengan estetika sangat menarik",
-            "Adanya lencana verifikasi (centang resmi) dan tautan ke situs domain resmi instansi",
-            "Sering membagikan tautan undian berhadiah uang tunai",
-            "Memiliki ribuan komentar tanpa adanya moderasi",
-            "Tidak mencantumkan informasi bio profil apa pun"
+            "Mengajarkan siswa untuk mempercayai semua informasi yang beredar",
+            "Melarang seluruh siswa untuk membaca dan mencari berita",
+            "Menyediakan pendidikan literasi media dan sumber daya pemeriksaan fakta",
+            "Menghapus seluruh akun media sosial milik semua siswa",
+            "Membiarkan siswa menentukan kebenaran berdasarkan popularitas akun"
         ],
-        answer: 1,
-        explanation: "Lencana verifikasi dan tautan domain resmi membantu membedakan akun resmi dari akun tiruan (impersonator) yang kerap dibuat untuk melakukan penipuan."
+        answer: 2,
+        explanation: "Pendidikan literasi media membantu siswa mengevaluasi informasi secara kritis. Dukungan sekolah dapat berupa kegiatan belajar, penyediaan sumber daya, dan pembiasaan untuk memeriksa informasi sebelum mempercayai atau membagikannya."
     },
     {
         type: 'mcq',
-        q: "Mengapa konten satir atau parodi terkadang dapat berubah menjadi disinformasi di masyarakat?",
+        caseStudy: "Sebuah lembaga ingin memperkuat keberlangsungan ekosistem periksa fakta di tengah masyarakat luas.",
+        q: "Bentuk dukungan yang paling tepat dan berdampak nyata adalah ...",
         options: [
-            "Karena pembuat satir selalu menyertakan bukti hasil riset",
-            "Karena tidak semua orang memahami konteks humor atau sindirannya sehingga dianggap sebagai fakta sungguhan",
-            "Karena konten satir dilarang oleh undang-undang penyiaran",
-            "Karena satir hanya ditulis menggunakan istilah ilmiah asing",
-            "Karena satir dibuat khusus oleh tim periksa fakta"
+            "Menyebarkan berita sensasional tanpa pemeriksaan data awal",
+            "Membatasi akses masyarakat terhadap sumber informasi publik",
+            "Memberikan dana, sumber daya, dan dukungan perlindungan hukum",
+            "Menghapus semua konten dan suara yang berbeda pendapat",
+            "Menyerahkan seluruh tanggung jawab periksa fakta kepada warganet biasa"
         ],
-        answer: 1,
-        explanation: "Konten satir pada dasarnya dibuat sebagai humor atau kritik. Namun saat disebarkan ulang tanpa konteks atau dibaca oleh audiens yang tidak memahaminya, konten tersebut bisa disalahartikan sebagai berita nyata."
+        answer: 2,
+        explanation: "Ekosistem periksa fakta membutuhkan dukungan yang nyata agar dapat berjalan dengan baik. Dana, sumber daya, dan dukungan hukum membantu organisasi serta pihak terkait melakukan pemeriksaan secara berkelanjutan dan melindungi proses kerja mereka."
     }
 ];
 
