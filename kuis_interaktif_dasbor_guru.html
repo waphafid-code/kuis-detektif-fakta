@@ -2125,24 +2125,20 @@ function checkAnswer() {
         if (streak > maxStreak) maxStreak = streak;
         answeredCorrectly[origQIdx] = true;
 
-        // 📳 TRIGGER EFEK GETARAN (Haptic Vibration + Visual Screen Rumble bertambah kuat)
+        // 📳 Haptic touch mikro halus
         triggerStreakVibration(streak);
 
         fb.className = 'feedback-box correct-fb';
         fb.innerHTML = `<h4>✅ Fakta Terverifikasi!</h4><p>${data.explanation}</p>`;
 
-        document.body.classList.remove('flash-correct'); void document.body.offsetWidth; document.body.classList.add('flash-correct');
-
         const streakEl = document.getElementById('streak-display');
-        streakEl.style.transform = 'scale(1.4)';
-        setTimeout(() => streakEl.style.transform = '', 300);
+        streakEl.style.transform = 'scale(1.25)';
+        setTimeout(() => streakEl.style.transform = '', 250);
 
         if (card) card.classList.toggle('streak-on-fire', streak >= 3);
 
         if (streak >= 2) {
             showMegaComboHero(streak);
-        } else {
-            spawnRandomEmojis('✅', 2);
         }
     } else {
         sfxWrong();
@@ -2152,11 +2148,7 @@ function checkAnswer() {
         fb.className = 'feedback-box wrong-fb';
         fb.innerHTML = `<h4>❌ Analisis Keliru!</h4><p>${data.explanation}</p>`;
 
-        document.body.classList.remove('flash-wrong'); void document.body.offsetWidth; document.body.classList.add('flash-wrong');
-        const app = document.getElementById('main-app');
-        app.classList.remove('shake-it'); void app.offsetWidth; app.classList.add('shake-it');
         if (card) card.classList.remove('streak-on-fire');
-        spawnRandomEmojis('❌', 2);
     }
 
     fb.style.display = 'block';
@@ -2933,58 +2925,138 @@ function downloadExcelWorkbook(wb, fileName) {
 
 function exportStudentExcel() {
     sfxClick();
-    if (typeof XLSX === 'undefined') {
-        showToast('Pustaka Excel sedang dimuat. Coba lagi dalam beberapa detik...', '⚠️');
-        return;
-    }
-
     try {
         const finalScore = Math.round((score / quizData.length) * 100);
         const sName = studentName || 'Siswa';
         const sClass = studentClass || 'Kelas';
+        const safeClass = sClass.replace(/[/\\?%*:|"<> ]/g, '_');
+        const safeName = sName.replace(/[/\\?%*:|"<> ]/g, '_');
+        const nowStr = new Date().toLocaleString('id-ID');
+        const isLulus = finalScore >= 75;
 
-        const sheetData = [
-            ['RAPOR HASIL EVALUASI PEMBELAJARAN SISWA'],
-            ['KUIS DETEKTIF FAKTA DIGITAL (BERPIKIR KOMPUTASIONAL)'],
-            [],
-            ['Nama Siswa', sName],
-            ['Kelas', sClass],
-            ['Nilai Akhir', finalScore],
-            ['Jawaban Benar', `${score} dari ${quizData.length} Soal`],
-            ['Status Kelulusan', finalScore >= 75 ? 'LULUS' : 'REMEDIAL'],
-            ['Max Streak', `${maxStreak}x Jawaban Benar Beruntun`],
-            ['Waktu Pengerjaan', new Date().toLocaleString('id-ID')],
-            [],
-            ['No', 'Pertanyaan Soal', 'Hasil Analisis', 'Kunci Jawaban Valid']
-        ];
+        // Opsi 1: Jika Pustaka XLSX Tersedia di Browser Siswa
+        if (typeof XLSX !== 'undefined') {
+            try {
+                const sheetData = [
+                    ['RAPOR HASIL EVALUASI PEMBELAJARAN SISWA'],
+                    ['KUIS DETEKTIF FAKTA DIGITAL (BERPIKIR KOMPUTASIONAL)'],
+                    [],
+                    ['Nama Siswa', sName],
+                    ['Kelas', sClass],
+                    ['Nilai Akhir', finalScore],
+                    ['Jawaban Benar', `${score} dari ${quizData.length} Soal`],
+                    ['Status Kelulusan', isLulus ? 'LULUS' : 'REMEDIAL'],
+                    ['Max Streak', `${maxStreak}x Jawaban Benar Beruntun`],
+                    ['Waktu Pengerjaan', nowStr],
+                    [],
+                    ['No', 'Pertanyaan Soal', 'Hasil Analisis', 'Kunci Jawaban Valid']
+                ];
+
+                shuffledQuizOrder.forEach((origIdx, playIdx) => {
+                    const qData = quizData[origIdx];
+                    const isRight = answeredCorrectly[origIdx];
+                    let correctAns = Array.isArray(qData.answer) ? qData.answer.map(a => qData.options[a]).join(' | ') : qData.options[qData.answer];
+                    sheetData.push([
+                        playIdx + 1,
+                        qData.q,
+                        isRight ? 'BENAR' : 'SALAH',
+                        correctAns
+                    ]);
+                });
+
+                const ws = XLSX.utils.aoa_to_sheet(sheetData);
+                ws['!cols'] = [{ wch: 6 }, { wch: 65 }, { wch: 18 }, { wch: 45 }];
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, 'Rapor Siswa');
+
+                const fileName = `Rapor_Kuis_${safeClass}_${safeName}.xlsx`;
+                downloadExcelWorkbook(wb, fileName);
+                sfxCorrect();
+                showToast('Rapor Excel (.xlsx) berhasil diunduh!', '📊');
+                return;
+            } catch (xlsxErr) {
+                console.warn('XLSX write error, using native fallback:', xlsxErr);
+            }
+        }
+
+        // Opsi 2: NATIVE ZERO-DEPENDENCY EXCEL (.XLS / HTML TABLE FORMAT)
+        // 100% Berhasil di SEMUA Smartphone Android & iPhone tanpa butuh pustaka eksternal!
+        let htmlContent = `
+        <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+        <head>
+            <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+            <!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet><x:Name>Rapor Siswa</x:Name><x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions></x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]-->
+            <style>
+                body { font-family: Arial, sans-serif; font-size: 10pt; }
+                table { border-collapse: collapse; width: 100%; }
+                th { background-color: #4f46e5; color: #ffffff; font-weight: bold; border: 1px solid #cbd5e1; padding: 8px; text-align: center; }
+                td { border: 1px solid #cbd5e1; padding: 6px 8px; vertical-align: top; }
+                .title { background-color: #0f172a; color: #22d3ee; font-size: 13pt; font-weight: bold; padding: 10px; }
+                .subtitle { background-color: #1e293b; color: #f8fafc; font-size: 10pt; padding: 6px; }
+                .info-label { font-weight: bold; background-color: #f1f5f9; width: 180px; }
+                .status-lulus { color: #16a34a; font-weight: bold; }
+                .status-remedial { color: #dc2626; font-weight: bold; }
+            </style>
+        </head>
+        <body>
+            <table>
+                <tr><td colspan="4" class="title">RAPOR HASIL EVALUASI PEMBELAJARAN SISWA</td></tr>
+                <tr><td colspan="4" class="subtitle">Misi Detektif Fakta Digital (Uji Validitas Data & Berpikir Komputasional)</td></tr>
+                <tr><td colspan="4" style="height: 10px;"></td></tr>
+                <tr><td class="info-label">Nama Siswa</td><td colspan="3">${sName}</td></tr>
+                <tr><td class="info-label">Kelas</td><td colspan="3">${sClass}</td></tr>
+                <tr><td class="info-label">Skor Nilai</td><td colspan="3" class="${isLulus ? 'status-lulus' : 'status-remedial'}">${finalScore} (${isLulus ? 'STATUS: LULUS' : 'STATUS: REMEDIAL'})</td></tr>
+                <tr><td class="info-label">Jawaban Benar</td><td colspan="3">${score} dari ${quizData.length} Soal</td></tr>
+                <tr><td class="info-label">Max Streak</td><td colspan="3">${maxStreak}x Jawaban Benar Beruntun</td></tr>
+                <tr><td class="info-label">Waktu Pengerjaan</td><td colspan="3">${nowStr}</td></tr>
+                <tr><td colspan="4" style="height: 14px;"></td></tr>
+                <tr>
+                    <th style="width: 45px;">No</th>
+                    <th style="width: 380px;">Pertanyaan Soal</th>
+                    <th style="width: 100px;">Hasil Analisis</th>
+                    <th style="width: 280px;">Kunci Jawaban Valid</th>
+                </tr>
+        `;
 
         shuffledQuizOrder.forEach((origIdx, playIdx) => {
             const qData = quizData[origIdx];
             const isRight = answeredCorrectly[origIdx];
             let correctAns = Array.isArray(qData.answer) ? qData.answer.map(a => qData.options[a]).join(' | ') : qData.options[qData.answer];
-            sheetData.push([
-                playIdx + 1,
-                qData.q,
-                isRight ? 'BENAR' : 'SALAH',
-                correctAns
-            ]);
+            const statusClass = isRight ? 'status-lulus' : 'status-remedial';
+            const statusText = isRight ? 'BENAR' : 'SALAH';
+
+            htmlContent += `
+                <tr>
+                    <td align="center">${playIdx + 1}</td>
+                    <td>${qData.q}</td>
+                    <td align="center" class="${statusClass}">${statusText}</td>
+                    <td>${correctAns}</td>
+                </tr>
+            `;
         });
 
-        const ws = XLSX.utils.aoa_to_sheet(sheetData);
-        ws['!cols'] = [{ wch: 6 }, { wch: 65 }, { wch: 18 }, { wch: 45 }];
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, 'Rapor Siswa');
+        htmlContent += `
+            </table>
+        </body>
+        </html>`;
 
-        const safeClass = sClass.replace(/[/\\?%*:|"<> ]/g, '_');
-        const safeName = sName.replace(/[/\\?%*:|"<> ]/g, '_');
-        const fileName = `Rapor_Kuis_${safeClass}_${safeName}.xlsx`;
+        const blob = new Blob(['\uFEFF' + htmlContent], { type: 'application/vnd.ms-excel;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `Rapor_Kuis_${safeClass}_${safeName}.xls`;
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(() => {
+            if (a.parentNode) document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }, 1500);
 
-        downloadExcelWorkbook(wb, fileName);
         sfxCorrect();
-        showToast('Hasil kuis berhasil diunduh ke Excel (.xlsx)!', '📊');
+        showToast('Rapor Excel (.xls) berhasil diunduh!', '📊');
     } catch (err) {
         sfxWrong();
-        showToast('Gagal mengekspor Excel: ' + err.message, '❌');
+        showToast('Gagal mengekspor: ' + err.message, '❌');
     }
 }
 
