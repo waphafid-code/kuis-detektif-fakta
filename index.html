@@ -788,15 +788,33 @@
         .modal-actions { display: flex; gap: 10px; margin-top: 20px; }
         .modal-actions .btn { flex: 1; }
 
-        /* ═══ RESPONSIVE ═══ */
-        @media (max-width: 640px) {
-            .glass-card { padding: 24px 18px; }
+        /* ═══ RESPONSIVE & MOBILE GPU OPTIMIZATION ═══ */
+        @media (max-width: 768px) {
+            /* Matikan komputasi blur berat di HP GPU rendah, ganti warna solid gelap modern */
+            .glass-card, .sound-toggle, .modal-overlay, .modal-box, #toast-msg {
+                backdrop-filter: none !important;
+                -webkit-backdrop-filter: none !important;
+                background: rgba(13, 15, 36, 0.96) !important;
+            }
+            .glass-card {
+                padding: 24px 16px !important;
+                box-shadow: 0 10px 30px rgba(0,0,0,0.6) !important;
+                border-radius: 18px !important;
+            }
+            /* Sembunyikan canvas partikel di HP untuk hemat 100% GPU dan baterai */
+            #particle-canvas {
+                display: none !important;
+            }
+            body::before {
+                background-size: 35px 35px !important;
+                opacity: 0.5 !important;
+            }
             .quiz-header { flex-direction: column; align-items: flex-start; }
             .stats-row { width: 100%; justify-content: space-between; }
             .summary-cards { grid-template-columns: repeat(2, 1fr); }
             .home-logo { font-size: 3rem; }
-            .result-stats { gap: 10px; }
-            .result-stat { min-width: 80px; padding: 10px 14px; }
+            .result-stats { gap: 8px; }
+            .result-stat { min-width: 75px; padding: 8px 12px; }
             .setting-row { flex-direction: column; align-items: flex-start; }
         }
     </style>
@@ -2287,19 +2305,21 @@ function toggleReview() {
 }
 
 function shootConfetti() {
+    const isMobile = window.innerWidth < 768;
+    const count = isMobile ? 16 : 40;
     const colors = ['#8b5cf6', '#22d3ee', '#10b981', '#f59e0b', '#f43f5e', '#6366f1', '#ec4899'];
-    for (let i = 0; i < 120; i++) {
+    for (let i = 0; i < count; i++) {
         const el = document.createElement('div');
         el.className = 'confetti';
         el.style.left = Math.random() * 100 + 'vw';
         el.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
-        el.style.width = (Math.random() * 8 + 4) + 'px';
-        el.style.height = (Math.random() * 8 + 4) + 'px';
+        el.style.width = (Math.random() * 6 + 4) + 'px';
+        el.style.height = (Math.random() * 6 + 4) + 'px';
         el.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
-        el.style.animationDuration = (Math.random() * 2.5 + 2) + 's';
-        el.style.animationDelay = (Math.random() * 1.5) + 's';
+        el.style.animationDuration = (Math.random() * 1.5 + 1.2) + 's';
+        el.style.animationDelay = (Math.random() * 0.5) + 's';
         document.body.appendChild(el);
-        setTimeout(() => el.remove(), 5000);
+        setTimeout(() => el.remove(), 2200);
     }
 }
 
