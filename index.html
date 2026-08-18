@@ -526,6 +526,29 @@
             box-shadow: 0 0 20px rgba(244,63,94,0.2);
         }
 
+        .btn-delete-row {
+            background: rgba(244, 63, 94, 0.12);
+            border: 1px solid rgba(244, 63, 94, 0.35);
+            color: #fb7185;
+            border-radius: 8px;
+            padding: 5px 10px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            white-space: nowrap;
+        }
+        .btn-delete-row:hover {
+            background: rgba(244, 63, 94, 0.3);
+            border-color: var(--danger);
+            color: #fff;
+            transform: scale(1.05);
+            box-shadow: 0 0 12px rgba(244, 63, 94, 0.3);
+        }
+
         .case-study-box {
             background: linear-gradient(135deg, rgba(234,179,8,0.08), rgba(234,179,8,0.03));
             border-left: 4px solid var(--warning); border-radius: 0 14px 14px 0;
@@ -912,6 +935,28 @@
     </div>
 </div>
 
+<!-- Single Student Delete Confirmation Modal -->
+<div class="modal-overlay" id="delete-single-modal">
+    <div class="modal-box" style="border-color: rgba(244,63,94,0.4); box-shadow: 0 0 40px rgba(244,63,94,0.2);">
+        <div style="font-size: 2.8rem; margin-bottom: 8px;">👤🗑️</div>
+        <h3 style="color: var(--danger);">Hapus Nilai Siswa</h3>
+        <p style="color: var(--text-secondary); line-height: 1.5; margin-bottom: 16px;">
+            Apakah Anda yakin ingin menghapus data nilai siswa berikut dari sistem?
+        </p>
+        <div style="background: rgba(255,255,255,0.04); border: 1px solid var(--glass-border); padding: 12px 16px; border-radius: 12px; margin-bottom: 18px; text-align: left;">
+            <div style="font-weight: 800; font-size: 1.05rem; color: var(--accent);" id="del-student-name">-</div>
+            <div style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 4px;" id="del-student-info">-</div>
+        </div>
+        <p style="color: var(--danger); font-size: 0.8rem; margin-bottom: 20px;">
+            Nilai siswa ini akan dihapus secara permanen dari penyimpanan lokal & Cloud Supabase.
+        </p>
+        <div class="modal-actions">
+            <button class="btn btn-secondary" onclick="closeDeleteSingleModal()">Batal</button>
+            <button class="btn btn-danger" style="background: var(--danger); color: white;" onclick="confirmDeleteSingle()">Ya, Hapus Nilai Siswa 🗑️</button>
+        </div>
+    </div>
+</div>
+
 <!-- Toast Notification -->
 <div id="toast-msg" style="position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(100px); opacity: 0; background: rgba(15,15,40,0.95); border: 1px solid var(--accent); color: var(--text); padding: 14px 24px; border-radius: 14px; font-weight: 700; z-index: 9999; backdrop-filter: blur(20px); box-shadow: 0 10px 30px rgba(0,0,0,0.5); transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); pointer-events: none; display: flex; align-items: center; gap: 10px;"></div>
 
@@ -1155,6 +1200,7 @@
                             <th>Benar</th>
                             <th>Durasi</th>
                             <th>Waktu</th>
+                            <th style="text-align: center;">Aksi</th>
                         </tr>
                     </thead>
                     <tbody id="dash-tbody"></tbody>
@@ -2723,6 +2769,8 @@ function submitPin() {
     }
 }
 
+let targetDeleteRecord = null;
+
 function openDeleteModal() {
     sfxWrong();
     document.getElementById('delete-modal').classList.add('active');
@@ -2731,6 +2779,73 @@ function openDeleteModal() {
 function closeDeleteModal() {
     sfxClick();
     document.getElementById('delete-modal').classList.remove('active');
+}
+
+function openDeleteSingleModal(id, name, cls, timestamp, score) {
+    sfxWrong();
+    targetDeleteRecord = { id, name, cls, timestamp, score };
+    document.getElementById('del-student-name').textContent = name;
+    document.getElementById('del-student-info').textContent = `Kelas: ${cls || '-'} · Nilai: ${score} · KKM: 80 (${score >= 80 ? 'LULUS' : 'REMEDIAL'})`;
+    document.getElementById('delete-single-modal').classList.add('active');
+}
+
+function closeDeleteSingleModal() {
+    sfxClick();
+    targetDeleteRecord = null;
+    document.getElementById('delete-single-modal').classList.remove('active');
+}
+
+async function confirmDeleteSingle() {
+    if (!targetDeleteRecord) return;
+    const target = targetDeleteRecord;
+    closeDeleteSingleModal();
+
+    // 1. Hapus dari LocalStorage
+    let records = loadRecords();
+    records = records.filter(r => {
+        if (target.id && r.id && target.id == r.id) return false;
+        if (target.timestamp && r.timestamp && target.timestamp == r.timestamp && r.name === target.name) return false;
+        if (r.name === target.name && r.class === target.cls && r.score == target.score) return false;
+        return true;
+    });
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+
+    // 2. Hapus dari Cloud Supabase Real-Time Database
+    if (supabaseClient) {
+        try {
+            if (target.id) {
+                await supabaseClient.from('quiz_results').delete().eq('id', target.id);
+            } else {
+                await supabaseClient.from('quiz_results').delete()
+                    .eq('student_name', target.name)
+                    .eq('student_class', target.cls)
+                    .eq('score', target.score);
+            }
+        } catch (e) {
+            console.warn('Supabase delete error:', e);
+        }
+    }
+
+    // 3. Hapus dari MySQL Server Lokal (opsional jika aktif)
+    try {
+        await fetch('/api/scores', { 
+            method: 'DELETE',
+            headers: { 
+                'Content-Type': 'application/json',
+                'x-admin-pin': PIN_GURU 
+            },
+            body: JSON.stringify({ 
+                name: target.name, 
+                class: target.cls, 
+                timestamp: target.timestamp,
+                id: target.id 
+            })
+        });
+    } catch (e) {}
+
+    sfxWrong();
+    renderDashboard();
+    showToast(`Nilai siswa "${target.name}" berhasil dihapus!`, '🗑️');
 }
 
 async function confirmClearData() {
@@ -2834,7 +2949,7 @@ function renderDashboard() {
     tbody.innerHTML = '';
 
     if (records.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state"><div class="empty-icon">📭</div><p>Belum ada data siswa${filterClass !== 'all' ? ` kelas ${filterClass}` : ''}.<br>Data akan muncul otomatis setelah siswa menyelesaikan kuis.</p></div></td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="9"><div class="empty-state"><div class="empty-icon">📭</div><p>Belum ada data siswa${filterClass !== 'all' ? ` kelas ${filterClass}` : ''}.<br>Data akan muncul otomatis setelah siswa menyelesaikan kuis.</p></div></td></tr>`;
     } else {
         const sorted = [...records].sort((a, b) => b.score - a.score || (a.timestamp || 0) - (b.timestamp || 0));
         sorted.forEach((r, i) => {
@@ -2845,6 +2960,7 @@ function renderDashboard() {
             else if (r.score >= 60) pillClass = 'mid';
 
             const isPass = r.score >= 80;
+            const safeName = (r.name || '').replace(/'/g, "\\'");
 
             tr.innerHTML = `
                 <td style="font-family: var(--font-mono); color: var(--text-muted);">${i + 1}</td>
@@ -2855,6 +2971,11 @@ function renderDashboard() {
                 <td style="font-family: var(--font-mono);">${r.correct !== undefined ? r.correct : '-'}/${r.total || quizData.length}</td>
                 <td style="color: var(--text-muted); font-size: 0.85rem;">${r.duration || '-'}</td>
                 <td style="color: var(--text-muted); font-size: 0.8rem;">${r.time || '-'}<br><span style="font-size:0.7rem;">${r.date || ''}</span></td>
+                <td style="text-align: center;">
+                    <button class="btn-delete-row" title="Hapus nilai siswa ini" onclick="openDeleteSingleModal('${r.id || ''}', '${safeName}', '${r.class || ''}', ${r.timestamp || 0}, ${r.score || 0})">
+                        🗑️ Hapus
+                    </button>
+                </td>
             `;
             tbody.appendChild(tr);
         });
