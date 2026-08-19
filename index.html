@@ -1107,64 +1107,67 @@
 </div>
 
 <!-- Detailed Student Answers Examination Modal -->
-<div class="modal-overlay" id="student-detail-modal" style="align-items: flex-start; padding: 20px 10px; overflow-y: auto;">
-    <div class="modal-box" style="max-width: 820px; width: 100%; max-height: 90vh; display: flex; flex-direction: column; text-align: left; padding: 24px; border-color: rgba(139,92,246,0.4); box-shadow: 0 0 50px rgba(139,92,246,0.25); margin: auto;">
-        <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px solid var(--glass-border); padding-bottom: 14px; margin-bottom: 16px; gap: 10px;">
+<div class="modal-overlay" id="student-detail-modal" style="z-index: 99999; padding: 12px; background: rgba(5, 5, 20, 0.88); backdrop-filter: blur(16px); align-items: center; justify-content: center;">
+    <div class="modal-box" style="max-width: 860px; width: 100%; max-height: 92vh; height: 92vh; display: flex; flex-direction: column; text-align: left; padding: 20px 24px; border-color: rgba(139,92,246,0.4); box-shadow: 0 0 50px rgba(139,92,246,0.25); margin: auto; overflow: hidden; border-radius: 18px;">
+        
+        <!-- Header (Fixed Top) -->
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--glass-border); padding-bottom: 12px; margin-bottom: 12px; gap: 10px; flex-shrink: 0;">
             <div>
-                <h3 style="margin: 0; color: var(--accent); font-size: 1.25rem; display: flex; align-items: center; gap: 8px;">
+                <h3 style="margin: 0; color: var(--accent); font-size: 1.2rem; display: flex; align-items: center; gap: 8px;">
                     <span>📋 Lembar Jawaban & Analisis Kesalahan Siswa</span>
                 </h3>
-                <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 4px;" id="sd-header-subtitle">
+                <div style="font-size: 0.82rem; color: var(--text-muted); margin-top: 2px;" id="sd-header-subtitle">
                     Memeriksa butir soal dan jawaban pilihan siswa
                 </div>
             </div>
-            <button class="btn btn-secondary" onclick="closeStudentDetailModal()" style="padding: 6px 12px; font-size: 0.85rem;">✕ Tutup</button>
+            <button class="btn btn-secondary" onclick="closeStudentDetailModal()" style="padding: 6px 14px; font-size: 0.85rem; border-radius: 8px;">✕ Tutup</button>
         </div>
 
-        <!-- Student summary banner -->
-        <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border); border-radius: 14px; padding: 14px 18px; margin-bottom: 16px; display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px;" id="sd-summary-grid">
+        <!-- Student summary banner (Fixed Top) -->
+        <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border); border-radius: 12px; padding: 10px 14px; margin-bottom: 10px; display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 8px; flex-shrink: 0;" id="sd-summary-grid">
             <!-- Filled via JS -->
         </div>
 
-        <!-- Filter tabs: Semua (20), Salah (N), Benar (M) -->
-        <div style="display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap;">
-            <button class="btn btn-secondary active access-mode-btn" id="sd-tab-all" onclick="filterStudentDetail('all')">
+        <!-- Filter tabs: Semua (20), Salah (N), Benar (M) (Fixed Top) -->
+        <div style="display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; flex-shrink: 0;">
+            <button class="btn btn-secondary active access-mode-btn" id="sd-tab-all" onclick="filterStudentDetail('all')" style="padding: 6px 12px !important; font-size: 0.78rem !important;">
                 📑 Semua Soal (<span id="sd-count-all">20</span>)
             </button>
-            <button class="btn btn-secondary access-mode-btn" id="sd-tab-wrong" onclick="filterStudentDetail('wrong')" style="color: #fb7185; border-color: rgba(244,63,94,0.35);">
+            <button class="btn btn-secondary access-mode-btn" id="sd-tab-wrong" onclick="filterStudentDetail('wrong')" style="color: #fb7185; border-color: rgba(244,63,94,0.35); padding: 6px 12px !important; font-size: 0.78rem !important;">
                 ❌ Hanya Soal Salah (<span id="sd-count-wrong">0</span>)
             </button>
-            <button class="btn btn-secondary access-mode-btn" id="sd-tab-correct" onclick="filterStudentDetail('correct')" style="color: #34d399; border-color: rgba(16,185,129,0.35);">
+            <button class="btn btn-secondary access-mode-btn" id="sd-tab-correct" onclick="filterStudentDetail('correct')" style="color: #34d399; border-color: rgba(16,185,129,0.35); padding: 6px 12px !important; font-size: 0.78rem !important;">
                 ✅ Hanya Soal Benar (<span id="sd-count-correct">0</span>)
             </button>
         </div>
 
-        <!-- Quick Question Number Matrix Navigator (20 Pills) -->
-        <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--glass-border); border-radius: 12px; padding: 10px 14px; margin-bottom: 14px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 6px;">
-                <span style="font-size: 0.74rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px;">
-                    🎯 Peta 20 Soal Siswa (Klik nomor untuk lompat langsung ke butir soal):
+        <!-- Quick Question Number Matrix Navigator (Fixed Top) -->
+        <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--glass-border); border-radius: 10px; padding: 8px 12px; margin-bottom: 12px; flex-shrink: 0;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; flex-wrap: wrap; gap: 6px;">
+                <span style="font-size: 0.72rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px;">
+                    🎯 Peta 20 Soal Siswa (Klik nomor untuk lompat langsung):
                 </span>
-                <div style="display: flex; gap: 10px; font-size: 0.75rem; font-weight: 700;">
+                <div style="display: flex; gap: 10px; font-size: 0.74rem; font-weight: 700;">
                     <span style="color: var(--success);">🟢 Benar (<span id="sd-nav-correct-count">0</span>)</span>
                     <span style="color: var(--danger);">🔴 Salah (<span id="sd-nav-wrong-count">0</span>)</span>
                 </div>
             </div>
-            <div id="sd-nav-grid" style="display: flex; flex-wrap: wrap; gap: 6px;">
+            <div id="sd-nav-grid" style="display: flex; flex-wrap: wrap; gap: 5px; max-height: 70px; overflow-y: auto;">
                 <!-- 20 pills rendered via JS -->
             </div>
         </div>
 
-        <!-- Scrollable Questions List -->
-        <div id="sd-questions-list" style="overflow-y: auto; flex: 1; padding-right: 6px; display: flex; flex-direction: column; gap: 14px; max-height: 48vh;">
+        <!-- Scrollable Questions List (Flexible Scroll Area) -->
+        <div id="sd-questions-list" style="overflow-y: auto; flex: 1 1 auto; min-height: 0; padding-right: 6px; display: flex; flex-direction: column; gap: 12px;">
             <!-- Questions rendered via JS -->
         </div>
 
-        <div style="border-top: 1px solid var(--glass-border); padding-top: 14px; margin-top: 16px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
-            <div style="font-size: 0.8rem; color: var(--text-muted);">
+        <!-- Footer (Fixed Bottom) -->
+        <div style="border-top: 1px solid var(--glass-border); padding-top: 10px; margin-top: 10px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; flex-shrink: 0;">
+            <div style="font-size: 0.78rem; color: var(--text-muted);">
                 💡 Menampilkan ringkasan lengkap jawaban benar dan salah dari seluruh butir soal.
             </div>
-            <button class="btn btn-accent" onclick="closeStudentDetailModal()" style="padding: 8px 20px;">Selesai Memeriksa ✔️</button>
+            <button class="btn btn-accent" onclick="closeStudentDetailModal()" style="padding: 7px 18px; font-size: 0.85rem;">Selesai Memeriksa ✔️</button>
         </div>
     </div>
 </div>
@@ -3713,13 +3716,18 @@ function reconstructStudentAnswers(record) {
     });
 }
 
-function openStudentDetailModal(recordIdx) {
+function openStudentDetailModal(recordOrIdx) {
     sfxClick();
-    const allRecords = loadRecords();
-    const filterClass = document.getElementById('filter-class').value;
-    const records = filterClass === 'all' ? allRecords : allRecords.filter(r => r.class === filterClass);
-    const sorted = [...records].sort((a, b) => b.score - a.score || (a.timestamp || 0) - (b.timestamp || 0));
-    const record = sorted[recordIdx];
+    let record = null;
+    if (typeof recordOrIdx === 'object' && recordOrIdx !== null) {
+        record = recordOrIdx;
+    } else {
+        const allRecords = loadRecords();
+        const filterClass = document.getElementById('filter-class').value;
+        const records = filterClass === 'all' ? allRecords : allRecords.filter(r => r.class === filterClass);
+        const sorted = [...records].sort((a, b) => b.score - a.score || (a.timestamp || 0) - (b.timestamp || 0));
+        record = sorted[recordOrIdx];
+    }
     if (!record) return;
 
     currentExaminedRecord = record;
