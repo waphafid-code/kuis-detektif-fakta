@@ -1058,6 +1058,54 @@
     </div>
 </div>
 
+<!-- Anti-Cheat Penalty Modal (Siren & Immediate Disqualification) -->
+<div class="modal-overlay" id="cheat-modal" style="background: rgba(15, 0, 5, 0.96); z-index: 100000;">
+    <div class="modal-box" style="border-color: var(--danger); box-shadow: 0 0 80px rgba(244,63,94,0.7); max-width: 520px; animation: pulseGlow 1s infinite alternate;">
+        <div style="font-size: 3.8rem; margin-bottom: 8px;">🚨⚠️</div>
+        <h2 style="color: var(--danger); font-size: 1.35rem; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px;">
+            Pelanggaran Anti-Cheating Terdeteksi!
+        </h2>
+        <div style="background: rgba(244,63,94,0.12); border: 1px solid rgba(244,63,94,0.4); border-radius: 12px; padding: 14px 18px; margin-bottom: 16px; text-align: left;">
+            <p style="color: #fda4af; font-size: 0.88rem; line-height: 1.5; margin: 0;">
+                Sistem mendeteksi Anda <strong>berpindah tab, meminimalkan jendela, atau keluar dari aplikasi browser</strong> (diduga membuka AI / sumber lain).
+            </p>
+        </div>
+        <div style="background: rgba(255,255,255,0.04); border: 1px solid var(--glass-border); border-radius: 12px; padding: 12px 16px; margin-bottom: 18px; text-align: left; font-size: 0.82rem; color: var(--text-secondary);">
+            <div style="color: var(--danger); font-weight: 800; font-size: 0.9rem; margin-bottom: 4px;">SANKSI UJIAN:</div>
+            <div>• Seluruh jawaban yang telah dipilih <strong>dibatalkan & dihapus</strong>.</div>
+            <div>• Status Hasil: <span class="kkm-pill remedial" style="font-size: 0.7rem; padding: 2px 6px;">DISKUALIFIKASI (SKOR 0 - REMEDIAL)</span></div>
+            <div>• Pelanggaran telah dicatat di Dasbor Guru secara real-time.</div>
+        </div>
+        <div class="modal-actions" style="justify-content: center;">
+            <button class="btn btn-danger" style="background: var(--danger); color: white; padding: 10px 24px; font-weight: 800;" onclick="acknowledgeCheatPenalty()">
+                Saya Mengerti & Keluar
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Resume Unfinished Quiz Modal (Refresh Protection) -->
+<div class="modal-overlay" id="resume-modal" style="z-index: 99999;">
+    <div class="modal-box" style="border-color: rgba(34,211,238,0.5); box-shadow: 0 0 40px rgba(34,211,238,0.25); max-width: 480px;">
+        <div style="font-size: 3rem; margin-bottom: 8px;">💾🔄</div>
+        <h3 style="color: var(--accent); margin-bottom: 8px;">Lanjutkan Sesi Kuis Anda?</h3>
+        <p style="color: var(--text-secondary); line-height: 1.5; margin-bottom: 14px; font-size: 0.9rem;">
+            Sistem mendeteksi Anda memuat ulang halaman saat kuis berlangsung:
+        </p>
+        <div style="background: rgba(34,211,238,0.08); border: 1px solid rgba(34,211,238,0.3); border-radius: 12px; padding: 12px 16px; margin-bottom: 16px; text-align: left;">
+            <div style="font-weight: 800; color: var(--accent); font-size: 1rem;" id="resume-student-name">-</div>
+            <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 4px;" id="resume-student-info">-</div>
+        </div>
+        <p style="font-size: 0.82rem; color: #34d399; margin-bottom: 20px;">
+            ✅ Seluruh jawaban dan skor Anda sebelumnya tetap tersimpan aman!
+        </p>
+        <div class="modal-actions" style="gap: 10px;">
+            <button class="btn btn-secondary" onclick="discardQuizSession()">Mulai Baru 🔄</button>
+            <button class="btn btn-primary" onclick="restoreQuizSession()">▶️ Lanjutkan Kuis</button>
+        </div>
+    </div>
+</div>
+
 <!-- Detailed Student Answers Examination Modal -->
 <div class="modal-overlay" id="student-detail-modal" style="align-items: flex-start; padding: 20px 10px; overflow-y: auto;">
     <div class="modal-box" style="max-width: 820px; width: 100%; max-height: 90vh; display: flex; flex-direction: column; text-align: left; padding: 24px; border-color: rgba(139,92,246,0.4); box-shadow: 0 0 50px rgba(139,92,246,0.25); margin: auto;">
@@ -2015,6 +2063,31 @@ function sfxStreakCombo(lvl) {
     });
 }
 
+// 🚨 Loud Siren Alarm Synthesizer for Anti-Cheat Violation
+let alarmSirenTimer = null;
+function sfxAlarm() {
+    if (!actx) initAudio();
+    if (isMuted || !actx) return;
+    if (alarmSirenTimer) clearInterval(alarmSirenTimer);
+    let up = true;
+    let freq = 700;
+    
+    // First burst
+    tone(900, 'sawtooth', 0.4, 0.35, 450);
+    let cycles = 0;
+    alarmSirenTimer = setInterval(() => {
+        cycles++;
+        if (freq >= 1350) up = false;
+        if (freq <= 550) up = true;
+        freq += up ? 200 : -200;
+        tone(freq, 'sawtooth', 0.14, 0.3, null, 0, 3000);
+        if (cycles > 28) {
+            clearInterval(alarmSirenTimer);
+            alarmSirenTimer = null;
+        }
+    }, 110);
+}
+
 // 🎼 Lush Chill-Pop / Lo-Fi Study Chords (Cmaj7 -> Am7 -> Dm7 -> G7)
 const LUSH_CHORDS = [
     { bass: 130.81, notes: [261.63, 329.63, 392.00, 493.88], melody: [523.25, 659.25, 587.33, 493.88] }, // Cmaj7
@@ -2471,8 +2544,154 @@ function spawnRandomEmojis(emoji, count) {
 }
 
 // ============================================================
-//  🚀 QUIZ FLOW (DENGAN SOAL & PILIHAN DIACAK)
+//  🚀 QUIZ FLOW & ANTI-CHEAT SYSTEM (LENGKAP DENGAN RESTORE SESI)
 // ============================================================
+const SESSION_QUIZ_ACTIVE_KEY = 'detektif_active_session_v2';
+let isCheatingTriggered = false;
+
+function saveCurrentQuizSession() {
+    if (!screens.quiz || !screens.quiz.classList.contains('active') || isCheatingTriggered) return;
+    try {
+        const sessionData = {
+            studentName,
+            studentClass,
+            currentQ,
+            score,
+            streak,
+            maxStreak,
+            answeredCorrectly,
+            detailedAnswers,
+            shuffledQuizOrder,
+            quizStartTime,
+            TIMER_MAX
+        };
+        sessionStorage.setItem(SESSION_QUIZ_ACTIVE_KEY, JSON.stringify(sessionData));
+    } catch(e) {}
+}
+
+function checkUnfinishedSession() {
+    try {
+        const raw = sessionStorage.getItem(SESSION_QUIZ_ACTIVE_KEY);
+        if (!raw) return;
+        const data = JSON.parse(raw);
+        if (data && data.studentName && data.shuffledQuizOrder && data.shuffledQuizOrder.length > 0) {
+            document.getElementById('resume-student-name').textContent = data.studentName;
+            document.getElementById('resume-student-info').textContent = `Kelas: ${data.studentClass || '-'} · Sedang di Soal #${(data.currentQ || 0) + 1} dari ${quizData.length} (Skor: ${data.score || 0})`;
+            document.getElementById('resume-modal').classList.add('active');
+        }
+    } catch(e) {}
+}
+
+function restoreQuizSession() {
+    sfxClick();
+    document.getElementById('resume-modal').classList.remove('active');
+    try {
+        const raw = sessionStorage.getItem(SESSION_QUIZ_ACTIVE_KEY);
+        if (!raw) return;
+        const data = JSON.parse(raw);
+        initAudio();
+
+        studentName = data.studentName;
+        studentClass = data.studentClass;
+        currentQ = data.currentQ || 0;
+        score = data.score || 0;
+        streak = data.streak || 0;
+        maxStreak = data.maxStreak || 0;
+        answeredCorrectly = data.answeredCorrectly || new Array(quizData.length).fill(null);
+        detailedAnswers = data.detailedAnswers || new Array(quizData.length).fill(null);
+        shuffledQuizOrder = data.shuffledQuizOrder;
+        quizStartTime = data.quizStartTime || Date.now();
+        TIMER_MAX = data.TIMER_MAX !== undefined ? data.TIMER_MAX : loadTimerSetting();
+
+        document.getElementById('display-name').textContent = studentName;
+        document.getElementById('display-class').textContent = studentClass;
+
+        switchScreen('quiz');
+        loadQuestion(currentQ);
+        setTimeout(startBGM, 200);
+        showToast('Sesi kuis berhasil dipulihkan! Lanjutkan misi!', '🚀');
+    } catch(e) {
+        discardQuizSession();
+    }
+}
+
+function discardQuizSession() {
+    sfxClick();
+    sessionStorage.removeItem(SESSION_QUIZ_ACTIVE_KEY);
+    document.getElementById('resume-modal').classList.remove('active');
+    goHome();
+}
+
+// 🚨 Anti-Cheating Handler (Tab Switch / Window Blur Detection)
+function triggerCheatPenalty() {
+    if (isCheatingTriggered) return;
+    if (!screens.quiz || !screens.quiz.classList.contains('active')) return;
+
+    isCheatingTriggered = true;
+    stopTimer();
+    stopBGM();
+    sfxAlarm();
+
+    // Hapus sesi aktif agar tidak bisa dipulihkan kembali
+    sessionStorage.removeItem(SESSION_QUIZ_ACTIVE_KEY);
+
+    // Simpan rekap diskualifikasi ke database / localstorage
+    const now = new Date();
+    const clockStr = `${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')} WIB`;
+    const cheatRecord = {
+        name: studentName,
+        class: studentClass,
+        score: 0,
+        correct: 0,
+        total: quizData.length,
+        wrongQuestions: quizData.map((_, i) => i),
+        detailedAnswers: [],
+        statusNote: '🚨 DISKUALIFIKASI (Kecurangan / Buka Tab Lain)',
+        isCheated: true,
+        time: clockStr,
+        duration: 'Diskualifikasi',
+        date: now.toLocaleDateString('id-ID'),
+        timestamp: now.getTime()
+    };
+    saveRecord(cheatRecord);
+
+    document.getElementById('cheat-modal').classList.add('active');
+}
+
+function acknowledgeCheatPenalty() {
+    document.getElementById('cheat-modal').classList.remove('active');
+    isCheatingTriggered = false;
+    goHome();
+}
+
+// 👁️ DETEKSI PERPINDAHAN TAB / KELUAR DARI BROWSER (ANTI-CHEAT)
+document.addEventListener('visibilitychange', () => {
+    if (document.hidden && screens.quiz && screens.quiz.classList.contains('active') && !isCheatingTriggered) {
+        triggerCheatPenalty();
+    }
+});
+
+window.addEventListener('blur', () => {
+    if (screens.quiz && screens.quiz.classList.contains('active') && !isCheatingTriggered) {
+        setTimeout(() => {
+            if (document.hidden && screens.quiz && screens.quiz.classList.contains('active') && !isCheatingTriggered) {
+                triggerCheatPenalty();
+            }
+        }, 300);
+    }
+});
+
+// 🛡️ 2 TAHAP VERIFIKASI SAAT REFRESH / MENINGGALKAN HALAMAN
+window.addEventListener('beforeunload', (e) => {
+    if (screens.quiz && screens.quiz.classList.contains('active') && !isCheatingTriggered) {
+        saveCurrentQuizSession();
+        const confirmationMessage = 'PERINGATAN: Kuis sedang berlangsung! Jawaban Anda akan disimpan di sesi ini, namun pastikan tidak meninggalkan kuis tanpa izin guru.';
+        e.preventDefault();
+        e.returnValue = confirmationMessage;
+        return confirmationMessage;
+    }
+});
+
 function initiateQuiz() {
     const name = document.getElementById('input-name').value.trim();
     const cls = document.getElementById('input-class').value;
@@ -2515,6 +2734,7 @@ function initiateQuiz() {
     score = 0;
     streak = 0;
     maxStreak = 0;
+    isCheatingTriggered = false;
 
     const indices = Array.from({ length: quizData.length }, (_, i) => i);
     shuffledQuizOrder = shuffleArray(indices).map(item => item.val);
@@ -2563,15 +2783,13 @@ function runCountdown() {
 }
 
 function startQuizActual() {
-    window.onbeforeunload = (e) => {
-        e.preventDefault();
-        return 'Kuis sedang berlangsung. Apakah Anda yakin ingin keluar? Progres Anda akan hilang.';
-    };
+    isCheatingTriggered = false;
     document.getElementById('display-name').textContent = studentName;
     document.getElementById('display-class').textContent = studentClass;
     quizStartTime = Date.now();
     switchScreen('quiz');
     loadQuestion(0);
+    saveCurrentQuizSession();
     setTimeout(startBGM, 200);
 }
 
@@ -2789,6 +3007,7 @@ function loadQuestion(index) {
     });
 
     startTimer();
+    saveCurrentQuizSession();
 }
 
 function checkAnswer(isAutoTimeout = false) {
@@ -2916,6 +3135,7 @@ function checkAnswer(isAutoTimeout = false) {
 
     document.getElementById('btn-check').style.display = 'none';
     document.getElementById('btn-next').style.display = 'inline-flex';
+    saveCurrentQuizSession();
 }
 
 function nextQuestion() {
@@ -2933,6 +3153,7 @@ function nextQuestion() {
 
 function finishQuiz() {
     window.onbeforeunload = null;
+    sessionStorage.removeItem(SESSION_QUIZ_ACTIVE_KEY);
     stopBGM();
     stopTimer();
     switchScreen('result');
@@ -3846,15 +4067,23 @@ function renderDashboard() {
             if (r.score >= 80) pillClass = 'high';
             else if (r.score >= 60) pillClass = 'mid';
 
-            const isPass = r.score >= 80;
+            const isPass = r.score >= 80 && !r.isCheated;
             const safeName = (r.name || '').replace(/'/g, "\\'");
+
+            const scoreDisplay = r.isCheated 
+                ? `<span class="score-pill low" style="background: rgba(244,63,94,0.25); border-color: var(--danger); color: #fff;">0 🚨</span>` 
+                : `<span class="score-pill ${pillClass}">${r.score}</span>`;
+
+            const statusDisplay = r.isCheated
+                ? `<span class="kkm-pill remedial" style="background: var(--danger); color: white; font-weight: 800;" title="${r.statusNote || 'Kecurangan / Berpindah Tab'}">🚨 DISKUALIFIKASI (CURANG)</span>`
+                : `<span class="kkm-pill ${isPass ? 'passed' : 'remedial'}">${isPass ? 'LULUS' : 'REMEDIAL'}</span>`;
 
             tr.innerHTML = `
                 <td style="font-family: var(--font-mono); color: var(--text-muted);">${i + 1}</td>
                 <td style="font-weight: 700;">${r.name}</td>
                 <td><span style="font-family: var(--font-mono); color: var(--accent); font-size: 0.85rem;">${r.class || '-'}</span></td>
-                <td><span class="score-pill ${pillClass}">${r.score}</span></td>
-                <td><span class="kkm-pill ${isPass ? 'passed' : 'remedial'}">${isPass ? 'LULUS' : 'REMEDIAL'}</span></td>
+                <td>${scoreDisplay}</td>
+                <td>${statusDisplay}</td>
                 <td style="font-family: var(--font-mono);">${r.correct !== undefined ? r.correct : '-'}/${r.total || quizData.length}</td>
                 <td style="color: var(--text-muted); font-size: 0.85rem;">${r.duration || '-'}</td>
                 <td style="color: var(--text-muted); font-size: 0.8rem;">${r.time || '-'}<br><span style="font-size:0.7rem;">${r.date || ''}</span></td>
@@ -4692,6 +4921,7 @@ window.addEventListener('DOMContentLoaded', () => {
     TIMER_MAX = loadTimerSetting();
     checkBackendStatus();
     switchScreen('home');
+    checkUnfinishedSession();
 });
 
 document.addEventListener('keydown', (e) => {
