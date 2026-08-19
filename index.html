@@ -1072,20 +1072,20 @@
     </div>
 </div>
 
-<!-- Class Access Locked Modal (Jadwal Buk RINI) -->
+<!-- Class Access Locked Modal (Jadwal RINI SYAFITRI) -->
 <div class="modal-overlay" id="access-locked-modal">
     <div class="modal-box" style="border-color: rgba(234,179,8,0.4); box-shadow: 0 0 40px rgba(234,179,8,0.25); max-width: 480px;">
         <div style="font-size: 3rem; margin-bottom: 6px;">🔒🕒</div>
         <h3 style="color: #facc15; margin-bottom: 8px;">Akses Kuis Belum Dibuka</h3>
         <p style="color: var(--text-secondary); line-height: 1.5; margin-bottom: 14px; font-size: 0.92rem;">
-            Kuis ini diatur khusus sesuai jam pelajaran guru pamong:<br>
-            <strong style="color: var(--text); font-size: 1rem;">👩‍🏫 Guru Pamong: BUK RINI</strong>
+            Kuis ini hanya dapat diakses pada jam mata pelajaran:<br>
+            <strong style="color: var(--text); font-size: 1.05rem;">👩‍🏫 Guru Mata Pelajaran: RINI SYAFITRI</strong>
         </p>
 
         <div style="background: rgba(234,179,8,0.08); border: 1px solid rgba(234,179,8,0.3); border-radius: 12px; padding: 14px 16px; margin-bottom: 16px; text-align: left;">
             <div style="font-weight: 800; color: #facc15; font-size: 0.95rem;" id="locked-class-name">Kelas -</div>
             <div style="font-size: 0.85rem; color: #fef08a; margin-top: 4px; line-height: 1.4;" id="locked-class-schedule">
-                Jadwal Resmi Buk Rini: -
+                Jadwal Resmi Mata Pelajaran (Rini Syafitri): -
             </div>
             <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 8px; border-top: 1px dashed rgba(234,179,8,0.2); padding-top: 6px;" id="locked-current-time">
                 Waktu Saat Ini: -
@@ -1093,12 +1093,11 @@
         </div>
 
         <p style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 20px; line-height: 1.45;">
-            💡 <em>Jika Anda sedang di kelas dan telah diinstruksikan oleh guru untuk mulai, mintalah guru membuka kuis melalui Dasbor Guru.</em>
+            💡 <em>Akses pengerjaan kuis akan terbuka secara otomatis tepat pada jam pelajaran guru mata pelajaran dimulai.</em>
         </p>
 
-        <div class="modal-actions" style="justify-content: center; gap: 10px;">
-            <button class="btn btn-secondary" onclick="closeAccessLockedModal()">Mengerti 👍</button>
-            <button class="btn btn-primary" onclick="closeAccessLockedModal(); openPinModal();">Akses Guru 🔐</button>
+        <div class="modal-actions" style="justify-content: center;">
+            <button class="btn btn-secondary" onclick="closeAccessLockedModal()" style="padding: 10px 32px; font-weight: 700; min-width: 140px;">Kembali 🔙</button>
         </div>
     </div>
 </div>
@@ -1111,15 +1110,18 @@
             Pelanggaran Anti-Cheating Terdeteksi!
         </h2>
         <div style="background: rgba(244,63,94,0.12); border: 1px solid rgba(244,63,94,0.4); border-radius: 12px; padding: 14px 18px; margin-bottom: 16px; text-align: left;">
-            <p style="color: #fda4af; font-size: 0.88rem; line-height: 1.5; margin: 0;">
-                Sistem mendeteksi Anda <strong>berpindah tab, meminimalkan jendela, atau keluar dari aplikasi browser</strong> (diduga membuka AI / sumber lain).
+            <div style="font-weight: 800; color: #fb7185; margin-bottom: 6px; font-size: 0.95rem;" id="cheat-detected-reason">
+                Penyebab: Kecurangan Terdeteksi
+            </div>
+            <p style="color: #fda4af; font-size: 0.85rem; line-height: 1.5; margin: 0;">
+                Sistem mendeteksi aktivitas terlarang (Screenshot / Copy-Paste / Split Screen / Berpindah Tab / Keluar Browser).
             </p>
         </div>
         <div style="background: rgba(255,255,255,0.04); border: 1px solid var(--glass-border); border-radius: 12px; padding: 12px 16px; margin-bottom: 18px; text-align: left; font-size: 0.82rem; color: var(--text-secondary);">
             <div style="color: var(--danger); font-weight: 800; font-size: 0.9rem; margin-bottom: 4px;">SANKSI UJIAN:</div>
             <div>• Seluruh jawaban yang telah dipilih <strong>dibatalkan & dihapus</strong>.</div>
             <div>• Status Hasil: <span class="kkm-pill remedial" style="font-size: 0.7rem; padding: 2px 6px;">DISKUALIFIKASI (SKOR 0 - REMEDIAL)</span></div>
-            <div>• Pelanggaran telah dicatat di Dasbor Guru secara real-time.</div>
+            <div>• Pelanggaran & jenis kecurangan telah dicatat di Dasbor Guru secara real-time.</div>
         </div>
         <div class="modal-actions" style="justify-content: center;">
             <button class="btn btn-danger" style="background: var(--danger); color: white; padding: 10px 24px; font-weight: 800;" onclick="acknowledgeCheatPenalty()">
@@ -1398,11 +1400,11 @@
                 </div>
             </div>
 
-            <!-- SCHEDULE & ACCESS CONTROL PANEL (BUK RINI) -->
+            <!-- SCHEDULE & ACCESS CONTROL PANEL (RINI SYAFITRI) -->
             <div class="settings-panel" style="margin-bottom: 24px; border: 1px solid rgba(139,92,246,0.35); background: linear-gradient(135deg, rgba(139,92,246,0.07), rgba(34,211,238,0.03)); border-radius: 16px; padding: 18px 20px;">
                 <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 12px;">
                     <h4 style="margin: 0; color: var(--accent); display: flex; align-items: center; gap: 8px; font-size: 0.95rem;">
-                        <span>🕒 Kontrol Jadwal & Akses Kuis (Guru Pamong: Buk RINI)</span>
+                        <span>🕒 Kontrol Jadwal & Akses Kuis (Guru Mata Pelajaran: RINI SYAFITRI)</span>
                     </h4>
                     <span class="setting-saved" id="access-saved-msg" style="display:none; color: var(--success); font-weight: 700; font-size: 0.8rem;">✅ Pengaturan Akses Tersimpan!</span>
                 </div>
@@ -1417,7 +1419,7 @@
                             🟢 Buka Sekarang (Semua Kelas)
                         </button>
                         <button class="btn btn-secondary access-mode-btn" id="btn-mode-auto" onclick="setAccessMode('auto')">
-                            🕒 Otomatis (Jadwal Buk RINI)
+                            🕒 Otomatis (Jadwal RINI SYAFITRI)
                         </button>
                         <button class="btn btn-secondary access-mode-btn" id="btn-mode-manual" onclick="setAccessMode('manual')">
                             🎛️ Manual Per Kelas
@@ -1891,9 +1893,9 @@ try {
     console.warn('Supabase init error:', err);
 }
 
-// 🕒 JADWAL MENGAJAR RESMI GURU PAMONG (BUK RINI)
+// 🕒 JADWAL MENGAJAR RESMI GURU MATA PELAJARAN (RINI SYAFITRI)
 // 0: Minggu, 1: Senin, 2: Selasa, 3: Rabu, 4: Kamis, 5: Jumat, 6: Sabtu
-const SCHEDULE_BUK_RINI = {
+const SCHEDULE_RINI_SYAFITRI = {
     'X E 1': { day: 1, dayName: 'Senin', start: '08:35', end: '09:25', period: 'Jam ke 4 - 5' },
     'X E 2': { day: 1, dayName: 'Senin', start: '10:35', end: '11:25', period: 'Jam ke 8 - 9' },
     'X E 6': { day: 3, dayName: 'Rabu',  start: '10:50', end: '11:50', period: 'Jam ke 8 - 9' },
@@ -1901,7 +1903,7 @@ const SCHEDULE_BUK_RINI = {
     'X E 5': { day: 5, dayName: 'Jumat', start: '07:00', end: '08:10', period: 'Jam ke 1 - 2' },
     'X E 4': { day: 5, dayName: 'Jumat', start: '09:20', end: '10:50', period: 'Jam ke 5 - 6' }
 };
-
+const SCHEDULE_BUK_RINI = SCHEDULE_RINI_SYAFITRI;
 const ACCESS_SETTINGS_KEY = 'detektif_fakta_access_control';
 
 let TIMER_MAX = 30;
@@ -2111,9 +2113,9 @@ function sfxStreakCombo(lvl) {
     });
 }
 
-// 🚨 Loud Siren Alarm Synthesizer for Anti-Cheat Violation
+// 🚨 Loud Siren Alarm Synthesizer for Anti-Cheat Violation (20 Detik)
 let alarmSirenTimer = null;
-function sfxAlarm() {
+function sfxAlarm(durationSec = 20) {
     if (!actx) initAudio();
     if (isMuted || !actx) return;
     if (alarmSirenTimer) clearInterval(alarmSirenTimer);
@@ -2121,19 +2123,38 @@ function sfxAlarm() {
     let freq = 700;
     
     // First burst
-    tone(900, 'sawtooth', 0.4, 0.35, 450);
-    let cycles = 0;
+    tone(950, 'sawtooth', 0.5, 0.45, 450);
+    const startTime = Date.now();
     alarmSirenTimer = setInterval(() => {
-        cycles++;
-        if (freq >= 1350) up = false;
-        if (freq <= 550) up = true;
-        freq += up ? 200 : -200;
-        tone(freq, 'sawtooth', 0.14, 0.3, null, 0, 3000);
-        if (cycles > 28) {
+        if (Date.now() - startTime >= durationSec * 1000) {
             clearInterval(alarmSirenTimer);
             alarmSirenTimer = null;
+            return;
         }
+        if (freq >= 1400) up = false;
+        if (freq <= 500) up = true;
+        freq += up ? 200 : -200;
+        tone(freq, 'sawtooth', 0.15, 0.38, null, 0, 3500);
     }, 110);
+}
+
+// 📳 Getar Kencang HP Android 20 Detik saat Terdeteksi Curang
+let cheatVibrationTimer = null;
+function startCheatVibration(durationSec = 20) {
+    if ('vibrate' in navigator) {
+        if (cheatVibrationTimer) clearInterval(cheatVibrationTimer);
+        const startTime = Date.now();
+        try { navigator.vibrate([600, 200, 600, 200, 600, 200]); } catch(e) {}
+        cheatVibrationTimer = setInterval(() => {
+            if (Date.now() - startTime >= durationSec * 1000) {
+                clearInterval(cheatVibrationTimer);
+                cheatVibrationTimer = null;
+                try { navigator.vibrate(0); } catch(e) {}
+                return;
+            }
+            try { navigator.vibrate([600, 200, 600, 200, 600, 200]); } catch(e) {}
+        }, 1600);
+    }
 }
 
 // 🎼 Lush Chill-Pop / Lo-Fi Study Chords (Cmaj7 -> Am7 -> Dm7 -> G7)
@@ -2670,18 +2691,32 @@ function discardQuizSession() {
     goHome();
 }
 
-// 🚨 Anti-Cheating Handler (Tab Switch / Window Blur Detection)
-function triggerCheatPenalty() {
+let initialQuizWidth = 0;
+let initialQuizHeight = 0;
+
+function isQuizActive() {
+    return screens.quiz && screens.quiz.classList.contains('active') && !isCheatingTriggered;
+}
+
+// 🚨 Anti-Cheating Handler (Multi-Detection: Screenshot, Copy-Paste, Split Screen, Tab Switch)
+function triggerCheatPenalty(reason = 'Kecurangan / Buka Tab Lain') {
     if (isCheatingTriggered) return;
     if (!screens.quiz || !screens.quiz.classList.contains('active')) return;
 
     isCheatingTriggered = true;
     stopTimer();
     stopBGM();
-    sfxAlarm();
+    
+    // 🔊 Alarm Keras 20 Detik & 📳 Getar Kencang HP Android 20 Detik
+    sfxAlarm(20);
+    startCheatVibration(20);
 
     // Hapus sesi aktif agar tidak bisa dipulihkan kembali
     sessionStorage.removeItem(SESSION_QUIZ_ACTIVE_KEY);
+
+    // Update alasan pelanggaran di modal
+    const reasonEl = document.getElementById('cheat-detected-reason');
+    if (reasonEl) reasonEl.textContent = `Penyebab: ${reason}`;
 
     // Simpan rekap diskualifikasi ke database / localstorage
     const now = new Date();
@@ -2694,7 +2729,8 @@ function triggerCheatPenalty() {
         total: quizData.length,
         wrongQuestions: quizData.map((_, i) => i),
         detailedAnswers: [],
-        statusNote: '🚨 DISKUALIFIKASI (Kecurangan / Buka Tab Lain)',
+        statusNote: `🚨 DISKUALIFIKASI (${reason})`,
+        cheatReason: reason,
         isCheated: true,
         time: clockStr,
         duration: 'Diskualifikasi',
@@ -2709,23 +2745,87 @@ function triggerCheatPenalty() {
 function acknowledgeCheatPenalty() {
     document.getElementById('cheat-modal').classList.remove('active');
     isCheatingTriggered = false;
+    if (alarmSirenTimer) { clearInterval(alarmSirenTimer); alarmSirenTimer = null; }
+    if (cheatVibrationTimer) { clearInterval(cheatVibrationTimer); cheatVibrationTimer = null; }
+    try { navigator.vibrate(0); } catch(e) {}
     goHome();
 }
 
-// 👁️ DETEKSI PERPINDAHAN TAB / KELUAR DARI BROWSER (ANTI-CHEAT)
+// 👁️ 1. DETEKSI PERPINDAHAN TAB / KELUAR DARI BROWSER (ANTI-CHEAT)
 document.addEventListener('visibilitychange', () => {
-    if (document.hidden && screens.quiz && screens.quiz.classList.contains('active') && !isCheatingTriggered) {
-        triggerCheatPenalty();
+    if (document.hidden && isQuizActive()) {
+        triggerCheatPenalty('🌐 Berpindah Tab / Meminimalkan Browser');
     }
 });
 
 window.addEventListener('blur', () => {
-    if (screens.quiz && screens.quiz.classList.contains('active') && !isCheatingTriggered) {
+    if (isQuizActive()) {
         setTimeout(() => {
-            if (document.hidden && screens.quiz && screens.quiz.classList.contains('active') && !isCheatingTriggered) {
-                triggerCheatPenalty();
+            if ((document.hidden || !document.hasFocus()) && isQuizActive()) {
+                triggerCheatPenalty('🌐 Keluar dari Aplikasi Browser / Buka Aplikasi Lain');
             }
         }, 300);
+    }
+});
+
+// 📸 2. DETEKSI SCREENSHOT / TANGKAPAN LAYAR / SNIPPING TOOL
+window.addEventListener('keyup', (e) => {
+    if (!isQuizActive()) return;
+    if (e.key === 'PrintScreen' || e.keyCode === 44) {
+        triggerCheatPenalty('📸 Screenshot / PrintScreen Terdeteksi');
+    }
+});
+
+window.addEventListener('keydown', (e) => {
+    if (!isQuizActive()) return;
+    // Windows Snipping tool (Win+Shift+S), Mac Screenshot (Cmd+Shift+3/4), Print (Ctrl+P)
+    if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'S' || e.key === 's' || e.key === '3' || e.key === '4')) {
+        e.preventDefault();
+        triggerCheatPenalty('📸 Screenshot / Snipping Tool Terdeteksi');
+    }
+    if ((e.ctrlKey || e.metaKey) && (e.key === 'p' || e.key === 'P')) {
+        e.preventDefault();
+        triggerCheatPenalty('🖨️ Percobaan Print / Cetak Layar');
+    }
+});
+
+// 📋 3. DETEKSI & PENCEGAHAN COPY - PASTE - CUT - KLIK KANAN
+document.addEventListener('copy', (e) => {
+    if (isQuizActive()) {
+        e.preventDefault();
+        triggerCheatPenalty('📋 Percobaan Copy / Salin Teks Soal');
+    }
+});
+
+document.addEventListener('paste', (e) => {
+    if (isQuizActive()) {
+        e.preventDefault();
+        triggerCheatPenalty('📋 Percobaan Paste / Tempel Teks');
+    }
+});
+
+document.addEventListener('cut', (e) => {
+    if (isQuizActive()) {
+        e.preventDefault();
+        triggerCheatPenalty('📋 Percobaan Cut / Potong Teks');
+    }
+});
+
+document.addEventListener('contextmenu', (e) => {
+    if (isQuizActive()) {
+        e.preventDefault();
+        triggerCheatPenalty('🖱️ Percobaan Klik Kanan / Inspect Element');
+    }
+});
+
+// 📱 4. DETEKSI SPLIT SCREEN / LAYAR TERBELAH / RESIZE DRASTIS DI HP & DESKTOP
+window.addEventListener('resize', () => {
+    if (!isQuizActive()) return;
+    if (initialQuizHeight > 0 && initialQuizWidth > 0) {
+        // Jika tinggi layar berkurang drastis (indikasi split screen / floating app)
+        if (window.innerHeight < initialQuizHeight * 0.65 || window.innerWidth < initialQuizWidth * 0.65) {
+            triggerCheatPenalty('📱 Split Screen / Layar Terbelah Terdeteksi');
+        }
     }
 });
 
@@ -2761,14 +2861,14 @@ function initiateQuiz() {
         return;
     }
 
-    // 🔒 Verifikasi Akses Jadwal Buk RINI & Pengaturan Guru
+    // 🔒 Verifikasi Akses Jadwal RINI SYAFITRI & Pengaturan Guru
     const access = checkClassAccess(cls);
     if (!access.allowed) {
         sfxWrong();
-        const schedule = access.schedule || (SCHEDULE_BUK_RINI[cls] || {});
+        const schedule = access.schedule || (SCHEDULE_RINI_SYAFITRI[cls] || {});
         document.getElementById('locked-class-name').textContent = `Kelas ${cls}`;
         document.getElementById('locked-class-schedule').innerHTML = `
-            📅 <strong>Jadwal Resmi Buk Rini:</strong> ${schedule.dayName || '-'}, Pukul <strong>${schedule.start || '-'} - ${schedule.end || '-'} WIB</strong> (${schedule.period || '-'})
+            📅 <strong>Jadwal Resmi Mata Pelajaran (Rini Syafitri):</strong> ${schedule.dayName || '-'}, Pukul <strong>${schedule.start || '-'} - ${schedule.end || '-'} WIB</strong> (${schedule.period || '-'})
         `;
         document.getElementById('locked-current-time').textContent = `Waktu Saat Ini: ${access.currentInfo || new Date().toLocaleString('id-ID')}`;
         document.getElementById('access-locked-modal').classList.add('active');
@@ -2832,6 +2932,8 @@ function runCountdown() {
 
 function startQuizActual() {
     isCheatingTriggered = false;
+    initialQuizWidth = window.innerWidth;
+    initialQuizHeight = window.innerHeight;
     document.getElementById('display-name').textContent = studentName;
     document.getElementById('display-class').textContent = studentClass;
     quizStartTime = Date.now();
@@ -3494,7 +3596,7 @@ async function confirmClearData() {
 }
 
 // ============================================================
-//  🕒 KONTROL AKSES & JADWAL GURU PAMONG (BUK RINI)
+//  🕒 KONTROL AKSES & JADWAL GURU MATA PELAJARAN (RINI SYAFITRI)
 // ============================================================
 function loadAccessSettings() {
     try {
@@ -3544,7 +3646,7 @@ function checkClassAccess(cls) {
 
     if (accessSettings.mode === 'manual') {
         const isOpen = accessSettings.classOverrides && accessSettings.classOverrides[cls] === true;
-        const schedule = SCHEDULE_BUK_RINI[cls];
+        const schedule = SCHEDULE_RINI_SYAFITRI[cls];
         if (isOpen) return { allowed: true, reason: 'Kelas ini dibuka manual oleh guru' };
         return { 
             allowed: false, 
@@ -3554,8 +3656,8 @@ function checkClassAccess(cls) {
         };
     }
 
-    // Default / Auto Mode: Mengikuti Jadwal Resmi Buk RINI
-    const schedule = SCHEDULE_BUK_RINI[cls];
+    // Default / Auto Mode: Mengikuti Jadwal Resmi RINI SYAFITRI
+    const schedule = SCHEDULE_RINI_SYAFITRI[cls];
     if (!schedule) return { allowed: true, reason: 'Bebas akses' };
 
     // Cek jika guru memberikan override khusus untuk kelas ini
@@ -3564,14 +3666,14 @@ function checkClassAccess(cls) {
     }
 
     if (currentDay === schedule.day && currentTimeStr >= schedule.start && currentTimeStr <= schedule.end) {
-        return { allowed: true, reason: 'Sedang jam pelajaran Buk RINI' };
+        return { allowed: true, reason: 'Sedang jam pelajaran Rini Syafitri' };
     }
 
     return { 
         allowed: false, 
         schedule: schedule, 
         currentInfo: nowFullStr,
-        reason: 'Di luar jam pelajaran Buk RINI' 
+        reason: 'Bukan jam guru mata pelajaran' 
     };
 }
 
@@ -3583,7 +3685,7 @@ function setAccessMode(mode) {
     updateAccessControlUI();
     const labelMap = {
         'always_open': '🟢 Kuis dibuka sekarang untuk semua kelas!',
-        'auto': '🕒 Kuis diatur otomatis mengikuti jadwal mengajar Buk Rini!',
+        'auto': '🕒 Kuis diatur otomatis mengikuti jadwal mengajar Rini Syafitri!',
         'manual': '🎛️ Mode kontrol manual per kelas aktif!',
         'deadline': '⏱️ Mode tenggat waktu kustom aktif!'
     };
