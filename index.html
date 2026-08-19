@@ -1079,7 +1079,7 @@
         </div>
 
         <!-- Filter tabs: Semua (20), Salah (N), Benar (M) -->
-        <div style="display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap;">
+        <div style="display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap;">
             <button class="btn btn-secondary active access-mode-btn" id="sd-tab-all" onclick="filterStudentDetail('all')">
                 📑 Semua Soal (<span id="sd-count-all">20</span>)
             </button>
@@ -1091,14 +1091,30 @@
             </button>
         </div>
 
+        <!-- Quick Question Number Matrix Navigator (20 Pills) -->
+        <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--glass-border); border-radius: 12px; padding: 10px 14px; margin-bottom: 14px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 6px;">
+                <span style="font-size: 0.74rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px;">
+                    🎯 Peta 20 Soal Siswa (Klik nomor untuk lompat langsung ke butir soal):
+                </span>
+                <div style="display: flex; gap: 10px; font-size: 0.75rem; font-weight: 700;">
+                    <span style="color: var(--success);">🟢 Benar (<span id="sd-nav-correct-count">0</span>)</span>
+                    <span style="color: var(--danger);">🔴 Salah (<span id="sd-nav-wrong-count">0</span>)</span>
+                </div>
+            </div>
+            <div id="sd-nav-grid" style="display: flex; flex-wrap: wrap; gap: 6px;">
+                <!-- 20 pills rendered via JS -->
+            </div>
+        </div>
+
         <!-- Scrollable Questions List -->
-        <div id="sd-questions-list" style="overflow-y: auto; flex: 1; padding-right: 6px; display: flex; flex-direction: column; gap: 14px; max-height: 52vh;">
+        <div id="sd-questions-list" style="overflow-y: auto; flex: 1; padding-right: 6px; display: flex; flex-direction: column; gap: 14px; max-height: 48vh;">
             <!-- Questions rendered via JS -->
         </div>
 
         <div style="border-top: 1px solid var(--glass-border); padding-top: 14px; margin-top: 16px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
             <div style="font-size: 0.8rem; color: var(--text-muted);">
-                💡 Soal di atas dipetakan dari urutan pengerjaan kuis siswa secara akurat.
+                💡 Menampilkan ringkasan lengkap jawaban benar dan salah dari seluruh butir soal.
             </div>
             <button class="btn btn-accent" onclick="closeStudentDetailModal()" style="padding: 8px 20px;">Selesai Memeriksa ✔️</button>
         </div>
@@ -1419,9 +1435,57 @@
                 </table>
             </div>
 
+            <!-- CLASS MATRIX: ALL STUDENTS x 20 QUESTIONS -->
+            <div class="analytics-section" style="margin-top: 24px; margin-bottom: 24px; border: 1px solid rgba(139,92,246,0.3); border-radius: 14px; padding: 18px; background: rgba(255,255,255,0.02);">
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 12px;">
+                    <div>
+                        <h3 style="margin: 0; font-size: 1.05rem; color: var(--accent); display: flex; align-items: center; gap: 8px;">
+                            <span>📊 Matriks Peta Jawaban Seluruh Siswa (20 Butir Soal)</span>
+                        </h3>
+                        <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 3px;">
+                            Tinjau secara menyeluruh butir soal yang dijawab <span style="color: var(--success); font-weight: 700;">BENAR (🟢 / ✅)</span> maupun <span style="color: var(--danger); font-weight: 700;">SALAH (🔴 / ❌)</span> untuk setiap siswa
+                        </div>
+                    </div>
+                </div>
+
+                <div class="table-container" style="max-height: 420px; overflow: auto; border: 1px solid var(--glass-border); border-radius: 10px;">
+                    <table style="font-size: 0.78rem; text-align: center; border-collapse: collapse; min-width: 980px;" id="matrix-table">
+                        <thead style="position: sticky; top: 0; background: rgba(15,15,40,0.96); z-index: 10;">
+                            <tr id="matrix-thead-row">
+                                <th style="text-align: left; min-width: 140px; padding: 10px 12px;">Nama Siswa</th>
+                                <th style="min-width: 60px;">Kelas</th>
+                                <th style="min-width: 50px;">Skor</th>
+                                <th style="min-width: 28px; padding: 6px 2px;" title="Soal 1">S1</th>
+                                <th style="min-width: 28px; padding: 6px 2px;" title="Soal 2">S2</th>
+                                <th style="min-width: 28px; padding: 6px 2px;" title="Soal 3">S3</th>
+                                <th style="min-width: 28px; padding: 6px 2px;" title="Soal 4">S4</th>
+                                <th style="min-width: 28px; padding: 6px 2px;" title="Soal 5">S5</th>
+                                <th style="min-width: 28px; padding: 6px 2px;" title="Soal 6">S6</th>
+                                <th style="min-width: 28px; padding: 6px 2px;" title="Soal 7">S7</th>
+                                <th style="min-width: 28px; padding: 6px 2px;" title="Soal 8">S8</th>
+                                <th style="min-width: 28px; padding: 6px 2px;" title="Soal 9">S9</th>
+                                <th style="min-width: 28px; padding: 6px 2px;" title="Soal 10">S10</th>
+                                <th style="min-width: 28px; padding: 6px 2px;" title="Soal 11">S11</th>
+                                <th style="min-width: 28px; padding: 6px 2px;" title="Soal 12">S12</th>
+                                <th style="min-width: 28px; padding: 6px 2px;" title="Soal 13">S13</th>
+                                <th style="min-width: 28px; padding: 6px 2px;" title="Soal 14">S14</th>
+                                <th style="min-width: 28px; padding: 6px 2px;" title="Soal 15">S15</th>
+                                <th style="min-width: 28px; padding: 6px 2px;" title="Soal 16">S16</th>
+                                <th style="min-width: 28px; padding: 6px 2px;" title="Soal 17">S17</th>
+                                <th style="min-width: 28px; padding: 6px 2px;" title="Soal 18">S18</th>
+                                <th style="min-width: 28px; padding: 6px 2px;" title="Soal 19">S19</th>
+                                <th style="min-width: 28px; padding: 6px 2px;" title="Soal 20">S20</th>
+                                <th style="min-width: 80px; padding: 6px 10px;">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="matrix-tbody"></tbody>
+                    </table>
+                </div>
+            </div>
+
             <!-- QUESTION ANALYTICS -->
             <div class="analytics-section" id="analytics-section">
-                <h3>📈 Analisis Soal — Persentase Jawaban Benar</h3>
+                <h3>📈 Analisis Butir Soal — Persentase Jawaban Benar</h3>
                 <div id="q-analytics"></div>
             </div>
 
@@ -3491,6 +3555,42 @@ function renderStudentDetailQuestions() {
     container.innerHTML = '';
     const detailedList = reconstructStudentAnswers(currentExaminedRecord);
 
+    const wrongCount = detailedList.filter(d => !d.isCorrect).length;
+    const correctCount = detailedList.filter(d => d.isCorrect).length;
+
+    // Update Quick Question Navigator Pills
+    const navGrid = document.getElementById('sd-nav-grid');
+    if (navGrid) {
+        navGrid.innerHTML = '';
+        detailedList.forEach((item, idx) => {
+            const pill = document.createElement('button');
+            const isRight = item.isCorrect;
+            pill.className = `btn ${isRight ? 'btn-success' : 'btn-danger'}`;
+            pill.style.cssText = `
+                padding: 4px 8px; font-size: 0.72rem; font-weight: 800; border-radius: 8px;
+                background: ${isRight ? 'rgba(16,185,129,0.18)' : 'rgba(244,63,94,0.18)'};
+                border: 1px solid ${isRight ? 'rgba(16,185,129,0.45)' : 'rgba(244,63,94,0.45)'};
+                color: ${isRight ? '#34d399' : '#fda4af'};
+                cursor: pointer; transition: all 0.2s;
+            `;
+            pill.innerHTML = `S${idx + 1} ${isRight ? '✅' : '❌'}`;
+            pill.title = `Soal ${idx + 1}: ${isRight ? 'Benar' : 'Salah'} (Klik untuk lompat)`;
+            pill.onclick = () => {
+                filterStudentDetail('all');
+                setTimeout(() => {
+                    const targetEl = document.getElementById(`sd-q-card-${item.qIndex}`);
+                    if (targetEl) targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }, 50);
+            };
+            navGrid.appendChild(pill);
+        });
+    }
+
+    const navCorrectCount = document.getElementById('sd-nav-correct-count');
+    const navWrongCount = document.getElementById('sd-nav-wrong-count');
+    if (navCorrectCount) navCorrectCount.textContent = correctCount;
+    if (navWrongCount) navWrongCount.textContent = wrongCount;
+
     const filtered = detailedList.filter(item => {
         if (currentExaminedFilter === 'wrong') return !item.isCorrect;
         if (currentExaminedFilter === 'correct') return item.isCorrect;
@@ -3509,6 +3609,7 @@ function renderStudentDetailQuestions() {
 
     filtered.forEach((item) => {
         const card = document.createElement('div');
+        card.id = `sd-q-card-${item.qIndex}`;
         card.className = `sd-card ${item.isCorrect ? 'correct' : 'wrong'}`;
 
         const diffStr = item.difficulty === 'Easy' ? '🟢 Mudah' : (item.difficulty === 'Hard' ? '🔴 Sulit' : '🟡 Sedang');
@@ -3611,6 +3712,74 @@ function startDashboardAutoRefresh() {
     }, 3000);
 }
 
+function renderClassMatrix(records) {
+    const tbody = document.getElementById('matrix-tbody');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+
+    if (!records || records.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="25" style="padding: 24px; color: var(--text-muted);">Belum ada data siswa untuk matriks butir soal.</td></tr>`;
+        return;
+    }
+
+    const sorted = [...records].sort((a, b) => b.score - a.score || (a.timestamp || 0) - (b.timestamp || 0));
+    const qCorrectCounts = new Array(quizData.length).fill(0);
+
+    sorted.forEach((r, rowIdx) => {
+        const tr = document.createElement('tr');
+        const detailedList = reconstructStudentAnswers(r);
+
+        let questionCells = '';
+        detailedList.forEach((qItem, qIdx) => {
+            const isRight = qItem.isCorrect;
+            if (isRight) qCorrectCounts[qIdx]++;
+            questionCells += `
+                <td style="padding: 6px 2px; font-size: 0.8rem; background: ${isRight ? 'rgba(16,185,129,0.08)' : 'rgba(244,63,94,0.08)'}; color: ${isRight ? 'var(--success)' : 'var(--danger)'}; cursor: pointer; font-weight: 800;" 
+                    title="Soal ${qIdx + 1}: ${isRight ? 'BENAR' : 'SALAH'} (${r.name}) - Klik untuk periksa"
+                    onclick="openStudentDetailModal(${rowIdx})">
+                    ${isRight ? '✅' : '❌'}
+                </td>
+            `;
+        });
+
+        tr.innerHTML = `
+            <td style="text-align: left; font-weight: 700; padding: 8px 12px;">${r.name}</td>
+            <td><span style="font-family: var(--font-mono); color: var(--accent); font-size: 0.75rem;">${r.class || '-'}</span></td>
+            <td><span class="score-pill ${r.score >= 80 ? 'high' : (r.score >= 60 ? 'mid' : 'low')}" style="padding: 2px 6px; font-size: 0.75rem;">${r.score}</span></td>
+            ${questionCells}
+            <td style="padding: 6px 8px; white-space: nowrap;">
+                <button class="btn-detail-row" style="padding: 3px 8px; font-size: 0.7rem;" onclick="openStudentDetailModal(${rowIdx})">
+                    🔍 Detail
+                </button>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
+
+    // Summary row: % Ketuntasan Soal
+    const summaryTr = document.createElement('tr');
+    summaryTr.style.cssText = 'background: rgba(139,92,246,0.12); font-weight: 800; border-top: 2px solid var(--primary);';
+    let summaryCells = '';
+    qCorrectCounts.forEach((count, qIdx) => {
+        const pct = Math.round((count / sorted.length) * 100);
+        const color = pct >= 80 ? 'var(--success)' : (pct >= 60 ? 'var(--warning)' : 'var(--danger)');
+        summaryCells += `
+            <td style="padding: 6px 1px; font-size: 0.7rem; color: ${color};" title="Ketuntasan Soal ${qIdx + 1}: ${pct}% (${count}/${sorted.length} siswa)">
+                ${pct}%
+            </td>
+        `;
+    });
+
+    summaryTr.innerHTML = `
+        <td colspan="3" style="text-align: left; padding: 8px 12px; color: var(--accent); font-size: 0.75rem;">
+            📈 % Ketuntasan Kelas
+        </td>
+        ${summaryCells}
+        <td style="font-size: 0.7rem; color: var(--text-muted);">-</td>
+    `;
+    tbody.appendChild(summaryTr);
+}
+
 function renderDashboard() {
     const allRecords = loadRecords();
     const filterClass = document.getElementById('filter-class').value;
@@ -3702,6 +3871,7 @@ function renderDashboard() {
         });
     }
 
+    renderClassMatrix(records);
     renderQuestionAnalytics(allRecords);
 }
 
