@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="format-detection" content="telephone=no, email=no, address=no, date=no">
     <title>🕵️ Detektif Fakta Digital — Misi Audit Validitas Data</title>
     <meta name="description" content="Kuis interaktif literasi digital dan berpikir komputasional untuk siswa kelas X.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -665,7 +666,16 @@
         .opt-label input:checked ~ .check-indicator::after { content: '✓'; }
         .opt-label input:checked ~ .opt-text { color: var(--text); }
 
-        .opt-text { flex: 1; }
+        .opt-text {
+            flex: 1;
+            pointer-events: none !important;
+            user-select: none !important;
+            -webkit-user-select: none !important;
+            -webkit-touch-callout: none !important;
+        }
+        .opt-text * {
+            pointer-events: none !important;
+        }
 
         .opt-label.correct {
             background: rgba(16,185,129,0.12) !important;
@@ -1767,14 +1777,14 @@ const quizData = [
         difficulty: 'Easy',
         q: "Alamat email untuk mengirim aduan konten melalui Kominfo adalah ...",
         options: [
-            "cybercrime@polri.go.id",
-            "polisionline.net@gmail.com",
-            "aduankonten@mail.kominfo.go.id",
-            "info@mediaonline.id",
-            "laporberita@gmail.com"
+            "cybercrime@\u200Bpolri.go.id",
+            "polisionline.net@\u200Bgmail.com",
+            "aduankonten@\u200Bmail.kominfo.go.id",
+            "info@\u200Bmediaonline.id",
+            "laporberita@\u200Bgmail.com"
         ],
         answer: 2,
-        explanation: "Alamat tersebut digunakan untuk menyampaikan aduan konten kepada Kominfo. Laporan akan lebih mudah diperiksa jika disertai tangkapan layar dan tautan konten yang jelas."
+        explanation: "Alamat aduankonten@mail.kominfo.go.id digunakan untuk menyampaikan aduan konten kepada Kominfo. Laporan akan lebih mudah diperiksa jika disertai tangkapan layar dan tautan konten yang jelas."
     },
     {
         type: 'mcq',
@@ -1782,13 +1792,13 @@ const quizData = [
         q: "Situs Mafindo yang digunakan untuk melaporkan hoaks adalah ...",
         options: [
             "trustpositif.kominfo.go.id",
-            "aduankonten@mail.kominfo.go.id",
-            "cybercrime@polri.go.id",
-            "polisionline.net@gmail.com",
-            "https://turnbackhoax.id/lapor-hoax/"
+            "aduankonten@\u200Bmail.kominfo.go.id",
+            "cybercrime@\u200Bpolri.go.id",
+            "polisionline.net@\u200Bgmail.com",
+            "turnbackhoax.id/lapor-hoax/"
         ],
         answer: 4,
-        explanation: "TurnBackHoax merupakan salah satu layanan Mafindo untuk menerima laporan hoaks. Pengguna dapat memasukkan informasi yang dicurigai palsu melalui halaman pelaporan tersebut."
+        explanation: "TurnBackHoax (turnbackhoax.id/lapor-hoax/) merupakan salah satu layanan Mafindo untuk menerima laporan hoaks. Pengguna dapat memasukkan informasi yang dicurigai palsu melalui halaman pelaporan tersebut."
     },
     {
         type: 'checkbox',
@@ -2828,6 +2838,18 @@ window.addEventListener('resize', () => {
         }
     }
 });
+
+// 🚫 5. PENCEGAHAN LINK / MAILTO (AGAR SISWA TIDAK TERLEMPAR KE APLIKASI EMAIL)
+document.addEventListener('click', (e) => {
+    if (isQuizActive()) {
+        const link = e.target.closest('a');
+        if (link) {
+            e.preventDefault();
+            e.stopPropagation();
+            return false;
+        }
+    }
+}, true);
 
 // 🛡️ 2 TAHAP VERIFIKASI SAAT REFRESH / MENINGGALKAN HALAMAN
 window.addEventListener('beforeunload', (e) => {
