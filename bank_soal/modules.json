@@ -1,0 +1,16 @@
+[
+  {
+    "id": "modul_detektif_fakta",
+    "title": "Misi Detektif Fakta: Uji Validitas Data",
+    "category": "Literasi Digital & Komputasional",
+    "icon": "🕵️",
+    "badge": "Misi Utama",
+    "description": "Kuis investigasi literasi digital, verifikasi informasi, dan berpikir komputasional untuk siswa kelas X.",
+    "questionCount": 20,
+    "kkm": 80,
+    "difficulty": "Campuran (Easy - Hard)",
+    "dataFile": "bank_soal/modul_detektif_fakta.json",
+    "isDefault": true,
+    "createdAt": "2026-09-01T08:00:00Z"
+  }
+]
