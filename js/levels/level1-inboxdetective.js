@@ -477,6 +477,69 @@
         });
 
         updateScoreDisplay();
+        renderForensicConsoleHUD();
+    }
+
+    function renderForensicConsoleHUD() {
+        if (!activeContainer || !currentDoc) return;
+        let consoleEl = activeContainer.querySelector('.forensic-console-overlay');
+        if (!consoleEl) {
+            consoleEl = document.createElement('div');
+            consoleEl.className = 'forensic-console-overlay';
+            activeContainer.appendChild(consoleEl);
+        }
+
+        const domainText = testsRevealed.domain ? currentDoc.tests.domain : '🔍 Cek Domain';
+        const metadataText = testsRevealed.metadata ? currentDoc.tests.metadata : '📅 Cek Metadata';
+        const mediaText = testsRevealed.media ? currentDoc.tests.media : '📰 Verifikasi Media';
+
+        consoleEl.innerHTML = `
+            <div class="forensic-console-card animate-pop-in">
+                <div class="console-doc-header">
+                    <span class="hud-level-tag">DOKUMEN ${currentDocIdx + 1}/12</span>
+                    <strong class="console-doc-title">📄 ${currentDoc.title}</strong>
+                    <span class="console-doc-sender">Dari: ${currentDoc.sender}</span>
+                </div>
+                <div class="console-doc-snippet">
+                    "${currentDoc.snippet}"
+                </div>
+
+                <div class="console-tools-row">
+                    <button type="button" class="btn-console-tool ${testsRevealed.domain ? 'tool-active' : ''}" data-tool="domain">
+                        ${domainText}
+                    </button>
+                    <button type="button" class="btn-console-tool ${testsRevealed.metadata ? 'tool-active' : ''}" data-tool="metadata">
+                        ${metadataText}
+                    </button>
+                    <button type="button" class="btn-console-tool ${testsRevealed.media ? 'tool-active' : ''}" data-tool="media">
+                        ${mediaText}
+                    </button>
+                </div>
+
+                <div class="console-decisions-row">
+                    <button type="button" class="btn-decision-fakta" id="btn-decide-fakta">
+                        ✅ KEPUTUSAN: FAKTA VALID
+                    </button>
+                    <button type="button" class="btn-decision-hoaks" id="btn-decide-hoaks">
+                        ❌ KEPUTUSAN: HOAKS / PALSU
+                    </button>
+                </div>
+            </div>
+        `;
+
+        consoleEl.querySelectorAll('.btn-console-tool').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                const tool = this.getAttribute('data-tool');
+                revealTest(tool);
+                renderForensicConsoleHUD();
+            });
+        });
+
+        const btnF = consoleEl.querySelector('#btn-decide-fakta');
+        if (btnF) btnF.addEventListener('click', function () { makeDecision('fakta'); });
+
+        const btnH = consoleEl.querySelector('#btn-decide-hoaks');
+        if (btnH) btnH.addEventListener('click', function () { makeDecision('hoaks'); });
     }
 
     function revealTest(testKey) {
