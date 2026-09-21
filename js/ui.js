@@ -162,7 +162,7 @@
             hudBarEl.innerHTML = `
                 <div class="hub-brand-group">
                     <!-- Tombol Kembali Utama Sisi Kiri -->
-                    <a href="kuis_interaktif_dasbor_guru.html" class="hud-back-btn" id="hud-btn-kembali" title="Kembali ke Beranda Utama / Dasbor">
+                    <a href="index.html" class="hud-back-btn" id="hud-btn-kembali" title="Kembali ke Beranda Utama / Dasbor">
                         <span class="hud-back-arrow">⬅️</span>
                         <span class="hud-back-label">Kembali</span>
                     </a>
@@ -202,7 +202,7 @@
                     </button>
 
                     <!-- Tombol Keluar / Kembali ke Beranda Sisi Kanan -->
-                    <a href="kuis_interaktif_dasbor_guru.html" class="hud-portal-link" id="hud-btn-exit" title="Keluar dan Kembali ke Beranda Utama">
+                    <a href="index.html" class="hud-portal-link" id="hud-btn-exit" title="Keluar dan Kembali ke Beranda Utama">
                         🚪 <span>Kembali ke Beranda</span>
                     </a>
                 </div>

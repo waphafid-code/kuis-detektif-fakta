@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="id" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="format-detection" content="telephone=no, email=no, address=no, date=no">
+    <title>🏢 Kantor Data Digital — Hub 3D Berpikir Komputasional Fase E</title>
+    <meta name="description" content="Game edukasi 3D low-poly Berpikir Komputasional Fase E SMA Kelas X dioptimalkan untuk perangkat Android low-end RAM 2-3GB dengan touch-first controls.">
+    
+    <!-- Paksaan Dark Mode Permanen untuk Game Hub 3D -->
+    <script>
+        (function() {
+            document.documentElement.setAttribute('data-theme', 'dark');
+            if (document.body) document.body.setAttribute('data-theme', 'dark');
+        })();
+    </script>
+
+    <link rel="stylesheet" href="style.css?v=20260919-rev3">
+</head>
+<body data-theme="dark">
+
+    <!-- 0. Header HUD Atas Statis (Memastikan Tombol Kembali Muncul Seketika) -->
+    <header class="hub-hud-header" id="hub-hud-header">
+        <div class="hub-brand-group">
+            <!-- Tombol Kembali Utama Sisi Kiri -->
+            <a href="index.html" class="hud-back-btn" id="hud-btn-kembali" title="Kembali ke Beranda Utama / Dasbor">
+                <span class="hud-back-arrow">⬅️</span>
+                <span class="hud-back-label">Kembali</span>
+            </a>
+            <span class="hud-brand-icon">🏢</span>
+            <div class="hud-brand-text">
+                <h1 class="hud-app-title">Kantor Data Digital</h1>
+                <span class="hud-app-sub">Fase E • Divisi Integritas Data</span>
+            </div>
+        </div>
+
+        <div class="hud-actions-group">
+            <!-- Profil Siswa / Badge ID Card -->
+            <button type="button" class="hud-chip-btn profile-chip" id="btn-open-idcard" title="Kartu Identitas Staf">
+                <span class="chip-avatar">👤</span>
+                <span id="hud-player-name">Detektif Muda</span>
+            </button>
+
+            <!-- Tombol Log Misi / Quest Log -->
+            <button type="button" class="hud-chip-btn quest-log-chip" id="btn-open-quest-log" title="Buka Log Misi &amp; Catatan Investigasi">
+                <span>📋</span>
+                <span>Log Misi</span>
+            </button>
+
+            <!-- Indikator Grafis Low-End -->
+            <button type="button" class="hud-chip-btn" id="btn-tier-indicator" title="Pengaturan Grafis &amp; Mode Ringan">
+                <span id="tier-badge-label">Tier Low ⚡</span>
+            </button>
+
+            <!-- Toggle Suara -->
+            <button type="button" class="hud-icon-btn" id="btn-sound-toggle" title="Toggle Suara" aria-label="Toggle Suara">
+                <span id="sound-icon">🔊</span>
+            </button>
+
+            <!-- Pengaturan Global -->
+            <button type="button" class="hud-icon-btn" id="btn-open-settings" title="Pengaturan Global" aria-label="Pengaturan">
+                ⚙️
+            </button>
+
+            <!-- Tombol Keluar / Kembali ke Beranda Sisi Kanan -->
+            <a href="index.html" class="hud-portal-link" id="hud-btn-exit" title="Keluar dan Kembali ke Beranda Utama">
+                🚪 <span>Kembali ke Beranda</span>
+            </a>
+        </div>
+    </header>
+
+    <div id="app-preloader">
+        <div class="preloader-spinner"></div>
+        <div class="preloader-title">KANTOR DATA DIGITAL</div>
+        <div class="preloader-sub">Menyiapkan Lobi 3D & Deteksi Perangkat...</div>
+    </div>
+    <script>
+        // Failsafe: Jaminan preloader hilang maksimal 1 detik agar tidak mutar terus
+        setTimeout(function() {
+            var loader = document.getElementById('app-preloader');
+            if (loader && !loader.classList.contains('fade-out')) {
+                loader.classList.add('fade-out');
+                setTimeout(function() {
+                    if (loader && loader.parentNode) loader.parentNode.removeChild(loader);
+                }, 300);
+            }
+        }, 1000);
+    </script>
+
+    <!-- 2. Viewport Lobi 3D Three.js -->
+    <div id="hub-canvas-container"></div>
+
+    <!-- Hint Navigasi Sentuh / Mouse -->
+    <div class="hub-control-hint">
+        <span>👆 Geser layar untuk melihat stasiun • Tap stasiun untuk mulai</span>
+    </div>
+
+    <!-- 3. Stage Overlay untuk Level Permainan (Lazy Mount) -->
+    <div id="level-stage-container" class="hidden"></div>
+
+    <!-- Three.js Library Minified dari CDN Terpercaya -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        if (typeof THREE === 'undefined') {
+            document.write('<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"><\/script>');
+        }
+    </script>
+
+    <!-- Modul Sistem & Utilitas (Cache-Busted v20260919-rev6) -->
+    <script src="js/deviceTier.js?v=20260919-rev6"></script>
+    <script src="js/gameStorage.js?v=20260919-rev6"></script>
+    <script src="js/ui.js?v=20260919-rev6"></script>
+    <script src="js/engine3d.js?v=20260919-rev6"></script>
+
+    <!-- Data & Modul Level 3D Lengkap (Level 0 - 7 & Lab TIK) -->
+    <script src="js/data/level0-dialog.js?v=20260919-rev6"></script>
+    <script src="js/data/level0-data.js?v=20260919-rev6"></script>
+    <script src="js/levels/level0-onboarding.js?v=20260919-rev6"></script>
+    <script src="js/data/level1-dialog.js?v=20260919-rev6"></script>
+    <script src="js/data/level1-data.js?v=20260919-rev6"></script>
+    <script src="js/levels/level1-inboxdetective.js?v=20260919-rev6"></script>
+    <script src="js/data/level2-dialog.js?v=20260919-rev6"></script>
+    <script src="js/data/level2-data.js?v=20260919-rev6"></script>
+    <script src="js/levels/level2-warehousesorter.js?v=20260919-rev6"></script>
+    <script src="js/levels/level3to7-3d.js?v=20260919-rev6"></script>
+    <script src="js/data/labtik-dialog.js?v=20260919-rev6"></script>
+    <script src="js/data/labtik-data.js?v=20260919-rev6"></script>
+    <script src="js/levels/labtik-searchengine.js?v=20260919-rev6"></script>
+
+    <!-- Scene Lobi 3D Low-Poly & Main Bootstrap -->
+    <script src="js/hub.js?v=20260919-rev6"></script>
+    <script src="js/main.js?v=20260919-rev6"></script>
+</body>
+</html>
