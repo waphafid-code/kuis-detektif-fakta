@@ -6289,3 +6289,343 @@ body::before {
     color: #9d174d;
     background: rgba(236, 72, 153, 0.25);
 }
+
+/* ============================================================ */
+/* 📄 EXAM DOCUMENT IMPORTER & AUTO-LOCKED PREVIEW STYLES       */
+/* ============================================================ */
+.exam-importer-container {
+    background: rgba(15, 23, 42, 0.6);
+    border: 1.5px solid rgba(56, 189, 248, 0.35);
+    border-radius: var(--radius-lg);
+    padding: 24px;
+    margin-bottom: 24px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+    backdrop-filter: blur(12px);
+}
+
+[data-theme="light"] .exam-importer-container {
+    background: #ffffff;
+    border-color: rgba(79, 70, 229, 0.3);
+    box-shadow: 0 10px 30px rgba(79, 70, 229, 0.08);
+}
+
+.exam-doc-dropzone {
+    border: 2px dashed rgba(56, 189, 248, 0.45);
+    border-radius: var(--radius-md);
+    padding: 36px 20px;
+    text-align: center;
+    background: rgba(56, 189, 248, 0.03);
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    user-select: none;
+}
+
+.exam-doc-dropzone:hover,
+.exam-doc-dropzone.drag-active {
+    border-color: #38bdf8;
+    background: rgba(56, 189, 248, 0.1);
+    transform: translateY(-2px);
+    box-shadow: 0 12px 28px rgba(56, 189, 248, 0.15);
+}
+
+[data-theme="light"] .exam-doc-dropzone {
+    border-color: rgba(79, 70, 229, 0.4);
+    background: rgba(79, 70, 229, 0.02);
+}
+
+[data-theme="light"] .exam-doc-dropzone:hover,
+[data-theme="light"] .exam-doc-dropzone.drag-active {
+    border-color: #4f46e5;
+    background: rgba(79, 70, 229, 0.08);
+}
+
+.exam-preview-qcard {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-md);
+    padding: 18px 20px;
+    margin-bottom: 16px;
+    transition: border-color 0.2s;
+}
+
+[data-theme="light"] .exam-preview-qcard {
+    background: #f8fafc;
+    border-color: #e2e8f0;
+}
+
+.exam-preview-qcard:hover {
+    border-color: rgba(56, 189, 248, 0.4);
+}
+
+.exam-prev-opt-row {
+    padding: 10px 14px;
+    margin-bottom: 8px;
+    border-radius: 10px;
+    border: 1.5px solid var(--glass-border);
+    background: rgba(255, 255, 255, 0.02);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+[data-theme="light"] .exam-prev-opt-row {
+    background: #ffffff;
+    border-color: #e2e8f0;
+}
+
+.exam-prev-opt-row:hover {
+    border-color: rgba(56, 189, 248, 0.5);
+    background: rgba(56, 189, 248, 0.04);
+}
+
+.exam-prev-opt-row.opt-locked-active {
+    border-color: var(--success) !important;
+    background: rgba(16, 185, 129, 0.12) !important;
+    box-shadow: 0 2px 10px rgba(16, 185, 129, 0.15);
+}
+
+.exam-prev-opt-char {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    font-weight: 800;
+    font-size: 0.8rem;
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--text-secondary);
+    border: 1px solid var(--glass-border);
+    flex-shrink: 0;
+}
+
+.exam-prev-opt-char.char-locked {
+    background: var(--success);
+    color: #ffffff;
+    border-color: var(--success);
+}
+
+.badge-locked-pill {
+    font-size: 0.68rem;
+    font-weight: 800;
+    color: var(--success);
+    background: rgba(16, 185, 129, 0.18);
+    border: 1px solid rgba(16, 185, 129, 0.35);
+    padding: 3px 8px;
+    border-radius: 9999px;
+    flex-shrink: 0;
+    letter-spacing: 0.03em;
+}
+
+.modal-overlay-exam {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.82);
+    backdrop-filter: blur(8px);
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    animation: fadeIn 0.2s ease-out;
+}
+
+.modal-dialog-exam {
+    background: var(--bg-card);
+    border: 1.5px solid var(--glass-border);
+    border-radius: var(--radius-lg);
+    width: 100%;
+    max-width: 900px;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: var(--shadow-xl);
+    overflow: hidden;
+}
+
+.modal-exam-header {
+    padding: 18px 24px;
+    border-bottom: 1px solid var(--glass-border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.modal-exam-body {
+    padding: 24px;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.modal-exam-footer {
+    padding: 16px 24px;
+    border-top: 1px solid var(--glass-border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    background: rgba(255, 255, 255, 0.02);
+}
+
+/* ════════════════════════════════════════════════════════════════ */
+/* 🧩 INTERACTIVE QUESTION ACCORDION & COLLAPSIBLE SECTIONS         */
+/* ════════════════════════════════════════════════════════════════ */
+.q-collapsible-block {
+    margin-bottom: 12px;
+    border: 1px solid var(--glass-border);
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.02);
+    overflow: hidden;
+    transition: all 0.25s ease;
+}
+
+.q-collapsible-block:hover {
+    border-color: rgba(99, 102, 241, 0.35);
+}
+
+.q-collapse-btn {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 14px;
+    background: rgba(255, 255, 255, 0.03);
+    border: none;
+    color: var(--text);
+    font-size: 0.82rem;
+    font-weight: 700;
+    cursor: pointer;
+    text-align: left;
+    transition: background 0.2s ease;
+}
+
+.q-collapse-btn:hover {
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.q-collapse-btn-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.q-collapse-icon {
+    font-size: 1rem;
+}
+
+.q-collapse-title {
+    font-weight: 700;
+    letter-spacing: 0.2px;
+    color: var(--text);
+}
+
+.q-collapse-badge {
+    font-size: 0.7rem;
+    padding: 2px 8px;
+    border-radius: 9999px;
+    font-weight: 800;
+}
+
+.badge-has-content {
+    background: rgba(16, 185, 129, 0.15);
+    color: #34d399;
+    border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.badge-empty {
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-muted);
+    border: 1px solid var(--glass-border);
+}
+
+.q-collapse-arrow {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    transition: transform 0.25s ease;
+    display: inline-block;
+}
+
+.q-collapse-arrow.open {
+    transform: rotate(180deg);
+}
+
+.q-collapse-body {
+    padding: 14px;
+    border-top: 1px solid var(--glass-border);
+    animation: fadeInCollapse 0.25s ease-out;
+}
+
+@keyframes fadeInCollapse {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* 📁 Kasus / Stimulus Styling (Perbaikan Kotak Kuning) */
+.q-section-case {
+    border-left: 3px solid #f59e0b;
+}
+
+.case-study-display-box {
+    background: rgba(245, 158, 11, 0.05);
+    border: 1px solid rgba(245, 158, 11, 0.25);
+    border-radius: 10px;
+    padding: 12px 14px;
+    max-height: 220px;
+    overflow-y: auto;
+}
+
+.case-study-p {
+    margin: 0 0 10px 0;
+    line-height: 1.65;
+    font-size: 0.85rem;
+    color: #fef08a;
+}
+
+.case-study-p:last-child {
+    margin-bottom: 0;
+}
+
+/* Custom Scrollbar for case study */
+.case-study-display-box::-webkit-scrollbar {
+    width: 6px;
+}
+.case-study-display-box::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 6px;
+}
+.case-study-display-box::-webkit-scrollbar-thumb {
+    background: rgba(245, 158, 11, 0.4);
+    border-radius: 6px;
+}
+
+/* ⚖️ Panel Persetujuan & Keputusan Guru */
+.ai-approval-panel {
+    background: linear-gradient(135deg, rgba(15, 23, 42, 0.92), rgba(30, 41, 59, 0.88)) !important;
+    border: 1.5px solid rgba(14, 165, 233, 0.45) !important;
+    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.45), 0 0 20px rgba(14, 165, 233, 0.15) !important;
+}
+
+.quick-toolbar-btn {
+    padding: 6px 12px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--glass-border);
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.quick-toolbar-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text);
+    border-color: rgba(99, 102, 241, 0.4);
+}
+

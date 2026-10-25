@@ -1,5 +1,19 @@
 [
   {
+    "id": "modul_jaringan_keamanan",
+    "title": "Penilaian Harian: Infrastruktur Jaringan & Keamanan Digital",
+    "category": "Jaringan Komputer & Internet (JKI)",
+    "icon": "🛡️",
+    "badge": "Penilaian Harian",
+    "description": "Evaluasi 20 butir soal Infrastruktur Jaringan Komputer, Topologi, Media Transmisi, DNS, dan Keamanan Siber (CIA-A) Kelas X.",
+    "questionCount": 20,
+    "kkm": 80,
+    "difficulty": "3 Mudah • 3 Biasa • 9 Susah • 5 HOTS",
+    "dataFile": "bank_soal/modul_jaringan_keamanan.json",
+    "isDefault": true,
+    "createdAt": "2026-10-25T08:00:00Z"
+  },
+  {
     "id": "modul_detektif_fakta",
     "title": "Misi Detektif Fakta: Uji Validitas Data",
     "category": "Literasi Digital & Komputasional",

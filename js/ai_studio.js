@@ -392,23 +392,28 @@ function renderAiQuestionsPreview(quizPkg) {
             <!-- Draft Header & Controls -->
             <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 14px; padding-bottom: 12px; border-bottom: 1px solid var(--glass-border);">
                 <div>
-                    <div style="font-weight: 800; font-size: 1.15rem; color: var(--primary);">📝 Draft Soal Hasil Analisis Dokumen: ${quizPkg.title}</div>
+                    <div style="font-weight: 800; font-size: 1.15rem; color: var(--primary); display: flex; align-items: center; gap: 8px;">
+                        <span>📝 Draf Soal Hasil Analisis: ${escapeHtml(quizPkg.title)}</span>
+                    </div>
                     <div style="font-size: 0.82rem; color: var(--text-secondary); margin-top: 2px;">
-                        ${quizPkg.questions.length} Butir Soal Terbaca • KKM: ${quizPkg.kkm} • Kategori: ${quizPkg.category || 'Bahan Ajar'}
+                        ${quizPkg.questions.length} Butir Soal Terbaca &bull; KKM: ${quizPkg.kkm} &bull; Kategori: ${escapeHtml(quizPkg.category || 'Bahan Ajar')}
                     </div>
                 </div>
                 <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
                     <span id="ai-total-points-badge" style="font-size: 0.78rem; font-weight: 800; padding: 5px 14px; border-radius: 9999px; background: ${totalPts === 100 ? 'rgba(16,185,129,0.15)' : 'rgba(244,63,94,0.15)'}; color: ${totalPts === 100 ? 'var(--success)' : 'var(--danger)'}; border: 1px solid ${totalPts === 100 ? 'rgba(16,185,129,0.4)' : 'rgba(244,63,94,0.4)'};">
                         ${totalPts === 100 ? '✅ Total Poin: 100 (Standar)' : '⚠️ Total Poin: ' + totalPts + ' / 100'}
                     </span>
+                    <button type="button" class="quick-toolbar-btn" onclick="toggleAllDraftSections(true)" title="Buka seluruh tab di semua butir soal">
+                        📂 Buka Semua Tab
+                    </button>
+                    <button type="button" class="quick-toolbar-btn" onclick="toggleAllDraftSections(false)" title="Ciutkan seluruh tab agar tampilan ringkas">
+                        📁 Ciutkan Semua Tab
+                    </button>
                     <button type="button" class="btn btn-secondary" onclick="addDraftQuestion()" style="font-size: 0.8rem; padding: 6px 13px; font-weight: 700;">
                         ➕ Tambah Soal
                     </button>
                     <button type="button" class="btn btn-secondary" onclick="rebalanceDraftPoints()" style="font-size: 0.8rem; padding: 6px 13px; font-weight: 700;">
                         ⚖️ Pas 100 Poin
-                    </button>
-                    <button type="button" class="btn btn-primary" onclick="publishAiQuizModule()" style="font-size: 0.82rem; padding: 6px 16px; font-weight: 800;">
-                        💾 Terbitkan ke Bank Soal
                     </button>
                 </div>
             </div>
@@ -424,22 +429,15 @@ function renderAiQuestionsPreview(quizPkg) {
         qCard.style.borderRadius = '14px';
         qCard.style.background = 'rgba(255, 255, 255, 0.03)';
         qCard.style.marginBottom = '16px';
+        qCard.id = `draft-qcard-${idx}`;
 
+        const hasCase = Boolean(q.caseStudy && String(q.caseStudy).trim().length > 0);
         const isComplex = q.type === 'checkbox';
         const isTf = q.type === 'tf';
 
         const bloomTag = q.bloomLevel 
             ? `<span class="q-badge" style="background: rgba(168, 85, 247, 0.18); border-color: rgba(168, 85, 247, 0.45); color: #d8b4fe; font-size: 0.72rem; padding: 2px 8px; font-weight: 800;">🎓 ${q.bloomLevel}</span>` 
             : `<span class="q-badge" style="background: rgba(99, 102, 241, 0.18); border-color: rgba(99, 102, 241, 0.45); color: #a5b4fc; font-size: 0.72rem; padding: 2px 8px; font-weight: 800;">🎓 C4 (Analisis)</span>`;
-
-        let caseHtml = '';
-        if (q.caseStudy) {
-            caseHtml = `
-                <div style="background: rgba(234, 179, 8, 0.06); border-left: 3px solid var(--warning); padding: 8px 12px; border-radius: 0 8px 8px 0; margin-bottom: 10px; font-size: 0.83rem; color: #fde68a;">
-                    <strong>📁 Skenario Kasus Kontekstual:</strong> ${q.caseStudy}
-                </div>
-            `;
-        }
 
         let optionsHtml = '';
         (q.options || []).forEach((opt, optIdx) => {
@@ -448,33 +446,38 @@ function renderAiQuestionsPreview(quizPkg) {
                 : q.answer === optIdx;
 
             optionsHtml += `
-                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
-                    <span style="font-size: 0.8rem; font-weight: 700; color: ${isCorrect ? 'var(--success)' : 'var(--text-secondary)'}; width: 24px; text-align: center;">
-                        ${String.fromCharCode(65 + optIdx)}.
+                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                    <span style="font-size: 0.85rem; font-weight: 800; color: ${isCorrect ? 'var(--success)' : 'var(--text-secondary)'}; width: 28px; height: 28px; border-radius: 8px; background: ${isCorrect ? 'rgba(16,185,129,0.2)' : 'rgba(255,255,255,0.05)'}; display: flex; align-items: center; justify-content: center; border: 1px solid ${isCorrect ? 'rgba(16,185,129,0.5)' : 'var(--glass-border)'}; flex-shrink: 0;">
+                        ${String.fromCharCode(65 + optIdx)}
                     </span>
-                    <input type="text" class="form-input" style="flex: 1; padding: 6px 10px; font-size: 0.82rem;" value="${(opt || '').replace(/"/g, '&quot;')}" onchange="updateDraftOptionText(${idx}, ${optIdx}, this.value)">
-                    <label style="font-size: 0.75rem; display: flex; align-items: center; gap: 4px; color: ${isCorrect ? 'var(--success)' : 'var(--text-muted)'}; cursor: pointer; white-space: nowrap; padding: 4px 8px; border-radius: 6px; background: ${isCorrect ? 'rgba(16,185,129,0.12)' : 'transparent'};">
+                    <input type="text" class="form-input" style="flex: 1; padding: 8px 12px; font-size: 0.85rem; background: ${isCorrect ? 'rgba(16,185,129,0.05)' : 'rgba(0,0,0,0.2)'}; border-color: ${isCorrect ? 'rgba(16,185,129,0.45)' : 'var(--glass-border)'};" value="${escapeHtml(opt || '')}" onchange="updateDraftOptionText(${idx}, ${optIdx}, this.value)">
+                    <label style="font-size: 0.78rem; font-weight: 700; display: flex; align-items: center; gap: 6px; color: ${isCorrect ? 'var(--success)' : 'var(--text-muted)'}; cursor: pointer; white-space: nowrap; padding: 6px 12px; border-radius: 8px; background: ${isCorrect ? 'rgba(16,185,129,0.18)' : 'rgba(255,255,255,0.04)'}; border: 1px solid ${isCorrect ? 'rgba(16,185,129,0.45)' : 'var(--glass-border)'};">
                         <input type="${isComplex ? 'checkbox' : 'radio'}" name="draft_ans_${idx}" ${isCorrect ? 'checked' : ''} onchange="updateDraftAnswerKey(${idx}, ${optIdx}, this.checked)">
                         ${isCorrect ? 'Kunci ✅' : 'Pengecoh'}
                     </label>
-                    ${!isTf ? `<button type="button" onclick="removeDraftOption(${idx}, ${optIdx})" style="background:none; border:none; color: var(--danger); cursor: pointer; font-size: 0.8rem; padding: 2px 4px;" title="Hapus opsi ini">✖</button>` : ''}
+                    ${!isTf ? `<button type="button" onclick="removeDraftOption(${idx}, ${optIdx})" style="background:none; border:none; color: var(--danger); cursor: pointer; font-size: 0.85rem; padding: 4px 6px;" title="Hapus opsi ini">✖</button>` : ''}
                 </div>
             `;
         });
 
+        const keyDisplay = isComplex 
+            ? (Array.isArray(q.answer) ? q.answer.map(i => String.fromCharCode(65 + i)).join(', ') : 'A')
+            : (q.type === 'tf' ? (q.answer === 0 ? 'Benar' : 'Salah') : String.fromCharCode(65 + (q.answer || 0)));
+
         qCard.innerHTML = `
+            <!-- Header Kartu Soal -->
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px; border-bottom: 1px dashed var(--glass-border); padding-bottom: 10px;">
                 <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
-                    <strong style="color: var(--accent); font-size: 1rem;">Butir Soal #${idx + 1}</strong>
+                    <strong style="color: var(--accent); font-size: 1.05rem;">Butir Soal #${idx + 1}</strong>
                     ${bloomTag}
                     <select class="form-input" style="padding: 4px 8px; font-size: 0.75rem; border-radius: 6px;" onchange="changeDraftQuestionType(${idx}, this.value)">
-                        <option value="mcq" ${q.type === 'mcq' ? 'selected' : ''}>🔘 Pilihan Ganda Biasa</option>
+                        <option value="mcq" ${q.type === 'mcq' ? 'selected' : ''}>🔘 Pilihan Ganda Tunggal</option>
                         <option value="checkbox" ${q.type === 'checkbox' ? 'selected' : ''}>☑️ Pilihan Ganda Kompleks</option>
                         <option value="tf" ${q.type === 'tf' ? 'selected' : ''}>⚖️ Benar / Salah</option>
                     </select>
                     <div style="display: flex; align-items: center; gap: 4px;">
                         <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 700;">Bobot:</span>
-                        <input type="number" min="1" max="100" class="form-input" style="width: 60px; padding: 3px 6px; font-size: 0.78rem; text-align: center;" value="${q.points || 5}" onchange="updateDraftQuestionPoints(${idx}, this.value)">
+                        <input type="number" min="1" max="100" class="form-input" style="width: 58px; padding: 3px 6px; font-size: 0.78rem; text-align: center;" value="${q.points || 5}" onchange="updateDraftQuestionPoints(${idx}, this.value)">
                         <span style="font-size: 0.75rem; color: var(--text-secondary);">Poin</span>
                     </div>
                 </div>
@@ -483,24 +486,117 @@ function renderAiQuestionsPreview(quizPkg) {
                 </div>
             </div>
 
-            ${caseHtml}
-
-            <div style="margin-bottom: 12px;">
-                <label style="font-size: 0.78rem; font-weight: 700; color: var(--text-secondary); display: block; margin-bottom: 4px;">Teks Pertanyaan (Dapat diedit bebas):</label>
-                <textarea class="form-input" rows="2" style="width: 100%; font-size: 0.85rem;" onchange="updateDraftQuestionText(${idx}, this.value)">${q.q}</textarea>
-            </div>
-
-            <div style="margin-bottom: 12px;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-                    <label style="font-size: 0.78rem; font-weight: 700; color: var(--text-secondary); margin: 0;">Pilihan Jawaban & Kunci:</label>
-                    ${!isTf ? `<button type="button" onclick="addDraftOption(${idx})" style="background: none; border: none; color: var(--accent); cursor: pointer; font-size: 0.75rem; font-weight: 700;">➕ Tambah Opsi</button>` : ''}
+            <!-- TAB 1: 📁 Instruksi / Skenario Kasus / Stimulus (Bisa Dibuka/Tutup) -->
+            <div class="q-collapsible-block q-section-case" id="draft-block-case-${idx}">
+                <button type="button" class="q-collapse-btn ${hasCase ? 'has-content' : 'is-empty'}" onclick="toggleDraftSection(${idx}, 'case')">
+                    <div class="q-collapse-btn-left">
+                        <span class="q-collapse-icon">📖</span>
+                        <span class="q-collapse-title">Instruksi &amp; Skenario Kasus Kontekstual</span>
+                        <span class="q-collapse-badge ${hasCase ? 'badge-has-content' : 'badge-empty'}">
+                            ${hasCase ? '✅ Ada Stimulus' : '⚪ Kosong'}
+                        </span>
+                    </div>
+                    <div class="q-collapse-btn-right">
+                        <span class="q-collapse-arrow ${hasCase ? 'open' : ''}" id="draft-arrow-case-${idx}">▼</span>
+                    </div>
+                </button>
+                <div class="q-collapse-body" id="draft-body-case-${idx}" style="display: ${hasCase ? 'block' : 'none'};">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 6px;">
+                        <span style="font-size: 0.74rem; font-weight: 700; color: #fde68a;">
+                            Format Teks Stimulus (Paragraf Berjarak Nyaman):
+                        </span>
+                        <div style="display: flex; gap: 6px;">
+                            <button type="button" class="btn btn-secondary" id="btn-toggle-edit-case-${idx}" onclick="toggleEditDraftCase(${idx})" style="padding: 3px 8px; font-size: 0.72rem;">
+                                ✏️ Edit Teks
+                            </button>
+                            <button type="button" class="btn btn-secondary" onclick="autoFormatDraftCaseStudy(${idx})" style="padding: 3px 8px; font-size: 0.72rem;" title="Pecah kalimat rapat jadi paragraf berjarak">
+                                🧹 Rapikan Paragraf
+                            </button>
+                            <button type="button" class="btn btn-secondary" onclick="clearDraftCaseStudy(${idx})" style="padding: 3px 8px; font-size: 0.72rem; color: var(--danger); border-color: rgba(239,68,68,0.3);">
+                                🗑️ Hapus
+                            </button>
+                        </div>
+                    </div>
+                    <!-- Mode Tampilan Paragraf Nyaman -->
+                    <div id="draft-case-disp-${idx}" class="case-study-display-box" style="display: block;">
+                        ${hasCase ? formatCaseStudyHtml(q.caseStudy) : '<p style="margin:0; font-style:italic; color:var(--text-muted); font-size:0.8rem;">Tidak ada stimulus untuk butir soal ini.</p>'}
+                    </div>
+                    <!-- Mode Textarea untuk Edit Bebas -->
+                    <div id="draft-case-edit-${idx}" style="display: none; margin-top: 8px;">
+                        <textarea class="form-input" rows="4" style="width: 100%; font-size: 0.84rem; line-height: 1.5; resize: vertical;" placeholder="Tuliskan stimulus kasus di sini..." onchange="updateDraftCaseStudyText(${idx}, this.value)">${escapeHtml(q.caseStudy || '')}</textarea>
+                        <span style="font-size: 0.72rem; color: var(--text-muted); margin-top: 3px; display: block;">💡 Tekan Enter dua kali untuk membuat paragraf baru.</span>
+                    </div>
                 </div>
-                ${optionsHtml}
             </div>
 
-            <div>
-                <label style="font-size: 0.78rem; font-weight: 700; color: var(--text-secondary); display: block; margin-bottom: 4px;">💡 Pembahasan / Cita Dokumen:</label>
-                <textarea class="form-input" rows="2" style="width: 100%; font-size: 0.82rem;" onchange="updateDraftExplanationText(${idx}, this.value)">${q.explanation || ''}</textarea>
+            <!-- TAB 2: 📝 Butir Pertanyaan (Bisa Dibuka/Tutup) -->
+            <div class="q-collapsible-block" id="draft-block-q-${idx}">
+                <button type="button" class="q-collapse-btn has-content" onclick="toggleDraftSection(${idx}, 'q')">
+                    <div class="q-collapse-btn-left">
+                        <span class="q-collapse-icon">📝</span>
+                        <span class="q-collapse-title">Butir Pertanyaan Soal</span>
+                        <span class="q-collapse-badge badge-has-content">✅ Terbuka</span>
+                    </div>
+                    <div class="q-collapse-btn-right">
+                        <span class="q-collapse-arrow open" id="draft-arrow-q-${idx}">▼</span>
+                    </div>
+                </button>
+                <div class="q-collapse-body" id="draft-body-q-${idx}" style="display: block;">
+                    <textarea class="form-input" rows="3" style="width: 100%; font-size: 0.88rem; font-weight: 600; line-height: 1.5;" onchange="updateDraftQuestionText(${idx}, this.value)">${escapeHtml(q.q || '')}</textarea>
+                </div>
+            </div>
+
+            <!-- TAB 3: 🔘 Pilihan Jawaban & Kunci Resmi (Bisa Dibuka/Tutup) -->
+            <div class="q-collapsible-block" id="draft-block-options-${idx}">
+                <button type="button" class="q-collapse-btn has-content" onclick="toggleDraftSection(${idx}, 'options')">
+                    <div class="q-collapse-btn-left">
+                        <span class="q-collapse-icon">🎯</span>
+                        <span class="q-collapse-title">Pilihan Jawaban &amp; Kunci Resmi</span>
+                        <span class="q-collapse-badge badge-has-content">
+                            ${(q.options || []).length} Pilihan &bull; Kunci: ${keyDisplay}
+                        </span>
+                    </div>
+                    <div class="q-collapse-btn-right">
+                        <span class="q-collapse-arrow open" id="draft-arrow-options-${idx}">▼</span>
+                    </div>
+                </button>
+                <div class="q-collapse-body" id="draft-body-options-${idx}" style="display: block;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <span style="font-size: 0.75rem; color: var(--text-secondary); font-weight: 600;">Pilih radio/checkbox untuk mengunci kunci jawaban resmi:</span>
+                        ${!isTf ? `<button type="button" onclick="addDraftOption(${idx})" style="background: none; border: none; color: var(--accent); cursor: pointer; font-size: 0.78rem; font-weight: 800;">➕ Tambah Opsi</button>` : ''}
+                    </div>
+                    ${optionsHtml}
+                </div>
+            </div>
+
+            <!-- TAB 4: 💡 Pembahasan & Analisis Diagnostik (Bisa Dibuka/Tutup) -->
+            <div class="q-collapsible-block" id="draft-block-exp-${idx}">
+                <button type="button" class="q-collapse-btn ${q.explanation ? 'has-content' : 'is-empty'}" onclick="toggleDraftSection(${idx}, 'exp')">
+                    <div class="q-collapse-btn-left">
+                        <span class="q-collapse-icon">💡</span>
+                        <span class="q-collapse-title">Pembahasan, Bedah Miskonsepsi &amp; Petunjuk</span>
+                        <span class="q-collapse-badge ${q.explanation ? 'badge-has-content' : 'badge-empty'}">
+                            ${q.explanation ? '✅ Ada Pembahasan' : '⚪ Kosong'}
+                        </span>
+                    </div>
+                    <div class="q-collapse-btn-right">
+                        <span class="q-collapse-arrow" id="draft-arrow-exp-${idx}">▼</span>
+                    </div>
+                </button>
+                <div class="q-collapse-body" id="draft-body-exp-${idx}" style="display: none;">
+                    <div style="margin-bottom: 10px;">
+                        <label style="font-size: 0.74rem; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 3px;">
+                            💡 Analisis Pembahasan Guru:
+                        </label>
+                        <textarea class="form-input" rows="3" style="width: 100%; font-size: 0.82rem; line-height: 1.45;" placeholder="Penjelasan konseptual dan alasan jawaban..." onchange="updateDraftExplanationText(${idx}, this.value)">${escapeHtml(q.explanation || '')}</textarea>
+                    </div>
+                    <div>
+                        <label style="font-size: 0.74rem; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 3px;">
+                            🔍 Petunjuk Berpikir Siswa (Clue / Hint):
+                        </label>
+                        <input type="text" class="form-input" style="width: 100%; font-size: 0.82rem; padding: 6px 10px;" value="${escapeHtml(q.hint || '')}" placeholder="Petunjuk berpikir jika siswa kesulitan..." onchange="updateDraftHintText(${idx}, this.value)">
+                    </div>
+                </div>
             </div>
         `;
         listEl.appendChild(qCard);
@@ -542,7 +638,7 @@ function renderAiQuestionsPreview(quizPkg) {
                         <span style="font-size: 0.8rem; font-weight: 700; color: ${isCorrect ? 'var(--success)' : 'var(--text-secondary)'}; width: 22px; text-align: center;">
                             ${String.fromCharCode(65 + oIdx)}.
                         </span>
-                        <input type="text" class="form-input" style="flex: 1; padding: 5px 8px; font-size: 0.8rem;" value="${(opt || '').replace(/"/g, '&quot;')}" onchange="updateDraftRemedialOptionText(${rIdx}, ${oIdx}, this.value)">
+                        <input type="text" class="form-input" style="flex: 1; padding: 5px 8px; font-size: 0.8rem;" value="${escapeHtml(opt || '')}" onchange="updateDraftRemedialOptionText(${rIdx}, ${oIdx}, this.value)">
                         <label style="font-size: 0.75rem; display: flex; align-items: center; gap: 4px; color: ${isCorrect ? 'var(--success)' : 'var(--text-muted)'}; cursor: pointer; white-space: nowrap; padding: 3px 6px; border-radius: 4px; background: ${isCorrect ? 'rgba(16,185,129,0.12)' : 'transparent'};">
                             <input type="radio" name="draft_rem_ans_${rIdx}" ${isCorrect ? 'checked' : ''} onchange="updateDraftRemedialAnswerKey(${rIdx}, ${oIdx})">
                             ${isCorrect ? 'Kunci ✅' : 'Pilihan'}
@@ -560,20 +656,339 @@ function renderAiQuestionsPreview(quizPkg) {
                     </div>
                 </div>
                 <div style="margin-bottom: 10px;">
-                    <textarea class="form-input" rows="2" style="width: 100%; font-size: 0.82rem;" onchange="updateDraftRemedialQuestionText(${rIdx}, this.value)">${rq.q}</textarea>
+                    <textarea class="form-input" rows="2" style="width: 100%; font-size: 0.82rem;" onchange="updateDraftRemedialQuestionText(${rIdx}, this.value)">${escapeHtml(rq.q || '')}</textarea>
                 </div>
                 <div style="margin-bottom: 10px;">
                     ${rOptsHtml}
                 </div>
                 <div>
                     <label style="font-size: 0.75rem; font-weight: 700; color: var(--text-secondary); display: block; margin-bottom: 3px;">💡 Ulasan Pedagogis Remedial:</label>
-                    <textarea class="form-input" rows="2" style="width: 100%; font-size: 0.8rem;" onchange="updateDraftRemedialExplanationText(${rIdx}, this.value)">${rq.explanation || ''}</textarea>
+                    <textarea class="form-input" rows="2" style="width: 100%; font-size: 0.8rem;" onchange="updateDraftRemedialExplanationText(${rIdx}, this.value)">${escapeHtml(rq.explanation || '')}</textarea>
                 </div>
             `;
             listEl.appendChild(rCard);
         });
     }
+
+    // ════════════════════════════════════════════════════════════════
+    // ⚖️ PANEL KEPUTUSAN GURU: PERSETUJUAN, REVISI & PENOLAKAN DRAF
+    // ════════════════════════════════════════════════════════════════
+    const approvalCard = document.createElement('div');
+    approvalCard.className = 'ai-approval-panel glass-card';
+    approvalCard.style.cssText = 'margin-top: 28px; padding: 24px; border-radius: 16px;';
+    approvalCard.innerHTML = `
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 14px; margin-bottom: 18px; padding-bottom: 14px; border-bottom: 1px solid var(--glass-border);">
+            <div>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <span style="font-size: 1.6rem;">⚖️</span>
+                    <h4 style="margin: 0; font-size: 1.15rem; font-weight: 800; color: #fff;">
+                        Panel Keputusan Guru: Persetujuan, Revisi &amp; Penolakan Soal
+                    </h4>
+                </div>
+                <p style="margin: 5px 0 0 0; font-size: 0.82rem; color: var(--text-secondary); line-height: 1.45;">
+                    Tinjau butir soal di atas. Anda dapat <strong>Menerima</strong>, <strong>Menolak</strong>, atau <strong>Meminta Revisi</strong> draf soal sebelum diterbitkan resmi ke portal siswa.
+                </p>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                <span class="badge-locked-pill" style="font-size: 0.78rem; padding: 4px 12px;">
+                    📊 ${quizPkg.questions.length} Butir Soal Terbaca
+                </span>
+                <span style="font-size: 0.78rem; font-weight: 800; color: #34d399; background: rgba(16,185,129,0.15); padding: 4px 10px; border-radius: 8px; border: 1px solid rgba(16,185,129,0.3);">
+                    🎯 Standar 100 Poin
+                </span>
+            </div>
+        </div>
+
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <button type="button" class="btn btn-danger" onclick="rejectAiQuizDraft()" style="padding: 10px 18px; font-size: 0.85rem; font-weight: 700; display: inline-flex; align-items: center; gap: 6px;">
+                    ❌ Tolak Soal &amp; Buat Ulang
+                </button>
+                <button type="button" class="btn btn-secondary" onclick="openRevisionPromptModal()" style="padding: 10px 18px; font-size: 0.85rem; font-weight: 700; border-color: rgba(245,158,11,0.5); color: #fde68a; display: inline-flex; align-items: center; gap: 6px;">
+                    ✏️ Minta Revisi / Ubah Draf
+                </button>
+            </div>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <button type="button" class="btn btn-secondary" onclick="saveDraftAsPendingModule()" style="padding: 10px 20px; font-size: 0.88rem; font-weight: 700; display: inline-flex; align-items: center; gap: 6px;">
+                    💾 Simpan Draf ke Bank Soal
+                </button>
+                <button type="button" class="btn btn-success" onclick="publishAiQuizModule()" style="padding: 10px 24px; font-size: 0.92rem; font-weight: 800; background: linear-gradient(135deg, #10b981, #059669); box-shadow: 0 4px 20px rgba(16,185,129,0.4); display: inline-flex; align-items: center; gap: 8px;">
+                    🚀 Saya Setuju &amp; Terbitkan Kuis (Soal Diterima)
+                </button>
+            </div>
+        </div>
+
+        <!-- Form Instruksi Revisi Cepat Guru -->
+        <div id="ai-quick-revision-box" style="display: none; margin-top: 18px; padding: 16px; background: rgba(0,0,0,0.35); border-radius: 12px; border: 1px dashed rgba(245,158,11,0.4);">
+            <label style="font-size: 0.82rem; font-weight: 700; color: #fbbf24; display: block; margin-bottom: 6px;">
+                📝 Instruksi Revisi Khusus Guru:
+            </label>
+            <textarea id="ai-revision-instruction" class="form-input" rows="3" style="width: 100%; font-size: 0.85rem; margin-bottom: 10px;" placeholder="Contoh: Rapikan paragraf stimulus pada soal nomor 1, ubah tingkat kesulitan menjadi lebih menantang, atau seimbangkan bobot poin..."></textarea>
+            <div style="display: flex; justify-content: flex-end; gap: 8px;">
+                <button type="button" class="btn btn-secondary" onclick="closeRevisionPromptModal()" style="font-size: 0.8rem; padding: 6px 14px;">Batal</button>
+                <button type="button" class="btn btn-primary" onclick="applyAiDraftRevision()" style="font-size: 0.8rem; padding: 6px 18px; font-weight: 700; background: linear-gradient(135deg, #f59e0b, #d97706);">
+                    ⚡ Terapkan Revisi Otomatis
+                </button>
+            </div>
+        </div>
+    `;
+    listEl.appendChild(approvalCard);
 }
+
+/**
+ * Format string teks kasus / stimulus menjadi paragraf terpisah yang rapi dan nyaman dibaca.
+ * Mencegah satu blok teks panjang dempet tanpa kelang paragraf.
+ */
+function formatCaseStudyHtml(rawText) {
+    if (!rawText || typeof rawText !== 'string') return '';
+    const clean = rawText.trim();
+    if (!clean) return '';
+
+    // Pisahkan berdasarkan baris baru
+    let paragraphs = clean.split(/\n+/).map(p => p.trim()).filter(Boolean);
+
+    // Jika hanya satu teks panjang tanpa enter (> 150 karakter), pecah berdasarkan batas kalimat
+    if (paragraphs.length === 1 && paragraphs[0].length > 150) {
+        const sentences = paragraphs[0].split(/(?<=[.!?])\s+(?=[A-Z0-9"'])/);
+        if (sentences.length >= 2) {
+            paragraphs = [];
+            let tempGroup = [];
+            for (let i = 0; i < sentences.length; i++) {
+                tempGroup.push(sentences[i]);
+                if (tempGroup.length >= 2 || i === sentences.length - 1) {
+                    paragraphs.push(tempGroup.join(' '));
+                    tempGroup = [];
+                }
+            }
+        }
+    }
+
+    return paragraphs.map(p => `<p class="case-study-p">${typeof escapeHtml === 'function' ? escapeHtml(p) : p}</p>`).join('');
+}
+window.formatCaseStudyHtml = formatCaseStudyHtml;
+
+/**
+ * Buka-tutup (accordion) per bagian pada butir soal draf
+ */
+function toggleDraftSection(qIdx, sectionKey) {
+    const body = document.getElementById(`draft-body-${sectionKey}-${qIdx}`);
+    const arrow = document.getElementById(`draft-arrow-${sectionKey}-${qIdx}`);
+    if (!body) return;
+    const isHidden = body.style.display === 'none';
+    body.style.display = isHidden ? 'block' : 'none';
+    if (arrow) arrow.classList.toggle('open', isHidden);
+}
+window.toggleDraftSection = toggleDraftSection;
+
+/**
+ * Buka atau ciutkan seluruh tab di semua butir soal sekaligus
+ */
+function toggleAllDraftSections(open = true) {
+    document.querySelectorAll('[id^="draft-body-"]').forEach(el => {
+        el.style.display = open ? 'block' : 'none';
+    });
+    document.querySelectorAll('[id^="draft-arrow-"]').forEach(el => {
+        el.classList.toggle('open', open);
+    });
+    if (typeof showToast === 'function') {
+        showToast(open ? 'Seluruh tab butir soal telah DIBUKA! 📂' : 'Seluruh tab butir soal telah DICIUTKAN! 📁', 'ℹ️');
+    }
+}
+window.toggleAllDraftSections = toggleAllDraftSections;
+
+/**
+ * Alihkan antara mode tampilan paragraf rapi dan mode edit teks stimulus
+ */
+function toggleEditDraftCase(qIdx) {
+    const disp = document.getElementById(`draft-case-disp-${qIdx}`);
+    const edit = document.getElementById(`draft-case-edit-${qIdx}`);
+    const btn = document.getElementById(`btn-toggle-edit-case-${qIdx}`);
+    if (!disp || !edit) return;
+    const isEditing = edit.style.display === 'block';
+    if (isEditing) {
+        disp.style.display = 'block';
+        edit.style.display = 'none';
+        if (btn) btn.innerHTML = '✏️ Edit Teks';
+    } else {
+        disp.style.display = 'none';
+        edit.style.display = 'block';
+        if (btn) btn.innerHTML = '👁️ Pratinjau Rapi';
+    }
+}
+window.toggleEditDraftCase = toggleEditDraftCase;
+
+/**
+ * Rapikan teks stimulus panjang menjadi paragraf-paragraf terpisah secara otomatis
+ */
+function autoFormatDraftCaseStudy(qIdx) {
+    if (!generatedQuizDraft || !generatedQuizDraft.questions[qIdx]) return;
+    const q = generatedQuizDraft.questions[qIdx];
+    if (!q.caseStudy) return;
+
+    const sentences = q.caseStudy.split(/(?<=[.!?])\s+(?=[A-Z0-9"'])/);
+    if (sentences.length >= 2) {
+        const pList = [];
+        let cur = [];
+        for (let i = 0; i < sentences.length; i++) {
+            cur.push(sentences[i]);
+            if (cur.length >= 2 || i === sentences.length - 1) {
+                pList.push(cur.join(' '));
+                cur = [];
+            }
+        }
+        q.caseStudy = pList.join('\n\n');
+        renderAiQuestionsPreview(generatedQuizDraft);
+        if (typeof showToast === 'function') {
+            showToast(`Teks stimulus butir soal #${qIdx + 1} berhasil dirapikan berparagraf! ✨`, '🧹');
+        }
+    } else {
+        if (typeof showToast === 'function') {
+            showToast('Teks stimulus sudah cukup ringkas.', 'ℹ️');
+        }
+    }
+}
+window.autoFormatDraftCaseStudy = autoFormatDraftCaseStudy;
+
+/**
+ * Kosongkan teks stimulus pada soal tertentu
+ */
+function clearDraftCaseStudy(qIdx) {
+    if (!generatedQuizDraft || !generatedQuizDraft.questions[qIdx]) return;
+    if (!confirm(`Kosongkan teks skenario kasus/stimulus untuk butir soal #${qIdx + 1}?`)) return;
+    generatedQuizDraft.questions[qIdx].caseStudy = null;
+    renderAiQuestionsPreview(generatedQuizDraft);
+    if (typeof showToast === 'function') {
+        showToast(`Stimulus butir soal #${qIdx + 1} dikosongkan.`, '🗑️');
+    }
+}
+window.clearDraftCaseStudy = clearDraftCaseStudy;
+
+function updateDraftCaseStudyText(qIdx, val) {
+    if (generatedQuizDraft && generatedQuizDraft.questions[qIdx]) {
+        generatedQuizDraft.questions[qIdx].caseStudy = val.trim();
+        const disp = document.getElementById(`draft-case-disp-${qIdx}`);
+        if (disp) {
+            disp.innerHTML = formatCaseStudyHtml(val.trim());
+        }
+    }
+}
+window.updateDraftCaseStudyText = updateDraftCaseStudyText;
+
+function updateDraftHintText(qIdx, val) {
+    if (generatedQuizDraft && generatedQuizDraft.questions[qIdx]) {
+        generatedQuizDraft.questions[qIdx].hint = val.trim();
+    }
+}
+window.updateDraftHintText = updateDraftHintText;
+
+/**
+ * Tolak draf soal hasil generate dan buat ulang
+ */
+function rejectAiQuizDraft() {
+    if (!confirm('Apakah Anda yakin ingin MENOLAK draf soal ini dan membatalkan hasil generate?')) return;
+    generatedQuizDraft = null;
+    const previewSec = document.getElementById('ai-preview-section');
+    if (previewSec) previewSec.style.display = 'none';
+    const rawTextEl = document.getElementById('ai-raw-text');
+    if (rawTextEl) rawTextEl.scrollIntoView({ behavior: 'smooth' });
+    if (typeof showToast === 'function') {
+        showToast('Draf soal ditolak. Silakan sesuaikan bahan materi atau opsi kuis untuk generate ulang!', '❌');
+    }
+}
+window.rejectAiQuizDraft = rejectAiQuizDraft;
+
+/**
+ * Simpan draf ke Bank Soal tanpa mengaktifkan kuis langsung untuk siswa
+ */
+async function saveDraftAsPendingModule() {
+    if (!generatedQuizDraft || !generatedQuizDraft.questions || generatedQuizDraft.questions.length === 0) {
+        if (typeof showToast === 'function') showToast('Tidak ada butir soal dalam draf untuk disimpan!', '⚠️');
+        return;
+    }
+    try {
+        const draftCopy = {
+            ...generatedQuizDraft,
+            badge: 'Draf Guru (Belum Aktif)',
+            isDraft: true
+        };
+        await QuizManager.saveCustomModule(draftCopy);
+        if (typeof sfxCorrect === 'function') sfxCorrect();
+        if (typeof showToast === 'function') {
+            showToast(`💾 Draf "${draftCopy.title}" berhasil disimpan ke Bank Soal tanpa diaktifkan langsung.`, 'success', 5000);
+        }
+        await initModulesCatalog();
+        switchTeacherTab('bank');
+        const previewSec = document.getElementById('ai-preview-section');
+        if (previewSec) previewSec.style.display = 'none';
+        generatedQuizDraft = null;
+    } catch (err) {
+        if (typeof showToast === 'function') showToast(`Gagal menyimpan draf: ${err.message}`, '⚠️');
+    }
+}
+window.saveDraftAsPendingModule = saveDraftAsPendingModule;
+
+function openRevisionPromptModal() {
+    const box = document.getElementById('ai-quick-revision-box');
+    if (box) {
+        const isHidden = box.style.display === 'none';
+        box.style.display = isHidden ? 'block' : 'none';
+        if (isHidden) {
+            box.scrollIntoView({ behavior: 'smooth' });
+            const inp = document.getElementById('ai-revision-instruction');
+            if (inp) inp.focus();
+        }
+    }
+}
+window.openRevisionPromptModal = openRevisionPromptModal;
+
+function closeRevisionPromptModal() {
+    const box = document.getElementById('ai-quick-revision-box');
+    if (box) box.style.display = 'none';
+}
+window.closeRevisionPromptModal = closeRevisionPromptModal;
+
+function applyAiDraftRevision() {
+    const inp = document.getElementById('ai-revision-instruction');
+    const instruction = inp ? inp.value.trim() : '';
+    if (!instruction) {
+        if (typeof showToast === 'function') showToast('Masukkan instruksi revisi yang diinginkan terlebih dahulu!', '⚠️');
+        return;
+    }
+
+    const lower = instruction.toLowerCase();
+    if (lower.includes('rapikan') || lower.includes('paragraf') || lower.includes('stimulus') || lower.includes('kasus')) {
+        if (generatedQuizDraft && generatedQuizDraft.questions) {
+            generatedQuizDraft.questions.forEach(q => {
+                if (q.caseStudy && q.caseStudy.length > 100) {
+                    const sents = q.caseStudy.split(/(?<=[.!?])\s+(?=[A-Z0-9"'])/);
+                    if (sents.length >= 2) {
+                        q.caseStudy = sents.join('\n\n');
+                    }
+                }
+            });
+        }
+    }
+    if (lower.includes('poin') || lower.includes('100') || lower.includes('bobot')) {
+        rebalanceDraftPoints(false);
+    }
+    if (lower.includes('mudah') || lower.includes('easy')) {
+        if (generatedQuizDraft && generatedQuizDraft.questions) {
+            generatedQuizDraft.questions.forEach(q => q.difficulty = 'Easy');
+        }
+    } else if (lower.includes('sulit') || lower.includes('hots') || lower.includes('hard')) {
+        if (generatedQuizDraft && generatedQuizDraft.questions) {
+            generatedQuizDraft.questions.forEach(q => q.difficulty = 'Hard');
+        }
+    }
+
+    renderAiQuestionsPreview(generatedQuizDraft);
+    closeRevisionPromptModal();
+    if (inp) inp.value = '';
+    if (typeof showToast === 'function') {
+        showToast('Instruksi revisi berhasil diterapkan pada draf soal! ✨', '✅');
+    }
+}
+window.applyAiDraftRevision = applyAiDraftRevision;
 
 function updateDraftRemedialQuestionText(rIdx, val) {
     if (generatedQuizDraft && generatedQuizDraft.remedialQuestions && generatedQuizDraft.remedialQuestions[rIdx]) {

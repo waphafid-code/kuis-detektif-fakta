@@ -848,14 +848,14 @@ function autoSubmitTimeout() {
     spawnRandomEmojis('⏰', 3);
 }
 
-function updateCheckboxCounter(reqCount) {
+function updateCheckboxCounter() {
     const checkedCount = document.querySelectorAll('input[name="q-opt"]:checked').length;
     const numEl = document.getElementById('cb-num');
     const box = document.getElementById('cb-counter-box');
     if (numEl) numEl.textContent = checkedCount;
     if (box) {
-        box.classList.toggle('complete', checkedCount === reqCount);
-        box.classList.toggle('warning', checkedCount > reqCount);
+        box.classList.toggle('complete', checkedCount > 0);
+        box.classList.remove('warning');
     }
 }
 
@@ -1137,11 +1137,11 @@ function loadQuestion(index) {
         cbBox.style.display = 'none';
     } else {
         badge.className = 'q-badge checkbox';
-        badge.textContent = `☑️ Pilihan Majemuk (${reqCount} Kunci Benar)`;
+        badge.textContent = `☑️ Pilihan Ganda Kompleks (Pilih Semua yang Benar)`;
         inputType = 'checkbox';
         cbBox.style.display = 'inline-flex';
         cbBox.className = 'cb-counter-box';
-        cbBox.innerHTML = `<span>☑️ Terpilih: <strong id="cb-num">0</strong> jawaban (Bisa lebih dari 1)</span>`;
+        cbBox.innerHTML = `<span>☑️ Terpilih: <strong id="cb-num">0</strong> pernyataan (Bisa lebih dari 1)</span>`;
     }
 
     if (diffBadge) {
@@ -1236,17 +1236,8 @@ function loadQuestion(index) {
                     grid.querySelectorAll('.opt-label').forEach(l => l.classList.remove('selected-opt'));
                     label.classList.add('selected-opt');
                 } else if (data.type === 'checkbox') {
-                    const maxAllowed = data.maxSelect || (Array.isArray(data.answer) ? data.answer.length : null);
-                    const checkedInputs = grid.querySelectorAll('input[type="checkbox"]:checked');
-                    // Cegah human error memilih lebih dari batas yang ditentukan
-                    if (input.checked && maxAllowed && checkedInputs.length > maxAllowed) {
-                        input.checked = false;
-                        sfxWrong();
-                        showToast(`Maksimal memilih ${maxAllowed} jawaban untuk soal ini! Batalkan salah satu pilihan Anda sebelum memilih yang lain.`, '⚠️');
-                        return;
-                    }
                     label.classList.toggle('selected-opt', input.checked);
-                    updateCheckboxCounter(reqCount);
+                    updateCheckboxCounter();
                 }
             });
 

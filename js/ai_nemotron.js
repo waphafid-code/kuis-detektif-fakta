@@ -250,12 +250,27 @@ Balas HANYA dengan format JSON valid.`;
         // 2. Analisis Konten Tiap Slide: Judul, Definisi, Poin-Poin, Istilah, dan Kalimat Faktual
         const parsedSlides = slides.map(slide => {
             const rawLines = slide.content.split('\n').map(l => l.trim()).filter(Boolean);
-            const slideTitle = rawLines[0] ? rawLines[0].replace(/^#+\s*/, '') : slide.label;
+            let cleanTitle = rawLines[0] ? rawLines[0].replace(/^#+\s*/, '').replace(/^[\d+.)\-*•]+\s*/, '').trim() : slide.label;
+            
+            // Bersihkan jika baris pertama memuat teks rubrik/tabel kunci jawaban panjang
+            if (/kunci\s*jawaban|pedoman\s*penskoran|skor\s*maksimal|distribusi\s*kognitif|lampiran\s*guru/i.test(cleanTitle)) {
+                const parts = cleanTitle.split(/—|–|-|:|\(|\)/).map(p => p.trim()).filter(p => p.length >= 3 && !/kunci\s*jawaban|pedoman|skor|lampiran|level|distribusi/i.test(p));
+                cleanTitle = parts[0] || (slide.defaultTitle || "Materi Pembelajaran");
+            }
+            if (cleanTitle.length > 55) {
+                cleanTitle = cleanTitle.substring(0, 52).trim() + "...";
+            }
+            const slideTitle = cleanTitle;
             
             // Ekstraksi definisi (Pola: X adalah/merupakan/yaitu Y)
             const definitions = [];
             const defRegex = /([A-Za-z0-9\s()/-]{3,45})\s+(?:adalah|merupakan|yaitu|ialah|diartikan sebagai|didefinisikan sebagai)\s+([^.\n]+)/gi;
             rawLines.forEach(line => {
+                // Abaikan baris kunci jawaban/tabel nilai agar tidak dikira definisi konseptual
+                if (/pilihan\s+ganda|kunci\s+jawaban|benar\s*\/\s*salah|pg\s+kompleks|skor\s+maksimal|pedoman\s+penskoran/i.test(line)) {
+                    return;
+                }
+
                 let m;
                 while ((m = defRegex.exec(line)) !== null) {
                     const term = m[1].trim().replace(/^[-*•\d+.)\s]+/, '');
