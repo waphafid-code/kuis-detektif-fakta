@@ -645,7 +645,7 @@
                         </button>
                         <div class="q-collapse-body" id="exam-prev-body-case-${idx}" style="display: ${q.caseStudy ? 'block' : 'none'};">
                             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 6px;">
-                                <span style="font-size: 0.74rem; font-weight: 700; color: #fde68a;">
+                                <span class="case-format-label">
                                     Format Teks Stimulus (Paragraf Berjarak Nyaman):
                                 </span>
                                 <div style="display: flex; gap: 6px;">

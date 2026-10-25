@@ -482,7 +482,7 @@ function renderAiQuestionsPreview(quizPkg) {
                     </div>
                 </div>
                 <div style="display: flex; gap: 6px;">
-                    <button type="button" class="btn btn-secondary" style="padding: 4px 10px; font-size: 0.72rem; color: #fda4af; border-color: rgba(244,63,94,0.4);" onclick="removeDraftQuestion(${idx})">🗑️ Hapus Soal</button>
+                    <button type="button" class="btn btn-item-delete" onclick="removeDraftQuestion(${idx})">🗑️ Hapus Soal</button>
                 </div>
             </div>
 
@@ -502,7 +502,7 @@ function renderAiQuestionsPreview(quizPkg) {
                 </button>
                 <div class="q-collapse-body" id="draft-body-case-${idx}" style="display: ${hasCase ? 'block' : 'none'};">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 6px;">
-                        <span style="font-size: 0.74rem; font-weight: 700; color: #fde68a;">
+                        <span class="case-format-label">
                             Format Teks Stimulus (Paragraf Berjarak Nyaman):
                         </span>
                         <div style="display: flex; gap: 6px;">
@@ -677,56 +677,56 @@ function renderAiQuestionsPreview(quizPkg) {
     approvalCard.className = 'ai-approval-panel glass-card';
     approvalCard.style.cssText = 'margin-top: 28px; padding: 24px; border-radius: 16px;';
     approvalCard.innerHTML = `
-        <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 14px; margin-bottom: 18px; padding-bottom: 14px; border-bottom: 1px solid var(--glass-border);">
+        <div class="ai-approval-header">
             <div>
                 <div style="display: flex; align-items: center; gap: 10px;">
                     <span style="font-size: 1.6rem;">⚖️</span>
-                    <h4 style="margin: 0; font-size: 1.15rem; font-weight: 800; color: #fff;">
+                    <h4 class="ai-approval-title">
                         Panel Keputusan Guru: Persetujuan, Revisi &amp; Penolakan Soal
                     </h4>
                 </div>
-                <p style="margin: 5px 0 0 0; font-size: 0.82rem; color: var(--text-secondary); line-height: 1.45;">
+                <p class="ai-approval-subtitle">
                     Tinjau butir soal di atas. Anda dapat <strong>Menerima</strong>, <strong>Menolak</strong>, atau <strong>Meminta Revisi</strong> draf soal sebelum diterbitkan resmi ke portal siswa.
                 </p>
             </div>
             <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-                <span class="badge-locked-pill" style="font-size: 0.78rem; padding: 4px 12px;">
+                <span class="badge-locked-pill ai-approval-badge-count">
                     📊 ${quizPkg.questions.length} Butir Soal Terbaca
                 </span>
-                <span style="font-size: 0.78rem; font-weight: 800; color: #34d399; background: rgba(16,185,129,0.15); padding: 4px 10px; border-radius: 8px; border: 1px solid rgba(16,185,129,0.3);">
+                <span class="ai-approval-badge-score">
                     🎯 Standar 100 Poin
                 </span>
             </div>
         </div>
 
-        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+        <div class="ai-approval-actions">
             <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                <button type="button" class="btn btn-danger" onclick="rejectAiQuizDraft()" style="padding: 10px 18px; font-size: 0.85rem; font-weight: 700; display: inline-flex; align-items: center; gap: 6px;">
+                <button type="button" class="btn btn-approval-reject" onclick="rejectAiQuizDraft()">
                     ❌ Tolak Soal &amp; Buat Ulang
                 </button>
-                <button type="button" class="btn btn-secondary" onclick="openRevisionPromptModal()" style="padding: 10px 18px; font-size: 0.85rem; font-weight: 700; border-color: rgba(245,158,11,0.5); color: #fde68a; display: inline-flex; align-items: center; gap: 6px;">
+                <button type="button" class="btn btn-approval-revise" onclick="openRevisionPromptModal()">
                     ✏️ Minta Revisi / Ubah Draf
                 </button>
             </div>
             <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                <button type="button" class="btn btn-secondary" onclick="saveDraftAsPendingModule()" style="padding: 10px 20px; font-size: 0.88rem; font-weight: 700; display: inline-flex; align-items: center; gap: 6px;">
+                <button type="button" class="btn btn-approval-save" onclick="saveDraftAsPendingModule()">
                     💾 Simpan Draf ke Bank Soal
                 </button>
-                <button type="button" class="btn btn-success" onclick="publishAiQuizModule()" style="padding: 10px 24px; font-size: 0.92rem; font-weight: 800; background: linear-gradient(135deg, #10b981, #059669); box-shadow: 0 4px 20px rgba(16,185,129,0.4); display: inline-flex; align-items: center; gap: 8px;">
+                <button type="button" class="btn btn-approval-publish" onclick="publishAiQuizModule()">
                     🚀 Saya Setuju &amp; Terbitkan Kuis (Soal Diterima)
                 </button>
             </div>
         </div>
 
         <!-- Form Instruksi Revisi Cepat Guru -->
-        <div id="ai-quick-revision-box" style="display: none; margin-top: 18px; padding: 16px; background: rgba(0,0,0,0.35); border-radius: 12px; border: 1px dashed rgba(245,158,11,0.4);">
-            <label style="font-size: 0.82rem; font-weight: 700; color: #fbbf24; display: block; margin-bottom: 6px;">
+        <div id="ai-quick-revision-box" class="ai-quick-revision-box" style="display: none;">
+            <label class="ai-revision-label">
                 📝 Instruksi Revisi Khusus Guru:
             </label>
-            <textarea id="ai-revision-instruction" class="form-input" rows="3" style="width: 100%; font-size: 0.85rem; margin-bottom: 10px;" placeholder="Contoh: Rapikan paragraf stimulus pada soal nomor 1, ubah tingkat kesulitan menjadi lebih menantang, atau seimbangkan bobot poin..."></textarea>
+            <textarea id="ai-revision-instruction" class="form-input ai-revision-textarea" rows="3" placeholder="Contoh: Rapikan paragraf stimulus pada soal nomor 1, ubah tingkat kesulitan menjadi lebih menantang, atau seimbangkan bobot poin..."></textarea>
             <div style="display: flex; justify-content: flex-end; gap: 8px;">
-                <button type="button" class="btn btn-secondary" onclick="closeRevisionPromptModal()" style="font-size: 0.8rem; padding: 6px 14px;">Batal</button>
-                <button type="button" class="btn btn-primary" onclick="applyAiDraftRevision()" style="font-size: 0.8rem; padding: 6px 18px; font-weight: 700; background: linear-gradient(135deg, #f59e0b, #d97706);">
+                <button type="button" class="btn btn-approval-cancel" onclick="closeRevisionPromptModal()">Batal</button>
+                <button type="button" class="btn btn-approval-apply" onclick="applyAiDraftRevision()">
                     ⚡ Terapkan Revisi Otomatis
                 </button>
             </div>
