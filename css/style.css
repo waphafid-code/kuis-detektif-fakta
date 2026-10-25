@@ -667,17 +667,80 @@ body::before {
     display: block; font-size: 0.82rem; font-weight: 700; color: var(--text);
     margin-bottom: 6px;
 }
-.form-select, .form-input {
-    width: 100%; padding: 12px 16px; border-radius: var(--radius-sm);
-    background: var(--bg-card); border: 1.5px solid var(--glass-border);
-    color: var(--text); font-size: 0.92rem; font-family: var(--font-body);
-    transition: all 0.25s ease; outline: none;
+/* ============================================================ */
+/* 🎨 UNIVERSAL FORM CONTROLS & INPUTS (ZERO HARSH WHITE BOXES)  */
+/* ============================================================ */
+.form-select, 
+.form-input, 
+.form-control,
+input[type="text"].form-control,
+input[type="number"].form-control,
+input[type="password"].form-control,
+input[type="url"].form-control,
+textarea.form-control,
+select.form-control {
+    width: 100%;
+    padding: 11px 15px;
+    border-radius: var(--radius-sm, 12px);
+    background: var(--bg-surface-low, rgba(20, 28, 48, 0.7));
+    border: 1.5px solid var(--glass-border);
+    color: var(--text);
+    font-size: 0.9rem;
+    font-family: var(--font-body);
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    outline: none;
+    box-sizing: border-box;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.15);
 }
-.form-select:focus, .form-input:focus {
+
+[data-theme="dark"] .form-select,
+[data-theme="dark"] .form-input,
+[data-theme="dark"] .form-control,
+body.dark-theme .form-select,
+body.dark-theme .form-input,
+body.dark-theme .form-control {
+    background: rgba(15, 23, 42, 0.8) !important;
+    border-color: rgba(255, 255, 255, 0.12) !important;
+    color: #f8fafc !important;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.35) !important;
+}
+
+.form-select:hover, 
+.form-input:hover, 
+.form-control:hover {
+    border-color: rgba(99, 102, 241, 0.35);
+}
+
+.form-select:focus, 
+.form-input:focus, 
+.form-control:focus {
     border-color: var(--primary);
-    box-shadow: 0 0 0 4px var(--primary-glow);
+    box-shadow: 0 0 0 3px var(--primary-glow), inset 0 2px 4px rgba(0, 0, 0, 0.1);
+    background: var(--bg-card);
 }
-.form-select option { background: var(--bg-card); color: var(--text); }
+
+[data-theme="dark"] .form-select:focus,
+[data-theme="dark"] .form-input:focus,
+[data-theme="dark"] .form-control:focus,
+body.dark-theme .form-select:focus,
+body.dark-theme .form-input:focus,
+body.dark-theme .form-control:focus {
+    border-color: #6366f1 !important;
+    background: rgba(15, 23, 42, 0.98) !important;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.35), inset 0 2px 4px rgba(0, 0, 0, 0.35) !important;
+    color: #ffffff !important;
+}
+
+.form-control::placeholder,
+.form-input::placeholder {
+    color: var(--text-muted);
+    opacity: 0.7;
+}
+
+.form-select option { 
+    background: var(--bg-card, #151d30); 
+    color: var(--text, #f8fafc); 
+}
 
 /* Dual Action Buttons (Stitch Pill Style) */
 .home-actions-grid {
@@ -6431,16 +6494,117 @@ body::before {
 }
 
 .modal-dialog-exam {
-    background: var(--bg-card);
-    border: 1.5px solid var(--glass-border);
+    background: #0f172a !important;
+    border: 1.5px solid rgba(255, 255, 255, 0.12) !important;
     border-radius: var(--radius-lg);
     width: 100%;
-    max-width: 900px;
+    max-width: 920px;
     max-height: 90vh;
     display: flex;
     flex-direction: column;
-    box-shadow: var(--shadow-xl);
+    box-shadow: 0 25px 60px -10px rgba(0, 0, 0, 0.85), 0 0 30px rgba(99, 102, 241, 0.2) !important;
     overflow: hidden;
+    color: #f8fafc !important;
+}
+
+/* Modals inputs & textareas — Sleek Dark Glass Aesthetics, Zero Harsh White */
+.modal-dialog-exam .form-control,
+.modal-dialog-exam .form-input,
+.modal-dialog-exam input[type="text"],
+.modal-dialog-exam input[type="number"],
+.modal-dialog-exam input[type="password"],
+.modal-dialog-exam textarea,
+.modal-dialog-exam select,
+#modal-exam-doc-preview .form-control,
+#modal-exam-doc-preview input,
+#modal-exam-doc-preview textarea,
+#modal-exam-doc-preview select,
+#modal-exam-doc-manual .form-control,
+#modal-exam-doc-manual input,
+#modal-exam-doc-manual textarea,
+#modal-exam-doc-manual select {
+    background: rgba(15, 23, 42, 0.75) !important;
+    border: 1.5px solid rgba(255, 255, 255, 0.12) !important;
+    color: #f1f5f9 !important;
+    border-radius: 10px !important;
+    padding: 10px 14px !important;
+    font-family: var(--font-body) !important;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3) !important;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    box-sizing: border-box !important;
+}
+
+.modal-dialog-exam .form-control:hover,
+.modal-dialog-exam textarea:hover,
+.modal-dialog-exam input:hover,
+#modal-exam-doc-preview textarea:hover,
+#modal-exam-doc-preview input:hover,
+#modal-exam-doc-manual textarea:hover,
+#modal-exam-doc-manual input:hover {
+    border-color: rgba(99, 102, 241, 0.45) !important;
+    background: rgba(15, 23, 42, 0.9) !important;
+}
+
+.modal-dialog-exam .form-control:focus,
+.modal-dialog-exam .form-input:focus,
+.modal-dialog-exam input:focus,
+.modal-dialog-exam textarea:focus,
+#modal-exam-doc-preview .form-control:focus,
+#modal-exam-doc-preview input:focus,
+#modal-exam-doc-preview textarea:focus,
+#modal-exam-doc-manual .form-control:focus,
+#modal-exam-doc-manual input:focus,
+#modal-exam-doc-manual textarea:focus {
+    border-color: #38bdf8 !important;
+    background: #0b1120 !important;
+    box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.25), inset 0 2px 4px rgba(0, 0, 0, 0.3) !important;
+    color: #ffffff !important;
+    outline: none !important;
+}
+
+.modal-dialog-exam input::placeholder,
+.modal-dialog-exam textarea::placeholder,
+#modal-exam-doc-preview input::placeholder,
+#modal-exam-doc-preview textarea::placeholder,
+#modal-exam-doc-manual input::placeholder,
+#modal-exam-doc-manual textarea::placeholder {
+    color: #64748b !important;
+}
+
+/* Light Theme Adaptations for Modal */
+[data-theme="light"] .modal-dialog-exam {
+    background: #ffffff !important;
+    border-color: #cbd5e1 !important;
+    color: #0f172a !important;
+    box-shadow: 0 20px 50px rgba(15, 23, 42, 0.15) !important;
+}
+
+[data-theme="light"] .modal-dialog-exam .form-control,
+[data-theme="light"] .modal-dialog-exam input[type="text"],
+[data-theme="light"] .modal-dialog-exam input[type="number"],
+[data-theme="light"] .modal-dialog-exam textarea,
+[data-theme="light"] #modal-exam-doc-preview .form-control,
+[data-theme="light"] #modal-exam-doc-preview input,
+[data-theme="light"] #modal-exam-doc-preview textarea,
+[data-theme="light"] #modal-exam-doc-manual .form-control,
+[data-theme="light"] #modal-exam-doc-manual input,
+[data-theme="light"] #modal-exam-doc-manual textarea {
+    background: #f8fafc !important;
+    border: 1.5px solid #cbd5e1 !important;
+    color: #0f172a !important;
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+}
+
+[data-theme="light"] .modal-dialog-exam .form-control:focus,
+[data-theme="light"] .modal-dialog-exam input:focus,
+[data-theme="light"] .modal-dialog-exam textarea:focus,
+[data-theme="light"] #modal-exam-doc-preview .form-control:focus,
+[data-theme="light"] #modal-exam-doc-preview input:focus,
+[data-theme="light"] #modal-exam-doc-preview textarea:focus {
+    border-color: #4f46e5 !important;
+    background: #ffffff !important;
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15) !important;
+    color: #0f172a !important;
 }
 
 .modal-exam-header {

@@ -661,7 +661,7 @@
                                 ${q.caseStudy ? (typeof formatCaseStudyHtml === 'function' ? formatCaseStudyHtml(q.caseStudy) : `<p class="case-study-p">${escapeHtml(q.caseStudy)}</p>`) : '<p style="margin:0; font-style:italic; color:var(--text-muted); font-size:0.8rem;">Tidak ada stimulus kasus.</p>'}
                             </div>
                             <div id="exam-prev-case-edit-${idx}" style="display: none; margin-top: 8px;">
-                                <textarea class="form-control" style="width:100%;font-size:0.84rem;line-height:1.5;resize:vertical;" rows="4" onchange="ExamDocImporterUI.updateCaseStudy(${idx}, this.value)">${escapeHtml(q.caseStudy || '')}</textarea>
+                                <textarea class="form-control" style="width:100%;font-size:0.84rem;line-height:1.5;resize:vertical;background:rgba(15,23,42,0.75);color:#f8fafc;border:1.5px solid rgba(255,255,255,0.12);border-radius:10px;padding:10px 14px;" rows="4" onchange="ExamDocImporterUI.updateCaseStudy(${idx}, this.value)">${escapeHtml(q.caseStudy || '')}</textarea>
                             </div>
                         </div>
                     </div>
@@ -679,7 +679,7 @@
                             </div>
                         </button>
                         <div class="q-collapse-body" id="exam-prev-body-q-${idx}" style="display: block;">
-                            <textarea class="form-control" style="width:100%;font-size:0.88rem;font-weight:600;min-height:55px;resize:vertical;line-height:1.5;" onchange="ExamDocImporterUI.updateQuestionText(${idx}, this.value)">${escapeHtml(q.q)}</textarea>
+                            <textarea class="form-control exam-q-textarea" style="width:100%;font-size:0.88rem;font-weight:600;min-height:60px;resize:vertical;line-height:1.55;background:rgba(15,23,42,0.75);color:#f8fafc;border:1.5px solid rgba(255,255,255,0.12);border-radius:10px;padding:12px 14px;" onchange="ExamDocImporterUI.updateQuestionText(${idx}, this.value)">${escapeHtml(q.q)}</textarea>
                         </div>
                     </div>
 
@@ -723,11 +723,11 @@
                             <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:0.78rem;">
                                 <div>
                                     <label style="font-size:0.72rem;font-weight:700;color:var(--text-muted);display:block;margin-bottom:3px;">💡 Pembahasan:</label>
-                                    <input type="text" class="form-control" value="${escapeHtml(q.explanation || '')}" placeholder="Keterangan pembahasan..." style="font-size:0.8rem;padding:6px 10px;" onchange="ExamDocImporterUI.updateExplanation(${idx}, this.value)">
+                                    <input type="text" class="form-control" value="${escapeHtml(q.explanation || '')}" placeholder="Keterangan pembahasan..." style="font-size:0.8rem;padding:8px 12px;background:rgba(15,23,42,0.75);color:#f8fafc;border:1.5px solid rgba(255,255,255,0.12);border-radius:8px;" onchange="ExamDocImporterUI.updateExplanation(${idx}, this.value)">
                                 </div>
                                 <div>
                                     <label style="font-size:0.72rem;font-weight:700;color:var(--text-muted);display:block;margin-bottom:3px;">🔍 Petunjuk / Hint:</label>
-                                    <input type="text" class="form-control" value="${escapeHtml(q.hint || '')}" placeholder="Petunjuk berpikir siswa..." style="font-size:0.8rem;padding:6px 10px;" onchange="ExamDocImporterUI.updateHint(${idx}, this.value)">
+                                    <input type="text" class="form-control" value="${escapeHtml(q.hint || '')}" placeholder="Petunjuk berpikir siswa..." style="font-size:0.8rem;padding:8px 12px;background:rgba(15,23,42,0.75);color:#f8fafc;border:1.5px solid rgba(255,255,255,0.12);border-radius:8px;" onchange="ExamDocImporterUI.updateHint(${idx}, this.value)">
                                 </div>
                             </div>
                         </div>
