@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
     <meta name="format-detection" content="telephone=no, email=no, address=no, date=no">
     <title>📝 QuizMaster — Platform Kuis Interaktif Cerdas</title>
     <meta name="description" content="Platform kuis interaktif cerdas dengan AI auto-generate soal untuk evaluasi pembelajaran siswa.">
@@ -31,9 +31,9 @@
         }
     </script>
     <!-- QuizMaster Modern Design System & UI Styling -->
-    <link rel="stylesheet" href="css/style.css?v=20261026-ai-rolefix">
+    <link rel="stylesheet" href="css/style.css?v=20261026-mobile-perfect">
     <!-- Cyber Guardian Sentinel Protocol & Gemini Teacher AI Assistant Styling -->
-    <link rel="stylesheet" href="css/guardian_and_chatbot.css?v=20261026-streamchat">
+    <link rel="stylesheet" href="css/guardian_and_chatbot.css?v=20261026-mobile-perfect">
 
 
 </head>
@@ -1147,8 +1147,8 @@
             <!-- SETTINGS PANEL -->
             <div class="settings-panel" style="margin-bottom: 16px;">
                 <h4>⚙️ Pengaturan Kuis</h4>
-                <div style="display: flex; gap: 20px; flex-wrap: wrap; align-items: center;">
-                    <div class="setting-row" style="margin: 0; display: flex; align-items: center; gap: 10px;">
+                <div class="settings-grid">
+                    <div class="setting-row">
                         <label for="setting-timer" style="font-weight: 700; font-size: 0.88rem; color: var(--text);">⏱ Waktu per Soal:</label>
                         <select id="setting-timer" class="form-select-modern" onchange="saveTimerSetting()">
                             <option value="15">15 detik</option>
@@ -1163,7 +1163,7 @@
                         <span class="setting-saved" id="timer-saved-msg">✅ Tersimpan!</span>
                     </div>
 
-                    <div class="setting-row" style="margin: 0; display: flex; align-items: center; gap: 10px;">
+                    <div class="setting-row">
                         <label for="setting-minigames-timer" style="font-weight: 700; font-size: 0.88rem; color: var(--text);">🎮 Durasi Mini-Games:</label>
                         <select id="setting-minigames-timer" class="form-select-modern" onchange="saveMiniGamesTimerSetting()">
                             <option value="15">15 detik (Mode Kilat)</option>
@@ -1178,9 +1178,9 @@
                         <span class="setting-saved" id="minigames-timer-saved-msg" style="display:none; color:var(--success); font-weight:700; font-size:0.8rem;">✅ Tersimpan!</span>
                     </div>
 
-                    <div class="setting-row" style="margin: 0; display: flex; align-items: center; gap: 10px;">
+                    <div class="setting-row">
                         <label for="setting-submission-policy" style="font-weight: 700; font-size: 0.88rem; color: var(--text);">🔄 Batas Respon Siswa:</label>
-                        <select id="setting-submission-policy" onchange="saveSubmissionPolicySetting()" class="form-select-modern" style="max-width: 340px; font-size: 0.85rem;">
+                        <select id="setting-submission-policy" onchange="saveSubmissionPolicySetting()" class="form-select-modern" style="font-size: 0.85rem;">
                             <option value="single_only" selected>1️⃣ Hanya 1 Kali (Tolak Pengiriman Ganda)</option>
                             <option value="allow_twice_highest">✌️ Dapat Dikumpulkan 2 Kali (Ambil Nilai Tertinggi)</option>
                             <option value="allow_remedy">⭐ Boleh Remedi (Simpan Nilai Tertinggi)</option>
@@ -1189,30 +1189,30 @@
                         <span class="setting-saved" id="policy-saved-msg">✅ Tersimpan!</span>
                     </div>
 
-                    <div class="setting-row" style="margin: 0; display: flex; align-items: center; gap: 10px;">
+                    <div class="setting-row">
                         <label for="setting-remedial-toggle" style="font-weight: 700; font-size: 0.88rem; color: var(--text);">🔁 Mode Remedial:</label>
-                        <select id="setting-remedial-toggle" onchange="saveRemedialSetting()" class="form-select-modern" style="max-width: 280px; font-size: 0.85rem;">
+                        <select id="setting-remedial-toggle" onchange="saveRemedialSetting()" class="form-select-modern" style="font-size: 0.85rem;">
                             <option value="disabled" selected>🔴 Nonaktif (Matikan Fitur Remedial Saat Ujian)</option>
                             <option value="enabled">🟢 Aktif (Izinkan Remedial Terarah)</option>
                         </select>
                         <span class="setting-saved" id="remedial-toggle-saved-msg" style="display:none; color:var(--success); font-weight:700; font-size:0.8rem;">✅ Tersimpan!</span>
                     </div>
 
-                    <div class="setting-row" style="margin: 0; display: flex; align-items: center; gap: 10px;">
+                    <div class="setting-row">
                         <label for="setting-fullscreen-mode" style="font-weight: 700; font-size: 0.88rem; color: var(--text);">🖥️ Kunci Layar Penuh:</label>
-                        <select id="setting-fullscreen-mode" onchange="saveFullscreenSetting()" class="form-select-modern" style="max-width: 320px; font-size: 0.85rem;">
+                        <select id="setting-fullscreen-mode" onchange="saveFullscreenSetting()" class="form-select-modern" style="font-size: 0.85rem;">
                             <option value="wajib" selected>🟢 Wajib (Enforced Fullscreen Lockdown)</option>
                             <option value="opsional">⚪ Bebas / Latihan (Tanpa Kunci Layar)</option>
                         </select>
                         <span class="setting-saved" id="fullscreen-saved-msg" style="display:none; color:var(--success); font-weight:700; font-size:0.8rem;">✅ Tersimpan!</span>
                     </div>
 
-                    <div class="setting-row" style="margin: 0; display: flex; align-items: center; gap: 8px;">
+                    <div class="setting-row">
                         <span style="font-weight: 700; font-size: 0.88rem; color: var(--text);">🧹 Retensi Berkas:</span>
                         <span style="font-size: 0.78rem; font-weight: 700; padding: 4px 10px; border-radius: 12px; background: rgba(16,185,129,0.12); border: 1px solid rgba(16,185,129,0.35); color: #10b981;" title="Berkas unggahan atau draft sementara otomatis dihapus setelah 7 hari agar kuota penyimpanan tidak cepat penuh">
                             Auto-Purge 7 Hari 🛡️
                         </span>
-                        <button type="button" class="btn btn-secondary" onclick="runManualStorageCleanup()" style="padding: 4px 12px; font-size: 0.76rem; border-radius: 8px;" title="Bersihkan cache berkas atau data draft yang berumur lebih dari 7 hari">
+                        <button type="button" class="btn btn-secondary" onclick="runManualStorageCleanup()" style="padding: 6px 12px; font-size: 0.76rem; border-radius: 8px;" title="Bersihkan cache berkas atau data draft yang berumur lebih dari 7 hari">
                             Bersihkan Sekarang 🧹
                         </button>
                     </div>

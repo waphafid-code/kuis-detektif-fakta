@@ -768,6 +768,7 @@
     font-size: 1.8rem;
     background: linear-gradient(135deg, #fbbf24, #f59e0b);
     -webkit-background-clip: text;
+    background-clip: text;
     -webkit-text-fill-color: transparent;
     filter: drop-shadow(0 0 15px rgba(245, 158, 11, 0.5));
 }
@@ -1066,4 +1067,159 @@
     gap: 12px;
     justify-content: center;
     flex-wrap: wrap;
+}
+
+/* ============================================================
+   📱 MOBILE & ANDROID RESPONSIVE ADAPTATION (GUARDIAN & CHATBOT)
+   ============================================================ */
+
+/* Hide floating chatbot trigger during active examination */
+body.in-exam .chatbot-float-trigger,
+.screen-quiz.active ~ .chatbot-float-trigger,
+#screen-quiz.active .chatbot-float-trigger {
+    display: none !important;
+    pointer-events: none !important;
+}
+
+@media (max-width: 640px) {
+    /* 1. Chatbot Floating Trigger Mobile Positioning */
+    .chatbot-float-trigger {
+        bottom: 16px !important;
+        right: 16px !important;
+        padding: 9px 15px !important;
+        font-size: 0.8rem !important;
+        gap: 6px !important;
+        box-shadow: 0 4px 16px rgba(66, 133, 244, 0.4) !important;
+    }
+    .trigger-sparkle {
+        font-size: 1rem !important;
+    }
+
+    /* 2. Chatbot Mobile Bottom Sheet */
+    .teacher-chatbot-wrapper {
+        position: fixed !important;
+        bottom: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        top: auto !important;
+        width: 100vw !important;
+        max-width: 100vw !important;
+        height: 86vh !important;
+        max-height: 90vh !important;
+        border-radius: 22px 22px 0 0 !important;
+        border-bottom: none !important;
+        border-left: none !important;
+        border-right: none !important;
+        box-shadow: 0 -12px 40px rgba(0, 0, 0, 0.6) !important;
+        z-index: 99999 !important;
+    }
+
+    .chatbot-header {
+        padding: 12px 14px !important;
+    }
+
+    .chatbot-title {
+        font-size: 0.88rem !important;
+    }
+
+    .chatbot-sub {
+        font-size: 0.68rem !important;
+    }
+
+    /* Swipeable Chips Bar */
+    .chatbot-chips-bar {
+        padding: 8px 12px !important;
+        gap: 6px !important;
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+        scrollbar-width: none;
+        flex-wrap: nowrap !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+    .chatbot-chips-bar::-webkit-scrollbar {
+        display: none;
+    }
+
+    .chatbot-chip {
+        padding: 6px 12px !important;
+        font-size: 0.72rem !important;
+        flex-shrink: 0 !important;
+        white-space: nowrap !important;
+    }
+
+    .chatbot-messages-area {
+        padding: 12px !important;
+        gap: 10px !important;
+    }
+
+    .chatbot-msg .msg-content {
+        padding: 10px 14px !important;
+        font-size: 0.84rem !important;
+        max-width: 88% !important;
+    }
+
+    .chatbot-input-bar {
+        padding: 10px 12px !important;
+        gap: 8px !important;
+    }
+
+    .chatbot-input-field {
+        font-size: 0.84rem !important;
+        padding: 10px 12px !important;
+    }
+
+    /* 3. Cyber Guardian Battle Stage on Mobile */
+    .guardian-battle-stage {
+        height: 250px !important;
+        padding: 14px 10px !important;
+        border-radius: 16px !important;
+        margin-bottom: 12px !important;
+    }
+
+    .character-pod {
+        width: 120px !important;
+        gap: 6px !important;
+    }
+
+    .character-avatar {
+        width: 60px !important;
+        height: 60px !important;
+        font-size: 1.8rem !important;
+        border-width: 2px !important;
+    }
+
+    .character-hp-track {
+        width: 110px !important;
+        height: 8px !important;
+    }
+
+    .character-name {
+        font-size: 0.75rem !important;
+    }
+
+    .vs-emblem {
+        font-size: 1.1rem !important;
+    }
+
+    .guardian-combat-card {
+        padding: 16px 14px !important;
+        border-radius: 16px !important;
+    }
+
+    .combat-scenario-title {
+        font-size: 0.95rem !important;
+        line-height: 1.4 !important;
+    }
+
+    .combat-choice-btn {
+        padding: 10px 12px !important;
+        font-size: 0.82rem !important;
+    }
+
+    .guardian-result-modal {
+        padding: 24px 16px !important;
+        border-radius: 20px !important;
+        margin: 20px 12px !important;
+    }
 }

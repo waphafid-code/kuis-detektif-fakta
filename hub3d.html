@@ -130,6 +130,38 @@
             background: rgba(255, 255, 255, 0.12);
             border-color: rgba(99, 102, 241, 0.4);
         }
+
+        @media (max-width: 640px) {
+            .portal-container {
+                padding: 24px 16px;
+            }
+            .hero-emblem {
+                font-size: 3.5rem;
+            }
+            .portal-title {
+                font-size: 1.85rem;
+                letter-spacing: 0.5px;
+            }
+            .portal-desc {
+                font-size: 0.92rem;
+                line-height: 1.6;
+                margin-bottom: 24px;
+            }
+            .portal-actions {
+                flex-direction: column;
+                width: 100%;
+                max-width: 320px;
+                gap: 12px;
+            }
+            .btn-launch-hero,
+            .btn-back-home {
+                width: 100%;
+                justify-content: center;
+                box-sizing: border-box;
+                padding: 14px 20px;
+                font-size: 0.95rem;
+            }
+        }
     </style>
 </head>
 <body>
