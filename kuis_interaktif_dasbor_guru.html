@@ -29,7 +29,10 @@
         }
     </script>
     <!-- QuizMaster Modern Design System & UI Styling -->
-    <link rel="stylesheet" href="css/style.css?v=20260919-rev4">
+    <link rel="stylesheet" href="css/style.css?v=20261026-ai-rolefix">
+    <!-- Cyber Guardian Sentinel Protocol & Gemini Teacher AI Assistant Styling -->
+    <link rel="stylesheet" href="css/guardian_and_chatbot.css?v=20261026-streamchat">
+
 
 </head>
 <body>
@@ -39,47 +42,68 @@
 
 <canvas id="particle-canvas"></canvas>
 
-<!-- 🏛️ MODERN STRUCTURED NAVBAR HEADER (STITCH ACCORDANCE) -->
-<header class="app-header">
+<!-- 📱 MOBILE TOP BAR (TAMPIL HANYA DI LAYAR KECIL) -->
+<div class="mobile-top-bar" id="mobile-top-bar">
+    <button class="mobile-menu-btn" onclick="toggleSidebarMenu()" aria-label="Buka Menu Navigasi">
+        <span>☰</span>
+    </button>
+    <div class="header-brand" onclick="goHome()" style="cursor: pointer;">
+        <div class="brand-logo-icon" style="width: 32px; height: 32px; font-size: 1rem;">
+            <span>🎓</span>
+        </div>
+        <span class="brand-name" style="font-size: 1.05rem;">QuizMaster</span>
+    </div>
+    <div class="header-ctrl-group">
+        <button class="header-btn" onclick="toggleTheme()" title="Mode Tema">
+            <span id="theme-icon-mob">🌙</span>
+        </button>
+    </div>
+</div>
+<div class="sidebar-backdrop" id="sidebar-backdrop" onclick="toggleSidebarMenu(false)"></div>
+
+<!-- 🏛️ MODERN STRUCTURED SIDEBAR NAVIGATION -->
+<header class="app-header app-sidebar" id="app-sidebar">
     <div class="header-inner">
-        <!-- Left: Brand + Portal Badge -->
+        <!-- Top: Brand + Portal Badge -->
         <div class="header-brand" onclick="goHome()">
-            <div class="brand-logo-icon">
-                <span>🎓</span>
+            <div class="brand-logo-row">
+                <div class="brand-logo-icon">
+                    <span>🎓</span>
+                </div>
+                <span class="brand-name">QuizMaster</span>
             </div>
-            <span class="brand-name">QuizMaster</span>
             <span class="portal-badge" id="header-portal-badge">
                 <span class="pulse-dot"></span>
                 STUDENT PORTAL
             </span>
         </div>
 
-        <!-- Center: Nav Pills -->
+        <!-- Center: Nav Links -->
         <nav class="header-nav" aria-label="Navigasi Utama">
-            <a href="javascript:void(0)" class="nav-item active" id="nav-btn-home" onclick="goHome()" title="Halaman Depan / Ruang Kuis">
+            <a href="javascript:void(0)" class="nav-item active" id="nav-btn-home" onclick="goHome(); toggleSidebarMenu(false);" title="Halaman Depan / Ruang Kuis">
                 <span>🏠</span> Beranda
             </a>
-            <a href="javascript:void(0)" class="nav-item" id="nav-btn-learn" onclick="switchScreen('learn')" title="Ruang Belajar Interaktif Ala Ruangguru">
+            <a href="javascript:void(0)" class="nav-item" id="nav-btn-learn" onclick="switchScreen('learn'); toggleSidebarMenu(false);" title="Ruang Belajar Interaktif Ala Ruangguru">
                 <span>📖</span> Ruang Belajar
             </a>
-            <a href="javascript:void(0)" class="nav-item" id="nav-btn-games" onclick="openMiniGamesHub()" title="Arena Mini-Game Edukatif &amp; Ice Breaking">
+            <a href="javascript:void(0)" class="nav-item" id="nav-btn-games" onclick="openMiniGamesHub(); toggleSidebarMenu(false);" title="Arena Mini-Game Edukatif &amp; Ice Breaking">
                 <span>🎮</span> Mini Game
             </a>
-            <a href="javascript:void(0)" class="nav-item" id="nav-btn-rekap" onclick="navToTeacherTab('records')" title="Rekap Nilai Siswa & Analisis">
+            <a href="javascript:void(0)" class="nav-item" id="nav-btn-rekap" onclick="navToTeacherTab('records'); toggleSidebarMenu(false);" title="Rekap Nilai Siswa & Analisis">
                 <span>📊</span> Dasbor Guru
             </a>
-            <a href="javascript:void(0)" class="nav-item" id="nav-btn-bank" onclick="navToTeacherTab('bank')" title="Bank Materi & Modul Kuis">
+            <a href="javascript:void(0)" class="nav-item" id="nav-btn-bank" onclick="navToTeacherTab('bank'); toggleSidebarMenu(false);" title="Bank Materi & Modul Kuis">
                 <span>📚</span> Bank Soal
             </a>
-            <a href="javascript:void(0)" class="nav-item" id="nav-btn-ai" onclick="navToTeacherTab('ai')" title="Studio Kuis Cerdas AI Nemotron">
+            <a href="javascript:void(0)" class="nav-item" id="nav-btn-ai" onclick="navToTeacherTab('ai'); toggleSidebarMenu(false);" title="Studio Kuis Cerdas AI Nemotron">
                 <span>🤖</span> AI Studio
             </a>
-            <a href="hub3d.html" class="nav-item nav-item-hub3d" id="nav-btn-hub3d" title="Buka Kantor Data Digital (Hub 3D Low-Poly)">
-                <span>🏢</span> Hub 3D
+            <a href="javascript:void(0)" class="nav-item nav-item-guardian" id="nav-btn-cyber-guardian" onclick="launchCyberGuardianGame(); toggleSidebarMenu(false);" title="Arena Game Interaktif Edukatif: Cyber Guardian Sentinel Protocol">
+                <span>🦸‍♂️</span> Cyber Guardian
             </a>
         </nav>
 
-        <!-- Right: Actions Cluster -->
+        <!-- Bottom: Actions Cluster -->
         <div class="header-actions">
             <!-- Session Timer Pill -->
             <div class="session-timer-pill" id="header-session-pill" title="Durasi Sesi Aplikasi">
@@ -100,7 +124,7 @@
                 </button>
             </div>
 
-            <!-- Account Profile Pill (Right Side Header) -->
+            <!-- Account Profile Pill (Bottom of Sidebar) -->
             <div class="profile-pill" id="header-profile-pill" title="Akun Pengguna Aktif">
                 <div class="avatar-circle" id="header-avatar-circle">
                     <span id="header-avatar-text">🎓</span>
@@ -269,8 +293,9 @@
             💡 <em>Akses pengerjaan kuis akan terbuka secara otomatis tepat pada jam pelajaran guru mata pelajaran dimulai.</em>
         </p>
 
-        <div class="modal-actions" style="justify-content: center;">
-            <button class="btn btn-secondary" onclick="closeAccessLockedModal()" style="padding: 10px 32px; font-weight: 700; min-width: 140px;">Kembali 🔙</button>
+        <div class="modal-actions" style="justify-content: center; gap: 12px; flex-wrap: wrap;">
+            <button type="button" class="btn btn-primary" onclick="closeAccessLockedModal(); if(typeof switchScreen==='function')switchScreen('learn');" style="padding: 10px 22px; font-weight: 700;">📖 Buka Ruang Belajar Sekarang</button>
+            <button type="button" class="btn btn-secondary" onclick="closeAccessLockedModal()" style="padding: 10px 24px; font-weight: 700; min-width: 120px;">Kembali 🔙</button>
         </div>
     </div>
 </div>
@@ -1102,6 +1127,10 @@
                     <span>📚</span>
                     <span>Bank Materi &amp; Modul</span>
                 </button>
+                <button type="button" class="teacher-tab-btn" id="tab-btn-chatbot" onclick="toggleTeacherChatbot(true)" role="tab" title="Tanya Asisten AI Guru Cerdas (Model Gemini)">
+                    <span>✨</span>
+                    <span>Tanya AI Guru</span>
+                </button>
             </div>
 
             <!-- TAB 1: REKAP NILAI SISWA & ANALISIS KELAS -->
@@ -1144,8 +1173,8 @@
                     <div class="setting-row" style="margin: 0; display: flex; align-items: center; gap: 10px;">
                         <label for="setting-submission-policy" style="font-weight: 700; font-size: 0.88rem; color: var(--text);">🔄 Batas Respon Siswa:</label>
                         <select id="setting-submission-policy" onchange="saveSubmissionPolicySetting()" class="form-select-modern" style="max-width: 320px; font-size: 0.85rem;">
-                            <option value="single_only">1️⃣ Hanya 1 Kali (Tolak Pengiriman Ganda)</option>
-                            <option value="allow_remedy" selected>⭐ Boleh Remedi (Simpan Nilai Tertinggi)</option>
+                            <option value="single_only" selected>1️⃣ Hanya 1 Kali (Tolak Pengiriman Ganda)</option>
+                            <option value="allow_remedy">⭐ Boleh Remedi (Simpan Nilai Tertinggi)</option>
                             <option value="allow_multiple">♾️ Boleh Ujian Bebas (Catat Semua Percobaan)</option>
                         </select>
                         <span class="setting-saved" id="policy-saved-msg">✅ Tersimpan!</span>
@@ -1154,8 +1183,8 @@
                     <div class="setting-row" style="margin: 0; display: flex; align-items: center; gap: 10px;">
                         <label for="setting-remedial-toggle" style="font-weight: 700; font-size: 0.88rem; color: var(--text);">🔁 Mode Remedial:</label>
                         <select id="setting-remedial-toggle" onchange="saveRemedialSetting()" class="form-select-modern" style="max-width: 280px; font-size: 0.85rem;">
-                            <option value="enabled" selected>🟢 Aktif (Izinkan Remedial Terarah)</option>
-                            <option value="disabled">🔴 Nonaktif (Matikan Fitur Remedial)</option>
+                            <option value="disabled" selected>🔴 Nonaktif (Matikan Fitur Remedial Saat Ujian)</option>
+                            <option value="enabled">🟢 Aktif (Izinkan Remedial Terarah)</option>
                         </select>
                         <span class="setting-saved" id="remedial-toggle-saved-msg" style="display:none; color:var(--success); font-weight:700; font-size:0.8rem;">✅ Tersimpan!</span>
                     </div>
@@ -1280,6 +1309,45 @@
                 <div id="class-breakdown" style="display: flex; gap: 8px; flex-wrap: wrap;"></div>
             </div>
 
+            <!-- SEGMENTED DUAL-MODULE FILTER DECK -->
+            <div class="module-filter-deck">
+                <div class="module-deck-header">
+                    <div>
+                        <div class="module-deck-title">🎯 Filter &amp; Pilihan Modul Kuis</div>
+                        <div class="module-deck-sub">Pilih modul kuis tunggal atau mode komparasi lintas 2 modul evaluasi</div>
+                    </div>
+                    <div class="active-module-indicator-text" id="active-module-indicator-text">
+                        Menampilkan: 📊 <strong>Komparasi 2 Modul (Lengkap)</strong>
+                    </div>
+                </div>
+                <div class="module-filter-buttons">
+                    <button type="button" class="module-seg-btn active" id="btn-mod-filter-all" onclick="selectModuleSegment('all')" title="Tampilkan perbandingan Kuis 1 &amp; Kuis 2 secara berdampingan">
+                        <span class="seg-icon">📊</span>
+                        <div class="seg-info">
+                            <span class="seg-title">Komparasi 2 Modul</span>
+                            <span class="seg-desc">Evaluasi komprehensif kedua kuis</span>
+                        </div>
+                        <span class="seg-badge" id="badge-cnt-all-mod">300 Data</span>
+                    </button>
+                    <button type="button" class="module-seg-btn" id="btn-mod-filter-jaringan" onclick="selectModuleSegment('modul_jaringan_keamanan')" title="Tampilkan hanya data Penilaian Harian Infrastruktur Jaringan &amp; Keamanan Digital">
+                        <span class="seg-icon">🛡️</span>
+                        <div class="seg-info">
+                            <span class="seg-title">Modul Keamanan Jaringan Saja</span>
+                            <span class="seg-desc">Kuis lain otomatis disembunyikan</span>
+                        </div>
+                        <span class="seg-badge" id="badge-cnt-jaringan-mod">145 Data</span>
+                    </button>
+                    <button type="button" class="module-seg-btn" id="btn-mod-filter-fakta" onclick="selectModuleSegment('modul_detektif_fakta')" title="Tampilkan hanya data Misi Detektif Fakta / Literasi Digital">
+                        <span class="seg-icon">🕵️</span>
+                        <div class="seg-info">
+                            <span class="seg-title">Modul Detektif Fakta Saja</span>
+                            <span class="seg-desc">Kuis lain otomatis disembunyikan</span>
+                        </div>
+                        <span class="seg-badge" id="badge-cnt-fakta-mod">155 Data</span>
+                    </button>
+                </div>
+            </div>
+
             <!-- FILTER & CONTROLS -->
             <div class="dash-controls" style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; align-items: center;">
                 <input type="text" id="filter-search-name" placeholder="🔍 Cari Nama Siswa..." oninput="renderDashboard()" class="form-input" style="max-width: 200px; padding: 9px 14px; font-size: 0.85rem;">
@@ -1307,25 +1375,37 @@
                 <button class="btn btn-secondary" onclick="renderDashboard()" style="padding: 9px 14px; font-size: 0.85rem;" title="Muat Ulang Data">🔄</button>
             </div>
 
-            <!-- ROSTER STATUS FILTER TABS (SEMUA / SUDAH / BELUM MENGERJAKAN) -->
+            <!-- ROSTER STATUS FILTER TABS (CROSS-QUIZ COMPLETION STATUS) -->
             <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 14px;">
                 <div class="roster-status-tabs" id="roster-status-tabs">
-                    <button type="button" class="status-tab-btn active" id="tab-status-all" onclick="setRosterStatusFilter('all')">
-                        <span>📑 Semua Siswa Terdaftar</span>
+                    <button type="button" class="status-tab-btn active" id="tab-status-all" onclick="setRosterStatusFilter('all')" title="Semua siswa terdaftar di roster 6 kelas">
+                        <span>📑 Semua Siswa</span>
                         <span id="cnt-roster-all">(216)</span>
                     </button>
-                    <button type="button" class="status-tab-btn" id="tab-status-submitted" onclick="setRosterStatusFilter('submitted')">
-                        <span>✅ Sudah Mengerjakan</span>
-                        <span id="cnt-roster-done">(0)</span>
+                    <button type="button" class="status-tab-btn" id="tab-status-both" onclick="setRosterStatusFilter('both')" title="Siswa yang sudah menuntaskan Kuis 1 &amp; Kuis 2">
+                        <span>🟢 Sudah Keduanya</span>
+                        <span id="cnt-roster-both">(0)</span>
                     </button>
-                    <button type="button" class="status-tab-btn" id="tab-status-waiting" onclick="setRosterStatusFilter('waiting')">
-                        <span>⏳ Belum Mengerjakan</span>
-                        <span id="cnt-roster-waiting">(216)</span>
+                    <button type="button" class="status-tab-btn" id="tab-status-only1" onclick="setRosterStatusFilter('only_fakta')" title="Siswa yang baru mengerjakan Kuis 1 (Detektif Fakta)">
+                        <span>🟡 Hanya Kuis 1</span>
+                        <span id="cnt-roster-only1">(0)</span>
+                    </button>
+                    <button type="button" class="status-tab-btn" id="tab-status-only2" onclick="setRosterStatusFilter('only_jaringan')" title="Siswa yang baru mengerjakan Kuis 2 (Keamanan Jaringan)">
+                        <span>🔵 Hanya Kuis 2</span>
+                        <span id="cnt-roster-only2">(0)</span>
+                    </button>
+                    <button type="button" class="status-tab-btn" id="tab-status-missing" onclick="setRosterStatusFilter('missing_one')" title="Siswa yang masih kurang 1 kuis (belum salah satunya)">
+                        <span>⚠️ Belum Salah Satunya</span>
+                        <span id="cnt-roster-missing">(0)</span>
+                    </button>
+                    <button type="button" class="status-tab-btn" id="tab-status-waiting-both" onclick="setRosterStatusFilter('waiting_both')" title="Siswa yang belum mengerjakan kedua kuis">
+                        <span>⏳ Belum Keduanya</span>
+                        <span id="cnt-roster-waiting-both">(0)</span>
                     </button>
                 </div>
                 <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                    <button type="button" class="btn btn-primary" onclick="restoreOfficialPdfRecords()" style="padding: 7px 14px; font-size: 0.78rem; font-weight: 700; background: linear-gradient(135deg, #059669, #10b981); border: none;" title="Sinkronkan & pulihkan seluruh 155 data nilai resmi dari laporan PDF SMAN 4 Padang">
-                        📥 Sinkron 155 Nilai Resmi (PDF)
+                    <button type="button" class="btn btn-primary" onclick="restoreOfficialPdfRecords()" style="padding: 7px 14px; font-size: 0.78rem; font-weight: 700; background: linear-gradient(135deg, #059669, #10b981); border: none;" title="Sinkronkan & pulihkan 155 data nilai resmi dari Modul Detektif Fakta SMAN 4 Padang">
+                        📥 Muat 155 Nilai Resmi (Detektif Fakta)
                     </button>
                     <button type="button" class="btn btn-secondary" onclick="copyUnsubmittedStudentsList()" style="padding: 7px 14px; font-size: 0.78rem; font-weight: 700;" title="Salin daftar siswa yang belum ujian ke WhatsApp">
                         📋 Salin Daftar Belum Ujian
@@ -2046,25 +2126,27 @@ Kunci Jawaban: B"></textarea>
 <!-- ============================================================ -->
 <!-- 🧩 MODULAR JAVASCRIPT LIBRARIES & ENGINES                   -->
 <!-- ============================================================ -->
-<script src="js/student_roster.js?v=20260919-rev4"></script>
-<script src="js/default_records.js?v=20260919-rev4"></script>
-<script src="js/default_questions.js?v=20260919-rev4"></script>
-<script src="js/doc_parser.js?v=20260919-rev4"></script>
-<script src="js/ai_nemotron.js?v=20260919-rev4"></script>
-<script src="js/quiz_manager.js?v=20260919-rev4"></script>
-<script src="js/question_editor.js?v=20260919-rev4"></script>
-<script src="js/exam_doc_importer.js?v=20260919-rev4"></script>
-<script src="js/storage.js?v=20260919-rev4"></script>
-<script src="js/audio.js?v=20260919-rev4"></script>
-<script src="js/particles.js?v=20260919-rev4"></script>
-<script src="js/quiz_engine.js?v=20260919-rev4"></script>
-<script src="js/dashboard.js?v=20260919-rev4"></script>
-<script src="js/export_reports.js?v=20260919-rev4"></script>
-<script src="js/ai_studio.js?v=20260919-rev4"></script>
-<script src="js/diagnostics.js?v=20260919-rev4"></script>
-<script src="js/learning_hub.js?v=20260919-rev4"></script>
-<script src="js/mini_games.js?v=20260919-rev4"></script>
-<script src="js/app.js?v=20260919-rev4"></script>
+<script src="js/student_roster.js?v=20261026-secfix"></script>
+<script src="js/default_records.js?v=20261026-secfix"></script>
+<script src="js/default_questions.js?v=20261026-secfix"></script>
+<script src="js/doc_parser.js?v=20261026-secfix"></script>
+<script src="js/ai_nemotron.js?v=20261026-secfix"></script>
+<script src="js/quiz_manager.js?v=20261026-secfix"></script>
+<script src="js/question_editor.js?v=20261026-secfix"></script>
+<script src="js/exam_doc_importer.js?v=20261026-ai-rolefix"></script>
+<script src="js/storage.js?v=20261026-examlock"></script>
+<script src="js/audio.js?v=20261026-examlock"></script>
+<script src="js/particles.js?v=20261026-examlock"></script>
+<script src="js/quiz_engine.js?v=20261026-examlock"></script>
+<script src="js/dashboard.js?v=20261026-examlock"></script>
+<script src="js/export_reports.js?v=20261026-examlock"></script>
+<script src="js/ai_studio.js?v=20261026-examlock"></script>
+<script src="js/diagnostics.js?v=20261026-examlock"></script>
+<script src="js/learning_hub.js?v=20261026-examlock"></script>
+<script src="js/mini_games.js?v=20261026-examlock"></script>
+<script src="js/teacher_chatbot.js?v=20261026-streamchat"></script>
+<script src="js/cyber_guardian_game.js?v=20261026-examlock"></script>
+<script src="js/app.js?v=20261026-examlock"></script>
 
 </body>
 </html>

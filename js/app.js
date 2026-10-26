@@ -11,9 +11,13 @@ function setTheme(theme, withSound = true) {
     localStorage.setItem('quizmaster_theme', theme);
     
     const themeIcon = document.getElementById('theme-icon');
+    const themeIconMob = document.getElementById('theme-icon-mob');
     const themeBtn = document.getElementById('btn-theme-toggle');
     if (themeIcon) {
         themeIcon.textContent = theme === 'dark' ? '☀️' : '🌙';
+    }
+    if (themeIconMob) {
+        themeIconMob.textContent = theme === 'dark' ? '☀️' : '🌙';
     }
     if (themeBtn) {
         themeBtn.title = theme === 'dark' ? 'Ganti ke Mode Terang' : 'Ganti ke Mode Gelap';
@@ -34,6 +38,22 @@ function toggleTheme() {
 window.toggleTheme = toggleTheme;
 window.setTheme = setTheme;
 window.initTheme = initTheme;
+
+// 📱 SIDEBAR DRAWER TOGGLE (UNTUK LAYAR MOBILE & TABLET)
+function toggleSidebarMenu(forceState) {
+    const sidebar = document.getElementById('app-sidebar') || document.querySelector('.app-header');
+    const backdrop = document.getElementById('sidebar-backdrop');
+    if (!sidebar) return;
+    const isOpen = typeof forceState === 'boolean' ? forceState : !sidebar.classList.contains('sidebar-open');
+    if (isOpen) {
+        sidebar.classList.add('sidebar-open');
+        if (backdrop) backdrop.classList.add('active');
+    } else {
+        sidebar.classList.remove('sidebar-open');
+        if (backdrop) backdrop.classList.remove('active');
+    }
+}
+window.toggleSidebarMenu = toggleSidebarMenu;
 
 // ============================================================
 //  ⏱️ HEADER LIVE QUIZ TIMER (HANYA MUNCUL SAAT UJIAN BERLANGSUNG)

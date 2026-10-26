@@ -3,133 +3,177 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <meta name="format-detection" content="telephone=no, email=no, address=no, date=no">
-    <title>🏢 Kantor Data Digital — Hub 3D Berpikir Komputasional Fase E</title>
-    <meta name="description" content="Game edukasi 3D low-poly Berpikir Komputasional Fase E SMA Kelas X dioptimalkan untuk perangkat Android low-end RAM 2-3GB dengan touch-first controls.">
-    
-    <!-- Paksaan Dark Mode Permanen untuk Game Hub 3D -->
-    <script>
-        (function() {
-            document.documentElement.setAttribute('data-theme', 'dark');
-            if (document.body) document.body.setAttribute('data-theme', 'dark');
-        })();
-    </script>
-
-    <link rel="stylesheet" href="css/style.css?v=20260919-rev6">
-    <link rel="stylesheet" href="style.css?v=20260919-rev6">
-</head>
-<body data-theme="dark">
-
-    <!-- 0. Header HUD Atas Statis (Memastikan Tombol Kembali Muncul Seketika) -->
-    <header class="hub-hud-header" id="hub-hud-header">
-        <div class="hub-brand-group">
-            <!-- Tombol Kembali Utama Sisi Kiri -->
-            <a href="index.html" class="hud-back-btn" id="hud-btn-kembali" title="Kembali ke Beranda Utama / Dasbor">
-                <span class="hud-back-arrow">⬅️</span>
-                <span class="hud-back-label">Kembali</span>
-            </a>
-            <span class="hud-brand-icon">🏢</span>
-            <div class="hud-brand-text">
-                <h1 class="hud-app-title">Kantor Data Digital</h1>
-                <span class="hud-app-sub">Fase E • Divisi Integritas Data</span>
-            </div>
-        </div>
-
-        <div class="hud-actions-group">
-            <!-- Profil Siswa / Badge ID Card -->
-            <button type="button" class="hud-chip-btn profile-chip" id="btn-open-idcard" title="Kartu Identitas Staf">
-                <span class="chip-avatar">👤</span>
-                <span id="hud-player-name">Detektif Muda</span>
-            </button>
-
-            <!-- Tombol Log Misi / Quest Log -->
-            <button type="button" class="hud-chip-btn quest-log-chip" id="btn-open-quest-log" title="Buka Log Misi &amp; Catatan Investigasi">
-                <span>📋</span>
-                <span>Log Misi</span>
-            </button>
-
-            <!-- Indikator Grafis Low-End -->
-            <button type="button" class="hud-chip-btn" id="btn-tier-indicator" title="Pengaturan Grafis &amp; Mode Ringan">
-                <span id="tier-badge-label">Tier Low ⚡</span>
-            </button>
-
-            <!-- Toggle Suara -->
-            <button type="button" class="hud-icon-btn" id="btn-sound-toggle" title="Toggle Suara" aria-label="Toggle Suara">
-                <span id="sound-icon">🔊</span>
-            </button>
-
-            <!-- Pengaturan Global -->
-            <button type="button" class="hud-icon-btn" id="btn-open-settings" title="Pengaturan Global" aria-label="Pengaturan">
-                ⚙️
-            </button>
-
-            <!-- Tombol Keluar / Kembali ke Beranda Sisi Kanan -->
-            <a href="index.html" class="hud-portal-link" id="hud-btn-exit" title="Keluar dan Kembali ke Beranda Utama">
-                🚪 <span>Kembali ke Beranda</span>
-            </a>
-        </div>
-    </header>
-
-    <div id="app-preloader">
-        <div class="preloader-spinner"></div>
-        <div class="preloader-title">KANTOR DATA DIGITAL</div>
-        <div class="preloader-sub">Menyiapkan Lobi 3D & Deteksi Perangkat...</div>
-    </div>
-    <script>
-        // Failsafe: Jaminan preloader hilang maksimal 1 detik agar tidak mutar terus
-        setTimeout(function() {
-            var loader = document.getElementById('app-preloader');
-            if (loader && !loader.classList.contains('fade-out')) {
-                loader.classList.add('fade-out');
-                setTimeout(function() {
-                    if (loader && loader.parentNode) loader.parentNode.removeChild(loader);
-                }, 300);
-            }
-        }, 1000);
-    </script>
-
-    <!-- 2. Viewport Lobi 3D Three.js -->
-    <div id="hub-canvas-container"></div>
-
-    <!-- Hint Navigasi Sentuh / Mouse -->
-    <div class="hub-control-hint">
-        <span>👆 Geser layar untuk melihat stasiun • Tap stasiun untuk mulai</span>
-    </div>
-
-    <!-- 3. Stage Overlay untuk Level Permainan (Lazy Mount) -->
-    <div id="level-stage-container" class="hidden"></div>
-
-    <!-- Three.js Library Minified dari CDN Terpercaya -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script>
-        if (typeof THREE === 'undefined') {
-            document.write('<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"><\/script>');
+    <title>🦸‍♂️ CYBER GUARDIAN: SENTINEL PROTOCOL — Game Edukasi Keamanan Digital</title>
+    <meta name="description" content="Game Edukasi Superhero Interaktif Keamanan Jaringan & Integritas Data Digital Informatika Fase E SMAN 4 Padang.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800;900&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css?v=20261025-final">
+    <link rel="stylesheet" href="css/guardian_and_chatbot.css?v=20261025-final">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: #030712;
+            color: #f3f4f6;
+            font-family: 'Poppins', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
         }
+        .portal-bg {
+            position: fixed;
+            inset: 0;
+            background: radial-gradient(circle at 50% 20%, rgba(99, 102, 241, 0.22) 0%, rgba(6, 182, 212, 0.12) 40%, rgba(3, 7, 18, 0.98) 85%);
+            z-index: 0;
+            pointer-events: none;
+        }
+        .portal-container {
+            position: relative;
+            z-index: 1;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px 24px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+        .hero-emblem {
+            font-size: 5rem;
+            animation: pulseEmblem 2.5s infinite ease-in-out;
+            margin-bottom: 12px;
+            filter: drop-shadow(0 0 30px rgba(99, 102, 241, 0.8));
+        }
+        @keyframes pulseEmblem {
+            0%, 100% { transform: scale(1); filter: drop-shadow(0 0 25px rgba(99, 102, 241, 0.7)); }
+            50% { transform: scale(1.08); filter: drop-shadow(0 0 45px rgba(6, 182, 212, 0.9)); }
+        }
+        .portal-title {
+            font-size: 2.6rem;
+            font-weight: 900;
+            letter-spacing: 1.5px;
+            background: linear-gradient(135deg, #38bdf8, #818cf8, #ec4899);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin: 0 0 10px 0;
+            text-transform: uppercase;
+        }
+        .portal-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(99, 102, 241, 0.15);
+            border: 1px solid rgba(99, 102, 241, 0.4);
+            padding: 6px 16px;
+            border-radius: 999px;
+            font-size: 0.82rem;
+            font-weight: 700;
+            color: #a5b4fc;
+            letter-spacing: 1px;
+            margin-bottom: 20px;
+        }
+        .portal-desc {
+            font-size: 1.05rem;
+            color: #94a3b8;
+            max-width: 650px;
+            line-height: 1.7;
+            margin-bottom: 32px;
+        }
+        .portal-actions {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .btn-launch-hero {
+            background: linear-gradient(135deg, #6366f1, #3b82f6, #06b6d4);
+            color: #ffffff;
+            border: none;
+            padding: 16px 36px;
+            font-size: 1.1rem;
+            font-weight: 800;
+            border-radius: 14px;
+            cursor: pointer;
+            box-shadow: 0 10px 30px rgba(99, 102, 241, 0.5);
+            transition: all 0.25s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+        }
+        .btn-launch-hero:hover {
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 0 15px 40px rgba(6, 182, 212, 0.6);
+        }
+        .btn-back-home {
+            background: rgba(255, 255, 255, 0.06);
+            color: #e2e8f0;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            padding: 16px 28px;
+            font-size: 0.98rem;
+            font-weight: 700;
+            border-radius: 14px;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .btn-back-home:hover {
+            background: rgba(255, 255, 255, 0.12);
+            border-color: rgba(99, 102, 241, 0.4);
+        }
+    </style>
+</head>
+<body>
+    <div class="portal-bg"></div>
+    <div class="portal-container">
+        <div class="hero-emblem">🦸‍♂️⚡</div>
+        <div class="portal-badge">
+            <span>🛡️ SMAN 4 PADANG • INFORMATIKA FASE E</span>
+        </div>
+        <h1 class="portal-title">CYBER GUARDIAN</h1>
+        <div style="font-family: 'JetBrains Mono', monospace; font-size: 1.1rem; color: #38bdf8; font-weight: 700; margin-bottom: 16px; letter-spacing: 2px;">
+            [SENTINEL PROTOCOL: ZERO-DAY DEFENSE]
+        </div>
+        <p class="portal-desc">
+            Selamat datang di Arena Pertarungan Siber Cerdas! Hadapi 3 ancaman malware tingkat dewa: 
+            <strong>Phish Phantom</strong>, <strong>Trojan Colossus</strong>, dan <strong>Ransom Overlord</strong>. 
+            Gunakan keahlian analisis port, firewall, dan kriptografi untuk melindungi data sekolah!
+        </p>
+
+        <div class="portal-actions">
+            <button type="button" class="btn-launch-hero" onclick="launchCyberGuardianGame()">
+                <span>⚡</span>
+                <span>MULAI PROTOKOL GUARDIAN</span>
+            </button>
+            <a href="kuis_interaktif_dasbor_guru.html" class="btn-back-home">
+                <span>📊</span>
+                <span>Kembali ke Dasbor Guru</span>
+            </a>
+            <a href="index.html" class="btn-back-home">
+                <span>🏠</span>
+                <span>Beranda Kuis</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Scripts Game Engine -->
+    <script src="js/audio.js?v=20261025-final"></script>
+    <script src="js/cyber_guardian_game.js?v=20261025-final"></script>
+    <script>
+        // Otomatis buka arena game begitu halaman dimuat jika ada parameter auto
+        window.addEventListener('DOMContentLoaded', () => {
+            const params = new URLSearchParams(window.location.search);
+            if (params.get('auto') === '1' || params.get('game') === 'guardian') {
+                setTimeout(() => launchCyberGuardianGame(), 300);
+            }
+        });
     </script>
-
-    <!-- Modul Sistem & Utilitas (Cache-Busted v20260919-rev6) -->
-    <script src="js/deviceTier.js?v=20260919-rev6"></script>
-    <script src="js/gameStorage.js?v=20260919-rev6"></script>
-    <script src="js/ui.js?v=20260919-rev6"></script>
-    <script src="js/engine3d.js?v=20260919-rev6"></script>
-
-    <!-- Data & Modul Level 3D Lengkap (Level 0 - 7 & Lab TIK) -->
-    <script src="js/data/level0-dialog.js?v=20260919-rev6"></script>
-    <script src="js/data/level0-data.js?v=20260919-rev6"></script>
-    <script src="js/levels/level0-onboarding.js?v=20260919-rev6"></script>
-    <script src="js/data/level1-dialog.js?v=20260919-rev6"></script>
-    <script src="js/data/level1-data.js?v=20260919-rev6"></script>
-    <script src="js/levels/level1-inboxdetective.js?v=20260919-rev6"></script>
-    <script src="js/data/level2-dialog.js?v=20260919-rev6"></script>
-    <script src="js/data/level2-data.js?v=20260919-rev6"></script>
-    <script src="js/levels/level2-warehousesorter.js?v=20260919-rev6"></script>
-    <script src="js/levels/level3to7-3d.js?v=20260919-rev6"></script>
-    <script src="js/data/labtik-dialog.js?v=20260919-rev6"></script>
-    <script src="js/data/labtik-data.js?v=20260919-rev6"></script>
-    <script src="js/levels/labtik-searchengine.js?v=20260919-rev6"></script>
-
-    <!-- Scene Lobi 3D Low-Poly & Main Bootstrap -->
-    <script src="js/hub.js?v=20260919-rev6"></script>
-    <script src="js/main.js?v=20260919-rev6"></script>
 </body>
 </html>

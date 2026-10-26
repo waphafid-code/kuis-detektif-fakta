@@ -345,6 +345,7 @@
         cleanQuestionHeader(str) {
             if (!str) return '';
             return str
+                .replace(/^(?:soal\s+(?:no\.?\s*)?\d+[\s:.-]*|pertanyaan\s+(?:no\.?\s*)?\d+[\s:.-]*|no\.?\s*\d+[\s:.-]*|\d+[\s:.-]+)\s*/i, '')
                 .replace(/^(?:Pertanyaan|Soal)[\s:\-=]+/i, '')
                 .replace(/\(Pilihan\s+Ganda\s+Kompleks\)/gi, '')
                 .replace(/\(Checkbox\)/gi, '')

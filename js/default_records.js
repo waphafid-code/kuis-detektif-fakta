@@ -1,8 +1,8 @@
 /**
- * 📋 DATA RESMI REKAPITULASI 155 SISWA DARI LAPORAN RESMI PDF
- * SMAN 4 PADANG — GURU MATA PELAJARAN: RINI SYAFITRI
- * Total Siswa: 155 | Rata-Rata: 79.4 | Tertinggi: 100 | Terendah: 0
- * Tingkat Kelulusan (KKM >= 80): 109 dari 155 Siswa (70%)
+ * 📋 DATA RESMI REKAPITULASI NILAI KUIS INFORMATIKA SMAN 4 PADANG
+ * GURU MATA PELAJARAN: RINI SYAFITRI
+ * - Modul 1: Misi Detektif Fakta (Literasi Digital & Komputasional) — 155 Nilai Resmi Hasil Ujian Asli dari PDF
+ * - Modul 2: Penilaian Harian: Infrastruktur Jaringan & Keamanan Digital (JKI) — Modul Baru (Bersih / 0 Siswa Menunggu Ujian Perdana)
  */
 
 const OFFICIAL_EXAM_RESULTS = [
@@ -3900,4 +3900,9 @@ const OFFICIAL_EXAM_RESULTS = [
   }
 ];
 
-window.OFFICIAL_EXAM_RESULTS = OFFICIAL_EXAM_RESULTS;
+if (typeof window !== 'undefined') {
+    window.OFFICIAL_EXAM_RESULTS = OFFICIAL_EXAM_RESULTS;
+}
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = { OFFICIAL_EXAM_RESULTS };
+}

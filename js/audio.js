@@ -12,23 +12,61 @@ function showToast(text, icon = 'ℹ️') {
     }, 3000);
 }
 
+function normalizeModuleId(modId, id, date) {
+    if (modId) {
+        const s = String(modId).toLowerCase();
+        if (s === 'modul_jaringan_keamanan' || s === 'modul_keamanan_jaringan' || s.includes('jaringan') || s.includes('keamanan')) {
+            return 'modul_jaringan_keamanan';
+        }
+        if (s === 'modul_detektif_fakta' || s.includes('detektif') || s.includes('fakta')) {
+            return 'modul_detektif_fakta';
+        }
+        return modId;
+    }
+    if (typeof id === 'string' && (id.startsWith('jki-') || id.includes('jaringan') || id.includes('keamanan'))) return 'modul_jaringan_keamanan';
+    if (typeof id === 'string' && id.startsWith('pdf-')) return 'modul_detektif_fakta';
+    if (typeof id === 'number' && id >= 670) return 'modul_jaringan_keamanan';
+    if (date === '25/10/2026' || (typeof date === 'string' && date.includes('25/10/2026'))) return 'modul_jaringan_keamanan';
+    return 'modul_detektif_fakta';
+}
+window.normalizeModuleId = normalizeModuleId;
+
 function mergeRecordsList(existingList, incomingList) {
     const map = new Map();
-    const makeKey = (r) => `${(r.name || '').toLowerCase().trim()}|${(r.class || '').trim()}`;
+    const makeKey = (r) => {
+        const modId = normalizeModuleId(r.moduleId || r.module_id, r.id, r.date || r.quiz_date);
+        const normCls = (r.class || r.student_class || '').replace(/\s+/g, ' ').trim().toUpperCase();
+        const normName = (r.name || r.student_name || '').toLowerCase().trim();
+        return `${normName}|${normCls}|${modId}`;
+    };
     
     (existingList || []).forEach(r => {
-        if (r && r.name) map.set(makeKey(r), r);
+        if (r && (r.name || r.student_name)) {
+            const modId = normalizeModuleId(r.moduleId || r.module_id, r.id, r.date || r.quiz_date);
+            const item = {
+                ...r,
+                moduleId: modId,
+                moduleTitle: r.moduleTitle || (modId === 'modul_jaringan_keamanan' ? 'Penilaian Harian: Infrastruktur Jaringan & Keamanan Digital' : 'Misi Detektif Fakta')
+            };
+            map.set(makeKey(item), item);
+        }
     });
 
     (incomingList || []).forEach(r => {
-        if (!r || !r.name) return;
-        const k = makeKey(r);
+        if (!r || (!r.name && !r.student_name)) return;
+        const modId = normalizeModuleId(r.moduleId || r.module_id, r.id, r.date || r.quiz_date);
+        const item = {
+            ...r,
+            moduleId: modId,
+            moduleTitle: r.moduleTitle || (modId === 'modul_jaringan_keamanan' ? 'Penilaian Harian: Infrastruktur Jaringan & Keamanan Digital' : 'Misi Detektif Fakta')
+        };
+        const k = makeKey(item);
         if (!map.has(k)) {
-            map.set(k, r);
+            map.set(k, item);
         } else {
             const cur = map.get(k);
-            if ((r.score || 0) >= (cur.score || 0) || (r.timestamp || 0) > (cur.timestamp || 0)) {
-                map.set(k, { ...cur, ...r });
+            if ((item.score || 0) >= (cur.score || 0) || (item.timestamp || 0) > (cur.timestamp || 0)) {
+                map.set(k, { ...cur, ...item });
             }
         }
     });
@@ -37,53 +75,138 @@ function mergeRecordsList(existingList, incomingList) {
 }
 window.mergeRecordsList = mergeRecordsList;
 
+function purgeFakeJkiRecords(list) {
+    if (!Array.isArray(list)) return [];
+    return list.filter(r => {
+        if (!r) return false;
+        // Bersihkan data fiktif jki-rec yang pernah digenerate secara dummy
+        if (typeof r.id === 'string' && r.id.startsWith('jki-')) return false;
+        // Bersihkan tanggal fiktif bulan Agustus 2026 untuk modul Keamanan Jaringan karena kuis baru dibuat Oktober 2026
+        if (r.moduleId === 'modul_jaringan_keamanan') {
+            const dt = String(r.date || r.quiz_date || '');
+            if (dt.includes('/8/2026') || dt.includes('-08-') || dt.includes('25/8') || dt.includes('27/8') || dt.includes('28/8') || dt.includes('29/8')) {
+                return false;
+            }
+        }
+        return true;
+    });
+}
+window.purgeFakeJkiRecords = purgeFakeJkiRecords;
+
 const OFFICIAL_DATA_SYNC_KEY = 'quizmaster_official_pdf_sync_ver';
-const CURRENT_OFFICIAL_VERSION = '20260919_official_155_final';
+const CURRENT_OFFICIAL_VERSION = '20261026_clean_official_v4';
+
+function getCleanOfficialBaseline() {
+    const raw = (typeof OFFICIAL_EXAM_RESULTS !== 'undefined' && Array.isArray(OFFICIAL_EXAM_RESULTS))
+        ? OFFICIAL_EXAM_RESULTS
+        : ((typeof window !== 'undefined' && Array.isArray(window.OFFICIAL_EXAM_RESULTS)) ? window.OFFICIAL_EXAM_RESULTS : []);
+    return purgeFakeJkiRecords(raw);
+}
 
 function loadRecords() {
     try {
-        // Validasi sinkronisasi data resmi PDF 155 siswa (dokumen valid mutlak)
-        if (localStorage.getItem(OFFICIAL_DATA_SYNC_KEY) !== CURRENT_OFFICIAL_VERSION) {
-            if (typeof OFFICIAL_EXAM_RESULTS !== 'undefined' && Array.isArray(OFFICIAL_EXAM_RESULTS) && OFFICIAL_EXAM_RESULTS.length > 0) {
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(OFFICIAL_EXAM_RESULTS));
-                localStorage.removeItem('detektif_fakta_records'); // Hapus cache testing lama
-                localStorage.setItem(OFFICIAL_DATA_SYNC_KEY, CURRENT_OFFICIAL_VERSION);
-                return OFFICIAL_EXAM_RESULTS;
-            }
-        }
+        const syncVer = localStorage.getItem(OFFICIAL_DATA_SYNC_KEY);
+        const baseline = getCleanOfficialBaseline();
+        
+        let saved = [];
+        try {
+            saved = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+        } catch(e) {}
+        
+        let emergency = [];
+        try {
+            emergency = JSON.parse(localStorage.getItem('quizmaster_emergency_backup_records') || '[]');
+        } catch(e) {}
 
-        let saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
-        if (Array.isArray(saved) && saved.length > 0) {
-            return saved;
-        }
+        saved = purgeFakeJkiRecords(saved);
+        emergency = purgeFakeJkiRecords(emergency);
 
-        if (typeof OFFICIAL_EXAM_RESULTS !== 'undefined' && Array.isArray(OFFICIAL_EXAM_RESULTS) && OFFICIAL_EXAM_RESULTS.length > 0) {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(OFFICIAL_EXAM_RESULTS));
+        // Jika versi sinkronisasi belum versi bersih terbaru, paksa pembersihan localStorage
+        if (syncVer !== CURRENT_OFFICIAL_VERSION) {
+            const mergedClean = mergeRecordsList(baseline, saved);
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(mergedClean));
+            localStorage.setItem('quizmaster_emergency_backup_records', JSON.stringify(emergency));
             localStorage.setItem(OFFICIAL_DATA_SYNC_KEY, CURRENT_OFFICIAL_VERSION);
-            return OFFICIAL_EXAM_RESULTS;
+            return mergedClean;
         }
-        return [];
+
+        let baseList = baseline;
+        if (Array.isArray(saved) && saved.length > 0) {
+            baseList = mergeRecordsList(baseline, saved);
+        }
+        if (Array.isArray(emergency) && emergency.length > 0) {
+            baseList = mergeRecordsList(baseList, emergency);
+        }
+
+        baseList = purgeFakeJkiRecords(baseList);
+        return baseList;
     } catch (e) {
-        return (typeof OFFICIAL_EXAM_RESULTS !== 'undefined' && Array.isArray(OFFICIAL_EXAM_RESULTS)) ? OFFICIAL_EXAM_RESULTS : [];
+        return getCleanOfficialBaseline();
     }
 }
+window.loadRecords = loadRecords;
 
 function restoreOfficialPdfRecords() {
     sfxClick();
-    if (typeof OFFICIAL_EXAM_RESULTS !== 'undefined' && Array.isArray(OFFICIAL_EXAM_RESULTS)) {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(OFFICIAL_EXAM_RESULTS));
+    const clean = getCleanOfficialBaseline();
+    if (clean.length > 0) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(clean));
         localStorage.removeItem('detektif_fakta_records');
+        localStorage.setItem('quizmaster_emergency_backup_records', '[]');
         localStorage.setItem(OFFICIAL_DATA_SYNC_KEY, CURRENT_OFFICIAL_VERSION);
         if (typeof renderDashboard === 'function') renderDashboard();
-        showToast(`✅ Basis data berhasil disetel ulang ke 155 nilai siswa resmi PDF!`, '📥');
+        showToast(`✅ Basis data disinkronkan: ${clean.length} nilai resmi Modul Detektif Fakta. Modul Keamanan Jaringan bersih (0 pengerjaan)!`, '📥');
     }
 }
 window.restoreOfficialPdfRecords = restoreOfficialPdfRecords;
+window.initOfficialBaselineRecords = restoreOfficialPdfRecords;
 
 async function saveRecord(record) {
-    const records = loadRecords();
-    records.push(record);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+    if (!record) return;
+
+    // 🛡️ SECURITY & DATA INTEGRITY VALIDATION:
+    // 1. Sanitasi string dasar
+    record.name = String(record.name || 'Siswa').trim().slice(0, 100);
+    record.class = String(record.class || '-').trim().slice(0, 50);
+
+    // 2. Validasi rentang skor (0 - 100) & jumlah benar/total
+    const totalQ = Number(record.total) || (window.quizData ? window.quizData.length : 20);
+    record.total = Math.max(1, totalQ);
+    const correctCount = Number(record.correct) || 0;
+    record.correct = Math.max(0, Math.min(record.total, correctCount));
+    
+    let numericScore = Number(record.score);
+    if (isNaN(numericScore) || numericScore < 0) numericScore = 0;
+    if (numericScore > 100) numericScore = 100;
+    record.score = Math.round(numericScore);
+
+    // 3. Deteksi anomali kecepatan mustahil (Anti-Bot / Script Tampering di console)
+    // Jika soal >= 10 butir dan selesai dalam durasi < 5 detik dengan skor tinggi, flag anomali
+    if (record.rawDurationMs && record.rawDurationMs < 5000 && record.total >= 10 && record.score > 50 && !record.isCheated) {
+        record.isCheated = true;
+        record.statusNote = '🚨 DISKUALIFIKASI (Anomali Kecepatan Mustahil: < 5 Detik)';
+        record.score = 0;
+    }
+
+    const modId = normalizeModuleId(record.moduleId, record.id, record.date);
+    record.moduleId = modId;
+    if (!record.moduleTitle) {
+        record.moduleTitle = (modId === 'modul_jaringan_keamanan') 
+            ? 'Penilaian Harian: Infrastruktur Jaringan & Keamanan Digital' 
+            : 'Misi Detektif Fakta';
+    }
+
+    // 🛡️ EMERGENCY REDUNDANT BACKUP: Simpan langsung ke cadangan darurat lokal
+    try {
+        const emergencyList = JSON.parse(localStorage.getItem('quizmaster_emergency_backup_records') || '[]');
+        emergencyList.push({ ...record, savedAt: Date.now() });
+        if (emergencyList.length > 100) emergencyList.shift();
+        localStorage.setItem('quizmaster_emergency_backup_records', JSON.stringify(emergencyList));
+    } catch(e) {}
+
+    const currentRecords = loadRecords();
+    const merged = mergeRecordsList(currentRecords, [record]);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
 
     // Broadcast event lokal untuk real-time sinkronisasi dasbor guru
     try {
@@ -92,13 +215,19 @@ async function saveRecord(record) {
 
     let savedToSupabase = false;
     const cfg = (typeof getSupabaseConfig === 'function') ? getSupabaseConfig() : { url: DEFAULT_SUPABASE_URL, key: DEFAULT_SUPABASE_ANON_KEY, table: 'quiz_results' };
+    
+    // Simpan moduleId dan moduleTitle di dalam wrong_questions JSON payload (kompatibel penuh dengan Supabase jsonb)
     const rowPayload = {
         student_name: record.name,
         student_class: record.class,
         score: record.score,
         correct_count: record.correct,
         total_questions: record.total || (window.quizData ? window.quizData.length : 20),
-        wrong_questions: record.wrongQuestions || [],
+        wrong_questions: {
+            list: Array.isArray(record.wrongQuestions) ? record.wrongQuestions : [],
+            moduleId: modId,
+            moduleTitle: record.moduleTitle
+        },
         duration: record.duration,
         time_str: record.time,
         quiz_date: record.date
@@ -448,29 +577,47 @@ async function syncWithBackend(showFeedback = false) {
             window.QuizManager.syncCloudModulesList(moduleRows);
         }
 
-        const formatted = studentRows.map(r => ({
-            id: r.id,
-            name: r.student_name || r.name,
-            class: r.student_class || r.class,
-            score: r.score,
-            correct: r.correct_count !== undefined ? r.correct_count : (r.correct !== undefined ? r.correct : Math.round(r.score * 0.2)),
-            total: r.total_questions || r.total || (window.quizData ? window.quizData.length : 20),
-            wrongQuestions: Array.isArray(r.wrong_questions) ? r.wrong_questions : (Array.isArray(r.wrongQuestions) ? r.wrongQuestions : []),
-            duration: r.duration || '-',
-            time: r.time_str || r.time || '-',
-            date: r.quiz_date || r.date || '-',
-            timestamp: r.created_at ? new Date(r.created_at).getTime() : (r.timestamp || Date.now()),
-            tabSwitchCount: r.tab_switch_count !== undefined ? r.tab_switch_count : (r.tabSwitchCount || 0),
-            isCheated: r.is_cheated !== undefined ? r.is_cheated : !!r.isCheated
-        }));
+        const formatted = studentRows.map(r => {
+            let extractedModId = null;
+            let extractedModTitle = null;
+            let extractedWrong = [];
 
-        let finalRecords;
-        if (formatted.length >= 155) {
-            finalRecords = formatted;
-        } else {
-            const current = loadRecords();
-            finalRecords = mergeRecordsList(current, formatted);
-        }
+            if (r.wrong_questions && typeof r.wrong_questions === 'object' && !Array.isArray(r.wrong_questions)) {
+                extractedModId = r.wrong_questions.moduleId;
+                extractedModTitle = r.wrong_questions.moduleTitle;
+                extractedWrong = Array.isArray(r.wrong_questions.list) ? r.wrong_questions.list : [];
+            } else if (Array.isArray(r.wrong_questions)) {
+                extractedWrong = r.wrong_questions;
+            }
+
+            const modId = normalizeModuleId(extractedModId || r.moduleId || r.module_id, r.id, r.quiz_date || r.date);
+            const modTitle = extractedModTitle || r.moduleTitle || (modId === 'modul_jaringan_keamanan' ? 'Penilaian Harian: Infrastruktur Jaringan & Keamanan Digital' : 'Misi Detektif Fakta');
+
+            return {
+                id: r.id,
+                name: r.student_name || r.name,
+                class: r.student_class || r.class,
+                score: r.score,
+                correct: r.correct_count !== undefined ? r.correct_count : (r.correct !== undefined ? r.correct : Math.round(r.score * 0.2)),
+                total: r.total_questions || r.total || (window.quizData ? window.quizData.length : 20),
+                wrongQuestions: extractedWrong,
+                moduleId: modId,
+                moduleTitle: modTitle,
+                duration: r.duration || '-',
+                time: r.time_str || r.time || '-',
+                date: r.quiz_date || r.date || '-',
+                timestamp: r.created_at ? new Date(r.created_at).getTime() : (r.timestamp || Date.now()),
+                tabSwitchCount: r.tab_switch_count !== undefined ? r.tab_switch_count : (r.tabSwitchCount || 0),
+                isCheated: r.is_cheated !== undefined ? r.is_cheated : !!r.isCheated
+            };
+        });
+
+        // Selalu gabungkan dengan baseline data resmi (155 data resmi Misi Detektif Fakta) dan data lokal saat ini
+        const baseline = (typeof OFFICIAL_EXAM_RESULTS !== 'undefined' && Array.isArray(OFFICIAL_EXAM_RESULTS)) ? purgeFakeJkiRecords(OFFICIAL_EXAM_RESULTS) : [];
+        const currentLocal = purgeFakeJkiRecords(JSON.parse(localStorage.getItem(STORAGE_KEY)) || []);
+        const mergedBaseline = mergeRecordsList(baseline, currentLocal);
+        const finalRecords = purgeFakeJkiRecords(mergeRecordsList(mergedBaseline, formatted));
+
         localStorage.setItem(STORAGE_KEY, JSON.stringify(finalRecords));
         localStorage.setItem(OFFICIAL_DATA_SYNC_KEY, CURRENT_OFFICIAL_VERSION);
         
@@ -487,7 +634,7 @@ async function syncWithBackend(showFeedback = false) {
 
         if (typeof renderDashboard === 'function') renderDashboard();
         if (showFeedback) {
-            showToast(`✅ Berhasil menyinkronkan ${formatted.length} data dari Supabase! (Total: ${merged.length})`, '☁️');
+            showToast(`✅ Berhasil menyinkronkan ${formatted.length} data dari Supabase! (Total: ${finalRecords.length})`, '☁️');
         }
         return true;
     } else {
@@ -603,12 +750,18 @@ async function uploadAllLocalRecordsToSupabase() {
     let successCount = 0;
     for (const r of records) {
         try {
+            const modId = normalizeModuleId(r.moduleId || r.module_id, r.id, r.date || r.quiz_date);
             const { error } = await supabaseClient.from(cfg.table || 'quiz_results').insert([{
                 student_name: r.name,
                 student_class: r.class,
                 score: r.score,
                 correct_count: r.correct !== undefined ? r.correct : 0,
                 total_questions: r.total || 20,
+                wrong_questions: {
+                    list: Array.isArray(r.wrongQuestions) ? r.wrongQuestions : [],
+                    moduleId: modId,
+                    moduleTitle: r.moduleTitle || (modId === 'modul_jaringan_keamanan' ? 'Penilaian Harian: Infrastruktur Jaringan & Keamanan Digital' : 'Misi Detektif Fakta')
+                },
                 duration: r.duration || '-',
                 time_str: r.time || '-',
                 quiz_date: r.date || '-',

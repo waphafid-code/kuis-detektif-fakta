@@ -21,6 +21,6 @@ start http://localhost:5500/kuis_interaktif_dasbor_guru.html
 echo.
 echo ========================================================
 echo  ✅ Server aktif di http://localhost:5500
-echo  🌐 Hub 3D siap di http://localhost:5500/hub3d.html
+echo  🦸‍♂️ Cyber Guardian Game di http://localhost:5500/hub3d.html
 echo ========================================================
 pause

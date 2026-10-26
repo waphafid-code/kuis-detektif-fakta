@@ -3,7 +3,9 @@
 // ============================================================
 const STORAGE_KEY = 'detektif_fakta_records_v2';
 const TIMER_SETTING_KEY = 'detektif_fakta_timer';
-const PIN_GURU = '2543';
+// 🛡️ SECURITY: PIN Guru disimpan dalam bentuk Hash SHA-256 (Mencegah pencurian PIN lewat Source Code)
+const PIN_GURU_HASH = '887846b0aa6af194c7e153372b41453af317c9407cb72cd75b9f633eb8ebf3a4';
+window.PIN_GURU_HASH = PIN_GURU_HASH;
 
 // 🛡️ GLOBAL SECURITY HELPERS: XSS ESCAPING & CSV/EXCEL FORMULA SANITIZATION
 function escapeHtml(str) {
@@ -219,13 +221,20 @@ async function flushPendingRecords() {
         const item = queue[i];
         const r = item.record;
         let uploaded = false;
+        const modId = (typeof normalizeModuleId === 'function') 
+            ? normalizeModuleId(r.moduleId || r.module_id, r.id, r.date || r.quiz_date) 
+            : (r.moduleId || 'modul_detektif_fakta');
         const uploadPayload = {
             student_name: r.name,
             student_class: r.class,
             score: r.score,
             correct_count: r.correct,
             total_questions: r.total || 20,
-            wrong_questions: r.wrongQuestions || [],
+            wrong_questions: {
+                list: Array.isArray(r.wrongQuestions) ? r.wrongQuestions : [],
+                moduleId: modId,
+                moduleTitle: r.moduleTitle || (modId === 'modul_jaringan_keamanan' ? 'Penilaian Harian: Infrastruktur Jaringan & Keamanan Digital' : 'Misi Detektif Fakta')
+            },
             duration: r.duration || '0m',
             time_str: r.time || '00:00',
             quiz_date: r.date || new Date().toLocaleDateString('id-ID')
@@ -331,11 +340,24 @@ const screens = {
 window.screens = screens;
 
 function switchScreen(key) {
+    // 🔒 SECURITY GUARD: Cegah pembobolan layar guru via console jika belum terotentikasi PIN
+    if (key === 'teacher' && typeof isTeacherAuthValid === 'function' && !isTeacherAuthValid()) {
+        if (typeof openPinModal === 'function') openPinModal();
+        return;
+    }
+
     Object.values(screens).forEach(s => {
         if (s) s.classList.remove('active');
     });
     if (screens[key]) {
         screens[key].classList.add('active');
+    }
+
+    // 🛡️ MODE UJIAN BEBAS DISTRAKSI: KETIKA UJIAN AKTIF, HILANGKAN SEMUA NAVIGASI (HANYA SOAL & PILIHAN JAWABAN)
+    if (key === 'quiz') {
+        document.body.classList.add('exam-mode-active');
+    } else {
+        document.body.classList.remove('exam-mode-active');
     }
 
     // Sync Modern Header Elements
@@ -397,8 +419,14 @@ function switchScreen(key) {
     // ⏱️ Synchronize Header Live Timer (HANYA MUNCUL SAAT SISWA UJIAN)
     if (key === 'quiz') {
         if (typeof startHeaderSessionTimer === 'function') startHeaderSessionTimer();
+        if (typeof toggleTeacherChatbot === 'function') toggleTeacherChatbot(false);
     } else {
         if (typeof stopHeaderSessionTimer === 'function') stopHeaderSessionTimer();
+    }
+
+    // 🤖 Synchronize AI Chatbot Role (Mode Guru vs Mode Siswa)
+    if (typeof updateTeacherChatbotModeUi === 'function') {
+        updateTeacherChatbotModeUi();
     }
 }
 window.switchScreen = switchScreen;

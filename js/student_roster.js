@@ -235,16 +235,52 @@ const STUDENT_ROSTER = {
     ]
 };
 
-// Aliases support (misal "X E.1" atau "X E 1")
+// Aliases support (misal "X E.1" atau "X E 1" atau "X E1")
 const normalizeClassName = (cls) => {
     if (!cls) return '';
+    const cleaned = String(cls).toUpperCase().replace(/[^A-Z0-9]/g, '');
+    const match = cleaned.match(/^XE([1-6])$/);
+    if (match) return `X E ${match[1]}`;
     return cls.replace(/\./g, ' ').replace(/\s+/g, ' ').trim();
 };
 
+const isClassEquivalent = (c1, c2) => {
+    if (!c1 || !c2) return false;
+    const n1 = String(c1).toUpperCase().replace(/[^A-Z0-9]/g, '');
+    const n2 = String(c2).toUpperCase().replace(/[^A-Z0-9]/g, '');
+    return n1 === n2;
+};
+
+const isNameEquivalent = (name1, name2) => {
+    if (!name1 || !name2) return false;
+    const clean1 = String(name1).trim().toLowerCase().replace(/[^a-z0-9\s]/g, '');
+    const clean2 = String(name2).trim().toLowerCase().replace(/[^a-z0-9\s]/g, '');
+    if (clean1 === clean2) return true;
+    if (clean1.length >= 3 && clean2.length >= 3 && (clean1.includes(clean2) || clean2.includes(clean1))) return true;
+    
+    const words1 = clean1.split(/\s+/).filter(w => w.length > 0);
+    const words2 = clean2.split(/\s+/).filter(w => w.length > 0);
+    if (words1.length === 0 || words2.length === 0) return false;
+
+    if (words1[0] === words2[0] && (words1.length === 1 || words2.length === 1)) return true;
+
+    const all1In2 = words1.every(w => words2.includes(w));
+    if (all1In2) return true;
+    const all2In1 = words2.every(w => words1.includes(w));
+    if (all2In1) return true;
+
+    return false;
+};
+
 const getStudentsByClass = (cls) => {
-    const norm = normalizeClassName(cls);
     for (const [key, list] of Object.entries(STUDENT_ROSTER)) {
-        if (normalizeClassName(key) === norm) return list;
+        if (isClassEquivalent(key, cls)) return list;
     }
     return [];
 };
+
+window.normalizeClassName = normalizeClassName;
+window.isClassEquivalent = isClassEquivalent;
+window.isNameEquivalent = isNameEquivalent;
+window.getStudentsByClass = getStudentsByClass;
+window.STUDENT_ROSTER = STUDENT_ROSTER;

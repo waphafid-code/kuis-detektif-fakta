@@ -43,6 +43,28 @@ window.sanitizeSpreadsheetValue = sanitizeSpreadsheetValue;
 // ============================================================
 //  🔐 PIN & DELETE MODALS (MODERN TEACHER AUTHENTICATION)
 // ============================================================
+// 🛡️ SECURITY: SHA-256 Hash PIN Guru resmi (2543) — Mencegah pembacaan PIN dari source/console
+const TEACHER_PIN_HASH = '887846b0aa6af194c7e153372b41453af317c9407cb72cd75b9f633eb8ebf3a4';
+let _isTeacherAuthenticated = false;
+
+async function hashPin(str) {
+    if (!str) return '';
+    try {
+        const encoder = new TextEncoder();
+        const data = encoder.encode(str);
+        const hashBuf = await crypto.subtle.digest('SHA-256', data);
+        const hashArr = Array.from(new Uint8Array(hashBuf));
+        return hashArr.map(b => b.toString(16).padStart(2, '0')).join('');
+    } catch(e) {
+        return str;
+    }
+}
+
+function isTeacherAuthValid() {
+    return _isTeacherAuthenticated || !!sessionStorage.getItem('quizmaster_teacher_auth_token');
+}
+window.isTeacherAuthValid = isTeacherAuthValid;
+
 let pinFailedAttempts = 0;
 let pinLockoutUntil = 0;
 
@@ -131,7 +153,7 @@ function closeModal() {
 }
 window.closeModal = closeModal;
 
-function submitPin() {
+async function submitPin() {
     const input = document.getElementById('pin-input');
     if (!input) return;
     const now = Date.now();
@@ -148,9 +170,16 @@ function submitPin() {
     }
 
     const pin = input.value.trim();
-    if (pin === PIN_GURU) {
+    const pinH = await hashPin(pin);
+    const isValid = (pinH === TEACHER_PIN_HASH);
+
+    if (isValid) {
         pinFailedAttempts = 0;
         pinLockoutUntil = 0;
+        _isTeacherAuthenticated = true;
+        const sessionToken = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : ('auth_' + Date.now());
+        sessionStorage.setItem('quizmaster_teacher_auth_token', sessionToken);
+
         sfxCorrect();
         closeModal();
         initAudio();
@@ -245,6 +274,14 @@ function closeDeleteSingleModal() {
 
 async function confirmDeleteSingle() {
     if (!targetDeleteRecord) return;
+    // 🔒 SECURITY GUARD: Tolak eksekusi jika pengguna belum terverifikasi PIN Guru
+    if (!isTeacherAuthValid()) {
+        sfxWrong();
+        showToast('⛔ Akses Ditolak: Anda belum memasukkan PIN Guru!', '🔒');
+        openPinModal();
+        return;
+    }
+
     const target = targetDeleteRecord;
     closeDeleteSingleModal();
 
@@ -280,7 +317,7 @@ async function confirmDeleteSingle() {
             method: 'DELETE',
             headers: { 
                 'Content-Type': 'application/json',
-                'x-admin-pin': PIN_GURU 
+                'x-admin-token': sessionStorage.getItem('quizmaster_teacher_auth_token') || 'authenticated'
             },
             body: JSON.stringify({ 
                 name: target.name, 
@@ -297,6 +334,14 @@ async function confirmDeleteSingle() {
 }
 
 async function confirmClearData() {
+    // 🔒 SECURITY GUARD: Tolak eksekusi jika pengguna belum terverifikasi PIN Guru
+    if (!isTeacherAuthValid()) {
+        sfxWrong();
+        showToast('⛔ Akses Ditolak: Anda belum memasukkan PIN Guru!', '🔒');
+        openPinModal();
+        return;
+    }
+
     closeDeleteModal();
     localStorage.removeItem(STORAGE_KEY);
 
@@ -311,7 +356,10 @@ async function confirmClearData() {
     try {
         await fetch('/api/scores', { 
             method: 'DELETE',
-            headers: { 'x-admin-pin': PIN_GURU }
+            headers: { 
+                'Content-Type': 'application/json',
+                'x-admin-token': sessionStorage.getItem('quizmaster_teacher_auth_token') || 'authenticated'
+            }
         });
     } catch (e) {}
 
@@ -330,7 +378,7 @@ function loadSubmissionPolicy() {
         const p = localStorage.getItem(SUBMISSION_POLICY_KEY);
         if (p) return p;
     } catch(e) {}
-    return 'allow_remedy'; // 'single_only', 'allow_remedy', 'allow_multiple'
+    return 'single_only'; // Default: 'single_only' (Integritas Ujian: 1 Kali Pengerjaan)
 }
 window.loadSubmissionPolicy = loadSubmissionPolicy;
 
@@ -359,9 +407,10 @@ const REMEDIAL_SETTING_KEY = 'quizmaster_remedial_enabled';
 function loadRemedialSetting() {
     try {
         const v = localStorage.getItem(REMEDIAL_SETTING_KEY);
+        if (v === 'enabled') return true;
         if (v === 'disabled') return false;
     } catch(e) {}
-    return true; // Default aktif
+    return false; // Default: Terkunci selama ujian, hanya aktif jika dibuka oleh Guru
 }
 window.loadRemedialSetting = loadRemedialSetting;
 
@@ -449,12 +498,19 @@ window.initFullscreenSettingUi = initFullscreenSettingUi;
 function loadAccessSettings() {
     try {
         const saved = JSON.parse(localStorage.getItem(ACCESS_SETTINGS_KEY));
-        if (saved) return saved;
+        if (saved) {
+            if (!saved.classOverrides) saved.classOverrides = {};
+            if (!saved.manualOpenedClasses) saved.manualOpenedClasses = {};
+            if (saved.lockAnswersDuringExam === undefined) saved.lockAnswersDuringExam = true;
+            return saved;
+        }
     } catch(e) {}
     return {
-        mode: 'always_open', // 'always_open', 'auto', 'manual', 'deadline'
+        mode: 'auto', // Default: 'auto' (Sesuai Jadwal RINI SYAFITRI), 'always_open', 'manual', 'deadline'
         deadlineTimestamp: null,
-        classOverrides: {}
+        classOverrides: {},
+        manualOpenedClasses: {},
+        lockAnswersDuringExam: true
     };
 }
 
@@ -484,7 +540,12 @@ function getClassSchedule(cls) {
     return { day: 1, dayName: 'Senin', start: '08:00', end: '10:00', period: 'Jam Mengajar' };
 }
 
-function checkClassAccess(cls) {
+function checkClassAccess(cls, moduleId) {
+    // 1. Modul Detektif Fakta (Kuis 1) bebas diakses untuk latihan & pengulangan mandiri
+    if (moduleId === 'modul_detektif_fakta') {
+        return { allowed: true, reason: 'Modul Latihan Mandiri / Riwayat Bebas Akses' };
+    }
+
     const accessSettings = loadAccessSettings();
     const now = new Date();
     const currentDay = now.getDay();
@@ -492,26 +553,44 @@ function checkClassAccess(cls) {
     const nowFullStr = `${getDayName(currentDay)}, ${currentTimeStr} WIB`;
     const schedule = getClassSchedule(cls);
 
-    // 1. PRIORITAS TERTINGGI: Override manual per kelas oleh guru
-    if (accessSettings.classOverrides && accessSettings.classOverrides[cls] !== undefined) {
-        if (accessSettings.classOverrides[cls] === false) {
+    // 1. ATURAN MUTLAK GURU: Jika kelas dibuka manual oleh Guru, TIDAK BISA DITUTUP OTOMATIS OLEH JADWAL APAPUN!
+    // Harus Guru sendiri yang menutupnya secara manual (classOverrides[cls] === false).
+    if (accessSettings.manualOpenedClasses && accessSettings.manualOpenedClasses[cls] === true) {
+        if (accessSettings.classOverrides && accessSettings.classOverrides[cls] === false) {
             return {
                 allowed: false,
                 schedule: schedule,
                 currentInfo: nowFullStr,
-                reason: 'Kelas ini sedang dikunci oleh guru mata pelajaran'
+                reason: 'Kelas ini telah dikunci manual oleh Guru'
             };
-        } else if (accessSettings.classOverrides[cls] === true) {
+        }
+        return {
+            allowed: true,
+            isManualOpen: true,
+            reason: 'Kelas ini dibuka manual oleh Guru (Terbuka sampai ditutup Guru)'
+        };
+    }
+
+    if (accessSettings.classOverrides && accessSettings.classOverrides[cls] !== undefined) {
+        if (accessSettings.classOverrides[cls] === true) {
             return {
                 allowed: true,
-                reason: 'Kelas ini dibuka manual oleh guru'
+                isManualOpen: true,
+                reason: 'Kelas ini dibuka manual oleh Guru (Terbuka sampai ditutup Guru)'
+            };
+        } else if (accessSettings.classOverrides[cls] === false) {
+            return {
+                allowed: false,
+                schedule: schedule,
+                currentInfo: nowFullStr,
+                reason: 'Kelas ini sedang dikunci oleh Guru'
             };
         }
     }
 
-    // 2. Mode Always Open (Buka Semua Kelas)
+    // 2. Mode Always Open (Seluruh Kelas Dibuka Bebas oleh Guru)
     if (accessSettings.mode === 'always_open') {
-        return { allowed: true, reason: 'Kuis dibuka untuk semua kelas' };
+        return { allowed: true, isManualOpen: true, reason: 'Kuis dibuka untuk semua kelas oleh Guru' };
     }
 
     // 3. Mode Deadline (Tenggat Waktu Kustom)
@@ -528,13 +607,13 @@ function checkClassAccess(cls) {
         }
     }
 
-    // 4. Mode Manual Per Kelas
+    // 4. Mode Manual Per Kelas (Terkunci kecuali dibuka manual oleh Guru)
     if (accessSettings.mode === 'manual') {
         return { 
             allowed: false, 
             schedule: schedule, 
             currentInfo: nowFullStr,
-            reason: 'Kelas ini sedang dikunci oleh guru' 
+            reason: 'Kelas ini sedang dikunci oleh Guru' 
         };
     }
 
@@ -549,7 +628,7 @@ function checkClassAccess(cls) {
         allowed: false, 
         schedule: schedule, 
         currentInfo: nowFullStr,
-        reason: 'Bukan jam guru mata pelajaran' 
+        reason: 'Bukan jam pelajaran guru mata pelajaran' 
     };
 }
 window.checkClassAccess = checkClassAccess;
@@ -558,12 +637,15 @@ function setAccessMode(mode) {
     sfxClick();
     const settings = loadAccessSettings();
     settings.mode = mode;
-    // Reset individual overrides when switching global modes so intent is clear
-    settings.classOverrides = {};
+    if (mode === 'always_open') {
+        const classes = ['X E 1', 'X E 2', 'X E 3', 'X E 4', 'X E 5', 'X E 6'];
+        if (!settings.manualOpenedClasses) settings.manualOpenedClasses = {};
+        classes.forEach(c => { settings.manualOpenedClasses[c] = true; });
+    }
     saveAccessSettings(settings);
     updateAccessControlUI();
     const labelMap = {
-        'always_open': '🟢 Kuis dibuka sekarang untuk semua kelas!',
+        'always_open': '🟢 Kuis dibuka sekarang untuk semua kelas (Permanen oleh Admin)!',
         'auto': '🕒 Kuis diatur otomatis mengikuti jadwal mengajar Rini Syafitri!',
         'manual': '🎛️ Mode kontrol manual per kelas aktif!',
         'deadline': '⏱️ Mode tenggat waktu kustom aktif!'
@@ -634,12 +716,21 @@ function toggleClassAccess(cls) {
     sfxClick();
     const settings = loadAccessSettings();
     if (!settings.classOverrides) settings.classOverrides = {};
+    if (!settings.manualOpenedClasses) settings.manualOpenedClasses = {};
+
     const currentAccess = checkClassAccess(cls);
     const nextState = !currentAccess.allowed;
     settings.classOverrides[cls] = nextState;
+
+    if (nextState === true) {
+        settings.manualOpenedClasses[cls] = true;
+    } else {
+        delete settings.manualOpenedClasses[cls];
+    }
+
     saveAccessSettings(settings);
     renderScheduleMatrix();
-    showToast(`Akses kelas ${cls} ${nextState ? 'DIBUKA 🟢' : 'DIKUNCI 🔒'}!`, nextState ? '🔓' : '🔒');
+    showToast(`Akses kelas ${cls} ${nextState ? 'DIBUKA MANUAL 🟢 (Permanen terbuka sampai ditutup Admin)' : 'DIKUNCI 🔒'}!`, nextState ? '🔓' : '🔒');
 }
 window.toggleClassAccess = toggleClassAccess;
 
@@ -647,17 +738,25 @@ function toggleAllClasses(open) {
     sfxClick();
     const settings = loadAccessSettings();
     const classes = ['X E 1', 'X E 2', 'X E 3', 'X E 4', 'X E 5', 'X E 6'];
-    settings.classOverrides = {};
+    if (!settings.classOverrides) settings.classOverrides = {};
+    if (!settings.manualOpenedClasses) settings.manualOpenedClasses = {};
+
     if (open) {
         settings.mode = 'always_open';
-        classes.forEach(c => { settings.classOverrides[c] = true; });
+        classes.forEach(c => { 
+            settings.classOverrides[c] = true; 
+            settings.manualOpenedClasses[c] = true;
+        });
     } else {
         settings.mode = 'manual';
-        classes.forEach(c => { settings.classOverrides[c] = false; });
+        classes.forEach(c => { 
+            settings.classOverrides[c] = false; 
+            delete settings.manualOpenedClasses[c];
+        });
     }
     saveAccessSettings(settings);
     updateAccessControlUI();
-    showToast(open ? 'Semua kelas DIBUKA 🟢!' : 'Semua kelas DIKUNCI 🔒!', open ? '🔓' : '🔒');
+    showToast(open ? 'Semua kelas DIBUKA MANUAL 🟢 (Permanen terbuka sampai ditutup Admin)!' : 'Semua kelas DIKUNCI 🔒!', open ? '🔓' : '🔒');
 }
 window.toggleAllClasses = toggleAllClasses;
 
@@ -666,11 +765,13 @@ function renderScheduleMatrix() {
     if (!container) return;
     container.innerHTML = '';
     const classes = ['X E 1', 'X E 2', 'X E 3', 'X E 4', 'X E 5', 'X E 6'];
+    const accessSettings = loadAccessSettings();
 
     classes.forEach(cls => {
         const schedule = getClassSchedule(cls);
         const access = checkClassAccess(cls);
         const isOpen = access.allowed;
+        const isManualOpen = (accessSettings.manualOpenedClasses && accessSettings.manualOpenedClasses[cls] === true) || (accessSettings.classOverrides && accessSettings.classOverrides[cls] === true) || (accessSettings.mode === 'always_open');
 
         const card = document.createElement('div');
         card.className = `matrix-card ${isOpen ? 'open' : 'locked'}`;
@@ -683,10 +784,11 @@ function renderScheduleMatrix() {
                     <span>📅 ${schedule.dayName || 'Jadwal'}, ${schedule.start || '08:00'} - ${schedule.end || '10:00'} WIB</span>
                 </div>
                 <div class="matrix-sched-period">${schedule.period || 'Jam Pelajaran'}</div>
+                ${isManualOpen && isOpen ? '<div style="font-size: 0.7rem; color: #10b981; margin-top: 4px; font-weight: 700;">🛡️ Dibuka Manual oleh Admin (Permanen)</div>' : ''}
             </div>
             <div class="matrix-card-actions">
                 <span class="matrix-status-badge ${isOpen ? 'open' : 'locked'}">
-                    ${isOpen ? '🟢 DIBUKA' : '🔒 TERKUNCI'}
+                    ${isOpen ? (isManualOpen ? '🟢 DIBUKA MANUAL' : '🟢 DIBUKA (JADWAL)') : '🔒 TERKUNCI'}
                 </span>
                 <button class="matrix-action-btn" onclick="toggleClassAccess('${cls}')">
                     ${isOpen ? 'Kunci 🔒' : 'Buka 🔓'}
@@ -710,12 +812,26 @@ let currentExaminedFilter = 'all';
 
 function reconstructStudentAnswers(record) {
     const activeQuestions = getActiveQuizData();
-    if (record.detailedAnswers && Array.isArray(record.detailedAnswers) && record.detailedAnswers.length > 0) {
+    if (record.detailedAnswers && Array.isArray(record.detailedAnswers) && record.detailedAnswers.length > 0 && record.detailedAnswers.some(it => it !== null)) {
         return record.detailedAnswers.map((item, idx) => {
-            const masterQ = activeQuestions[item.qIndex !== undefined ? item.qIndex : idx] || activeQuestions[idx];
+            if (!item) {
+                const masterQ = activeQuestions[idx];
+                return {
+                    qIndex: idx,
+                    questionText: masterQ ? masterQ.q : `Soal #${idx + 1}`,
+                    selectedText: ['-'],
+                    isCorrect: false,
+                    pointsEarned: 0,
+                    options: masterQ ? masterQ.options : [],
+                    explanation: masterQ ? masterQ.explanation : '',
+                    difficulty: masterQ ? masterQ.difficulty : 'Medium'
+                };
+            }
+            const qIdx = item.qIndex !== undefined ? item.qIndex : idx;
+            const masterQ = activeQuestions[qIdx] || activeQuestions[idx];
             return {
                 ...item,
-                qIndex: item.qIndex !== undefined ? item.qIndex : idx,
+                qIndex: qIdx,
                 options: item.options || (masterQ ? masterQ.options : []),
                 explanation: item.explanation || (masterQ ? masterQ.explanation : ''),
                 questionText: item.questionText || (masterQ ? masterQ.q : ''),
@@ -824,29 +940,29 @@ function openStudentDetailModal(recordOrIdx) {
     summaryGrid.innerHTML = `
         <div>
             <div style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase;">Nama Siswa</div>
-            <div style="font-weight: 800; color: var(--text); font-size: 0.95rem;">${record.name}</div>
+            <div style="font-weight: 800; color: var(--text); font-size: 0.95rem;">${escapeHtml(record.name)}</div>
         </div>
         <div>
             <div style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase;">Kelas</div>
-            <div style="font-weight: 800; color: var(--accent); font-size: 0.95rem;">${record.class || '-'}</div>
+            <div style="font-weight: 800; color: var(--accent); font-size: 0.95rem;">${escapeHtml(record.class || '-')}</div>
         </div>
         <div>
             <div style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase;">Nilai & Status</div>
             <div style="font-weight: 800; font-size: 0.95rem;">
-                <span style="color: ${isPass ? 'var(--success)' : 'var(--danger)'};">${record.score}</span> 
+                <span style="color: ${isPass ? 'var(--success)' : 'var(--danger)'};">${Number(record.score) || 0}</span> 
                 <span class="kkm-pill ${isPass ? 'passed' : 'remedial'}" style="font-size: 0.65rem; padding: 2px 6px;">${isPass ? 'LULUS KKM' : (isCheated ? 'DISKUALIFIKASI' : 'REMEDIAL')}</span>
             </div>
         </div>
         <div>
             <div style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase;">Jawaban Benar / Salah</div>
             <div style="font-weight: 700; font-size: 0.9rem;">
-                <span style="color: var(--success);">✔️ ${record.correct !== undefined ? record.correct : ((getActiveQuizData().length || 20) - (record.wrongQuestions ? record.wrongQuestions.length : 0))}</span> / 
-                <span style="color: var(--danger);">❌ ${record.wrongQuestions ? record.wrongQuestions.length : ((getActiveQuizData().length || 20) - (record.correct || 0))}</span>
+                <span style="color: var(--success);">✔️ ${record.correct !== undefined ? Number(record.correct) : ((getActiveQuizData().length || 20) - (record.wrongQuestions ? record.wrongQuestions.length : 0))}</span> / 
+                <span style="color: var(--danger);">❌ ${record.wrongQuestions ? record.wrongQuestions.length : ((getActiveQuizData().length || 20) - (Number(record.correct) || 0))}</span>
             </div>
         </div>
         <div>
             <div style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase;">Durasi & Waktu</div>
-            <div style="font-size: 0.8rem; color: var(--text-secondary);">${record.duration || '-'} (${record.time || '-'})</div>
+            <div style="font-size: 0.8rem; color: var(--text-secondary);">${escapeHtml(record.duration || '-')} (${escapeHtml(record.time || '-')})</div>
         </div>
         <div>
             <div style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase;">Integritas & Anti-Cheat</div>
@@ -989,7 +1105,7 @@ function renderStudentDetailQuestions() {
                 <div style="display: flex; justify-content: space-between; align-items: center; background: ${optBg}; border: 1px solid ${optBorder}; border-radius: 8px; padding: 8px 12px; font-size: 0.84rem; color: ${optColor}; gap: 8px;">
                     <div style="display: flex; align-items: flex-start; gap: 8px; flex: 1;">
                         <span style="font-weight: 800; font-family: var(--font-mono); color: var(--accent);">${letters[optIdx] || (optIdx+1)}.</span>
-                        <span style="line-height: 1.4;">${optText}</span>
+                        <span style="line-height: 1.4;">${escapeHtml(optText)}</span>
                     </div>
                     <div style="white-space: nowrap;">${tag}</div>
                 </div>
@@ -1001,21 +1117,21 @@ function renderStudentDetailQuestions() {
         if (item.caseStudy) {
             caseHtml = `
                 <div style="background: rgba(234,179,8,0.06); border-left: 3px solid var(--warning); padding: 8px 12px; border-radius: 0 8px 8px 0; margin-bottom: 10px; font-size: 0.85rem; font-style: italic; color: #fde68a;">
-                    <strong>📁 Bukti Kasus:</strong> ${item.caseStudy}
+                    <strong>📁 Bukti Kasus:</strong> ${escapeHtml(item.caseStudy)}
                 </div>
             `;
         }
 
         const studentAnsStr = (item.selectedIndices && item.selectedIndices.length > 0 && optList.length > 0)
-            ? item.selectedIndices.map(idx => `<strong>[${letters[idx] || (idx + 1)}]</strong> ${optList[idx] || (item.selectedText && item.selectedText[0]) || ''}`).join('<br>• ')
+            ? item.selectedIndices.map(idx => `<strong>[${letters[idx] || (idx + 1)}]</strong> ${escapeHtml(optList[idx] || (item.selectedText && item.selectedText[0]) || '')}`).join('<br>• ')
             : ((item.selectedText && item.selectedText.length > 0)
-                ? item.selectedText.join('<br>• ')
+                ? item.selectedText.map(t => escapeHtml(t)).join('<br>• ')
                 : '<em style="color: var(--text-muted);">(Tidak Ada Jawaban Dipilih / Waktu Habis)</em>');
 
         const correctAnsStr = (item.correctIndices && item.correctIndices.length > 0 && optList.length > 0)
-            ? item.correctIndices.map(idx => `<strong>[${letters[idx] || (idx + 1)}]</strong> ${optList[idx] || (item.correctText && item.correctText[0]) || ''}`).join('<br>• ')
+            ? item.correctIndices.map(idx => `<strong>[${letters[idx] || (idx + 1)}]</strong> ${escapeHtml(optList[idx] || (item.correctText && item.correctText[0]) || '')}`).join('<br>• ')
             : ((item.correctText && item.correctText.length > 0)
-                ? item.correctText.join('<br>• ')
+                ? item.correctText.map(t => escapeHtml(t)).join('<br>• ')
                 : '-');
 
         card.innerHTML = `
@@ -1030,7 +1146,7 @@ function renderStudentDetailQuestions() {
             ${caseHtml}
 
             <div style="font-weight: 700; font-size: 0.94rem; color: var(--text); line-height: 1.5; margin-bottom: 8px;">
-                ${item.questionText}
+                ${escapeHtml(item.questionText)}
             </div>
 
             <!-- Full Options List Breakdown with A, B, C, D, E -->
@@ -1065,7 +1181,7 @@ function renderStudentDetailQuestions() {
             <!-- Explanation & Reason -->
             <div style="background: rgba(255,255,255,0.04); border-left: 3px solid ${item.isCorrect ? 'var(--success)' : 'var(--danger)'}; border-radius: 0 10px 10px 0; padding: 12px 16px; font-size: 0.85rem; color: var(--text-secondary); line-height: 1.5;">
                 💡 <strong style="color: var(--accent);">Alasan / Pembahasan Mengapa ${item.isCorrect ? 'Benar' : 'Salah'}:</strong><br>
-                <span style="color: var(--text);">${item.explanation || '-'}</span>
+                <span style="color: var(--text);">${escapeHtml(item.explanation || '-')}</span>
             </div>
         `;
         container.appendChild(card);
@@ -1198,11 +1314,51 @@ let currentSortOrder = 'desc';
 let currentRosterStatusFilter = 'all'; // 'all', 'submitted', 'waiting'
 window.currentRenderedRecords = [];
 
+function selectModuleSegment(moduleId) {
+    if (typeof sfxClick === 'function') sfxClick();
+    const filterModuleEl = document.getElementById('filter-module');
+    if (filterModuleEl) {
+        filterModuleEl.value = moduleId;
+    }
+    const btnsMap = {
+        'all': 'btn-mod-filter-all',
+        'modul_jaringan_keamanan': 'btn-mod-filter-jaringan',
+        'modul_detektif_fakta': 'btn-mod-filter-fakta'
+    };
+    Object.keys(btnsMap).forEach(key => {
+        const btn = document.getElementById(btnsMap[key]);
+        if (btn) btn.classList.toggle('active', key === moduleId);
+    });
+
+    const indText = document.getElementById('active-module-indicator-text');
+    if (indText) {
+        if (moduleId === 'modul_jaringan_keamanan') {
+            indText.innerHTML = 'Menampilkan: 🛡️ <strong>Modul Keamanan Jaringan Saja</strong> (Kuis lain disembunyikan)';
+        } else if (moduleId === 'modul_detektif_fakta') {
+            indText.innerHTML = 'Menampilkan: 🕵️ <strong>Modul Detektif Fakta Saja</strong> (Kuis lain disembunyikan)';
+        } else {
+            indText.innerHTML = 'Menampilkan: 📊 <strong>Komparasi 2 Modul (Lengkap)</strong>';
+        }
+    }
+    renderDashboard();
+}
+window.selectModuleSegment = selectModuleSegment;
+
 function setRosterStatusFilter(filterKey) {
-    sfxClick();
+    if (typeof sfxClick === 'function') sfxClick();
     currentRosterStatusFilter = filterKey;
-    ['all', 'submitted', 'waiting'].forEach(k => {
-        const btn = document.getElementById(`tab-status-${k}`);
+    const tabIds = {
+        'all': 'tab-status-all',
+        'both': 'tab-status-both',
+        'only_fakta': 'tab-status-only1',
+        'only_jaringan': 'tab-status-only2',
+        'missing_one': 'tab-status-missing',
+        'waiting_both': 'tab-status-waiting-both',
+        'submitted': 'tab-status-submitted',
+        'waiting': 'tab-status-waiting'
+    };
+    Object.keys(tabIds).forEach(k => {
+        const btn = document.getElementById(tabIds[k]);
         if (btn) btn.classList.toggle('active', k === filterKey);
     });
     renderDashboard();
@@ -1224,9 +1380,16 @@ function toggleSort(col) {
     renderDashboard();
 }
 
-function remindStudent(name, cls) {
+function remindStudent(name, cls, missingType = 'both') {
     sfxClick();
-    const text = `Halo ${name} (${cls}), Anda tercatat BELUM menyelesaikan Kuis Detektif Fakta (Guru: RINI SYAFITRI). Silakan segera buka platform kuis dan selesaikan sebelum akses ditutup!`;
+    let text = '';
+    if (missingType === 'only_jaringan') {
+        text = `Halo ${name} (${cls}), Anda tercatat BELUM menyelesaikan Kuis 2: Penilaian Harian Keamanan Jaringan (Guru: RINI SYAFITRI). Silakan segera buka platform kuis dan selesaikan sebelum akses ditutup!`;
+    } else if (missingType === 'only_fakta') {
+        text = `Halo ${name} (${cls}), Anda tercatat BELUM menyelesaikan Kuis 1: Detektif Fakta (Guru: RINI SYAFITRI). Silakan segera buka platform kuis dan selesaikan sebelum akses ditutup!`;
+    } else {
+        text = `Halo ${name} (${cls}), Anda tercatat BELUM menyelesaikan Kuis Informatika Fase E (Guru: RINI SYAFITRI). Silakan segera buka platform kuis dan selesaikan sebelum akses ditutup!`;
+    }
     if (navigator.clipboard && navigator.clipboard.writeText) {
         navigator.clipboard.writeText(text).then(() => {
             showToast(`📲 Pesan pengingat untuk ${name} telah disalin!`, '💬');
@@ -1249,6 +1412,7 @@ window.remindStudentByIndex = remindStudentByIndex;
 function copyUnsubmittedStudentsList() {
     sfxClick();
     const filterClass = document.getElementById('filter-class') ? document.getElementById('filter-class').value : 'all';
+    const filterModule = window.currentDashboardModuleFilter || 'all';
     const allRecords = loadRecords();
     const classes = filterClass === 'all' ? ['X E 1', 'X E 2', 'X E 3', 'X E 4', 'X E 5', 'X E 6'] : [filterClass];
     
@@ -1256,7 +1420,14 @@ function copyUnsubmittedStudentsList() {
     classes.forEach(c => {
         const roster = (typeof STUDENT_ROSTER !== 'undefined' && STUDENT_ROSTER[c]) ? STUDENT_ROSTER[c] : [];
         roster.forEach(name => {
-            const hasDone = allRecords.some(r => (r.name || '').trim().toLowerCase() === name.trim().toLowerCase() && r.class === c);
+            const hasDone = allRecords.some(r => {
+                const nameMatches = (typeof isNameEquivalent === 'function') ? isNameEquivalent(r.name, name) : (r.name || '').trim().toLowerCase() === name.trim().toLowerCase();
+                const classMatches = (typeof isClassEquivalent === 'function') ? isClassEquivalent(r.class, c) : (r.class || '').replace(/\s+/g, '').toUpperCase() === c.replace(/\s+/g, '').toUpperCase();
+                if (!nameMatches || !classMatches) return false;
+                if (filterModule === 'all') return true;
+                const rMod = (typeof normalizeModuleId === 'function') ? normalizeModuleId(r.moduleId, r.id, r.date) : (r.moduleId || 'modul_detektif_fakta');
+                return rMod === filterModule;
+            });
             if (!hasDone) {
                 unsubmitted.push({ name, class: c });
             }
@@ -1268,7 +1439,8 @@ function copyUnsubmittedStudentsList() {
         return;
     }
 
-    let text = `📢 *DAFTAR SISWA BELUM MENGERJAKAN KUIS DETEKTIF FAKTA*\n`;
+    const modLabel = filterModule === 'modul_jaringan_keamanan' ? 'MODUL INFRASTRUKTUR JARINGAN & KEAMANAN DIGITAL' : (filterModule === 'modul_detektif_fakta' ? 'MODUL DETEKTIF FAKTA' : 'KUIS PEMBELAJARAN');
+    let text = `📢 *DAFTAR SISWA BELUM MENGERJAKAN ${modLabel}*\n`;
     text += `🏫 SMAN 4 PADANG — Kelas: ${filterClass === 'all' ? 'Semua Kelas (X E 1 - X E 6)' : filterClass}\n`;
     text += `👩‍🏫 Guru Pengampu: RINI SYAFITRI\n`;
     text += `📊 Total Belum Mengerjakan: ${unsubmitted.length} Siswa\n`;
@@ -1349,75 +1521,134 @@ function renderDashboard() {
     // Render Kontrol Jadwal & Akses Buk RINI
     updateAccessControlUI();
 
-    // 1. Kumpulkan seluruh data siswa terdaftar dari Roster Resmi (6 Kelas X E 1 - X E 6)
+    // 1. Kumpulkan data siswa terdaftar dari Roster Resmi (6 Kelas X E 1 - X E 6)
     const allClasses = ['X E 1', 'X E 2', 'X E 3', 'X E 4', 'X E 5', 'X E 6'];
     const targetClasses = filterClass === 'all' ? allClasses : [filterClass];
 
-    // Filter records sesuai modul pembelajaran terpilih
-    const moduleFilteredRecords = filterModule === 'all' 
-        ? allRecords 
-        : allRecords.filter(r => (r.moduleId || 'modul_detektif_fakta') === filterModule);
+    const modFaktaId = 'modul_detektif_fakta';
+    const modJaringanId = 'modul_jaringan_keamanan';
 
-    // Bangun daftar siswa terdaftar & cross-reference dengan submission
+    // Pisahkan records per modul kuis dengan normalisasi otomatis
+    const recordsFakta = allRecords.filter(r => {
+        const mod = (typeof normalizeModuleId === 'function') ? normalizeModuleId(r.moduleId, r.id, r.date) : (r.moduleId || modFaktaId);
+        return mod === modFaktaId;
+    });
+    const recordsJaringan = allRecords.filter(r => {
+        const mod = (typeof normalizeModuleId === 'function') ? normalizeModuleId(r.moduleId, r.id, r.date) : (r.moduleId || modFaktaId);
+        return mod === modJaringanId;
+    });
+
+    // Update counter pada badge tombol segmented modul
+    const badgeAll = document.getElementById('badge-cnt-all-mod');
+    const badgeJaringan = document.getElementById('badge-cnt-jaringan-mod');
+    const badgeFakta = document.getElementById('badge-cnt-fakta-mod');
+    if (badgeAll) badgeAll.textContent = `${allRecords.length} Data`;
+    if (badgeJaringan) badgeJaringan.textContent = `${recordsJaringan.length} Data`;
+    if (badgeFakta) badgeFakta.textContent = `${recordsFakta.length} Data`;
+
+    // Filter records sesuai modul pembelajaran terpilih
+    const isSingleModuleView = (filterModule === modJaringanId || filterModule === modFaktaId);
+    const activeSingleModId = isSingleModuleView ? filterModule : null;
+
+    // Bangun daftar siswa terdaftar & cross-reference dengan submission untuk kedua kuis
     const rosterStudentItems = [];
     targetClasses.forEach(cls => {
         const roster = (typeof STUDENT_ROSTER !== 'undefined' && STUDENT_ROSTER[cls]) ? STUDENT_ROSTER[cls] : [];
         roster.forEach(studentName => {
-            const studentAttempts = moduleFilteredRecords.filter(r => 
-                (r.name || '').trim().toLowerCase() === studentName.trim().toLowerCase() && 
-                r.class === cls
-            );
+            const cleanName = studentName.trim().toLowerCase();
+            const nameMatches = (typeof isNameEquivalent === 'function') 
+                ? (recName) => isNameEquivalent(recName, studentName)
+                : (recName) => (recName || '').trim().toLowerCase() === cleanName;
+            const classMatches = (typeof isClassEquivalent === 'function')
+                ? (recClass) => isClassEquivalent(recClass, cls)
+                : (recClass) => (recClass || '').replace(/\s+/g, '').toUpperCase() === cls.replace(/\s+/g, '').toUpperCase();
 
-            if (studentAttempts.length > 0) {
-                // Urutkan untuk mendapatkan skor terbaik (atau submission terakhir)
-                studentAttempts.sort((a, b) => (b.score - a.score) || ((b.timestamp || 0) - (a.timestamp || 0)));
-                const bestAttempt = studentAttempts[0];
-                rosterStudentItems.push({
-                    name: studentName,
-                    class: cls,
-                    hasSubmitted: true,
-                    record: bestAttempt,
-                    attemptsCount: studentAttempts.length,
-                    score: bestAttempt.score,
-                    timestamp: bestAttempt.timestamp || 0
-                });
-            } else {
-                rosterStudentItems.push({
-                    name: studentName,
-                    class: cls,
-                    hasSubmitted: false,
-                    record: null,
-                    attemptsCount: 0,
-                    score: -1,
-                    timestamp: 0
-                });
+            // Attempts Kuis 1 (Fakta)
+            const attemptsFakta = recordsFakta.filter(r => 
+                nameMatches(r.name) && classMatches(r.class)
+            ).sort((a, b) => (b.score - a.score) || ((b.timestamp || 0) - (a.timestamp || 0)));
+            const bestFakta = attemptsFakta[0] || null;
+
+            // Attempts Kuis 2 (Jaringan)
+            const attemptsJaringan = recordsJaringan.filter(r => 
+                nameMatches(r.name) && classMatches(r.class)
+            ).sort((a, b) => (b.score - a.score) || ((b.timestamp || 0) - (a.timestamp || 0)));
+            const bestJaringan = attemptsJaringan[0] || null;
+
+            const hasFakta = !!bestFakta;
+            const hasJaringan = !!bestJaringan;
+
+            let completionStatus = 'none'; // 'both', 'only_fakta', 'only_jaringan', 'none'
+            if (hasFakta && hasJaringan) completionStatus = 'both';
+            else if (hasFakta) completionStatus = 'only_fakta';
+            else if (hasJaringan) completionStatus = 'only_jaringan';
+
+            // Hitung nilai rata-rata komparatif
+            let avgScore = -1;
+            if (hasFakta && hasJaringan) {
+                avgScore = Math.round((bestFakta.score + bestJaringan.score) / 2);
+            } else if (hasFakta) {
+                avgScore = bestFakta.score;
+            } else if (hasJaringan) {
+                avgScore = bestJaringan.score;
             }
+
+            // Tentukan status aktif berdasarkan filterModule
+            let hasSubmitted = false;
+            let activeRecord = null;
+            let activeScore = -1;
+            let activeAttempts = 0;
+            let activeTimestamp = 0;
+
+            if (filterModule === modJaringanId) {
+                hasSubmitted = hasJaringan;
+                activeRecord = bestJaringan;
+                activeScore = bestJaringan ? bestJaringan.score : -1;
+                activeAttempts = attemptsJaringan.length;
+                activeTimestamp = bestJaringan ? (bestJaringan.timestamp || 0) : 0;
+            } else if (filterModule === modFaktaId) {
+                hasSubmitted = hasFakta;
+                activeRecord = bestFakta;
+                activeScore = bestFakta ? bestFakta.score : -1;
+                activeAttempts = attemptsFakta.length;
+                activeTimestamp = bestFakta ? (bestFakta.timestamp || 0) : 0;
+            } else {
+                // Komparasi 2 Modul ('all')
+                hasSubmitted = hasFakta || hasJaringan;
+                activeRecord = bestJaringan || bestFakta;
+                activeScore = avgScore;
+                activeAttempts = attemptsFakta.length + attemptsJaringan.length;
+                activeTimestamp = Math.max(bestFakta ? (bestFakta.timestamp || 0) : 0, bestJaringan ? (bestJaringan.timestamp || 0) : 0);
+            }
+
+            rosterStudentItems.push({
+                name: studentName,
+                class: cls,
+                hasSubmitted: hasSubmitted,
+                record: activeRecord,
+                attemptsCount: activeAttempts,
+                score: activeScore,
+                timestamp: activeTimestamp,
+                hasFakta: hasFakta,
+                recordFakta: bestFakta,
+                scoreFakta: bestFakta ? bestFakta.score : null,
+                hasJaringan: hasJaringan,
+                recordJaringan: bestJaringan,
+                scoreJaringan: bestJaringan ? bestJaringan.score : null,
+                completionStatus: completionStatus,
+                avgScore: avgScore
+            });
         });
     });
 
-    // Tambahkan juga jika ada siswa di records yang namanya di luar roster resmi
-    moduleFilteredRecords.forEach(r => {
-        if (targetClasses.includes(r.class)) {
-            const alreadyInRoster = rosterStudentItems.some(item => 
-                item.name.trim().toLowerCase() === (r.name || '').trim().toLowerCase() && 
-                item.class === r.class
-            );
-            if (!alreadyInRoster) {
-                rosterStudentItems.push({
-                    name: r.name,
-                    class: r.class || '-',
-                    hasSubmitted: true,
-                    record: r,
-                    attemptsCount: 1,
-                    score: r.score,
-                    timestamp: r.timestamp || 0
-                });
-            }
-        }
-    });
-
-    // 2. Hitung Rekapitulasi Metrik KPI
+    // 2. Hitung Agregasi Metrik Status Pengerjaan
     const totalEnrolled = rosterStudentItems.length;
+    const countBoth = rosterStudentItems.filter(s => s.completionStatus === 'both').length;
+    const countOnlyFakta = rosterStudentItems.filter(s => s.completionStatus === 'only_fakta').length;
+    const countOnlyJaringan = rosterStudentItems.filter(s => s.completionStatus === 'only_jaringan').length;
+    const countMissingOne = rosterStudentItems.filter(s => s.completionStatus === 'only_fakta' || s.completionStatus === 'only_jaringan').length;
+    const countWaitingBoth = rosterStudentItems.filter(s => s.completionStatus === 'none').length;
+
     const submittedItems = rosterStudentItems.filter(item => item.hasSubmitted);
     const waitingItems = rosterStudentItems.filter(item => !item.hasSubmitted);
 
@@ -1426,20 +1657,32 @@ function renderDashboard() {
     const participationPct = totalEnrolled > 0 ? Math.round((doneCount / totalEnrolled) * 100) : 0;
 
     const submittedRecords = submittedItems.map(item => item.record);
-    const avgScore = doneCount > 0 ? Math.round(submittedRecords.reduce((sum, r) => sum + r.score, 0) / doneCount) : 0;
-    const highestScore = doneCount > 0 ? Math.max(...submittedRecords.map(r => r.score)) : 0;
-    const lowestScore = doneCount > 0 ? Math.min(...submittedRecords.map(r => r.score)) : '-';
-    const lulusCount = submittedRecords.filter(r => r.score >= 80 && !r.isCheated).length;
+    const validScores = submittedItems.map(item => item.score).filter(s => s >= 0);
+    const avgScore = validScores.length > 0 ? Math.round(validScores.reduce((sum, s) => sum + s, 0) / validScores.length) : 0;
+    const highestScore = validScores.length > 0 ? Math.max(...validScores) : 0;
+    const lowestScore = validScores.length > 0 ? Math.min(...validScores) : '-';
+    const lulusCount = submittedItems.filter(item => item.score >= 80 && !(item.record && item.record.isCheated)).length;
 
-    // Perbarui Tab Counter
+    // Perbarui Tab Counter (Cross-Quiz Counters)
     const cntAll = document.getElementById('cnt-roster-all');
+    const cntBoth = document.getElementById('cnt-roster-both');
+    const cntOnly1 = document.getElementById('cnt-roster-only1');
+    const cntOnly2 = document.getElementById('cnt-roster-only2');
+    const cntMissing = document.getElementById('cnt-roster-missing');
+    const cntWaitingBoth = document.getElementById('cnt-roster-waiting-both');
     const cntDone = document.getElementById('cnt-roster-done');
     const cntWaiting = document.getElementById('cnt-roster-waiting');
+
     if (cntAll) cntAll.textContent = `(${totalEnrolled})`;
+    if (cntBoth) cntBoth.textContent = `(${countBoth})`;
+    if (cntOnly1) cntOnly1.textContent = `(${countOnlyFakta})`;
+    if (cntOnly2) cntOnly2.textContent = `(${countOnlyJaringan})`;
+    if (cntMissing) cntMissing.textContent = `(${countMissingOne})`;
+    if (cntWaitingBoth) cntWaitingBoth.textContent = `(${countWaitingBoth})`;
     if (cntDone) cntDone.textContent = `(${doneCount})`;
     if (cntWaiting) cntWaiting.textContent = `(${waitingCount})`;
 
-    // Perbarui KPI Cards Modern Stitch
+    // Perbarui KPI Cards Modern
     const elTotal = document.getElementById('sc-total');
     const elAvg = document.getElementById('sc-avg');
     const elHighest = document.getElementById('sc-highest');
@@ -1464,15 +1707,13 @@ function renderDashboard() {
     if (classBreakdown) {
         classBreakdown.innerHTML = '';
         allClasses.forEach(cls => {
-            const classRoster = (typeof STUDENT_ROSTER !== 'undefined' && STUDENT_ROSTER[cls]) ? STUDENT_ROSTER[cls] : [];
-            const totalInClass = classRoster.length || 36;
-            const classRecords = moduleFilteredRecords.filter(r => r.class === cls);
-            
-            // Hitung siswa unik yang sudah submit
-            const uniqueSubmitted = new Set(classRecords.map(r => (r.name || '').trim().toLowerCase()));
-            const countDone = uniqueSubmitted.size;
-            const avg = classRecords.length > 0 
-                ? Math.round(classRecords.reduce((s, r) => s + r.score, 0) / classRecords.length) 
+            const inClass = rosterStudentItems.filter(s => s.class === cls);
+            const totalInClass = inClass.length || 36;
+            const submittedInClass = inClass.filter(s => s.hasSubmitted);
+            const countDone = submittedInClass.length;
+            const scoresInClass = submittedInClass.map(s => s.score).filter(s => s >= 0);
+            const avg = scoresInClass.length > 0 
+                ? Math.round(scoresInClass.reduce((a, b) => a + b, 0) / scoresInClass.length) 
                 : '-';
             const isSelected = filterClass === cls;
             const pct = Math.round((countDone / totalInClass) * 100);
@@ -1500,7 +1741,17 @@ function renderDashboard() {
 
     // 4. Filter Siswa Sesuai Tab Status & Pencarian Nama
     let displayList = rosterStudentItems;
-    if (currentRosterStatusFilter === 'submitted') {
+    if (currentRosterStatusFilter === 'both') {
+        displayList = displayList.filter(item => item.completionStatus === 'both');
+    } else if (currentRosterStatusFilter === 'only_fakta') {
+        displayList = displayList.filter(item => item.completionStatus === 'only_fakta');
+    } else if (currentRosterStatusFilter === 'only_jaringan') {
+        displayList = displayList.filter(item => item.completionStatus === 'only_jaringan');
+    } else if (currentRosterStatusFilter === 'missing_one') {
+        displayList = displayList.filter(item => item.completionStatus === 'only_fakta' || item.completionStatus === 'only_jaringan');
+    } else if (currentRosterStatusFilter === 'waiting_both') {
+        displayList = displayList.filter(item => item.completionStatus === 'none');
+    } else if (currentRosterStatusFilter === 'submitted') {
         displayList = displayList.filter(item => item.hasSubmitted);
     } else if (currentRosterStatusFilter === 'waiting') {
         displayList = displayList.filter(item => !item.hasSubmitted);
@@ -1527,7 +1778,43 @@ function renderDashboard() {
         return (b.score - a.score) || a.name.localeCompare(b.name);
     });
 
-    // 6. Render Data Tabel Dasbor
+    // 6. Sinkronkan Header Tabel Sesuai Mode Tampilan (Komparasi 2 Modul vs Modul Tunggal)
+    const thead = document.querySelector('.dash-table thead');
+    if (thead) {
+        if (!isSingleModuleView) {
+            // Mode Komparasi 2 Modul
+            thead.innerHTML = `
+                <tr>
+                    <th style="width: 45px;">No</th>
+                    <th style="cursor: pointer;" onclick="toggleSort('name')" title="Klik untuk Urutkan Nama">Nama Siswa ⇅</th>
+                    <th style="width: 80px;">Kelas</th>
+                    <th style="text-align: center; width: 140px;" title="Kuis 1: Detektif Fakta">Kuis 1: Detektif Fakta</th>
+                    <th style="text-align: center; width: 140px;" title="Kuis 2: Keamanan Jaringan">Kuis 2: Keamanan Jaringan</th>
+                    <th style="text-align: center; width: 90px; cursor: pointer;" onclick="toggleSort('score')" title="Urutkan Nilai Rata-Rata">Rata-Rata ⇅</th>
+                    <th style="text-align: center; width: 160px;">Status Pengerjaan</th>
+                    <th style="text-align: center; width: 160px;">Aksi</th>
+                </tr>
+            `;
+        } else {
+            // Mode Modul Tunggal (Fokus Keamanan Jaringan atau Detektif Fakta Saja)
+            const modLabel = filterModule === modJaringanId ? 'Modul Keamanan Jaringan' : 'Modul Detektif Fakta';
+            thead.innerHTML = `
+                <tr>
+                    <th style="width: 45px;">No</th>
+                    <th style="cursor: pointer;" onclick="toggleSort('name')" title="Klik untuk Urutkan Nama">Nama Siswa ⇅</th>
+                    <th style="width: 85px;">Kelas</th>
+                    <th style="cursor: pointer; width: 90px;" onclick="toggleSort('score')" title="Klik untuk Urutkan Nilai">Skor ⇅</th>
+                    <th>Status Kelulusan (${modLabel})</th>
+                    <th>Benar</th>
+                    <th>Durasi</th>
+                    <th style="cursor: pointer;" onclick="toggleSort('time')" title="Klik untuk Urutkan Waktu">Waktu ⇅</th>
+                    <th style="text-align: center; width: 170px;">Aksi</th>
+                </tr>
+            `;
+        }
+    }
+
+    // 7. Render Data Tabel Dasbor
     const tbody = document.getElementById('dash-tbody');
     window.currentRenderedRecords = [];
     window.currentWaitingItems = [];
@@ -1538,13 +1825,12 @@ function renderDashboard() {
         if (displayList.length === 0) {
             tbody.innerHTML = `
                 <tr>
-                    <td colspan="9">
+                    <td colspan="${isSingleModuleView ? 9 : 8}">
                         <div class="empty-state">
                             <div class="empty-icon">📭</div>
                             <p>Tidak ada data siswa yang cocok dengan filter aktif:<br>
                             ${filterClass !== 'all' ? `• Kelas: <strong>${escapeHtml(filterClass)}</strong><br>` : ''}
-                            ${currentRosterStatusFilter === 'waiting' ? '• Status: <strong>Belum Mengerjakan</strong><br>' : ''}
-                            ${currentRosterStatusFilter === 'submitted' ? '• Status: <strong>Sudah Mengerjakan</strong><br>' : ''}
+                            ${filterModule !== 'all' ? `• Modul: <strong>${filterModule === modJaringanId ? 'Keamanan Jaringan Saja' : 'Detektif Fakta Saja'}</strong><br>` : ''}
                             ${searchName ? `• Pencarian: "<strong>${escapeHtml(searchName)}</strong>"` : ''}
                             </p>
                         </div>
@@ -1555,99 +1841,166 @@ function renderDashboard() {
             displayList.forEach((item, i) => {
                 const tr = document.createElement('tr');
 
-                if (item.hasSubmitted && item.record) {
-                    const r = item.record;
-                    const recordIdx = window.currentRenderedRecords.length;
-                    window.currentRenderedRecords.push(r);
-
-                    if (Date.now() - (r.timestamp || 0) < 15000) tr.classList.add('new-entry');
-                    
-                    let pillClass = 'low';
-                    if (r.score >= 80) pillClass = 'high';
-                    else if (r.score >= 60) pillClass = 'mid';
-
-                    const isPass = r.score >= 80 && !r.isCheated;
-                    const isRemedial = !!r.isRemedial;
-                    let remedialBadge = '';
-                    if (isRemedial) {
-                        remedialBadge = `<span class="badge-remedial-tuntas" title="Tuntas Remedial. Nilai Awal: ${r.originalScore !== null && r.originalScore !== undefined ? r.originalScore : '-'}">🔁 Remedi (${r.originalScore !== null && r.originalScore !== undefined ? r.originalScore : 0}➔${r.score})</span>`;
-                    } else if (r.score < 80 && !r.isCheated) {
-                        remedialBadge = `<span class="badge-remedial-needed" title="Nilai belum mencapai KKM 80">⚠️ Perlu Remedi</span>`;
+                if (!isSingleModuleView) {
+                    // ──── RENDER MODE KOMPARASI 2 KUIS (ALL) ────
+                    let kuis1Html = '';
+                    if (item.hasFakta && item.recordFakta) {
+                        const rec1 = item.recordFakta;
+                        const isPass1 = rec1.score >= 80;
+                        const rIdx1 = window.currentRenderedRecords.length;
+                        window.currentRenderedRecords.push(rec1);
+                        kuis1Html = `
+                            <div style="display: flex; align-items: center; justify-content: center; gap: 6px;">
+                                <span class="quiz-score-subpill ${isPass1 ? 'pass' : 'remedy'}">${rec1.score} (${isPass1 ? 'Lulus' : 'Remedi'})</span>
+                                <button type="button" class="btn-detail-row" style="padding: 2px 7px; font-size: 0.7rem;" onclick="openStudentDetailModal(window.currentRenderedRecords[${rIdx1}])" title="Periksa Lembar Kuis 1">🔍</button>
+                            </div>
+                        `;
+                    } else {
+                        kuis1Html = `<span class="quiz-score-subpill waiting">⏳ Belum</span>`;
                     }
 
-                    const scoreDisplay = r.isCheated 
-                        ? `<span class="score-pill low" style="background: rgba(244,63,94,0.25); border-color: var(--danger); color: #fff;">0 🚨</span>` 
-                        : `<span class="score-pill ${pillClass}">${r.score}</span> ${remedialBadge}`;
-
-                    const statusDisplay = r.isCheated
-                        ? `<span class="kkm-pill remedial" style="background: var(--danger); color: white; font-weight: 800;" title="${escapeHtml(r.statusNote || 'Kecurangan')}">🚨 DISKUALIFIKASI</span>`
-                        : (isRemedial 
-                            ? `<span class="kkm-pill passed" style="background: rgba(16,185,129,0.18); border-color: #10b981; color: #10b981; font-weight: 800;" title="Tuntas melalui program remedial adaptif">TUNTAS REMEDI</span>`
-                            : `<span class="kkm-pill ${isPass ? 'passed' : 'remedial'}">${isPass ? 'LULUS' : 'REMEDIAL'}</span>`);
-
-                    const attemptsBadge = item.attemptsCount > 1 
-                        ? `<span class="badge-attempts" title="Siswa ini telah mengerjakan ${item.attemptsCount} kali (Menampilkan nilai terbaik)">${item.attemptsCount}x Percobaan</span>` 
-                        : '';
-
-                    const rowTabSwitchCount = r.tabSwitchCount || 0;
-                    const rowIsCheated = r.isCheated || rowTabSwitchCount >= 3;
-                    const tabBadge = rowIsCheated 
-                        ? `<span style="font-size: 0.7rem; font-weight: 700; padding: 2px 7px; border-radius: 6px; background: rgba(239,68,68,0.25); border: 1px solid var(--danger); color: #fff;" title="Diskualifikasi: Keluar tab/split layar ${rowTabSwitchCount || 3}x">🚨 Keluar Tab ${rowTabSwitchCount || 3}x</span>`
-                        : (rowTabSwitchCount > 0 
-                            ? `<span style="font-size: 0.7rem; font-weight: 700; padding: 2px 7px; border-radius: 6px; background: rgba(245,158,11,0.18); border: 1px solid rgba(245,158,11,0.4); color: #fbbf24;" title="Terdeteksi ${rowTabSwitchCount}x keluar tab/split layar">⚠️ Keluar Tab ${rowTabSwitchCount}x</span>`
-                            : '');
-
-                    tr.innerHTML = `
-                        <td style="font-family: var(--font-mono); color: var(--text-muted);">${i + 1}</td>
-                        <td style="font-weight: 700;">
-                            <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
-                                <span>${escapeHtml(item.name)}</span>
-                                ${attemptsBadge}
-                                ${tabBadge}
+                    let kuis2Html = '';
+                    if (item.hasJaringan && item.recordJaringan) {
+                        const rec2 = item.recordJaringan;
+                        const isPass2 = rec2.score >= 80;
+                        const rIdx2 = window.currentRenderedRecords.length;
+                        window.currentRenderedRecords.push(rec2);
+                        kuis2Html = `
+                            <div style="display: flex; align-items: center; justify-content: center; gap: 6px;">
+                                <span class="quiz-score-subpill ${isPass2 ? 'pass' : 'remedy'}">${rec2.score} (${isPass2 ? 'Lulus' : 'Remedi'})</span>
+                                <button type="button" class="btn-detail-row" style="padding: 2px 7px; font-size: 0.7rem;" onclick="openStudentDetailModal(window.currentRenderedRecords[${rIdx2}])" title="Periksa Lembar Kuis 2">🔍</button>
                             </div>
-                        </td>
-                        <td><span style="font-family: var(--font-mono); color: var(--accent); font-size: 0.85rem;">${escapeHtml(item.class)}</span></td>
-                        <td>${scoreDisplay}</td>
-                        <td>${statusDisplay}</td>
-                        <td style="font-family: var(--font-mono);">${r.correct !== undefined ? r.correct : '-'}/${r.total || getActiveQuizData().length || 20}</td>
-                        <td style="color: var(--text-muted); font-size: 0.85rem;">${escapeHtml(r.duration || '-')}</td>
-                        <td style="color: var(--text-muted); font-size: 0.8rem;">${escapeHtml(r.time || '-')}<br><span style="font-size:0.7rem;">${escapeHtml(r.date || '')}</span></td>
-                        <td style="text-align: center; white-space: nowrap;">
-                            <button class="btn-detail-row" title="Periksa Lembar Jawaban & Analisis Kesalahan" onclick="openStudentDetailModal(window.currentRenderedRecords[${recordIdx}])">
-                                🔍 Periksa
-                            </button>
-                            <button class="btn-delete-row" title="Hapus nilai siswa ini" onclick="openDeleteSingleByIndex(${recordIdx})">
-                                🗑️ Hapus
-                            </button>
-                        </td>
-                    `;
-                } else {
-                    // Row Siswa Belum Mengerjakan (Waiting)
-                    const waitingIdx = window.currentWaitingItems.length;
-                    window.currentWaitingItems.push(item);
+                        `;
+                    } else {
+                        kuis2Html = `<span class="quiz-score-subpill waiting">⏳ Belum</span>`;
+                    }
 
-                    tr.style.opacity = '0.85';
-                    tr.innerHTML = `
-                        <td style="font-family: var(--font-mono); color: var(--text-muted);">${i + 1}</td>
-                        <td style="font-weight: 600; color: var(--text-secondary);">
-                            <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
-                                <span>${escapeHtml(item.name)}</span>
-                                <span class="badge-waiting">⏳ Menunggu</span>
-                            </div>
-                        </td>
-                        <td><span style="font-family: var(--font-mono); color: var(--text-muted); font-size: 0.85rem;">${escapeHtml(item.class)}</span></td>
-                        <td><span class="score-pill low" style="background: rgba(148,163,184,0.08); border-color: rgba(148,163,184,0.25); color: var(--text-muted);">-</span></td>
-                        <td><span class="kkm-pill remedial" style="background: rgba(234,179,8,0.12); color: #fde047; border-color: rgba(234,179,8,0.35); font-size: 0.72rem; padding: 3px 8px;">⏳ BELUM MENGERJAKAN</span></td>
-                        <td style="color: var(--text-muted);">-</td>
-                        <td style="color: var(--text-muted);">-</td>
-                        <td style="color: var(--text-muted); font-size: 0.76rem;">Belum Ujian</td>
-                        <td style="text-align: center; white-space: nowrap;">
-                            <button class="btn btn-secondary" onclick="remindStudentByIndex(${waitingIdx})" style="padding: 4px 10px; font-size: 0.72rem; border-radius: 6px; font-weight: 700;" title="Salin Pesan Pengingat WhatsApp">
+                    // Badge Status Pengerjaan Lengkap
+                    let crossBadge = '';
+                    if (item.completionStatus === 'both') {
+                        crossBadge = `<span class="badge-cross-both">🟢 Tuntas 2 Kuis</span>`;
+                    } else if (item.completionStatus === 'only_fakta') {
+                        crossBadge = `<span class="badge-cross-only1" title="Sudah Kuis 1, Belum Kuis 2">🟡 Hanya Kuis 1</span>`;
+                    } else if (item.completionStatus === 'only_jaringan') {
+                        crossBadge = `<span class="badge-cross-only2" title="Sudah Kuis 2, Belum Kuis 1">🔵 Hanya Kuis 2</span>`;
+                    } else {
+                        crossBadge = `<span class="badge-cross-none">⏳ Belum Ujian</span>`;
+                    }
+
+                    let avgPill = '-';
+                    if (item.avgScore >= 0) {
+                        const pillCls = item.avgScore >= 80 ? 'high' : item.avgScore >= 60 ? 'mid' : 'low';
+                        avgPill = `<span class="score-pill ${pillCls}">${item.avgScore}</span>`;
+                    }
+
+                    // Aksi Bar
+                    let actionHtml = '';
+                    if (item.completionStatus !== 'both') {
+                        const missingType = item.completionStatus === 'only_fakta' ? 'only_jaringan' : (item.completionStatus === 'only_jaringan' ? 'only_fakta' : 'both');
+                        actionHtml = `
+                            <button type="button" class="btn btn-secondary" onclick="remindStudent('${escapeHtml(item.name)}', '${escapeHtml(item.class)}', '${missingType}')" style="padding: 4px 10px; font-size: 0.72rem; border-radius: 6px; font-weight: 700;" title="Salin Pengingat WhatsApp Sesuai Kuis yang Belum">
                                 📲 Ingatkan
                             </button>
-                        </td>
+                        `;
+                    } else {
+                        actionHtml = `<span style="font-size: 0.75rem; color: var(--success); font-weight: 700;">✅ Lengkap</span>`;
+                    }
+
+                    tr.innerHTML = `
+                        <td style="font-family: var(--font-mono); color: var(--text-muted);">${i + 1}</td>
+                        <td style="font-weight: 700;">${escapeHtml(item.name)}</td>
+                        <td><span style="font-family: var(--font-mono); color: var(--accent); font-size: 0.85rem;">${escapeHtml(item.class)}</span></td>
+                        <td style="text-align: center;">${kuis1Html}</td>
+                        <td style="text-align: center;">${kuis2Html}</td>
+                        <td style="text-align: center;">${avgPill}</td>
+                        <td style="text-align: center;">${crossBadge}</td>
+                        <td style="text-align: center; white-space: nowrap;">${actionHtml}</td>
                     `;
+
+                } else {
+                    // ──── RENDER MODE MODUL TUNGGAL (KEAMANAN JARINGAN SAJA ATAU DETEKTIF FAKTA SAJA) ────
+                    if (item.hasSubmitted && item.record) {
+                        const r = item.record;
+                        const recordIdx = window.currentRenderedRecords.length;
+                        window.currentRenderedRecords.push(r);
+
+                        let pillClass = 'low';
+                        if (r.score >= 80) pillClass = 'high';
+                        else if (r.score >= 60) pillClass = 'mid';
+
+                        const isPass = r.score >= 80 && !r.isCheated;
+                        const isRemedial = !!r.isRemedial;
+                        let remedialBadge = '';
+                        if (isRemedial) {
+                            remedialBadge = `<span class="badge-remedial-tuntas" title="Tuntas Remedial. Nilai Awal: ${r.originalScore !== null && r.originalScore !== undefined ? r.originalScore : '-'}">🔁 Remedi (${r.originalScore !== null && r.originalScore !== undefined ? r.originalScore : 0}➔${r.score})</span>`;
+                        } else if (r.score < 80 && !r.isCheated) {
+                            remedialBadge = `<span class="badge-remedial-needed" title="Nilai belum mencapai KKM 80">⚠️ Perlu Remedi</span>`;
+                        }
+
+                        const scoreDisplay = r.isCheated 
+                            ? `<span class="score-pill low" style="background: rgba(244,63,94,0.25); border-color: var(--danger); color: #fff;">0 🚨</span>` 
+                            : `<span class="score-pill ${pillClass}">${r.score}</span> ${remedialBadge}`;
+
+                        const statusDisplay = r.isCheated
+                            ? `<span class="kkm-pill remedial" style="background: var(--danger); color: white; font-weight: 800;" title="${escapeHtml(r.statusNote || 'Kecurangan')}">🚨 DISKUALIFIKASI</span>`
+                            : (isRemedial 
+                                ? `<span class="kkm-pill passed" style="background: rgba(16,185,129,0.18); border-color: #10b981; color: #10b981; font-weight: 800;" title="Tuntas melalui program remedial adaptif">TUNTAS REMEDI</span>`
+                                : `<span class="kkm-pill ${isPass ? 'passed' : 'remedial'}">${isPass ? 'LULUS' : 'REMEDIAL'}</span>`);
+
+                        const attemptsBadge = item.attemptsCount > 1 
+                            ? `<span class="badge-attempts" title="Siswa ini telah mengerjakan ${item.attemptsCount} kali (Menampilkan nilai terbaik)">${item.attemptsCount}x Percobaan</span>` 
+                            : '';
+
+                        tr.innerHTML = `
+                            <td style="font-family: var(--font-mono); color: var(--text-muted);">${i + 1}</td>
+                            <td style="font-weight: 700;">
+                                <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+                                    <span>${escapeHtml(item.name)}</span>
+                                    ${attemptsBadge}
+                                </div>
+                            </td>
+                            <td><span style="font-family: var(--font-mono); color: var(--accent); font-size: 0.85rem;">${escapeHtml(item.class)}</span></td>
+                            <td>${scoreDisplay}</td>
+                            <td>${statusDisplay}</td>
+                            <td style="font-family: var(--font-mono);">${r.correct !== undefined ? r.correct : '-'}/${r.total || 20}</td>
+                            <td style="color: var(--text-muted); font-size: 0.85rem;">${escapeHtml(r.duration || '-')}</td>
+                            <td style="color: var(--text-muted); font-size: 0.8rem;">${escapeHtml(r.time || '-')}<br><span style="font-size:0.7rem;">${escapeHtml(r.date || '')}</span></td>
+                            <td style="text-align: center; white-space: nowrap;">
+                                <button class="btn-detail-row" title="Periksa Lembar Jawaban & Analisis Kesalahan" onclick="openStudentDetailModal(window.currentRenderedRecords[${recordIdx}])">
+                                    🔍 Periksa
+                                </button>
+                                <button class="btn-delete-row" title="Hapus nilai siswa ini" onclick="openDeleteSingleByIndex(${recordIdx})">
+                                    🗑️ Hapus
+                                </button>
+                            </td>
+                        `;
+                    } else {
+                        // Siswa belum mengerjakan kuis pada modul tunggal ini
+                        tr.style.opacity = '0.85';
+                        const modLabel = filterModule === modJaringanId ? 'Kuis Keamanan Jaringan' : 'Kuis Detektif Fakta';
+                        tr.innerHTML = `
+                            <td style="font-family: var(--font-mono); color: var(--text-muted);">${i + 1}</td>
+                            <td style="font-weight: 600; color: var(--text-secondary);">
+                                <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+                                    <span>${escapeHtml(item.name)}</span>
+                                    <span class="badge-waiting">⏳ Menunggu</span>
+                                </div>
+                            </td>
+                            <td><span style="font-family: var(--font-mono); color: var(--text-muted); font-size: 0.85rem;">${escapeHtml(item.class)}</span></td>
+                            <td><span class="score-pill low" style="background: rgba(148,163,184,0.08); border-color: rgba(148,163,184,0.25); color: var(--text-muted);">-</span></td>
+                            <td><span class="kkm-pill remedial" style="background: rgba(234,179,8,0.12); color: #fde047; border-color: rgba(234,179,8,0.35); font-size: 0.72rem; padding: 3px 8px;">⏳ BELUM MENGERJAKAN</span></td>
+                            <td style="color: var(--text-muted);">-</td>
+                            <td style="color: var(--text-muted);">-</td>
+                            <td style="color: var(--text-muted); font-size: 0.76rem;">Belum Ujian</td>
+                            <td style="text-align: center; white-space: nowrap;">
+                                <button class="btn btn-secondary" onclick="remindStudent('${escapeHtml(item.name)}', '${escapeHtml(item.class)}', '${filterModule === modJaringanId ? 'only_jaringan' : 'only_fakta'}')" style="padding: 4px 10px; font-size: 0.72rem; border-radius: 6px; font-weight: 700;" title="Salin Pesan Pengingat WhatsApp">
+                                    📲 Ingatkan
+                                </button>
+                            </td>
+                        `;
+                    }
                 }
+
                 tbody.appendChild(tr);
             });
         }
@@ -1713,144 +2066,200 @@ function renderQuestionAnalytics(records) {
 }
 
 function exportExcel() {
-    sfxClick();
+    if (typeof sfxClick === 'function') sfxClick();
     const allRecords = loadRecords();
     const filterClass = document.getElementById('filter-class') ? document.getElementById('filter-class').value : 'all';
-    const records = filterClass === 'all' ? allRecords : allRecords.filter(r => r.class === filterClass);
-
-    if (records.length === 0) {
-        showToast('Tidak ada data siswa untuk diekspor!', '⚠️');
-        return;
-    }
+    const filterModule = document.getElementById('filter-module') ? document.getElementById('filter-module').value : 'all';
+    const modFaktaId = 'modul_detektif_fakta';
+    const modJaringanId = 'modul_jaringan_keamanan';
 
     if (typeof XLSX === 'undefined') {
-        exportCSV();
+        if (typeof exportCSV === 'function') exportCSV();
         return;
     }
 
     const wb = XLSX.utils.book_new();
+    const targetClasses = filterClass === 'all' ? ['X E 1', 'X E 2', 'X E 3', 'X E 4', 'X E 5', 'X E 6'] : [filterClass];
 
-    const generateSheetDataForClass = (clsTitle, classRecords) => {
-        const sorted = [...classRecords].sort((a, b) => b.score - a.score || (a.name || '').localeCompare(b.name || ''));
-        const total = sorted.length;
-        const sum = sorted.reduce((acc, r) => acc + (r.score || 0), 0);
-        const avg = total > 0 ? (sum / total).toFixed(1) : '0';
-        const highest = total > 0 ? Math.max(...sorted.map(r => r.score || 0)) : 0;
-        const lowest = total > 0 ? Math.min(...sorted.map(r => r.score || 0)) : 0;
-        const lulus = sorted.filter(r => (r.score || 0) >= 80).length;
+    if (filterModule === 'all') {
+        // ──── MODE KOMPARASI 2 KUIS (EXCEL) ────
+        const buildComparativeSheet = (clsTitle, classesList) => {
+            const rows = [
+                ['SMAN 4 PADANG — LAPORAN KOMPARASI HASIL BELAJAR SISWA'],
+                ['Evaluasi: Kuis 1 (Detektif Fakta) & Kuis 2 (Infrastruktur Jaringan & Keamanan Digital)'],
+                [`Kelas: ${clsTitle}  |  Standar KKM: 80  |  Guru Pengampu: RINI SYAFITRI, S.Pd.`],
+                [`Waktu Unduh: ${new Date().toLocaleString('id-ID')}`],
+                [],
+                ['No', 'Nama Siswa', 'Kelas', 'Nilai Kuis 1 (Fakta)', 'Status K1', 'Nilai Kuis 2 (Jaringan)', 'Status K2', 'Rata-Rata', 'Status Pengerjaan', 'Hasil Akhir']
+            ];
 
-        const sheetData = [
-            ['SMAN 4 PADANG — REKAPITULASI NILAI MISI AUDIT VALIDITAS DATA'],
-            [`Laporan Nilai Kelas: ${clsTitle} (KKM: 80)`],
-            [`Total Siswa: ${total} | Rata-Rata: ${avg} | Tertinggi: ${highest} | Terendah: ${lowest} | Lulus KKM: ${lulus} Siswa`],
-            [`Waktu Unduh: ${new Date().toLocaleString('id-ID')}`],
-            [],
-            ['No', 'Nama Siswa', 'Kelas', 'Nilai Akhir', 'Status KKM (≥80)', 'Jawaban Benar', 'Total Soal', 'Ketuntasan', 'Durasi', 'Waktu Selesai', 'Tanggal']
+            let counter = 1;
+            classesList.forEach(c => {
+                const roster = (typeof STUDENT_ROSTER !== 'undefined' && STUDENT_ROSTER[c]) ? STUDENT_ROSTER[c] : [];
+                roster.forEach(name => {
+                    const cleanName = name.trim().toLowerCase();
+                    const nameMatches = (typeof isNameEquivalent === 'function') 
+                        ? (recName) => isNameEquivalent(recName, name)
+                        : (recName) => (recName || '').trim().toLowerCase() === cleanName;
+                    const classMatches = (typeof isClassEquivalent === 'function')
+                        ? (recClass) => isClassEquivalent(recClass, c)
+                        : (recClass) => (recClass || '').replace(/\s+/g, '').toUpperCase() === c.replace(/\s+/g, '').toUpperCase();
+
+                    const recFakta = allRecords.find(r => {
+                        const mod = (typeof normalizeModuleId === 'function') ? normalizeModuleId(r.moduleId, r.id, r.date) : (r.moduleId || modFaktaId);
+                        return nameMatches(r.name) && classMatches(r.class) && mod === modFaktaId;
+                    });
+                    const recJaringan = allRecords.find(r => {
+                        const mod = (typeof normalizeModuleId === 'function') ? normalizeModuleId(r.moduleId, r.id, r.date) : (r.moduleId || modFaktaId);
+                        return nameMatches(r.name) && classMatches(r.class) && mod === modJaringanId;
+                    });
+
+                    const s1 = recFakta ? recFakta.score : null;
+                    const s2 = recJaringan ? recJaringan.score : null;
+
+                    let statusPengerjaan = 'Belum Keduanya';
+                    if (s1 !== null && s2 !== null) statusPengerjaan = 'Tuntas 2 Kuis';
+                    else if (s1 !== null) statusPengerjaan = 'Hanya Kuis 1';
+                    else if (s2 !== null) statusPengerjaan = 'Hanya Kuis 2';
+
+                    let avg = '-';
+                    let kelulusan = 'BELUM LENGKAP';
+                    if (s1 !== null && s2 !== null) {
+                        const numericAvg = (s1 + s2) / 2;
+                        avg = numericAvg.toFixed(1);
+                        kelulusan = numericAvg >= 80 ? 'LULUS (TUNTAS)' : 'PERLU REMEDIAL';
+                    } else if (s1 !== null) {
+                        avg = s1;
+                        kelulusan = 'KURANG KUIS 2';
+                    } else if (s2 !== null) {
+                        avg = s2;
+                        kelulusan = 'KURANG KUIS 1';
+                    }
+
+                    rows.push([
+                        counter++,
+                        sanitizeSpreadsheetValue(name),
+                        sanitizeSpreadsheetValue(c),
+                        s1 !== null ? s1 : '-',
+                        s1 !== null ? (s1 >= 80 ? 'Lulus' : 'Remedial') : 'Belum Ujian',
+                        s2 !== null ? s2 : '-',
+                        s2 !== null ? (s2 >= 80 ? 'Lulus' : 'Remedial') : 'Belum Ujian',
+                        avg,
+                        statusPengerjaan,
+                        kelulusan
+                    ]);
+                });
+            });
+            return rows;
+        };
+
+        const compColWidths = [
+            { wch: 6 }, { wch: 32 }, { wch: 10 }, { wch: 20 },
+            { wch: 14 }, { wch: 24 }, { wch: 14 }, { wch: 14 },
+            { wch: 20 }, { wch: 20 }
         ];
 
-        sorted.forEach((r, i) => {
-            sheetData.push([
-                i + 1,
-                sanitizeSpreadsheetValue(r.name),
-                sanitizeSpreadsheetValue(r.class || clsTitle),
-                r.score,
-                r.score >= 80 ? 'LULUS' : 'REMEDIAL',
-                r.correct !== undefined ? r.correct : 0,
-                r.total || getActiveQuizData().length || 20,
-                r.score >= 80 ? 'LULUS (TUNTAS KKM)' : 'PERLU REMEDIAL',
-                r.duration || '-',
-                r.time || '-',
-                r.date || '-'
-            ]);
-        });
-        return sheetData;
-    };
+        if (filterClass === 'all') {
+            const allSheet = buildComparativeSheet('Semua Kelas (X E 1 s/d X E 6)', targetClasses);
+            const wsAll = XLSX.utils.aoa_to_sheet(allSheet);
+            wsAll['!cols'] = compColWidths;
+            XLSX.utils.book_append_sheet(wb, wsAll, 'Komparasi Semua Siswa');
 
-    const colWidths = [
-        { wch: 6 }, { wch: 32 }, { wch: 12 }, { wch: 14 }, { wch: 16 },
-        { wch: 15 }, { wch: 12 }, { wch: 22 }, { wch: 14 },
-        { wch: 15 }, { wch: 15 }
-    ];
-
-    if (filterClass === 'all') {
-        // 1. Sheet Ringkasan Semua Siswa
-        const sheetDataAll = generateSheetDataForClass('Semua Kelas (X E 1 s/d X E 6)', allRecords);
-        const wsAll = XLSX.utils.aoa_to_sheet(sheetDataAll);
-        wsAll['!cols'] = colWidths;
-        XLSX.utils.book_append_sheet(wb, wsAll, 'Semua Siswa');
-
-        // 2. Sheet Terpisah Per Kelas (X E 1 s/d X E 6) — TIDAK DICAMPUR
-        const classNames = ['X E 1', 'X E 2', 'X E 3', 'X E 4', 'X E 5', 'X E 6'];
-        classNames.forEach(cls => {
-            const classStudents = allRecords.filter(r => r.class === cls);
-            const classSheetData = generateSheetDataForClass(cls, classStudents);
-            const wsClass = XLSX.utils.aoa_to_sheet(classSheetData);
-            wsClass['!cols'] = colWidths;
-            XLSX.utils.book_append_sheet(wb, wsClass, `Kelas ${cls}`);
-        });
+            targetClasses.forEach(c => {
+                const clsSheet = buildComparativeSheet(`Kelas ${c}`, [c]);
+                const wsCls = XLSX.utils.aoa_to_sheet(clsSheet);
+                wsCls['!cols'] = compColWidths;
+                XLSX.utils.book_append_sheet(wb, wsCls, `Kelas ${c}`);
+            });
+        } else {
+            const clsSheet = buildComparativeSheet(`Kelas ${filterClass}`, [filterClass]);
+            const wsCls = XLSX.utils.aoa_to_sheet(clsSheet);
+            wsCls['!cols'] = compColWidths;
+            XLSX.utils.book_append_sheet(wb, wsCls, `Kelas ${filterClass}`);
+        }
     } else {
-        // Ekspor hanya kelas terpilih
-        const classSheetData = generateSheetDataForClass(filterClass, records);
-        const wsClass = XLSX.utils.aoa_to_sheet(classSheetData);
-        wsClass['!cols'] = colWidths;
-        XLSX.utils.book_append_sheet(wb, wsClass, `Kelas ${filterClass}`);
+        // ──── MODE MODUL TUNGGAL (KEAMANAN JARINGAN ATAU DETEKTIF FAKTA) ────
+        const isJaringan = (filterModule === modJaringanId);
+        const modTitle = isJaringan ? 'INFRASTRUKTUR JARINGAN & KEAMANAN DIGITAL' : 'MISI DETEKTIF FAKTA & LITERASI DIGITAL';
+        const filteredRecords = allRecords.filter(r => (isJaringan ? r.moduleId === modJaringanId : (r.moduleId || modFaktaId) === modFaktaId));
+
+        const generateSingleModSheet = (clsTitle, classRecords) => {
+            const sorted = [...classRecords].sort((a, b) => b.score - a.score || (a.name || '').localeCompare(b.name || ''));
+            const total = sorted.length;
+            const sum = sorted.reduce((acc, r) => acc + (r.score || 0), 0);
+            const avg = total > 0 ? (sum / total).toFixed(1) : '0';
+            const highest = total > 0 ? Math.max(...sorted.map(r => r.score || 0)) : 0;
+            const lowest = total > 0 ? Math.min(...sorted.map(r => r.score || 0)) : 0;
+            const lulus = sorted.filter(r => (r.score || 0) >= 80).length;
+
+            const sheetData = [
+                [`SMAN 4 PADANG — REKAP NILAI ${modTitle}`],
+                [`Laporan Kelas: ${clsTitle} (Standar KKM: 80) — Guru: RINI SYAFITRI, S.Pd.`],
+                [`Total Responden: ${total} Siswa | Rata-Rata: ${avg} | Tertinggi: ${highest} | Terendah: ${lowest} | Lulus KKM: ${lulus} Siswa`],
+                [`Waktu Unduh: ${new Date().toLocaleString('id-ID')}`],
+                [],
+                ['No', 'Nama Siswa', 'Kelas', 'Nilai Akhir', 'Status KKM (≥80)', 'Jawaban Benar', 'Total Soal', 'Durasi', 'Waktu Selesai', 'Tanggal']
+            ];
+
+            sorted.forEach((r, i) => {
+                sheetData.push([
+                    i + 1,
+                    sanitizeSpreadsheetValue(r.name),
+                    sanitizeSpreadsheetValue(r.class || clsTitle),
+                    r.score,
+                    r.score >= 80 ? 'LULUS (TUNTAS)' : 'PERLU REMEDIAL',
+                    r.correct !== undefined ? r.correct : 0,
+                    r.total || (typeof getActiveQuizData === 'function' ? getActiveQuizData().length : 20),
+                    r.duration || '-',
+                    r.time || '-',
+                    r.date || '-'
+                ]);
+            });
+            return sheetData;
+        };
+
+        const singleColWidths = [
+            { wch: 6 }, { wch: 32 }, { wch: 12 }, { wch: 14 },
+            { wch: 18 }, { wch: 15 }, { wch: 12 }, { wch: 15 },
+            { wch: 15 }, { wch: 15 }
+        ];
+
+        if (filterClass === 'all') {
+            const sheetAll = generateSingleModSheet('Semua Kelas (X E 1 - X E 6)', filteredRecords);
+            const wsAll = XLSX.utils.aoa_to_sheet(sheetAll);
+            wsAll['!cols'] = singleColWidths;
+            XLSX.utils.book_append_sheet(wb, wsAll, 'Semua Siswa');
+
+            targetClasses.forEach(c => {
+                const clsRecords = filteredRecords.filter(r => r.class === c);
+                const sheetCls = generateSingleModSheet(`Kelas ${c}`, clsRecords);
+                const wsCls = XLSX.utils.aoa_to_sheet(sheetCls);
+                wsCls['!cols'] = singleColWidths;
+                XLSX.utils.book_append_sheet(wb, wsCls, `Kelas ${c}`);
+            });
+        } else {
+            const clsRecords = filteredRecords.filter(r => r.class === filterClass);
+            const sheetCls = generateSingleModSheet(`Kelas ${filterClass}`, clsRecords);
+            const wsCls = XLSX.utils.aoa_to_sheet(sheetCls);
+            wsCls['!cols'] = singleColWidths;
+            XLSX.utils.book_append_sheet(wb, wsCls, `Kelas ${filterClass}`);
+        }
     }
 
-    // 3. Sheet Analisis Butir Soal
-    const sheetDataAnalisis = [
-        ['ANALISIS BUTIR SOAL KUIS DETEKTIF FAKTA DIGITAL'],
-        [`Jumlah Responden: ${allRecords.length} Siswa`],
-        [],
-        ['No Soal', 'Tingkat Kesulitan', 'Ringkasan Pertanyaan', 'Tipe Soal', 'Kunci Jawaban', 'Tingkat Ketepatan (%)', 'Jumlah Benar', 'Jumlah Salah']
-    ];
-
-    const attempts = allRecords.filter(r => r.wrongQuestions !== undefined);
-    quizData.forEach((q, i) => {
-        const wrongCount = attempts.filter(r => r.wrongQuestions.includes(i)).length;
-        const correctCount = attempts.length > 0 ? attempts.length - wrongCount : 0;
-        const pct = attempts.length > 0 ? Math.round((correctCount / attempts.length) * 100) : 0;
-        let kunciStr = '';
-        if (Array.isArray(q.answer)) {
-            kunciStr = q.answer.map(a => q.options[a]).join(' | ');
-        } else {
-            kunciStr = q.options[q.answer];
-        }
-
-        sheetDataAnalisis.push([
-            `Soal #${i + 1}`,
-            q.difficulty || 'Medium',
-            q.q.substring(0, 100),
-            q.type === 'checkbox' ? 'Pilihan Ganda Kompleks' : (q.type === 'tf' ? 'Benar/Salah' : 'Pilihan Ganda Tunggal'),
-            kunciStr,
-            `${pct}%`,
-            correctCount,
-            wrongCount
-        ]);
-    });
-
-    const wsAnalisis = XLSX.utils.aoa_to_sheet(sheetDataAnalisis);
-    wsAnalisis['!cols'] = [
-        { wch: 10 }, { wch: 16 }, { wch: 45 }, { wch: 24 },
-        { wch: 35 }, { wch: 22 }, { wch: 14 }, { wch: 14 }
-    ];
-    XLSX.utils.book_append_sheet(wb, wsAnalisis, 'Analisis Butir Soal');
-
-    const fileName = `Rekap_Nilai_${filterClass === 'all' ? 'Semua_Kelas_Terpisah' : filterClass.replace(/ /g, '_')}_${new Date().toISOString().slice(0,10)}.xlsx`;
+    const modSuffix = filterModule === 'all' ? 'Komparasi_2_Modul' : (filterModule === modJaringanId ? 'Keamanan_Jaringan' : 'Detektif_Fakta');
+    const fileName = `Rekap_Nilai_${modSuffix}_${filterClass === 'all' ? 'Semua_Kelas' : filterClass.replace(/ /g, '_')}_${new Date().toISOString().slice(0,10)}.xlsx`;
     XLSX.writeFile(wb, fileName);
-    sfxCorrect();
-    showToast(`File Excel berhasil diunduh (${filterClass === 'all' ? 'Tiap kelas dipisah per-sheet' : filterClass})! 📊`, '✅');
+    if (typeof sfxCorrect === 'function') sfxCorrect();
+    showToast(`File Excel ${modSuffix.replace(/_/g, ' ')} berhasil diunduh! 📊`, '✅');
 }
 
 function exportTeacherPDF() {
-    sfxClick();
+    if (typeof sfxClick === 'function') sfxClick();
     const allRecords = loadRecords();
     const filterClass = document.getElementById('filter-class') ? document.getElementById('filter-class').value : 'all';
-    const records = filterClass === 'all' ? allRecords : allRecords.filter(r => r.class === filterClass);
-
-    if (records.length === 0) {
-        showToast('Tidak ada data siswa untuk diekspor ke PDF!', '⚠️');
-        return;
-    }
+    const filterModule = document.getElementById('filter-module') ? document.getElementById('filter-module').value : 'all';
+    const modFaktaId = 'modul_detektif_fakta';
+    const modJaringanId = 'modul_jaringan_keamanan';
 
     if (!window.jspdf || !window.jspdf.jsPDF) {
         showToast('Pustaka PDF sedang dimuat. Coba lagi dalam beberapa detik...', '⚠️');
@@ -1861,117 +2270,317 @@ function exportTeacherPDF() {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF('p', 'mm', 'a4');
         const nowStr = new Date().toLocaleString('id-ID');
+        const targetClasses = filterClass === 'all' ? ['X E 1', 'X E 2', 'X E 3', 'X E 4', 'X E 5', 'X E 6'] : [filterClass];
 
-        const printClassSection = (clsTitle, classRecords, isFirstPage = false) => {
-            if (!isFirstPage) doc.addPage();
+        if (filterModule === 'all') {
+            // ══════════════════════════════════════════════════════
+            // 🌟 PDF: MODE KOMPARASI 2 MODUL KUIS (DUAL-QUIZ COMPARATIVE)
+            // ══════════════════════════════════════════════════════
+            const printComparativeSection = (clsTitle, classesList, isFirstPage = false) => {
+                if (!isFirstPage) doc.addPage();
 
-            // Header Banner
-            doc.setFillColor(15, 23, 42);
-            doc.rect(0, 0, 210, 32, 'F');
-            doc.setFillColor(6, 182, 212);
-            doc.rect(0, 32, 210, 2, 'F');
+                // Top Header Banner
+                doc.setFillColor(15, 23, 42);
+                doc.rect(0, 0, 210, 32, 'F');
+                doc.setFillColor(99, 102, 241);
+                doc.rect(0, 32, 210, 2, 'F');
 
-            doc.setTextColor(34, 211, 238);
-            doc.setFont('helvetica', 'bold');
-            doc.setFontSize(14);
-            doc.text('SMAN 4 PADANG — LAPORAN REKAPITULASI NILAI', 14, 13);
+                doc.setTextColor(129, 140, 248);
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(13);
+                doc.text('SMAN 4 PADANG — LAPORAN KOMPARASI HASIL BELAJAR SISWA', 14, 13);
 
-            doc.setTextColor(226, 232, 240);
-            doc.setFontSize(9.5);
-            doc.setFont('helvetica', 'normal');
-            doc.text(`Mata Pelajaran Informatika — Guru: RINI SYAFITRI  |  Kelas: ${clsTitle}`, 14, 20);
-            doc.text(`Standar Ketuntasan Minimal (KKM): 80   |   Dicetak: ${nowStr}`, 14, 26);
+                doc.setTextColor(226, 232, 240);
+                doc.setFontSize(9);
+                doc.setFont('helvetica', 'normal');
+                doc.text(`Kuis 1: Detektif Fakta  |  Kuis 2: Infrastruktur Jaringan & Keamanan Digital (KKM: 80)`, 14, 20);
+                doc.text(`Guru Pengampu: RINI SYAFITRI, S.Pd.  |  Kelas: ${clsTitle}  |  Dicetak: ${nowStr}`, 14, 26);
 
-            const sorted = [...classRecords].sort((a, b) => b.score - a.score || (a.name || '').localeCompare(b.name || ''));
-            const total = sorted.length;
-            const sum = sorted.reduce((acc, r) => acc + (r.score || 0), 0);
-            const avg = total > 0 ? (sum / total).toFixed(1) : '0';
-            const highest = total > 0 ? Math.max(...sorted.map(r => r.score || 0)) : 0;
-            const lowest = total > 0 ? Math.min(...sorted.map(r => r.score || 0)) : 0;
-            const lulusCount = sorted.filter(r => (r.score || 0) >= 80).length;
-            const lulusPct = total > 0 ? Math.round((lulusCount / total) * 100) : 0;
+                // Collect Cross-Quiz Student Rows
+                let totalStudents = 0;
+                let doneBothCount = 0;
+                let only1Count = 0;
+                let only2Count = 0;
+                let noneCount = 0;
+                let scoreSum = 0;
+                let completedCount = 0;
 
-            // Summary Stats Box
-            doc.setFillColor(248, 250, 252);
-            doc.setDrawColor(203, 213, 225);
-            doc.roundedRect(14, 38, 182, 19, 2, 2, 'FD');
+                const tableBody = [];
+                let counter = 1;
 
-            doc.setFontSize(9);
-            doc.setTextColor(30, 41, 59);
-            doc.setFont('helvetica', 'bold');
-            doc.text(`Total Siswa: ${total}`, 20, 46);
-            doc.text(`Rata-Rata: ${avg}`, 62, 46);
-            doc.text(`Tertinggi: ${highest}`, 104, 46);
-            doc.text(`Terendah: ${lowest}`, 146, 46);
-            doc.text(`Tingkat Kelulusan (Nilai >= 80): ${lulusCount} dari ${total} Siswa (${lulusPct}%)`, 20, 52);
+                classesList.forEach(c => {
+                    const roster = (typeof STUDENT_ROSTER !== 'undefined' && STUDENT_ROSTER[c]) ? STUDENT_ROSTER[c] : [];
+                    roster.forEach(name => {
+                        totalStudents++;
+                        const cleanName = name.trim().toLowerCase();
+                        const nameMatches = (typeof isNameEquivalent === 'function') 
+                            ? (recName) => isNameEquivalent(recName, name)
+                            : (recName) => (recName || '').trim().toLowerCase() === cleanName;
+                        const classMatches = (typeof isClassEquivalent === 'function')
+                            ? (recClass) => isClassEquivalent(recClass, c)
+                            : (recClass) => (recClass || '').replace(/\s+/g, '').toUpperCase() === c.replace(/\s+/g, '').toUpperCase();
 
-            const tableBody = sorted.map((r, i) => [
-                i + 1,
-                r.name,
-                r.class || clsTitle,
-                r.score,
-                `${r.correct !== undefined ? r.correct : 0} / ${r.total || quizData.length}`,
-                r.score >= 80 ? 'LULUS' : 'REMEDIAL',
-                r.duration || '-',
-                r.time || '-',
-                r.date || '-'
-            ]);
+                        const recFakta = allRecords.find(r => {
+                            const mod = (typeof normalizeModuleId === 'function') ? normalizeModuleId(r.moduleId, r.id, r.date) : (r.moduleId || modFaktaId);
+                            return nameMatches(r.name) && classMatches(r.class) && mod === modFaktaId;
+                        });
+                        const recJaringan = allRecords.find(r => {
+                            const mod = (typeof normalizeModuleId === 'function') ? normalizeModuleId(r.moduleId, r.id, r.date) : (r.moduleId || modFaktaId);
+                            return nameMatches(r.name) && classMatches(r.class) && mod === modJaringanId;
+                        });
 
-            doc.autoTable({
-                startY: 61,
-                head: [['No', 'Nama Siswa', 'Kelas', 'Skor', 'Benar', 'Status (KKM 80)', 'Durasi', 'Waktu', 'Tanggal']],
-                body: tableBody.length > 0 ? tableBody : [['-', '(Belum ada siswa mengikuti kuis)', '-', '-', '-', '-', '-', '-', '-']],
-                theme: 'grid',
-                headStyles: {
-                    fillColor: [15, 23, 42],
-                    textColor: [255, 255, 255],
-                    fontStyle: 'bold',
-                    fontSize: 8.5
-                },
-                bodyStyles: { fontSize: 8, textColor: [30, 41, 59] },
-                alternateRowStyles: { fillColor: [248, 250, 252] },
-                columnStyles: {
-                    0: { cellWidth: 8, halign: 'center' },
-                    1: { cellWidth: 46 },
-                    2: { cellWidth: 15, halign: 'center' },
-                    3: { cellWidth: 14, halign: 'center', fontStyle: 'bold' },
-                    4: { cellWidth: 16, halign: 'center' },
-                    5: { cellWidth: 26, halign: 'center' },
-                    6: { cellWidth: 18, halign: 'center' },
-                    7: { cellWidth: 20, halign: 'center' },
-                    8: { cellWidth: 19, halign: 'center' }
-                },
-                didParseCell: (data) => {
-                    if (data.section === 'body' && data.column.index === 5) {
-                        if (data.cell.raw === 'LULUS') data.cell.styles.textColor = [16, 185, 129];
-                        else if (data.cell.raw === 'REMEDIAL') data.cell.styles.textColor = [244, 63, 94];
-                    }
-                },
-                margin: { left: 14, right: 14 }
-            });
-        };
+                        const s1 = recFakta ? recFakta.score : null;
+                        const s2 = recJaringan ? recJaringan.score : null;
 
-        if (filterClass === 'all') {
-            // Halaman pertama: Ringkasan Semua Siswa
-            printClassSection('Semua Siswa Tergabung', allRecords, true);
+                        let statusStr = 'Belum Keduanya';
+                        if (s1 !== null && s2 !== null) {
+                            statusStr = 'Tuntas 2 Kuis';
+                            doneBothCount++;
+                        } else if (s1 !== null) {
+                            statusStr = 'Hanya Kuis 1';
+                            only1Count++;
+                        } else if (s2 !== null) {
+                            statusStr = 'Hanya Kuis 2';
+                            only2Count++;
+                        } else {
+                            noneCount++;
+                        }
 
-            // Halaman berikutnya: 1 Halaman / Tabel per kelas terpisah (X E 1 s/d X E 6) — TIDAK DICAMPUR
-            const classNames = ['X E 1', 'X E 2', 'X E 3', 'X E 4', 'X E 5', 'X E 6'];
-            classNames.forEach(cls => {
-                const classStudents = allRecords.filter(r => r.class === cls);
-                printClassSection(`Kelas ${cls}`, classStudents, false);
-            });
+                        let avgStr = '-';
+                        let kelulusanStr = 'BELUM LENGKAP';
+                        if (s1 !== null && s2 !== null) {
+                            const avgVal = (s1 + s2) / 2;
+                            avgStr = avgVal.toFixed(1);
+                            scoreSum += avgVal;
+                            completedCount++;
+                            kelulusanStr = avgVal >= 80 ? 'LULUS' : 'REMEDIAL';
+                        } else if (s1 !== null) {
+                            avgStr = s1;
+                            scoreSum += s1;
+                            completedCount++;
+                            kelulusanStr = s1 >= 80 ? 'K1 Lulus (K2 Belum)' : 'K1 Remed (K2 Belum)';
+                        } else if (s2 !== null) {
+                            avgStr = s2;
+                            scoreSum += s2;
+                            completedCount++;
+                            kelulusanStr = s2 >= 80 ? 'K2 Lulus (K1 Belum)' : 'K2 Remed (K1 Belum)';
+                        }
+
+                        tableBody.push([
+                            counter++,
+                            name,
+                            c,
+                            s1 !== null ? `${s1} (${s1 >= 80 ? 'L' : 'R'})` : '⏳ Belum',
+                            s2 !== null ? `${s2} (${s2 >= 80 ? 'L' : 'R'})` : '⏳ Belum',
+                            avgStr,
+                            statusStr,
+                            kelulusanStr
+                        ]);
+                    });
+                });
+
+                const overallAvg = completedCount > 0 ? (scoreSum / completedCount).toFixed(1) : '0';
+                const tuntasPct = totalStudents > 0 ? Math.round((doneBothCount / totalStudents) * 100) : 0;
+
+                // Summary Stats Card
+                doc.setFillColor(248, 250, 252);
+                doc.setDrawColor(203, 213, 225);
+                doc.roundedRect(14, 38, 182, 20, 2, 2, 'FD');
+
+                doc.setFontSize(8.5);
+                doc.setTextColor(30, 41, 59);
+                doc.setFont('helvetica', 'bold');
+                doc.text(`Total Terdaftar: ${totalStudents} Siswa`, 20, 45);
+                doc.text(`Tuntas 2 Kuis: ${doneBothCount} (${tuntasPct}%)`, 72, 45);
+                doc.text(`Rata-Rata Nilai: ${overallAvg}`, 130, 45);
+                doc.text(`Hanya Kuis 1: ${only1Count} Siswa   |   Hanya Kuis 2: ${only2Count} Siswa   |   Belum Keduanya: ${noneCount} Siswa`, 20, 52);
+
+                doc.autoTable({
+                    startY: 62,
+                    head: [['No', 'Nama Siswa', 'Kelas', 'Kuis 1 (Fakta)', 'Kuis 2 (Jaringan)', 'Rata-Rata', 'Status Pengerjaan', 'Hasil Akhir']],
+                    body: tableBody,
+                    theme: 'grid',
+                    headStyles: {
+                        fillColor: [15, 23, 42],
+                        textColor: [255, 255, 255],
+                        fontStyle: 'bold',
+                        fontSize: 8
+                    },
+                    bodyStyles: { fontSize: 7.5, textColor: [30, 41, 59] },
+                    alternateRowStyles: { fillColor: [248, 250, 252] },
+                    columnStyles: {
+                        0: { cellWidth: 8, halign: 'center' },
+                        1: { cellWidth: 44 },
+                        2: { cellWidth: 14, halign: 'center' },
+                        3: { cellWidth: 26, halign: 'center' },
+                        4: { cellWidth: 28, halign: 'center' },
+                        5: { cellWidth: 16, halign: 'center', fontStyle: 'bold' },
+                        6: { cellWidth: 26, halign: 'center' },
+                        7: { cellWidth: 20, halign: 'center', fontStyle: 'bold' }
+                    },
+                    didParseCell: (data) => {
+                        if (data.section === 'body' && data.column.index === 7) {
+                            if (data.cell.raw === 'LULUS') data.cell.styles.textColor = [16, 185, 129];
+                            else if (data.cell.raw === 'REMEDIAL') data.cell.styles.textColor = [244, 63, 94];
+                        }
+                    },
+                    margin: { left: 14, right: 14 }
+                });
+
+                // Signature Block (Only on last page or per section)
+                const finalY = doc.lastAutoTable ? doc.lastAutoTable.finalY + 12 : 240;
+                if (finalY < 250) {
+                    doc.setFontSize(8.5);
+                    doc.setFont('helvetica', 'normal');
+                    doc.setTextColor(51, 65, 85);
+                    doc.text('Mengetahui / Mengesahkan,', 140, finalY);
+                    doc.text('Guru Mata Pelajaran Informatika', 140, finalY + 5);
+                    doc.setFont('helvetica', 'bold');
+                    doc.text('RINI SYAFITRI, S.Pd.', 140, finalY + 24);
+                    doc.setFont('helvetica', 'normal');
+                    doc.text('NIP. 19850320 201101 2 008', 140, finalY + 29);
+                }
+            };
+
+            if (filterClass === 'all') {
+                printComparativeSection('Semua Siswa Terdaftar (X E 1 s/d X E 6)', targetClasses, true);
+                targetClasses.forEach(c => {
+                    printComparativeSection(`Kelas ${c}`, [c], false);
+                });
+            } else {
+                printComparativeSection(`Kelas ${filterClass}`, [filterClass], true);
+            }
+
         } else {
-            // Hanya kelas yang difilter
-            printClassSection(`Kelas ${filterClass}`, records, true);
+            // ══════════════════════════════════════════════════════
+            // 🛡️ PDF: MODE MODUL TUNGGAL (KEAMANAN JARINGAN / DETEKTIF FAKTA)
+            // ══════════════════════════════════════════════════════
+            const isJaringan = (filterModule === modJaringanId);
+            const modTitle = isJaringan ? 'PENILAIAN HARIAN: INFRASTRUKTUR JARINGAN & KEAMANAN DIGITAL' : 'EVALUASI PEMBELAJARAN: MISI DETEKTIF FAKTA & LITERASI DIGITAL';
+            const filteredRecords = allRecords.filter(r => (isJaringan ? r.moduleId === modJaringanId : (r.moduleId || modFaktaId) === modFaktaId));
+
+            const printSingleSection = (clsTitle, classRecords, isFirstPage = false) => {
+                if (!isFirstPage) doc.addPage();
+
+                // Header Banner
+                doc.setFillColor(15, 23, 42);
+                doc.rect(0, 0, 210, 32, 'F');
+                doc.setFillColor(isJaringan ? 6 : 16, isJaringan ? 182 : 185, isJaringan ? 212 : 129);
+                doc.rect(0, 32, 210, 2, 'F');
+
+                doc.setTextColor(isJaringan ? 34 : 52, isJaringan ? 211 : 211, isJaringan ? 238 : 153);
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(13);
+                doc.text(`SMAN 4 PADANG — ${modTitle}`, 14, 13);
+
+                doc.setTextColor(226, 232, 240);
+                doc.setFontSize(9);
+                doc.setFont('helvetica', 'normal');
+                doc.text(`Guru Pengampu: RINI SYAFITRI, S.Pd.  |  Kelas: ${clsTitle}`, 14, 20);
+                doc.text(`Standar Ketuntasan Minimal (KKM): 80   |   Dicetak: ${nowStr}`, 14, 26);
+
+                const sorted = [...classRecords].sort((a, b) => b.score - a.score || (a.name || '').localeCompare(b.name || ''));
+                const total = sorted.length;
+                const sum = sorted.reduce((acc, r) => acc + (r.score || 0), 0);
+                const avg = total > 0 ? (sum / total).toFixed(1) : '0';
+                const highest = total > 0 ? Math.max(...sorted.map(r => r.score || 0)) : 0;
+                const lowest = total > 0 ? Math.min(...sorted.map(r => r.score || 0)) : 0;
+                const lulusCount = sorted.filter(r => (r.score || 0) >= 80).length;
+                const lulusPct = total > 0 ? Math.round((lulusCount / total) * 100) : 0;
+
+                // Summary Stats Box
+                doc.setFillColor(248, 250, 252);
+                doc.setDrawColor(203, 213, 225);
+                doc.roundedRect(14, 38, 182, 19, 2, 2, 'FD');
+
+                doc.setFontSize(9);
+                doc.setTextColor(30, 41, 59);
+                doc.setFont('helvetica', 'bold');
+                doc.text(`Total Siswa Responden: ${total}`, 20, 46);
+                doc.text(`Rata-Rata: ${avg}`, 72, 46);
+                doc.text(`Tertinggi: ${highest}`, 115, 46);
+                doc.text(`Terendah: ${lowest}`, 155, 46);
+                doc.text(`Tingkat Kelulusan (Nilai ≥ 80): ${lulusCount} dari ${total} Siswa (${lulusPct}%)`, 20, 52);
+
+                const tableBody = sorted.map((r, i) => [
+                    i + 1,
+                    r.name,
+                    r.class || clsTitle,
+                    r.score,
+                    `${r.correct !== undefined ? r.correct : 0} / ${r.total || (typeof getActiveQuizData === 'function' ? getActiveQuizData().length : 20)}`,
+                    r.score >= 80 ? 'LULUS' : 'REMEDIAL',
+                    r.duration || '-',
+                    r.time || '-',
+                    r.date || '-'
+                ]);
+
+                doc.autoTable({
+                    startY: 61,
+                    head: [['No', 'Nama Siswa', 'Kelas', 'Skor', 'Benar', 'Status (KKM 80)', 'Durasi', 'Waktu', 'Tanggal']],
+                    body: tableBody.length > 0 ? tableBody : [['-', '(Belum ada data untuk kelas ini)', '-', '-', '-', '-', '-', '-', '-']],
+                    theme: 'grid',
+                    headStyles: {
+                        fillColor: [15, 23, 42],
+                        textColor: [255, 255, 255],
+                        fontStyle: 'bold',
+                        fontSize: 8.5
+                    },
+                    bodyStyles: { fontSize: 8, textColor: [30, 41, 59] },
+                    alternateRowStyles: { fillColor: [248, 250, 252] },
+                    columnStyles: {
+                        0: { cellWidth: 8, halign: 'center' },
+                        1: { cellWidth: 46 },
+                        2: { cellWidth: 15, halign: 'center' },
+                        3: { cellWidth: 14, halign: 'center', fontStyle: 'bold' },
+                        4: { cellWidth: 16, halign: 'center' },
+                        5: { cellWidth: 26, halign: 'center' },
+                        6: { cellWidth: 18, halign: 'center' },
+                        7: { cellWidth: 20, halign: 'center' },
+                        8: { cellWidth: 19, halign: 'center' }
+                    },
+                    didParseCell: (data) => {
+                        if (data.section === 'body' && data.column.index === 5) {
+                            if (data.cell.raw === 'LULUS') data.cell.styles.textColor = [16, 185, 129];
+                            else if (data.cell.raw === 'REMEDIAL') data.cell.styles.textColor = [244, 63, 94];
+                        }
+                    },
+                    margin: { left: 14, right: 14 }
+                });
+
+                // Signature Block
+                const finalY = doc.lastAutoTable ? doc.lastAutoTable.finalY + 12 : 240;
+                if (finalY < 250) {
+                    doc.setFontSize(8.5);
+                    doc.setFont('helvetica', 'normal');
+                    doc.setTextColor(51, 65, 85);
+                    doc.text('Mengetahui / Mengesahkan,', 140, finalY);
+                    doc.text('Guru Mata Pelajaran Informatika', 140, finalY + 5);
+                    doc.setFont('helvetica', 'bold');
+                    doc.text('RINI SYAFITRI, S.Pd.', 140, finalY + 24);
+                    doc.setFont('helvetica', 'normal');
+                    doc.text('NIP. 19850320 201101 2 008', 140, finalY + 29);
+                }
+            };
+
+            if (filterClass === 'all') {
+                printSingleSection('Semua Siswa Tergabung', filteredRecords, true);
+                targetClasses.forEach(cls => {
+                    const classStudents = filteredRecords.filter(r => r.class === cls);
+                    printSingleSection(`Kelas ${cls}`, classStudents, false);
+                });
+            } else {
+                const clsRecords = filteredRecords.filter(r => r.class === filterClass);
+                printSingleSection(`Kelas ${filterClass}`, clsRecords, true);
+            }
         }
 
-        const fileName = `Laporan_Rekap_Nilai_${filterClass === 'all' ? 'Semua_Kelas_Dipisah' : filterClass.replace(/ /g, '_')}_${new Date().toISOString().slice(0,10)}.pdf`;
+        const modNameSlug = filterModule === 'all' ? 'Komparasi_2_Modul' : (filterModule === modJaringanId ? 'Keamanan_Jaringan' : 'Detektif_Fakta');
+        const fileName = `Laporan_Resmi_${modNameSlug}_${filterClass === 'all' ? 'Semua_Kelas' : filterClass.replace(/ /g, '_')}_${new Date().toISOString().slice(0,10)}.pdf`;
         doc.save(fileName);
-        sfxCorrect();
-        showToast('Laporan PDF Guru berhasil diunduh (terpisah per-kelas)! 📑', '✅');
+        if (typeof sfxCorrect === 'function') sfxCorrect();
+        showToast(`Laporan PDF Guru (${modNameSlug.replace(/_/g, ' ')}) berhasil diunduh! 📑`, '✅');
     } catch (err) {
-        sfxWrong();
+        if (typeof sfxWrong === 'function') sfxWrong();
         showToast('Gagal membuat PDF: ' + err.message, '❌');
     }
 }

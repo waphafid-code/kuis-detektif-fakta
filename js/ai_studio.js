@@ -42,8 +42,41 @@ async function handleHomeModuleChange() {
 
     const badgeEl = document.getElementById('home-module-badge');
     const descEl = document.getElementById('home-module-desc');
-    if (badgeEl) badgeEl.textContent = `${current.questionCount || 0} Soal · KKM ${current.kkm || 80}`;
-    if (descEl) descEl.textContent = current.description || 'Materi evaluasi pembelajaran kuis interaktif.';
+    const clsSelect = document.getElementById('input-class');
+    const selectedClass = clsSelect ? clsSelect.value : '';
+
+    let accessStatus = null;
+    if (typeof checkClassAccess === 'function') {
+        accessStatus = checkClassAccess(selectedClass, moduleId);
+    }
+
+    if (badgeEl) {
+        if (moduleId === 'modul_jaringan_keamanan') {
+            if (accessStatus && !accessStatus.allowed) {
+                badgeEl.textContent = `🔒 Terjadwal (Jam Buk Rini) · ${current.questionCount || 0} Soal`;
+                badgeEl.style.background = 'rgba(234, 179, 8, 0.15)';
+                badgeEl.style.color = '#facc15';
+                badgeEl.style.borderColor = 'rgba(234, 179, 8, 0.4)';
+                if (descEl) {
+                    descEl.innerHTML = `${current.description || ''} <span style="display:block; margin-top:6px; color:#facc15; font-size:0.83rem; font-weight:600;">🕒 Kuis dibuka otomatis saat jam pelajaran resmi. Anda tetap dapat membaca materi di Ruang Belajar.</span>`;
+                }
+            } else {
+                badgeEl.textContent = `🟢 Sesi Aktif · ${current.questionCount || 0} Soal · KKM ${current.kkm || 80}`;
+                badgeEl.style.background = 'rgba(16, 185, 129, 0.15)';
+                badgeEl.style.color = '#34d399';
+                badgeEl.style.borderColor = 'rgba(16, 185, 129, 0.4)';
+                if (descEl) descEl.textContent = current.description || 'Materi evaluasi pembelajaran kuis interaktif.';
+            }
+        } else {
+            badgeEl.textContent = `${current.questionCount || 0} Soal · KKM ${current.kkm || 80} · Latihan Mandiri 🔓`;
+            badgeEl.style.background = '';
+            badgeEl.style.color = '';
+            badgeEl.style.borderColor = '';
+            if (descEl) descEl.textContent = current.description || 'Materi evaluasi pembelajaran kuis interaktif.';
+        }
+    } else if (descEl) {
+        descEl.textContent = current.description || 'Materi evaluasi pembelajaran kuis interaktif.';
+    }
 }
 
 function switchTeacherTab(tabKey) {

@@ -3,6 +3,63 @@
 const SESSION_QUIZ_ACTIVE_KEY = 'detektif_active_session_v2';
 let isCheatingTriggered = false;
 
+// ============================================================
+// 🛡️ SECURE IN-MEMORY ANSWER VAULT
+// Menyimpan kunci jawaban & pembahasan di closure privat agar tidak bisa diintip via Console/window.quizData
+// ============================================================
+const _secureAnswerVault = new Map();
+
+function vaultAnswers(questions) {
+    if (!Array.isArray(questions)) return [];
+    _secureAnswerVault.clear();
+    return questions.map((q, idx) => {
+        const qId = q.id || `q_${idx}`;
+        _secureAnswerVault.set(qId, {
+            answer: q.answer,
+            explanation: q.explanation
+        });
+
+        // Buat salinan aman tanpa kunci jawaban dan pembahasan langsung
+        const sanitized = { ...q, id: qId };
+        delete sanitized.answer;
+        delete sanitized.explanation;
+        return sanitized;
+    });
+}
+
+function getAnswerFromVault(q, origQIdx) {
+    const qId = (q && q.id) || `q_${origQIdx}`;
+    const entry = _secureAnswerVault.get(qId);
+    if (entry && entry.answer !== undefined) {
+        return entry.answer;
+    }
+    return (q && q.answer !== undefined) ? q.answer : null;
+}
+
+function getExplanationFromVault(q, origQIdx) {
+    const qId = (q && q.id) || `q_${origQIdx}`;
+    const entry = _secureAnswerVault.get(qId);
+    if (entry && entry.explanation !== undefined) {
+        return entry.explanation;
+    }
+    return (q && q.explanation) ? q.explanation : '';
+}
+
+// 🛡️ PEMBERSIH TEKS SOAL & OPSI (HAPUS PREFIX "SOAL NO...", "PERTANYAAN 1:", "A.", DLL)
+function stripQuestionPrefix(text) {
+    if (!text) return '';
+    let clean = String(text).trim();
+    clean = clean.replace(/^(?:soal\s+(?:no\.?\s*)?\d+[\s:.-]*|pertanyaan\s+(?:no\.?\s*)?\d+[\s:.-]*|no\.?\s*\d+[\s:.-]*|\d+[\s:.-]+)\s*/i, '');
+    return clean.trim();
+}
+window.stripQuestionPrefix = stripQuestionPrefix;
+
+function stripOptionLetterPrefix(text) {
+    if (!text) return '';
+    return String(text).replace(/^\s*(?:\*?\s*[A-Ea-e\d][\.\)\:\-]\s*|\([A-Ea-e\d]\)\s*)/, '').trim();
+}
+window.stripOptionLetterPrefix = stripOptionLetterPrefix;
+
 function computeSessionChecksum(data) {
     const payload = `${data.studentName || ''}:${data.studentClass || ''}:${data.score || 0}:${data.currentQ || 0}:${data.quizStartTime || 0}:${(data.shuffledQuizOrder || []).join(',')}:QM_SALT_INTEGRITY_2026`;
     let hash = 0;
@@ -19,6 +76,7 @@ function saveCurrentQuizSession() {
         const sessionData = {
             studentName,
             studentClass,
+            moduleId: currentActiveModule ? currentActiveModule.id : (window.QuizManager ? QuizManager.getActiveModuleId() : 'modul_detektif_fakta'),
             currentQ,
             score,
             streak,
@@ -259,8 +317,8 @@ function resumeFromCheatWarning() {
         enterExamFullscreen();
     }
 
-    if (TIMER_MAX > 0 && timerVal > 0) {
-        startTimer();
+    if (TIMER_MAX > 0 && questionRemainingSec > 0) {
+        startTimer(questionRemainingSec);
     }
     showToast(`Peringatan #${cheatStrikes} diterima. Sisa ${MAX_CHEAT_STRIKES - cheatStrikes} kesempatan. Tetap berada di halaman ujian!`, '🛡️');
 }
@@ -292,7 +350,11 @@ function triggerCheatPenalty(reason = 'Kecurangan / Buka Tab Lain') {
     // Simpan rekap diskualifikasi ke database / localstorage
     const now = new Date();
     const clockStr = `${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')} WIB`;
+    const activeModId = currentActiveModule ? currentActiveModule.id : (window.QuizManager ? QuizManager.getActiveModuleId() : 'modul_detektif_fakta');
+    const activeModTitle = currentActiveModule ? currentActiveModule.title : (window.QuizManager && QuizManager.getActiveModule() ? QuizManager.getActiveModule().title : 'Misi Detektif Fakta');
     const cheatRecord = {
+        moduleId: activeModId,
+        moduleTitle: activeModTitle,
         name: studentName,
         class: studentClass,
         score: 0,
@@ -327,21 +389,48 @@ function acknowledgeCheatPenalty() {
     goHome();
 }
 
-// 👁️ 1. DETEKSI PERPINDAHAN TAB / KELUAR DARI BROWSER (ANTI-CHEAT)
+// 👁️ 1. DETEKSI PERPINDAHAN TAB / KELUAR DARI BROWSER (ANTI-CHEAT DENGAN GRACE PERIOD 2.5S UNTUK NOTIFIKASI MOBILE)
+let blurGraceTimer = null;
+
+function clearBlurGraceTimer() {
+    if (blurGraceTimer) {
+        clearTimeout(blurGraceTimer);
+        blurGraceTimer = null;
+    }
+}
+
 document.addEventListener('visibilitychange', () => {
-    if (document.hidden && isQuizActive() && !isCheatWarningActive) {
-        handleAntiCheatEvent('🌐 Berpindah Tab / Meminimalkan Browser');
+    if (!isQuizActive() || isCheatWarningActive) {
+        clearBlurGraceTimer();
+        return;
+    }
+    if (document.hidden) {
+        clearBlurGraceTimer();
+        // Berikan waktu toleransi 2.5 detik agar pop-up banner WA/SMS/baterai di HP tidak langsung memicu penalti
+        blurGraceTimer = setTimeout(() => {
+            if (document.hidden && isQuizActive() && !isCheatWarningActive) {
+                handleAntiCheatEvent('🌐 Berpindah Tab / Meminimalkan Browser');
+            }
+            blurGraceTimer = null;
+        }, 2500);
+    } else {
+        clearBlurGraceTimer();
     }
 });
 
 window.addEventListener('blur', () => {
-    if (isQuizActive() && !isCheatWarningActive) {
-        setTimeout(() => {
-            if ((document.hidden || !document.hasFocus()) && isQuizActive() && !isCheatWarningActive) {
-                handleAntiCheatEvent('🌐 Keluar dari Aplikasi Browser / Buka Aplikasi Lain');
-            }
-        }, 400);
-    }
+    if (!isQuizActive() || isCheatWarningActive) return;
+    clearBlurGraceTimer();
+    blurGraceTimer = setTimeout(() => {
+        if ((document.hidden || !document.hasFocus()) && isQuizActive() && !isCheatWarningActive) {
+            handleAntiCheatEvent('🌐 Keluar dari Aplikasi Browser / Buka Aplikasi Lain');
+        }
+        blurGraceTimer = null;
+    }, 2500);
+});
+
+window.addEventListener('focus', () => {
+    clearBlurGraceTimer();
 });
 
 // 📸 2. DETEKSI SCREENSHOT / TANGKAPAN LAYAR / SNIPPING TOOL
@@ -521,6 +610,10 @@ function onHomeClassChanged() {
         nameSelect.appendChild(opt);
     });
 
+    if (typeof handleHomeModuleChange === 'function') {
+        handleHomeModuleChange();
+    }
+
     sfxClick();
 }
 
@@ -592,8 +685,11 @@ async function initiateQuiz() {
 
     isQuizFinishing = false;
 
+    // 📦 Tentukan Modul Pembelajaran Terpilih terlebih dahulu
+    const targetModId = moduleId || (currentActiveModule ? currentActiveModule.id : (window.QuizManager ? QuizManager.getActiveModuleId() : 'modul_detektif_fakta'));
+
     // 🔒 Verifikasi Akses Jadwal RINI SYAFITRI & Pengaturan Guru
-    const access = checkClassAccess(cls);
+    const access = checkClassAccess(cls, targetModId);
     if (!access.allowed) {
         sfxWrong();
         const schedule = access.schedule || (typeof getClassSchedule === 'function' ? getClassSchedule(cls) : (SCHEDULE_RINI_SYAFITRI[cls] || {}));
@@ -606,17 +702,24 @@ async function initiateQuiz() {
         return;
     }
 
-    // 🔄 Verifikasi Batas Respon Siswa (Submission Policy)
+    // 🔄 Verifikasi Batas Respon Siswa (Submission Policy) & Integritas Ujian
     const policy = (typeof loadSubmissionPolicy === 'function') 
         ? loadSubmissionPolicy() 
-        : (localStorage.getItem('quizmaster_submission_policy') || 'allow_remedy');
+        : (localStorage.getItem('quizmaster_submission_policy') || 'single_only');
     
-    const previousAttempts = loadRecords().filter(r => 
-        (r.name || '').trim().toLowerCase() === name.trim().toLowerCase() && 
-        r.class === cls
-    );
+    const previousAttempts = loadRecords().filter(r => {
+        const rMod = (typeof normalizeModuleId === 'function') ? normalizeModuleId(r.moduleId, r.id, r.date) : (r.moduleId || 'modul_detektif_fakta');
+        const nameMatch = (typeof isNameEquivalent === 'function') ? isNameEquivalent(r.name, name) : (r.name || '').trim().toLowerCase() === name.trim().toLowerCase();
+        const classMatch = (typeof isClassEquivalent === 'function') ? isClassEquivalent(r.class, cls) : r.class === cls;
+        return nameMatch && classMatch && rMod === targetModId;
+    });
 
-    if (policy === 'single_only' && previousAttempts.length > 0) {
+    const isRemedialAllowed = (typeof loadRemedialSetting === 'function') ? loadRemedialSetting() : false;
+    const bestScore = previousAttempts.length > 0 ? Math.max(...previousAttempts.map(r => r.score)) : 0;
+    const isEligibleForRemedial = isRemedialAllowed && bestScore < 80;
+    const cannotRetake = !isEligibleForRemedial && (policy === 'single_only' || isExamModule);
+
+    if (previousAttempts.length > 0 && cannotRetake) {
         sfxWrong();
         const prev = previousAttempts[0];
         const dupModal = document.getElementById('already-submitted-modal');
@@ -636,9 +739,10 @@ async function initiateQuiz() {
         return;
     }
 
-    if (policy === 'allow_remedy' && previousAttempts.length > 0) {
-        const best = Math.max(...previousAttempts.map(r => r.score));
-        showToast(`Sesi Remedi: Nilai tertinggi Anda (${best}/100) akan dipertahankan! ⭐`, 'ℹ️');
+    if (previousAttempts.length > 0 && isRemedialAllowed && bestScore < 80) {
+        showToast(`Sesi Remedial Terarah: Nilai terbaik Anda (${bestScore}/100) tetap dipertahankan jika nilai baru lebih rendah! ⭐`, 'ℹ️');
+    } else if (policy === 'allow_remedy' && previousAttempts.length > 0) {
+        showToast(`Sesi Remedi: Nilai tertinggi Anda (${bestScore}/100) akan dipertahankan! ⭐`, 'ℹ️');
     }
 
     // 📦 Muat Soal Sesuai Modul Pembelajaran Terpilih
@@ -668,6 +772,10 @@ async function initiateQuiz() {
     window.remedialOriginalQuestions = remedialOriginalQuestions;
     const remInd = document.getElementById('quiz-remedial-indicator');
     if (remInd) remInd.style.display = 'none';
+
+    // 🛡️ SECURITY: Pindahkan kunci jawaban ke vault privat & bersihkan window.quizData
+    quizData = vaultAnswers(quizData);
+    window.quizData = quizData;
 
     totalPossiblePoints = quizData.reduce((acc, q) => acc + (q.points || 5), 0);
     if (totalPossiblePoints === 0) totalPossiblePoints = quizData.length * 5;
@@ -745,25 +853,54 @@ function startQuizActual() {
     setTimeout(startBGM, 200);
 }
 
-function startTimer() {
+let questionStartTime = 0;
+let questionDuration = 0;
+let questionRemainingSec = 0;
+let lastWarnedSec = -1;
+
+function startTimer(customDuration) {
     stopTimer();
     if (TIMER_MAX === 0) {
         document.getElementById('timer-display').textContent = '⏱ ∞';
         document.getElementById('timer-display').classList.remove('warning');
         return;
     }
-    timerVal = TIMER_MAX;
+    questionDuration = (customDuration !== undefined && customDuration > 0) ? customDuration : TIMER_MAX;
+    questionStartTime = Date.now();
+    questionRemainingSec = questionDuration;
+    timerVal = questionDuration;
+    lastWarnedSec = -1;
     updateTimerDisplay();
+
+    // 🛡️ DRIFT-PROOF & ANTI-TAMPERING:
+    // Waktu dihitung dari selisih waktu nyata sistem (Date.now() - questionStartTime)
     timerInterval = setInterval(() => {
-        timerVal = Math.max(0, timerVal - 1);
+        const elapsedSec = Math.floor((Date.now() - questionStartTime) / 1000);
+        timerVal = Math.max(0, questionDuration - elapsedSec);
+        questionRemainingSec = timerVal;
         updateTimerDisplay();
-        if (timerVal <= 5 && timerVal > 0) sfxTimerWarn();
-        if (timerVal <= 0) { stopTimer(); autoSubmitTimeout(); }
-    }, 1000);
+
+        if (timerVal <= 5 && timerVal > 0 && timerVal !== lastWarnedSec) {
+            lastWarnedSec = timerVal;
+            sfxTimerWarn();
+        }
+
+        if (timerVal <= 0) {
+            stopTimer();
+            autoSubmitTimeout();
+        }
+    }, 500);
 }
 
 function stopTimer() {
-    if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+    if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+    }
+    if (questionStartTime > 0 && questionDuration > 0) {
+        const elapsedSec = Math.floor((Date.now() - questionStartTime) / 1000);
+        questionRemainingSec = Math.max(0, questionDuration - elapsedSec);
+    }
 }
 
 function updateTimerDisplay() {
@@ -792,11 +929,13 @@ function autoSubmitTimeout() {
     allInputs.forEach(inp => inp.disabled = true);
     labels.forEach(lbl => lbl.classList.add('disabled'));
 
+    const answerKey = getAnswerFromVault(data, origQIdx);
+    const correctOriginals = Array.isArray(answerKey) ? answerKey : (answerKey !== null && answerKey !== undefined ? [answerKey] : []);
+
     if (data.type === 'matrix_tf') {
         const table = document.getElementById('matrix-active-table');
         if (table) table.classList.add('disabled-row');
     } else {
-        const correctOriginals = Array.isArray(data.answer) ? data.answer : [data.answer];
         currentShuffleMap.forEach((origIdx, shuffIdx) => {
             if (correctOriginals.includes(origIdx)) {
                 const l = document.getElementById(`label-${shuffIdx}`);
@@ -808,6 +947,8 @@ function autoSubmitTimeout() {
     streak = 0;
     answeredCorrectly[origQIdx] = false;
 
+    const expText = getExplanationFromVault(data, origQIdx);
+
     detailedAnswers[origQIdx] = {
         qIndex: origQIdx,
         questionNumber: currentQ + 1,
@@ -818,14 +959,14 @@ function autoSubmitTimeout() {
         options: data.options || data.statements,
         selectedIndices: [],
         selectedText: ['(Waktu Habis — Belum Memilih Jawaban)'],
-        correctIndices: Array.isArray(data.answer) ? data.answer : [data.answer],
-        correctText: Array.isArray(data.answer) ? data.answer.map(i => (data.options && data.options[i]) || i) : [(data.options && data.options[data.answer]) || data.answer],
+        correctIndices: correctOriginals,
+        correctText: Array.isArray(answerKey) ? answerKey.map(i => (data.options && data.options[i]) || i) : [(data.options && data.options[answerKey]) || answerKey],
         isCorrect: false,
         pointsEarned: 0,
         maxPoints: data.points || 5,
         isPartial: false,
         pointSummary: 'Waktu Habis (0 Poin)',
-        explanation: data.explanation
+        explanation: expText
     };
 
     document.getElementById('streak-display').textContent = `🔥 ${streak}`;
@@ -836,7 +977,7 @@ function autoSubmitTimeout() {
 
     const fb = document.getElementById('feedback-box');
     fb.className = 'feedback-box wrong-fb';
-    fb.innerHTML = `<h4>⏰ Waktu Habis (Belum Ada Jawaban Terpilih)!</h4><p>${data.explanation}</p>`;
+    fb.innerHTML = `<h4>⏰ Waktu Habis (Belum Ada Jawaban Terpilih)!</h4><p>${typeof formatPedagogicalFeedback === 'function' ? formatPedagogicalFeedback(expText) : expText}</p>`;
     fb.style.display = 'block';
 
     document.getElementById('btn-check').style.display = 'none';
@@ -1099,7 +1240,8 @@ function loadQuestion(index) {
     const tierHint = document.getElementById('q-tier-hint');
     const cbBox = document.getElementById('cb-counter-box');
     let inputType = 'radio';
-    const reqCount = Array.isArray(data.answer) ? data.answer.length : 1;
+    const answerKey = getAnswerFromVault(data, origQIdx);
+    const reqCount = Array.isArray(answerKey) ? answerKey.length : 1;
     const qPts = data.points || 5;
 
     if (ptsBadge) {
@@ -1164,7 +1306,8 @@ function loadQuestion(index) {
         csBox.innerHTML = `<strong>📁 Bukti Kasus / Stimulus:</strong> ${typeof escapeHtml === 'function' ? escapeHtml(data.caseStudy) : data.caseStudy}`;
     } else { csBox.style.display = 'none'; }
 
-    document.getElementById('q-text').innerHTML = `<span class="q-num">Soal ${index + 1}.</span> ${typeof escapeHtml === 'function' ? escapeHtml(data.q) : data.q}`;
+    const cleanedQ = stripQuestionPrefix(data.q);
+    document.getElementById('q-text').innerHTML = `${typeof escapeHtml === 'function' ? escapeHtml(cleanedQ) : cleanedQ}`;
 
     const grid = document.getElementById('options-grid');
     grid.innerHTML = '';
@@ -1216,8 +1359,17 @@ function loadQuestion(index) {
         grid.appendChild(container);
     } else {
         // ═══ RENDER REGULAR OPTIONS (MCQ, TF, CHECKBOX) ═══
-        const shuffled = shuffleArray(data.options);
+        // Acak pilihan ganda & checkbox untuk setiap siswa! (TF Benar/Salah tetap urut agar polaritas jelas)
+        let optionsToRender = data.options || [];
+        let shuffled;
+        if (data.type === 'tf') {
+            shuffled = optionsToRender.map((val, idx) => ({ val, origIdx: idx }));
+        } else {
+            shuffled = shuffleArray(optionsToRender);
+        }
         currentShuffleMap = shuffled.map(s => s.origIdx);
+
+        const letterBadges = ['A', 'B', 'C', 'D', 'E', 'F'];
 
         shuffled.forEach((item, shuffIdx) => {
             const label = document.createElement('label');
@@ -1244,12 +1396,22 @@ function loadQuestion(index) {
             const checkMark = document.createElement('span');
             checkMark.className = 'check-indicator';
 
-            const text = document.createElement('span');
-            text.className = 'opt-text';
-            text.textContent = item.val;
-
             label.appendChild(input);
             label.appendChild(checkMark);
+
+            // Tampilkan badge huruf rapi A, B, C, D (untuk MCQ & Checkbox)
+            if (data.type !== 'tf') {
+                const badgeLetter = document.createElement('span');
+                badgeLetter.className = 'opt-prefix-badge';
+                badgeLetter.textContent = letterBadges[shuffIdx] || `${shuffIdx + 1}`;
+                label.appendChild(badgeLetter);
+            }
+
+            const cleanOptText = data.type === 'tf' ? item.val : stripOptionLetterPrefix(item.val);
+            const text = document.createElement('span');
+            text.className = 'opt-text';
+            text.textContent = cleanOptText;
+
             label.appendChild(text);
             grid.appendChild(label);
         });
@@ -1306,7 +1468,8 @@ function checkAnswer(isAutoTimeout = false) {
         const table = document.getElementById('matrix-active-table');
         if (table) table.classList.add('disabled-row');
 
-        correctOriginals = Array.isArray(data.answer) ? data.answer : [];
+        const answerKey = getAnswerFromVault(data, origQIdx);
+        correctOriginals = Array.isArray(answerKey) ? answerKey : [];
         selectedOriginals = userAnswers;
 
         let correctCount = 0;
@@ -1372,7 +1535,8 @@ function checkAnswer(isAutoTimeout = false) {
         labels.forEach(lbl => lbl.classList.add('disabled'));
 
         selectedOriginals = selectedShuffleIdxs.map(si => currentShuffleMap[si]);
-        correctOriginals = Array.isArray(data.answer) ? data.answer : [data.answer];
+        const answerKey = getAnswerFromVault(data, origQIdx);
+        correctOriginals = Array.isArray(answerKey) ? answerKey : (answerKey !== null && answerKey !== undefined ? [answerKey] : []);
 
         if (data.type === 'mcq' || data.type === 'tf') {
             isCorrect = selectedOriginals.length > 0 && selectedOriginals[0] === correctOriginals[0];
@@ -1408,7 +1572,7 @@ function checkAnswer(isAutoTimeout = false) {
             });
         }
 
-        pointRes = window.NemotronAI ? window.NemotronAI.calculateQuestionPoints(data, selectedOriginals) : {
+        pointRes = window.NemotronAI ? window.NemotronAI.calculateQuestionPoints({ ...data, answer: answerKey }, selectedOriginals) : {
             pointsEarned: isCorrect ? (data.points || 5) : 0,
             maxPoints: data.points || 5,
             isFullCorrect: isCorrect,
@@ -1429,9 +1593,11 @@ function checkAnswer(isAutoTimeout = false) {
         selectedText = selectedOriginals.map((val, idx) => `[#${idx+1}] ${val === 0 ? 'Benar' : (val === 1 ? 'Salah' : 'Belum')}`);
         correctText = correctOriginals.map((val, idx) => `[#${idx+1}] ${val === 0 ? 'Benar' : 'Salah'}`);
     } else {
-        selectedText = selectedOriginals.map(idx => data.options[idx]);
-        correctText = correctOriginals.map(idx => data.options[idx]);
+        selectedText = selectedOriginals.map(idx => (data.options && data.options[idx]) || idx);
+        correctText = correctOriginals.map(idx => (data.options && data.options[idx]) || idx);
     }
+
+    const expText = getExplanationFromVault(data, origQIdx);
 
     detailedAnswers[origQIdx] = {
         qIndex: origQIdx,
@@ -1450,7 +1616,7 @@ function checkAnswer(isAutoTimeout = false) {
         maxPoints: pointRes.maxPoints,
         isPartial: pointRes.isPartial,
         pointSummary: pointRes.summary,
-        explanation: data.explanation
+        explanation: expText
     };
 
     // Sembunyikan tombol petunjuk saat jawaban sudah dikunci
@@ -1469,7 +1635,7 @@ function checkAnswer(isAutoTimeout = false) {
         triggerStreakVibration(streak);
 
         fb.className = 'feedback-box correct-fb';
-        fb.innerHTML = `<h4>${isAutoTimeout ? '⏰ Waktu Habis — Pilihan Terkunci & Benar! ✅' : '✅ Jawaban Benar Penuh!'} (+${pointRes.pointsEarned} Poin)</h4>${formatPedagogicalFeedback(data.explanation)}`;
+        fb.innerHTML = `<h4>${isAutoTimeout ? '⏰ Waktu Habis — Pilihan Terkunci & Benar! ✅' : '✅ Jawaban Benar Penuh!'} (+${pointRes.pointsEarned} Poin)</h4>${formatPedagogicalFeedback(expText)}`;
 
         const streakEl = document.getElementById('streak-display');
         streakEl.style.transform = 'scale(1.25)';
@@ -1483,7 +1649,7 @@ function checkAnswer(isAutoTimeout = false) {
         answeredCorrectly[origQIdx] = true;
 
         fb.className = 'feedback-box warning-fb';
-        fb.innerHTML = `<h4>🟡 Jawaban Benar Sebagian (+${pointRes.pointsEarned}/${pointRes.maxPoints} Poin)</h4><p style="font-weight: 700; color: #fde047; margin-bottom: 6px;">${pointRes.summary}</p>${formatPedagogicalFeedback(data.explanation)}`;
+        fb.innerHTML = `<h4>🟡 Jawaban Benar Sebagian (+${pointRes.pointsEarned}/${pointRes.maxPoints} Poin)</h4><p style="font-weight: 700; color: #fde047; margin-bottom: 6px;">${pointRes.summary}</p>${formatPedagogicalFeedback(expText)}`;
 
         if (card) card.classList.remove('streak-on-fire');
     } else {
@@ -1492,7 +1658,7 @@ function checkAnswer(isAutoTimeout = false) {
         answeredCorrectly[origQIdx] = false;
 
         fb.className = 'feedback-box wrong-fb';
-        fb.innerHTML = `<h4>${isAutoTimeout ? '⏰ Waktu Habis — Pilihan Otomatis Terkunci! ❌' : '❌ Analisis Kurang Tepat'} (0/${pointRes.maxPoints} Poin)</h4>${formatPedagogicalFeedback(data.explanation)}`;
+        fb.innerHTML = `<h4>${isAutoTimeout ? '⏰ Waktu Habis — Pilihan Otomatis Terkunci! ❌' : '❌ Analisis Kurang Tepat'} (0/${pointRes.maxPoints} Poin)</h4>${formatPedagogicalFeedback(expText)}`;
 
         if (card) card.classList.remove('streak-on-fire');
     }
@@ -1525,17 +1691,14 @@ function finishQuiz() {
     if (isQuizFinishing) return;
     isQuizFinishing = true;
 
-    clearFullscreenWarningCountdown();
-    exitExamFullscreen();
+    try {
+        clearFullscreenWarningCountdown();
+        exitExamFullscreen();
+    } catch(e) {}
 
     window.onbeforeunload = null;
-    sessionStorage.removeItem(SESSION_QUIZ_ACTIVE_KEY);
-    stopBGM();
-    stopTimer();
-    switchScreen('result');
-
-    const card = document.querySelector('#screen-quiz .glass-card');
-    if (card) card.classList.remove('streak-on-fire');
+    try { stopBGM(); } catch(e) {}
+    try { stopTimer(); } catch(e) {}
 
     const calcScore = totalPossiblePoints > 0 
         ? Math.round((earnedPointsTotal / totalPossiblePoints) * 100) 
@@ -1557,16 +1720,18 @@ function finishQuiz() {
     let reconciledScore = finalScore;
     if (isRemedialSession && remedialSourceRecord) {
         const orig = remedialSourceRecord.score || 0;
-        // Peningkatan proporsional pada butir soal yang salah
         reconciledScore = Math.max(orig, Math.min(100, Math.round(orig + (100 - orig) * (finalScore / 100))));
         displayScore = reconciledScore;
     }
 
     const isPassed = displayScore >= KKM;
 
+    const activeModId = (currentActiveModule && currentActiveModule.id) || (window.QuizManager ? QuizManager.getActiveModuleId() : 'modul_detektif_fakta');
+    const activeModTitle = (currentActiveModule && currentActiveModule.title) || (window.QuizManager && QuizManager.getActiveModule() ? QuizManager.getActiveModule().title : (activeModId === 'modul_jaringan_keamanan' ? 'Penilaian Harian: Infrastruktur Jaringan & Keamanan Digital' : 'Misi Detektif Fakta'));
+
     const record = {
-        moduleId: currentActiveModule ? currentActiveModule.id : 'modul_detektif_fakta',
-        moduleTitle: currentActiveModule ? currentActiveModule.title : 'Misi Detektif Fakta',
+        moduleId: activeModId,
+        moduleTitle: activeModTitle,
         name: studentName,
         class: studentClass,
         score: displayScore,
@@ -1581,13 +1746,35 @@ function finishQuiz() {
         detailedAnswers: detailedAnswers,
         time: clockStr,
         duration: timeStr,
+        rawDurationMs: Date.now() - quizStartTime,
         date: now.toLocaleDateString('id-ID'),
         timestamp: now.getTime(),
         tabSwitchCount: cheatStrikes || 0,
         isCheated: false,
         hintsUsedCount: sessionHintsUsedCount || 0
     };
-    saveRecord(record);
+
+    // 🛡️ REKAM KE BASIS DATA & EMERGENCY BACKUP SEGERA SEBELUM RESUME DIHAPUS
+    try {
+        saveRecord(record);
+    } catch(errSave) {
+        console.error('CRITICAL: saveRecord gagal, memicu cadangan darurat lokal:', errSave);
+        try {
+            const emergencyList = JSON.parse(localStorage.getItem('quizmaster_emergency_backup_records') || '[]');
+            emergencyList.push({ ...record, savedAt: Date.now() });
+            localStorage.setItem('quizmaster_emergency_backup_records', JSON.stringify(emergencyList));
+        } catch(e) {}
+    }
+
+    // Hapus sesi aktif HANYA setelah rekam nilai tersimpan aman
+    try {
+        sessionStorage.removeItem(SESSION_QUIZ_ACTIVE_KEY);
+    } catch(e) {}
+
+    switchScreen('result');
+
+    const card = document.querySelector('#screen-quiz .glass-card');
+    if (card) card.classList.remove('streak-on-fire');
 
     const ring = document.getElementById('score-ring');
     const circumference = 2 * Math.PI * 78;
@@ -1699,20 +1886,46 @@ function finishQuiz() {
 function buildReview() {
     const list = document.getElementById('review-list');
     list.innerHTML = '';
+
+    // Cek apakah modul saat ini adalah Modul Ujian Keamanan Jaringan dan status kunci jawaban ujian aktif
+    const activeModId = currentActiveModule ? currentActiveModule.id : (window.QuizManager ? QuizManager.getActiveModuleId() : 'modul_detektif_fakta');
+    const isExamModule = (activeModId === 'modul_jaringan_keamanan');
+    const accessSettings = (typeof loadAccessSettings === 'function') ? loadAccessSettings() : { lockAnswersDuringExam: true };
+    const isAnswersLocked = isExamModule && (accessSettings.lockAnswersDuringExam !== false);
+
+    if (isAnswersLocked) {
+        const lockBanner = document.createElement('div');
+        lockBanner.className = 'exam-lock-review-banner';
+        lockBanner.style.cssText = 'background: rgba(99, 102, 241, 0.09); border: 1.5px solid rgba(99, 102, 241, 0.35); border-radius: 14px; padding: 18px 20px; text-align: center; margin-bottom: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.15);';
+        lockBanner.innerHTML = `
+            <div style="font-size: 2.2rem; margin-bottom: 6px;">🔒🛡️</div>
+            <div style="font-weight: 800; font-size: 1.05rem; color: #a5b4fc; margin-bottom: 6px;">
+                Kunci Jawaban &amp; Pembahasan Dirahasiakan Sementara
+            </div>
+            <p style="font-size: 0.88rem; color: var(--text-secondary); line-height: 1.5; margin: 0 auto; max-width: 520px;">
+                Untuk menjaga integritas dan kerahasiaan ujian bersama Kelas X SMAN 4 Padang, kunci jawaban tepat dan bedah soal rinci disembunyikan selama sesi ujian. Anda tetap dapat meninjau soal mana yang benar atau salah di bawah ini.
+            </p>
+            <div style="margin-top: 12px; display: inline-flex; align-items: center; gap: 8px; font-size: 0.8rem; padding: 5px 14px; background: rgba(255,255,255,0.06); border-radius: 20px; color: #cbd5e1;">
+                👩‍🏫 Guru Pengampu: <strong>Ibu Rini Syafitri, S.Pd.</strong>
+            </div>
+        `;
+        list.appendChild(lockBanner);
+    }
+
     shuffledQuizOrder.forEach((origIdx, playIdx) => {
         const data = quizData[origIdx];
         const isRight = answeredCorrectly[origIdx];
         const div = document.createElement('div');
         div.className = `review-item ${isRight ? 'review-correct' : 'review-wrong'}`;
         const status = isRight ? '✅' : (isRight === false ? '❌' : '⏰');
+        const ansKey = getAnswerFromVault(data, origIdx);
         let correctAns;
         if (data.type === 'matrix_tf') {
-            const stmts = data.statements || data.options || [];
-            correctAns = (Array.isArray(data.answer) ? data.answer : []).map((ans, i) => `[#${i+1}] ${ans === 0 ? '✓ Benar' : '✕ Salah'}`).join(' • ');
-        } else if (Array.isArray(data.answer)) {
-            correctAns = data.answer.map(a => (data.options && data.options[a]) || a).join(' | ');
+            correctAns = (Array.isArray(ansKey) ? ansKey : []).map((ans, i) => `[#${i+1}] ${ans === 0 ? '✓ Benar' : '✕ Salah'}`).join(' • ');
+        } else if (Array.isArray(ansKey)) {
+            correctAns = ansKey.map(a => (data.options && data.options[a]) || a).join(' | ');
         } else {
-            correctAns = (data.options && data.options[data.answer]) || data.answer;
+            correctAns = (data.options && data.options[ansKey]) || ansKey;
         }
 
         const diff = data.difficulty || 'Medium';
@@ -1722,24 +1935,36 @@ function buildReview() {
         // Jawaban siswa yang tersimpan
         const userAnsDetail = detailedAnswers[origIdx];
         const userAnsText = userAnsDetail && userAnsDetail.selectedText ? userAnsDetail.selectedText.join(' • ') : '-';
+        const cleanedReviewQ = typeof stripQuestionPrefix === 'function' ? stripQuestionPrefix(data.q) : data.q;
+        const expReview = getExplanationFromVault(data, origIdx);
 
-        div.innerHTML = `
-            <div class="review-q" style="font-weight: 700; font-size: 0.95rem; margin-bottom: 6px; line-height: 1.4; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px;">
-                <span>${status} <strong>Soal ${playIdx + 1}:</strong> ${data.q}</span>
-                <span class="q-badge ${diffClass}" style="font-size: 0.72rem; padding: 2px 10px; margin: 0;">${diffLabel}</span>
-            </div>
-            <div style="font-size: 0.84rem; margin-bottom: 4px; color: ${isRight ? 'var(--success)' : 'var(--danger)'};">
-                <strong>Jawaban Anda:</strong> ${userAnsText}
-            </div>
-            <div class="review-answer" style="margin-bottom: 10px; font-size: 0.84rem;">
-                <strong>Kunci Jawaban Tepat:</strong> <span style="color: var(--success); font-weight: 700;">${correctAns}</span>
-            </div>
-            <div class="review-explanation" style="font-size: 0.85rem; color: var(--text-secondary); line-height: 1.45; background: rgba(255,255,255,0.03); padding: 12px 16px; border-radius: 12px; border-left: 3.5px solid ${isRight ? 'var(--success)' : 'var(--danger)'};">
+        const correctAnsHtml = isAnswersLocked
+            ? `<span style="color: #94a3b8; font-style: italic; font-weight: 600;">🔒 [Dirahasiakan selama sesi ujian berlangsung]</span>`
+            : `<span style="color: var(--success); font-weight: 700;">${typeof escapeHtml === 'function' ? escapeHtml(correctAns) : correctAns}</span>`;
+
+        const expReviewHtml = isAnswersLocked
+            ? `<div style="font-size: 0.83rem; color: #94a3b8; font-style: italic; line-height: 1.45; background: rgba(255,255,255,0.02); padding: 10px 14px; border-radius: 10px; border-left: 3.5px solid ${isRight ? 'var(--success)' : 'var(--danger)'};">
+                🔒 Pembahasan analisis pedagogis akan dibuka resmi setelah sesi kuis selesai.
+               </div>`
+            : `<div class="review-explanation" style="font-size: 0.85rem; color: var(--text-secondary); line-height: 1.45; background: rgba(255,255,255,0.03); padding: 12px 16px; border-radius: 12px; border-left: 3.5px solid ${isRight ? 'var(--success)' : 'var(--danger)'};">
                 <div style="font-weight: 800; font-size: 0.88rem; color: ${isRight ? 'var(--success)' : '#fb7185'}; margin-bottom: 6px;">
                     💡 Bedah Soal &amp; Analisis Pedagogis:
                 </div>
-                ${formatPedagogicalFeedback(data.explanation)}
+                ${formatPedagogicalFeedback(expReview)}
+               </div>`;
+
+        div.innerHTML = `
+            <div class="review-q" style="font-weight: 700; font-size: 0.95rem; margin-bottom: 6px; line-height: 1.4; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px;">
+                <span>${status} ${typeof escapeHtml === 'function' ? escapeHtml(cleanedReviewQ) : cleanedReviewQ}</span>
+                <span class="q-badge ${diffClass}" style="font-size: 0.72rem; padding: 2px 10px; margin: 0;">${diffLabel}</span>
             </div>
+            <div style="font-size: 0.84rem; margin-bottom: 4px; color: ${isRight ? 'var(--success)' : 'var(--danger)'};">
+                <strong>Jawaban Anda:</strong> ${typeof escapeHtml === 'function' ? escapeHtml(userAnsText) : userAnsText}
+            </div>
+            <div class="review-answer" style="margin-bottom: 10px; font-size: 0.84rem;">
+                <strong>Kunci Jawaban Tepat:</strong> ${correctAnsHtml}
+            </div>
+            ${expReviewHtml}
         `;
         list.appendChild(div);
     });
@@ -1857,8 +2082,9 @@ async function executeRemedialSession() {
     // Set state kuis ke mode remedial
     isRemedialSession = true;
     window.isRemedialSession = true;
-    quizData = filteredQuestions;
-    window.quizData = filteredQuestions;
+    // 🛡️ SECURITY: Pindahkan kunci jawaban remedial ke vault privat & bersihkan window.quizData
+    quizData = vaultAnswers(filteredQuestions);
+    window.quizData = quizData;
 
     isQuizFinishing = false;
     currentQ = 0;
