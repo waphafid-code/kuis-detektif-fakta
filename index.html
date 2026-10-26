@@ -31,9 +31,9 @@
         }
     </script>
     <!-- QuizMaster Modern Design System & UI Styling -->
-    <link rel="stylesheet" href="css/style.css?v=20261026-mobile-perfect">
+    <link rel="stylesheet" href="css/style.css?v=20261026-mobile-perfect-v2">
     <!-- Cyber Guardian Sentinel Protocol & Gemini Teacher AI Assistant Styling -->
-    <link rel="stylesheet" href="css/guardian_and_chatbot.css?v=20261026-mobile-perfect">
+    <link rel="stylesheet" href="css/guardian_and_chatbot.css?v=20261026-mobile-perfect-v2">
 
 
 </head>
@@ -69,10 +69,13 @@
         <!-- Top: Brand + Portal Badge -->
         <div class="header-brand" onclick="goHome()">
             <div class="brand-logo-row">
-                <div class="brand-logo-icon">
-                    <span>🎓</span>
+                <div class="brand-logo-left">
+                    <div class="brand-logo-icon">
+                        <span>🎓</span>
+                    </div>
+                    <span class="brand-name">QuizMaster</span>
                 </div>
-                <span class="brand-name">QuizMaster</span>
+                <button type="button" class="sidebar-close-btn" onclick="toggleSidebarMenu(false); event.stopPropagation();" aria-label="Tutup Menu">✕</button>
             </div>
             <span class="portal-badge" id="header-portal-badge">
                 <span class="pulse-dot"></span>
