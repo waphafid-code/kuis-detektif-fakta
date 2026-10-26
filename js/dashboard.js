@@ -251,26 +251,121 @@ function closeDeleteModal() {
     if (modal) modal.classList.remove('active');
 }
 
-function openDeleteSingleModal(id, name, cls, timestamp, score) {
+// 🎯 BUKA MODAL PILIH HAPUS NILAI SPESIFIK PER MODUL
+function openDeleteStudentModuleModal(name, cls, preselectedModuleId = null, specificScore = null) {
+    if (!isTeacherAuthValid()) {
+        sfxWrong();
+        showToast('⛔ Akses Ditolak: Anda belum memasukkan PIN Guru!', '🔒');
+        openPinModal();
+        return;
+    }
+
     sfxWrong();
-    targetDeleteRecord = { id, name, cls, timestamp, score };
-    document.getElementById('del-student-name').textContent = name;
-    document.getElementById('del-student-info').textContent = `Kelas: ${cls || '-'} · Nilai: ${score} · KKM: 80 (${score >= 80 ? 'LULUS' : 'REMEDIAL'})`;
-    document.getElementById('delete-single-modal').classList.add('active');
+    const allRecords = loadRecords();
+    const modFaktaId = 'modul_detektif_fakta';
+    const modJaringanId = 'modul_jaringan_keamanan';
+
+    const nameMatches = (typeof isNameEquivalent === 'function') 
+        ? (recName) => isNameEquivalent(recName, name)
+        : (recName) => (recName || '').trim().toLowerCase() === name.trim().toLowerCase();
+    const classMatches = (typeof isClassEquivalent === 'function')
+        ? (recClass) => isClassEquivalent(recClass, cls)
+        : (recClass) => (recClass || '').replace(/\s+/g, '').toUpperCase() === (cls || '').replace(/\s+/g, '').toUpperCase();
+
+    const recsFakta = allRecords.filter(r => nameMatches(r.name) && classMatches(r.class) && normalizeModuleId(r.moduleId, r.id, r.date) === modFaktaId);
+    const recsJaringan = allRecords.filter(r => nameMatches(r.name) && classMatches(r.class) && normalizeModuleId(r.moduleId, r.id, r.date) === modJaringanId);
+
+    const bestFakta = recsFakta.sort((a,b) => (b.score - a.score))[0] || null;
+    const bestJaringan = recsJaringan.sort((a,b) => (b.score - a.score))[0] || null;
+
+    targetDeleteRecord = {
+        name: name,
+        cls: cls,
+        preselectedModule: preselectedModuleId || (bestJaringan && !bestFakta ? modJaringanId : (bestFakta && !bestJaringan ? modFaktaId : 'all')),
+        recordFakta: bestFakta,
+        recordJaringan: bestJaringan
+    };
+
+    const elName = document.getElementById('del-student-name');
+    const elInfo = document.getElementById('del-student-info');
+    if (elName) elName.textContent = name;
+    if (elInfo) elInfo.textContent = `Kelas: ${cls || '-'}`;
+
+    const container = document.getElementById('del-module-options-container');
+    if (container) {
+        let defaultChoice = targetDeleteRecord.preselectedModule;
+        if (defaultChoice === modJaringanId && !bestJaringan && bestFakta) defaultChoice = modFaktaId;
+        if (defaultChoice === modFaktaId && !bestFakta && bestJaringan) defaultChoice = modJaringanId;
+
+        container.innerHTML = `
+            <div style="font-weight: 700; font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 6px;">
+                Pilih nilai modul mana yang ingin Anda hapus:
+            </div>
+            
+            <label style="display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: rgba(255,255,255,0.03); border: 1px solid ${defaultChoice === modFaktaId ? 'var(--primary)' : 'var(--glass-border)'}; border-radius: 10px; cursor: pointer; transition: 0.2s;">
+                <input type="radio" name="del-module-choice" value="modul_detektif_fakta" ${defaultChoice === modFaktaId ? 'checked' : ''} ${!bestFakta ? 'disabled' : ''}>
+                <div style="flex: 1;">
+                    <div style="font-weight: 800; font-size: 0.9rem; color: ${bestFakta ? 'var(--text)' : 'var(--text-muted)'}; display: flex; align-items: center; gap: 6px;">
+                        <span>🕵️ Modul Detektif Fakta (Kuis 1)</span>
+                        ${bestFakta ? `<span class="quiz-score-subpill ${bestFakta.score >= 80 ? 'pass' : 'remedy'}" style="font-size: 0.72rem; padding: 2px 6px;">Skor: ${bestFakta.score}</span>` : ''}
+                    </div>
+                    <div style="font-size: 0.76rem; color: var(--text-secondary); margin-top: 2px;">
+                        ${bestFakta ? `Status: <strong>${bestFakta.score >= 80 ? 'LULUS KKM' : 'REMEDIAL'}</strong> · Waktu: ${bestFakta.date || '-'}` : '⏳ <em>Siswa belum memiliki nilai pada modul ini</em>'}
+                    </div>
+                </div>
+            </label>
+
+            <label style="display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: rgba(255,255,255,0.03); border: 1px solid ${defaultChoice === modJaringanId ? 'var(--primary)' : 'var(--glass-border)'}; border-radius: 10px; cursor: pointer; transition: 0.2s;">
+                <input type="radio" name="del-module-choice" value="modul_jaringan_keamanan" ${defaultChoice === modJaringanId ? 'checked' : ''} ${!bestJaringan ? 'disabled' : ''}>
+                <div style="flex: 1;">
+                    <div style="font-weight: 800; font-size: 0.9rem; color: ${bestJaringan ? 'var(--text)' : 'var(--text-muted)'}; display: flex; align-items: center; gap: 6px;">
+                        <span>🛡️ Modul Keamanan Jaringan (Kuis 2)</span>
+                        ${bestJaringan ? `<span class="quiz-score-subpill ${bestJaringan.score >= 80 ? 'pass' : 'remedy'}" style="font-size: 0.72rem; padding: 2px 6px;">Skor: ${bestJaringan.score}</span>` : ''}
+                    </div>
+                    <div style="font-size: 0.76rem; color: var(--text-secondary); margin-top: 2px;">
+                        ${bestJaringan ? `Status: <strong>${bestJaringan.score >= 80 ? 'LULUS KKM' : 'REMEDIAL'}</strong> · Waktu: ${bestJaringan.date || '-'}` : '⏳ <em>Siswa belum memiliki nilai pada modul ini</em>'}
+                    </div>
+                </div>
+            </label>
+
+            <label style="display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: rgba(244,63,94,0.08); border: 1px solid rgba(244,63,94,0.3); border-radius: 10px; cursor: pointer; transition: 0.2s;">
+                <input type="radio" name="del-module-choice" value="all" ${defaultChoice === 'all' ? 'checked' : ''}>
+                <div style="flex: 1;">
+                    <div style="font-weight: 800; font-size: 0.9rem; color: var(--danger);">
+                        ⚠️ Hapus Nilai KEDUA Modul (Hapus Total Siswa Ini)
+                    </div>
+                    <div style="font-size: 0.76rem; color: var(--text-secondary); margin-top: 2px;">
+                        Menghapus seluruh nilai Kuis 1 & Kuis 2 siswa ini. Siswa dapat memulai ulang dari nol.
+                    </div>
+                </div>
+            </label>
+        `;
+    }
+
+    const modal = document.getElementById('delete-single-modal');
+    if (modal) modal.classList.add('active');
 }
+window.openDeleteStudentModuleModal = openDeleteStudentModuleModal;
+
+function openDeleteSingleModal(id, name, cls, timestamp, score) {
+    openDeleteStudentModuleModal(name, cls, null, score);
+}
+window.openDeleteSingleModal = openDeleteSingleModal;
 
 function openDeleteSingleByIndex(recordIdx) {
     const r = window.currentRenderedRecords ? window.currentRenderedRecords[recordIdx] : null;
     if (!r) return;
-    openDeleteSingleModal(r.id || '', r.name || '', r.class || '', r.timestamp || 0, r.score || 0);
+    openDeleteStudentModuleModal(r.name || '', r.class || '', r.moduleId || null, r.score || 0);
 }
 window.openDeleteSingleByIndex = openDeleteSingleByIndex;
 
 function closeDeleteSingleModal() {
     sfxClick();
     targetDeleteRecord = null;
-    document.getElementById('delete-single-modal').classList.remove('active');
+    const modal = document.getElementById('delete-single-modal');
+    if (modal) modal.classList.remove('active');
 }
+window.closeDeleteSingleModal = closeDeleteSingleModal;
 
 async function confirmDeleteSingle() {
     if (!targetDeleteRecord) return;
@@ -282,36 +377,106 @@ async function confirmDeleteSingle() {
         return;
     }
 
+    const selRadio = document.querySelector('input[name="del-module-choice"]:checked');
+    const chosenModule = selRadio ? selRadio.value : (targetDeleteRecord.preselectedModule || 'all');
     const target = targetDeleteRecord;
     closeDeleteSingleModal();
 
-    // 1. Hapus dari LocalStorage
+    const nameMatches = (typeof isNameEquivalent === 'function') 
+        ? (recName) => isNameEquivalent(recName, target.name)
+        : (recName) => (recName || '').trim().toLowerCase() === target.name.trim().toLowerCase();
+    const classMatches = (typeof isClassEquivalent === 'function')
+        ? (recClass) => isClassEquivalent(recClass, target.cls)
+        : (recClass) => (recClass || '').replace(/\s+/g, '').toUpperCase() === (target.cls || '').replace(/\s+/g, '').toUpperCase();
+
+    // 1. Simpan ke daftar tombstone (quizmaster_deleted_records) agar tidak dibangkitkan lagi dari baseline
+    let deletedRecords = [];
+    try {
+        deletedRecords = JSON.parse(localStorage.getItem('quizmaster_deleted_records') || '[]');
+        if (!Array.isArray(deletedRecords)) deletedRecords = [];
+    } catch(e) {}
+
+    const normName = target.name.trim().toLowerCase();
+    const normCls = (target.cls || '').replace(/\s+/g, '').toUpperCase();
+
+    if (chosenModule === 'all' || chosenModule === 'modul_detektif_fakta') {
+        deletedRecords.push(`${normName}|${normCls}|modul_detektif_fakta`);
+    }
+    if (chosenModule === 'all' || chosenModule === 'modul_jaringan_keamanan') {
+        deletedRecords.push(`${normName}|${normCls}|modul_jaringan_keamanan`);
+    }
+    deletedRecords = Array.from(new Set(deletedRecords));
+    localStorage.setItem('quizmaster_deleted_records', JSON.stringify(deletedRecords));
+
+    // 2. Hapus dari LocalStorage
     let records = loadRecords();
     records = records.filter(r => {
-        if (target.id && r.id && target.id == r.id) return false;
-        if (target.timestamp && r.timestamp && target.timestamp == r.timestamp && r.name === target.name) return false;
-        if (r.name === target.name && r.class === target.cls && r.score == target.score) return false;
+        if (!nameMatches(r.name) || !classMatches(r.class)) return true;
+        const rMod = (typeof normalizeModuleId === 'function') ? normalizeModuleId(r.moduleId, r.id, r.date) : (r.moduleId || 'modul_detektif_fakta');
+        if (chosenModule === 'all') return false;
+        if (chosenModule === rMod) return false;
         return true;
     });
     localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
 
-    // 2. Hapus dari Cloud Supabase Real-Time Database
+    // 3. Hapus juga dari emergency backup
+    try {
+        let emergencyList = JSON.parse(localStorage.getItem('quizmaster_emergency_backup_records') || '[]');
+        if (Array.isArray(emergencyList)) {
+            emergencyList = emergencyList.filter(r => {
+                if (!nameMatches(r.name) || !classMatches(r.class)) return true;
+                const rMod = (typeof normalizeModuleId === 'function') ? normalizeModuleId(r.moduleId, r.id, r.date) : (r.moduleId || 'modul_detektif_fakta');
+                if (chosenModule === 'all') return false;
+                if (chosenModule === rMod) return false;
+                return true;
+            });
+            localStorage.setItem('quizmaster_emergency_backup_records', JSON.stringify(emergencyList));
+        }
+    } catch(e) {}
+
+    // 4. Hapus dari Cloud Supabase Real-Time Database
     if (supabaseClient) {
         try {
-            if (target.id) {
-                await supabaseClient.from('quiz_results').delete().eq('id', target.id);
-            } else {
+            if (chosenModule === 'all') {
+                await supabaseClient.from('quiz_results').delete()
+                    .eq('student_name', target.name)
+                    .eq('student_class', target.cls);
+            } else if (chosenModule === 'modul_jaringan_keamanan') {
                 await supabaseClient.from('quiz_results').delete()
                     .eq('student_name', target.name)
                     .eq('student_class', target.cls)
-                    .eq('score', target.score);
+                    .eq('wrong_questions->>moduleId', 'modul_jaringan_keamanan');
+            } else if (chosenModule === 'modul_detektif_fakta') {
+                await supabaseClient.from('quiz_results').delete()
+                    .eq('student_name', target.name)
+                    .eq('student_class', target.cls)
+                    .neq('quiz_date', '25/10/2026');
             }
         } catch (e) {
             console.warn('Supabase delete error:', e);
         }
     }
 
-    // 3. Hapus dari MySQL Server Lokal (opsional jika aktif)
+    // 5. REST API fallback ke Supabase
+    try {
+        const cfg = (typeof getSupabaseConfig === 'function') ? getSupabaseConfig() : null;
+        if (cfg && cfg.url && cfg.key) {
+            let deleteUrl = `${cfg.url.replace(/\/$/, '')}/rest/v1/${cfg.table || 'quiz_results'}?student_name=eq.${encodeURIComponent(target.name)}&student_class=eq.${encodeURIComponent(target.cls)}`;
+            if (chosenModule === 'modul_jaringan_keamanan') {
+                deleteUrl += `&wrong_questions->>moduleId=eq.modul_jaringan_keamanan`;
+            }
+            await fetch(deleteUrl, {
+                method: 'DELETE',
+                headers: {
+                    'apikey': cfg.key,
+                    'Authorization': 'Bearer ' + cfg.key,
+                    'Content-Type': 'application/json'
+                }
+            });
+        }
+    } catch(e) {}
+
+    // 6. Hapus dari MySQL Server Lokal (opsional jika aktif)
     try {
         await fetch('/api/scores', { 
             method: 'DELETE',
@@ -321,17 +486,23 @@ async function confirmDeleteSingle() {
             },
             body: JSON.stringify({ 
                 name: target.name, 
-                class: target.cls, 
-                timestamp: target.timestamp,
-                id: target.id 
+                class: target.cls,
+                moduleId: chosenModule
             })
         });
     } catch (e) {}
 
     sfxWrong();
     renderDashboard();
-    showToast(`Nilai siswa "${target.name}" berhasil dihapus!`, '🗑️');
+
+    const modLabels = {
+        'modul_detektif_fakta': 'Modul Detektif Fakta (Kuis 1)',
+        'modul_jaringan_keamanan': 'Modul Keamanan Jaringan (Kuis 2)',
+        'all': 'Semua Modul Kuis'
+    };
+    showToast(`Nilai ${modLabels[chosenModule] || 'modul'} untuk "${target.name}" berhasil dihapus!`, '🗑️');
 }
+window.confirmDeleteSingle = confirmDeleteSingle;
 
 async function confirmClearData() {
     // 🔒 SECURITY GUARD: Tolak eksekusi jika pengguna belum terverifikasi PIN Guru
@@ -344,6 +515,8 @@ async function confirmClearData() {
 
     closeDeleteModal();
     localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem('quizmaster_emergency_backup_records');
+    localStorage.setItem('quizmaster_deleted_records', JSON.stringify(['__ALL__']));
 
     // 1. Hapus dari Cloud Supabase
     if (supabaseClient) {
@@ -367,6 +540,7 @@ async function confirmClearData() {
     renderDashboard();
     showToast('Semua data rekap siswa berhasil dihapus!', '🗑️');
 }
+window.confirmClearData = confirmClearData;
 
 // ============================================================
 //  🕒 KONTROL AKSES & JADWAL GURU MATA PELAJARAN (RINI SYAFITRI)
@@ -394,6 +568,7 @@ function saveSubmissionPolicySetting() {
     }
     const labelMap = {
         'single_only': '1️⃣ Batas Respon: Hanya 1 Kali Pengerjaan (Tolak Duplikat)',
+        'allow_twice_highest': '✌️ Batas Respon: Dapat Dikumpulkan 2 Kali (Ambil Nilai Tertinggi)',
         'allow_remedy': '⭐ Batas Respon: Boleh Remedi (Simpan Nilai Tertinggi)',
         'allow_multiple': '♾️ Batas Respon: Bebas Mencoba (Catat Semua Respon)'
     };
@@ -1507,15 +1682,41 @@ function renderDashboard() {
     // Sinkronkan pilihan dropdown filter-module jika ada materi baru
     if (filterModuleEl && window.QuizManager) {
         QuizManager.getAllModules().then(mods => {
-            const curVal = filterModuleEl.value;
-            if (filterModuleEl.options.length !== mods.length + 1) {
-                let opts = '<option value="all">📚 Semua Materi / Modul</option>';
-                mods.forEach(m => {
+            const curVal = filterModuleEl.value || 'all';
+            const extraMods = mods.filter(m => m.id !== 'modul_jaringan_keamanan' && m.id !== 'modul_detektif_fakta');
+            if (filterModuleEl.options.length !== 3 + extraMods.length) {
+                let opts = `
+                    <option value="all" ${curVal === 'all' ? 'selected' : ''}>📊 Komparasi 2 Modul (Lengkap)</option>
+                    <option value="modul_jaringan_keamanan" ${curVal === 'modul_jaringan_keamanan' ? 'selected' : ''}>🛡️ Modul Keamanan Jaringan Saja</option>
+                    <option value="modul_detektif_fakta" ${curVal === 'modul_detektif_fakta' ? 'selected' : ''}>🕵️ Modul Detektif Fakta Saja</option>
+                `;
+                extraMods.forEach(m => {
                     opts += `<option value="${m.id}" ${curVal === m.id ? 'selected' : ''}>${m.icon || '📚'} ${m.title}</option>`;
                 });
                 filterModuleEl.innerHTML = opts;
             }
         });
+    }
+
+    // Sinkronkan tombol segmented filter modul & teks indikator aktif
+    const btnsMap = {
+        'all': 'btn-mod-filter-all',
+        'modul_jaringan_keamanan': 'btn-mod-filter-jaringan',
+        'modul_detektif_fakta': 'btn-mod-filter-fakta'
+    };
+    Object.keys(btnsMap).forEach(key => {
+        const btn = document.getElementById(btnsMap[key]);
+        if (btn) btn.classList.toggle('active', key === filterModule);
+    });
+    const indText = document.getElementById('active-module-indicator-text');
+    if (indText) {
+        if (filterModule === 'modul_jaringan_keamanan') {
+            indText.innerHTML = 'Menampilkan: 🛡️ <strong>Modul Keamanan Jaringan Saja</strong> (Kuis lain disembunyikan)';
+        } else if (filterModule === 'modul_detektif_fakta') {
+            indText.innerHTML = 'Menampilkan: 🕵️ <strong>Modul Detektif Fakta Saja</strong> (Kuis lain disembunyikan)';
+        } else {
+            indText.innerHTML = 'Menampilkan: 📊 <strong>Komparasi 2 Modul (Lengkap)</strong>';
+        }
     }
 
     // Render Kontrol Jadwal & Akses Buk RINI
@@ -1788,11 +1989,11 @@ function renderDashboard() {
                     <th style="width: 45px;">No</th>
                     <th style="cursor: pointer;" onclick="toggleSort('name')" title="Klik untuk Urutkan Nama">Nama Siswa ⇅</th>
                     <th style="width: 80px;">Kelas</th>
-                    <th style="text-align: center; width: 140px;" title="Kuis 1: Detektif Fakta">Kuis 1: Detektif Fakta</th>
-                    <th style="text-align: center; width: 140px;" title="Kuis 2: Keamanan Jaringan">Kuis 2: Keamanan Jaringan</th>
+                    <th style="text-align: center; width: 175px;" title="Kuis 1: Detektif Fakta">🕵️ Kuis 1: Detektif Fakta</th>
+                    <th style="text-align: center; width: 175px;" title="Kuis 2: Keamanan Jaringan">🛡️ Kuis 2: Keamanan Jaringan</th>
                     <th style="text-align: center; width: 90px; cursor: pointer;" onclick="toggleSort('score')" title="Urutkan Nilai Rata-Rata">Rata-Rata ⇅</th>
-                    <th style="text-align: center; width: 160px;">Status Pengerjaan</th>
-                    <th style="text-align: center; width: 160px;">Aksi</th>
+                    <th style="text-align: center; width: 140px;">Status Pengerjaan</th>
+                    <th style="text-align: center; width: 165px;">Aksi</th>
                 </tr>
             `;
         } else {
@@ -1850,9 +2051,10 @@ function renderDashboard() {
                         const rIdx1 = window.currentRenderedRecords.length;
                         window.currentRenderedRecords.push(rec1);
                         kuis1Html = `
-                            <div style="display: flex; align-items: center; justify-content: center; gap: 6px;">
+                            <div style="display: flex; align-items: center; justify-content: center; gap: 4px; flex-wrap: wrap;">
                                 <span class="quiz-score-subpill ${isPass1 ? 'pass' : 'remedy'}">${rec1.score} (${isPass1 ? 'Lulus' : 'Remedi'})</span>
                                 <button type="button" class="btn-detail-row" style="padding: 2px 7px; font-size: 0.7rem;" onclick="openStudentDetailModal(window.currentRenderedRecords[${rIdx1}])" title="Periksa Lembar Kuis 1">🔍</button>
+                                <button type="button" class="btn-delete-row" style="padding: 2px 6px; font-size: 0.7rem; border-radius: 4px;" onclick="openDeleteStudentModuleModal('${escapeHtml(item.name)}', '${escapeHtml(item.class)}', 'modul_detektif_fakta', ${rec1.score})" title="Hapus Nilai Kuis 1 (Detektif Fakta) saja">🗑️</button>
                             </div>
                         `;
                     } else {
@@ -1866,9 +2068,10 @@ function renderDashboard() {
                         const rIdx2 = window.currentRenderedRecords.length;
                         window.currentRenderedRecords.push(rec2);
                         kuis2Html = `
-                            <div style="display: flex; align-items: center; justify-content: center; gap: 6px;">
+                            <div style="display: flex; align-items: center; justify-content: center; gap: 4px; flex-wrap: wrap;">
                                 <span class="quiz-score-subpill ${isPass2 ? 'pass' : 'remedy'}">${rec2.score} (${isPass2 ? 'Lulus' : 'Remedi'})</span>
                                 <button type="button" class="btn-detail-row" style="padding: 2px 7px; font-size: 0.7rem;" onclick="openStudentDetailModal(window.currentRenderedRecords[${rIdx2}])" title="Periksa Lembar Kuis 2">🔍</button>
+                                <button type="button" class="btn-delete-row" style="padding: 2px 6px; font-size: 0.7rem; border-radius: 4px;" onclick="openDeleteStudentModuleModal('${escapeHtml(item.name)}', '${escapeHtml(item.class)}', 'modul_jaringan_keamanan', ${rec2.score})" title="Hapus Nilai Kuis 2 (Keamanan Jaringan) saja">🗑️</button>
                             </div>
                         `;
                     } else {
@@ -1895,15 +2098,25 @@ function renderDashboard() {
 
                     // Aksi Bar
                     let actionHtml = '';
-                    if (item.completionStatus !== 'both') {
-                        const missingType = item.completionStatus === 'only_fakta' ? 'only_jaringan' : (item.completionStatus === 'only_jaringan' ? 'only_fakta' : 'both');
+                    if (item.hasFakta || item.hasJaringan) {
                         actionHtml = `
-                            <button type="button" class="btn btn-secondary" onclick="remindStudent('${escapeHtml(item.name)}', '${escapeHtml(item.class)}', '${missingType}')" style="padding: 4px 10px; font-size: 0.72rem; border-radius: 6px; font-weight: 700;" title="Salin Pengingat WhatsApp Sesuai Kuis yang Belum">
+                            <div style="display: flex; align-items: center; justify-content: center; gap: 5px; flex-wrap: wrap;">
+                                <button type="button" class="btn-delete-row" onclick="openDeleteStudentModuleModal('${escapeHtml(item.name)}', '${escapeHtml(item.class)}')" style="padding: 4px 8px; font-size: 0.72rem; border-radius: 6px; font-weight: 700;" title="Pilih modul & hapus nilai untuk siswa ini">
+                                    🗑️ Hapus Nilai...
+                                </button>
+                                ${item.completionStatus !== 'both' ? `
+                                    <button type="button" class="btn btn-secondary" onclick="remindStudent('${escapeHtml(item.name)}', '${escapeHtml(item.class)}', '${item.completionStatus === 'only_fakta' ? 'only_jaringan' : 'only_fakta'}')" style="padding: 4px 8px; font-size: 0.72rem; border-radius: 6px; font-weight: 700;" title="Salin Pengingat WhatsApp Sesuai Kuis yang Belum">
+                                        📲 Ingatkan
+                                    </button>
+                                ` : ''}
+                            </div>
+                        `;
+                    } else {
+                        actionHtml = `
+                            <button type="button" class="btn btn-secondary" onclick="remindStudent('${escapeHtml(item.name)}', '${escapeHtml(item.class)}', 'both')" style="padding: 4px 8px; font-size: 0.72rem; border-radius: 6px; font-weight: 700;" title="Salin Pengingat WhatsApp Belum Ujian">
                                 📲 Ingatkan
                             </button>
                         `;
-                    } else {
-                        actionHtml = `<span style="font-size: 0.75rem; color: var(--success); font-weight: 700;">✅ Lengkap</span>`;
                     }
 
                     tr.innerHTML = `
@@ -1969,7 +2182,7 @@ function renderDashboard() {
                                 <button class="btn-detail-row" title="Periksa Lembar Jawaban & Analisis Kesalahan" onclick="openStudentDetailModal(window.currentRenderedRecords[${recordIdx}])">
                                     🔍 Periksa
                                 </button>
-                                <button class="btn-delete-row" title="Hapus nilai siswa ini" onclick="openDeleteSingleByIndex(${recordIdx})">
+                                <button class="btn-delete-row" title="Hapus nilai siswa ini pada modul ini" onclick="openDeleteStudentModuleModal('${escapeHtml(item.name)}', '${escapeHtml(item.class)}', '${filterModule}', ${r.score})">
                                     🗑️ Hapus
                                 </button>
                             </td>

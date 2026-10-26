@@ -710,36 +710,66 @@ async function initiateQuiz() {
     const previousAttempts = loadRecords().filter(r => {
         const rMod = (typeof normalizeModuleId === 'function') ? normalizeModuleId(r.moduleId, r.id, r.date) : (r.moduleId || 'modul_detektif_fakta');
         const nameMatch = (typeof isNameEquivalent === 'function') ? isNameEquivalent(r.name, name) : (r.name || '').trim().toLowerCase() === name.trim().toLowerCase();
-        const classMatch = (typeof isClassEquivalent === 'function') ? isClassEquivalent(r.class, cls) : r.class === cls;
+        const classMatch = (typeof isClassEquivalent === 'function') ? isClassEquivalent(r.class, cls) : (r.class || '').replace(/\s+/g, '').toUpperCase() === cls.replace(/\s+/g, '').toUpperCase();
         return nameMatch && classMatch && rMod === targetModId;
     });
 
     const isRemedialAllowed = (typeof loadRemedialSetting === 'function') ? loadRemedialSetting() : false;
-    const bestScore = previousAttempts.length > 0 ? Math.max(...previousAttempts.map(r => r.score)) : 0;
-    const isEligibleForRemedial = isRemedialAllowed && bestScore < 80;
-    const cannotRetake = !isEligibleForRemedial && (policy === 'single_only' || isExamModule);
+    const bestScore = previousAttempts.length > 0 ? Math.max(...previousAttempts.map(r => Number(r.score) || 0)) : 0;
+    const attemptCount = previousAttempts.length;
 
-    if (previousAttempts.length > 0 && cannotRetake) {
+    let canProceed = true;
+    let blockMessage = '';
+
+    if (policy === 'allow_twice_highest') {
+        // ✌️ OPSI GURU: Dapat dikumpulkan 2 kali dan ambil nilai tertinggi
+        // Tidak peduli apakah anak sudah atau belum kumpulkan jawaban (attempt 0 atau 1), TETAP BISA!
+        if (attemptCount >= 2) {
+            canProceed = false;
+            blockMessage = `Batas Pengumpulan Tercapai: Anda telah mengirimkan jawaban sebanyak 2 kali untuk modul ini. Nilai tertinggi Anda (${bestScore}/100) telah tersimpan permanen di dasbor guru.`;
+        }
+    } else if (policy === 'allow_multiple') {
+        // ♾️ Ujian bebas tanpa batas pengulangan
+        canProceed = true;
+    } else if (policy === 'allow_remedy') {
+        // ⭐ Boleh remedi jika belum tuntas KKM 80
+        if (attemptCount > 0 && bestScore >= 80 && !isRemedialAllowed) {
+            canProceed = false;
+            blockMessage = `Anda sudah lulus KKM pada modul ini dengan nilai ${bestScore}/100. Pengerjaan ulang hanya dibuka untuk siswa remedial.`;
+        }
+    } else {
+        // 1️⃣ single_only: Hanya 1 kali pengerjaan
+        if (attemptCount > 0 && !(isRemedialAllowed && bestScore < 80)) {
+            canProceed = false;
+            blockMessage = `Siswa ${name} sudah pernah mengirimkan jawaban kuis untuk modul ini (Nilai: ${bestScore}/100). Sesuai pengaturan guru, kuis hanya dapat dikerjakan 1 kali.`;
+        }
+    }
+
+    if (!canProceed) {
         sfxWrong();
-        const prev = previousAttempts[0];
+        const prev = previousAttempts[0] || {};
         const dupModal = document.getElementById('already-submitted-modal');
         if (dupModal) {
             const elName = document.getElementById('dup-student-name');
             const elClass = document.getElementById('dup-student-class');
             const elScore = document.getElementById('dup-student-score');
             const elMeta = document.getElementById('dup-student-meta');
+            const pDesc = dupModal.querySelector('p');
             if (elName) elName.textContent = name;
             if (elClass) elClass.textContent = `Kelas: ${cls}`;
-            if (elScore) elScore.textContent = `Nilai: ${prev.score} / 100`;
+            if (elScore) elScore.textContent = `Nilai Terbaik: ${bestScore} / 100 (${attemptCount}x Pengumpulan)`;
             if (elMeta) elMeta.textContent = `Waktu Submit: ${prev.time || '-'}, ${prev.date || ''} · Durasi: ${prev.duration || '-'}`;
+            if (pDesc && blockMessage) pDesc.textContent = blockMessage;
             dupModal.classList.add('active');
         } else {
-            showToast(`Siswa ${name} sudah pernah mengirimkan jawaban kuis!`, '⚠️');
+            showToast(blockMessage, '⚠️');
         }
         return;
     }
 
-    if (previousAttempts.length > 0 && isRemedialAllowed && bestScore < 80) {
+    if (policy === 'allow_twice_highest' && attemptCount === 1) {
+        showToast(`Percobaan ke-2 Kuis Aktif! Nilai tertinggi dari kedua percobaan yang akan diambil sebagai nilai akhir (${bestScore}/100 vs nilai baru). Selamat berjuang! ✌️⭐`, 'ℹ️');
+    } else if (previousAttempts.length > 0 && isRemedialAllowed && bestScore < 80) {
         showToast(`Sesi Remedial Terarah: Nilai terbaik Anda (${bestScore}/100) tetap dipertahankan jika nilai baru lebih rendah! ⭐`, 'ℹ️');
     } else if (policy === 'allow_remedy' && previousAttempts.length > 0) {
         showToast(`Sesi Remedi: Nilai tertinggi Anda (${bestScore}/100) akan dipertahankan! ⭐`, 'ℹ️');
@@ -1715,7 +1745,7 @@ function finishQuiz() {
     const numCorrect = answeredCorrectly.filter(x => x === true).length;
     const KKM = currentActiveModule ? (currentActiveModule.kkm || 80) : 80;
 
-    // 📈 Rekonsiliasi Nilai Perbaikan Kurikulum Merdeka (Adaptive Remedial Reconcile)
+    // 📈 Rekonsiliasi Nilai Perbaikan Kurikulum Merdeka & Mode 2 Kali Submit
     let displayScore = finalScore;
     let reconciledScore = finalScore;
     if (isRemedialSession && remedialSourceRecord) {
@@ -1724,9 +1754,26 @@ function finishQuiz() {
         displayScore = reconciledScore;
     }
 
-    const isPassed = displayScore >= KKM;
-
     const activeModId = (currentActiveModule && currentActiveModule.id) || (window.QuizManager ? QuizManager.getActiveModuleId() : 'modul_detektif_fakta');
+    const submissionPolicy = (typeof loadSubmissionPolicy === 'function') ? loadSubmissionPolicy() : 'single_only';
+    
+    // Cek pengerjaan sebelumnya untuk memastikan AMBIL NILAI TERTINGGI
+    const prevStudentAttempts = loadRecords().filter(r => {
+        const rMod = (typeof normalizeModuleId === 'function') ? normalizeModuleId(r.moduleId, r.id, r.date) : (r.moduleId || 'modul_detektif_fakta');
+        const nameMatch = (typeof isNameEquivalent === 'function') ? isNameEquivalent(r.name, studentName) : (r.name || '').trim().toLowerCase() === studentName.trim().toLowerCase();
+        const classMatch = (typeof isClassEquivalent === 'function') ? isClassEquivalent(r.class, studentClass) : (r.class || '').replace(/\s+/g, '').toUpperCase() === studentClass.replace(/\s+/g, '').toUpperCase();
+        return nameMatch && classMatch && rMod === activeModId;
+    });
+
+    const isSecondAttempt = prevStudentAttempts.length > 0;
+    const highestPrevScore = isSecondAttempt ? Math.max(...prevStudentAttempts.map(r => Number(r.score) || 0)) : null;
+
+    if ((submissionPolicy === 'allow_twice_highest' || submissionPolicy === 'allow_remedy') && highestPrevScore !== null) {
+        displayScore = Math.max(highestPrevScore, finalScore);
+        reconciledScore = displayScore;
+    }
+
+    const isPassed = displayScore >= KKM;
     const activeModTitle = (currentActiveModule && currentActiveModule.title) || (window.QuizManager && QuizManager.getActiveModule() ? QuizManager.getActiveModule().title : (activeModId === 'modul_jaringan_keamanan' ? 'Penilaian Harian: Infrastruktur Jaringan & Keamanan Digital' : 'Misi Detektif Fakta'));
 
     const record = {
@@ -1803,6 +1850,9 @@ function finishQuiz() {
                 kkmBanner.className = 'kkm-status-banner remedial';
                 kkmBanner.innerHTML = `⚠️ STATUS: REMEDIAL BELUM TUNTAS (Skor: ${displayScore} / 100 • KKM: ${KKM})`;
             }
+        } else if (submissionPolicy === 'allow_twice_highest' && isSecondAttempt) {
+            kkmBanner.className = 'kkm-status-banner ' + (isPassed ? 'passed' : 'remedial');
+            kkmBanner.innerHTML = `✌️🏆 HASIL PERCOBAAN KE-2 (Nilai Tes Baru: ${finalScore} | Nilai Terbaik Diambil: ${displayScore} / 100 • KKM: ${KKM})`;
         } else {
             if (isPassed) {
                 kkmBanner.className = 'kkm-status-banner passed';

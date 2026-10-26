@@ -65,9 +65,17 @@ function mergeRecordsList(existingList, incomingList) {
             map.set(k, item);
         } else {
             const cur = map.get(k);
-            if ((item.score || 0) >= (cur.score || 0) || (item.timestamp || 0) > (cur.timestamp || 0)) {
-                map.set(k, { ...cur, ...item });
-            }
+            // 🏆 AMBIL NILAI TERTINGGI: Selalu pertahankan skor tertinggi dari seluruh percobaan
+            const bestScore = Math.max(Number(cur.score) || 0, Number(item.score) || 0);
+            const higher = (Number(item.score) || 0) >= (Number(cur.score) || 0) ? item : cur;
+            map.set(k, {
+                ...cur,
+                ...item,
+                score: bestScore,
+                correct: higher.correct !== undefined ? higher.correct : (item.correct !== undefined ? item.correct : cur.correct),
+                wrongQuestions: higher.wrongQuestions || item.wrongQuestions || cur.wrongQuestions,
+                detailedAnswers: higher.detailedAnswers || item.detailedAnswers || cur.detailedAnswers
+            });
         }
     });
 
@@ -92,6 +100,31 @@ function purgeFakeJkiRecords(list) {
     });
 }
 window.purgeFakeJkiRecords = purgeFakeJkiRecords;
+
+// 🗑️ Helper filter data yang telah resmi dihapus oleh Guru (Tombstones)
+function filterDeletedRecords(list) {
+    if (!Array.isArray(list) || list.length === 0) return [];
+    let deletedKeys = new Set();
+    try {
+        const rawDel = JSON.parse(localStorage.getItem('quizmaster_deleted_records') || '[]');
+        if (Array.isArray(rawDel)) {
+            deletedKeys = new Set(rawDel);
+        }
+    } catch(e) {}
+    if (!deletedKeys.size) return list;
+
+    return list.filter(r => {
+        if (!r) return false;
+        const normName = (r.name || r.student_name || '').toLowerCase().trim();
+        const normCls = (r.class || r.student_class || '').replace(/\s+/g, '').toUpperCase();
+        const modId = normalizeModuleId(r.moduleId || r.module_id, r.id, r.date || r.quiz_date);
+        const k = `${normName}|${normCls}|${modId}`;
+        if (deletedKeys.has(k)) return false;
+        if (r.id && deletedKeys.has(String(r.id))) return false;
+        return true;
+    });
+}
+window.filterDeletedRecords = filterDeletedRecords;
 
 const OFFICIAL_DATA_SYNC_KEY = 'quizmaster_official_pdf_sync_ver';
 const CURRENT_OFFICIAL_VERSION = '20261026_clean_official_v4';
@@ -123,9 +156,9 @@ function loadRecords() {
 
         // Jika versi sinkronisasi belum versi bersih terbaru, paksa pembersihan localStorage
         if (syncVer !== CURRENT_OFFICIAL_VERSION) {
-            const mergedClean = mergeRecordsList(baseline, saved);
+            const mergedClean = filterDeletedRecords(mergeRecordsList(baseline, saved));
             localStorage.setItem(STORAGE_KEY, JSON.stringify(mergedClean));
-            localStorage.setItem('quizmaster_emergency_backup_records', JSON.stringify(emergency));
+            localStorage.setItem('quizmaster_emergency_backup_records', JSON.stringify(filterDeletedRecords(emergency)));
             localStorage.setItem(OFFICIAL_DATA_SYNC_KEY, CURRENT_OFFICIAL_VERSION);
             return mergedClean;
         }
@@ -138,10 +171,10 @@ function loadRecords() {
             baseList = mergeRecordsList(baseList, emergency);
         }
 
-        baseList = purgeFakeJkiRecords(baseList);
+        baseList = filterDeletedRecords(purgeFakeJkiRecords(baseList));
         return baseList;
     } catch (e) {
-        return getCleanOfficialBaseline();
+        return filterDeletedRecords(getCleanOfficialBaseline());
     }
 }
 window.loadRecords = loadRecords;
@@ -153,6 +186,7 @@ function restoreOfficialPdfRecords() {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(clean));
         localStorage.removeItem('detektif_fakta_records');
         localStorage.setItem('quizmaster_emergency_backup_records', '[]');
+        localStorage.removeItem('quizmaster_deleted_records'); // Reset daftar hapus saat guru ingin memulihkan penuh
         localStorage.setItem(OFFICIAL_DATA_SYNC_KEY, CURRENT_OFFICIAL_VERSION);
         if (typeof renderDashboard === 'function') renderDashboard();
         showToast(`✅ Basis data disinkronkan: ${clean.length} nilai resmi Modul Detektif Fakta. Modul Keamanan Jaringan bersih (0 pengerjaan)!`, '📥');
@@ -616,7 +650,7 @@ async function syncWithBackend(showFeedback = false) {
         const baseline = (typeof OFFICIAL_EXAM_RESULTS !== 'undefined' && Array.isArray(OFFICIAL_EXAM_RESULTS)) ? purgeFakeJkiRecords(OFFICIAL_EXAM_RESULTS) : [];
         const currentLocal = purgeFakeJkiRecords(JSON.parse(localStorage.getItem(STORAGE_KEY)) || []);
         const mergedBaseline = mergeRecordsList(baseline, currentLocal);
-        const finalRecords = purgeFakeJkiRecords(mergeRecordsList(mergedBaseline, formatted));
+        const finalRecords = filterDeletedRecords(purgeFakeJkiRecords(mergeRecordsList(mergedBaseline, formatted)));
 
         localStorage.setItem(STORAGE_KEY, JSON.stringify(finalRecords));
         localStorage.setItem(OFFICIAL_DATA_SYNC_KEY, CURRENT_OFFICIAL_VERSION);

@@ -6,6 +6,8 @@
     <meta name="format-detection" content="telephone=no, email=no, address=no, date=no">
     <title>📝 QuizMaster — Platform Kuis Interaktif Cerdas</title>
     <meta name="description" content="Platform kuis interaktif cerdas dengan AI auto-generate soal untuk evaluasi pembelajaran siswa.">
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="alternate icon" href="favicon.ico">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
     <!-- SheetJS Library untuk Ekspor & Impor Excel (.xlsx / .csv) -->
@@ -203,18 +205,24 @@
 
 <!-- Single Student Delete Confirmation Modal -->
 <div class="modal-overlay" id="delete-single-modal">
-    <div class="modal-box" style="border-color: rgba(244,63,94,0.4); box-shadow: 0 0 40px rgba(244,63,94,0.2);">
+    <div class="modal-box" style="border-color: rgba(244,63,94,0.4); box-shadow: 0 0 40px rgba(244,63,94,0.2); max-width: 500px; width: 92%;">
         <div style="font-size: 2.8rem; margin-bottom: 8px;">👤🗑️</div>
         <h3 style="color: var(--danger);">Hapus Nilai Siswa</h3>
         <p style="color: var(--text-secondary); line-height: 1.5; margin-bottom: 16px;">
-            Apakah Anda yakin ingin menghapus data nilai siswa berikut dari sistem?
+            Pilih opsi modul nilai siswa yang ingin Anda hapus dari sistem:
         </p>
         <div style="background: rgba(255,255,255,0.04); border: 1px solid var(--glass-border); padding: 12px 16px; border-radius: 12px; margin-bottom: 18px; text-align: left;">
             <div style="font-weight: 800; font-size: 1.05rem; color: var(--accent);" id="del-student-name">-</div>
             <div style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 4px;" id="del-student-info">-</div>
         </div>
+
+        <!-- Dynamic Module Choice Container -->
+        <div id="del-module-options-container" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 18px; text-align: left;">
+            <!-- Rendered dynamically by openDeleteStudentModuleModal -->
+        </div>
+
         <p style="color: var(--danger); font-size: 0.8rem; margin-bottom: 20px;">
-            Nilai siswa ini akan dihapus secara permanen dari penyimpanan lokal & Cloud Supabase.
+            Nilai modul terpilih akan dihapus permanen dari penyimpanan lokal & Cloud Supabase.
         </p>
         <div class="modal-actions">
             <button class="btn btn-secondary" onclick="closeDeleteSingleModal()">Batal</button>
@@ -1172,8 +1180,9 @@
 
                     <div class="setting-row" style="margin: 0; display: flex; align-items: center; gap: 10px;">
                         <label for="setting-submission-policy" style="font-weight: 700; font-size: 0.88rem; color: var(--text);">🔄 Batas Respon Siswa:</label>
-                        <select id="setting-submission-policy" onchange="saveSubmissionPolicySetting()" class="form-select-modern" style="max-width: 320px; font-size: 0.85rem;">
+                        <select id="setting-submission-policy" onchange="saveSubmissionPolicySetting()" class="form-select-modern" style="max-width: 340px; font-size: 0.85rem;">
                             <option value="single_only" selected>1️⃣ Hanya 1 Kali (Tolak Pengiriman Ganda)</option>
+                            <option value="allow_twice_highest">✌️ Dapat Dikumpulkan 2 Kali (Ambil Nilai Tertinggi)</option>
                             <option value="allow_remedy">⭐ Boleh Remedi (Simpan Nilai Tertinggi)</option>
                             <option value="allow_multiple">♾️ Boleh Ujian Bebas (Catat Semua Percobaan)</option>
                         </select>
@@ -1359,9 +1368,10 @@
                     <option value="time_desc">⏱️ Waktu (Terbaru ➔ Terlama)</option>
                     <option value="time_asc">⏳ Waktu (Terlama ➔ Terbaru)</option>
                 </select>
-                <select id="filter-module" onchange="renderDashboard()" class="form-select" style="max-width: 200px; font-size: 0.85rem;">
-                    <option value="all">📚 Semua Materi</option>
-                    <!-- Populated dynamically via QuizManager -->
+                <select id="filter-module" onchange="selectModuleSegment(this.value)" class="form-select" style="max-width: 260px; font-size: 0.85rem;">
+                    <option value="all">📊 Komparasi 2 Modul (Lengkap)</option>
+                    <option value="modul_jaringan_keamanan">🛡️ Modul Keamanan Jaringan Saja</option>
+                    <option value="modul_detektif_fakta">🕵️ Modul Detektif Fakta Saja</option>
                 </select>
                 <select id="filter-class" onchange="renderDashboard()" class="form-select" style="max-width: 150px; font-size: 0.85rem;">
                     <option value="all">🏫 Semua Kelas</option>
