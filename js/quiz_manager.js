@@ -381,24 +381,22 @@ const QuizManager = {
             }
         }
 
-        let updated = false;
-        const hasDefault = list.some(m => m.id === this.DEFAULT_MODULE.id);
-        if (!hasDefault) {
-            list.unshift(this.DEFAULT_MODULE);
-            updated = true;
-        }
+        // Pastikan urutan kanonikal:
+        // Index 0: Modul 1 (Misi Detektif Fakta)
+        // Index 1: Modul 2 (Penilaian Harian: Jaringan & Keamanan)
+        // Index 2+: Modul tambahan buatan guru
+        const customModules = (Array.isArray(list) ? list : []).filter(
+            m => m && m.id !== this.DEFAULT_MODULE.id && m.id !== this.NETWORK_SECURITY_MODULE.id
+        );
 
-        const hasNetwork = list.some(m => m.id === this.NETWORK_SECURITY_MODULE.id);
-        if (!hasNetwork) {
-            list.unshift(this.NETWORK_SECURITY_MODULE);
-            updated = true;
-        }
+        const orderedList = [
+            this.DEFAULT_MODULE,
+            this.NETWORK_SECURITY_MODULE,
+            ...customModules
+        ];
 
-        if (updated) {
-            this.saveModulesList(list);
-        }
-
-        return list;
+        this.saveModulesList(orderedList);
+        return orderedList;
     },
 
     saveModulesList(modulesList) {
@@ -406,7 +404,7 @@ const QuizManager = {
     },
 
     getActiveModuleId() {
-        return localStorage.getItem(this.ACTIVE_MODULE_KEY) || this.NETWORK_SECURITY_MODULE.id;
+        return localStorage.getItem(this.ACTIVE_MODULE_KEY) || this.DEFAULT_MODULE.id;
     },
 
     setActiveModuleId(id, broadcast = true) {

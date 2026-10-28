@@ -25,8 +25,6 @@ function normalizeModuleId(modId, id, date) {
     }
     if (typeof id === 'string' && (id.startsWith('jki-') || id.includes('jaringan') || id.includes('keamanan'))) return 'modul_jaringan_keamanan';
     if (typeof id === 'string' && id.startsWith('pdf-')) return 'modul_detektif_fakta';
-    if (typeof id === 'number' && id >= 670) return 'modul_jaringan_keamanan';
-    if (typeof date === 'string' && (date.includes('/10/2026') || date.includes('-10-') || date.includes('/10/') || date.includes('25/10') || date.includes('26/10') || date.includes('27/10') || date.includes('28/10'))) return 'modul_jaringan_keamanan';
     return 'modul_detektif_fakta';
 }
 window.normalizeModuleId = normalizeModuleId;

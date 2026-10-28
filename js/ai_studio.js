@@ -7,10 +7,15 @@ async function initModulesCatalog() {
     const modules = await QuizManager.getAllModules();
     const homeSelect = document.getElementById('input-module');
     const filterSelect = document.getElementById('filter-module');
-    const activeId = QuizManager.getActiveModuleId();
 
     if (homeSelect) {
         homeSelect.innerHTML = '';
+        // Modul 1 (Misi Detektif Fakta) harus selalu menjadi pilihan utama & default bagi siswa,
+        // kecuali siswa secara eksplisit memilih modul lain pada dropdown di sesi aktif.
+        const sessionChosenId = sessionStorage.getItem('user_chosen_module_id');
+        const activeId = sessionChosenId || QuizManager.DEFAULT_MODULE.id;
+        QuizManager.setActiveModuleId(activeId, false);
+
         modules.forEach(m => {
             const opt = document.createElement('option');
             opt.value = m.id;
@@ -18,7 +23,7 @@ async function initModulesCatalog() {
             if (m.id === activeId) opt.selected = true;
             homeSelect.appendChild(opt);
         });
-        handleHomeModuleChange();
+        handleHomeModuleChange(false);
     }
 
     if (filterSelect) {
@@ -30,10 +35,15 @@ async function initModulesCatalog() {
     }
 }
 
-async function handleHomeModuleChange() {
+async function handleHomeModuleChange(isUserAction = false) {
     const sel = document.getElementById('input-module');
     if (!sel || !window.QuizManager) return;
     const moduleId = sel.value;
+    if (isUserAction) {
+        try {
+            sessionStorage.setItem('user_chosen_module_id', moduleId);
+        } catch (e) {}
+    }
     QuizManager.setActiveModuleId(moduleId);
 
     const modules = await QuizManager.getAllModules();
