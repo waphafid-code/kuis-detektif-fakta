@@ -12,8 +12,19 @@ let firebaseApp = null;
 let firestoreDb = null;
 let firebaseRealtimeUnsubscribe = null;
 
+const DEFAULT_FIREBASE_CONFIG = {
+    apiKey: "AIzaSyDF1bsT8NFwu5qc33UrHcFiECxH63-J9P0",
+    authDomain: "kuis-informatika-c8781.firebaseapp.com",
+    projectId: "kuis-informatika-c8781",
+    storageBucket: "kuis-informatika-c8781.firebasestorage.app",
+    messagingSenderId: "707112824956",
+    appId: "1:707112824956:web:01c89af0c315927c3719f9",
+    measurementId: "G-HM72HHWR7P"
+};
+window.DEFAULT_FIREBASE_CONFIG = DEFAULT_FIREBASE_CONFIG;
+
 /**
- * Mengambil konfigurasi Firebase dari localStorage
+ * Mengambil konfigurasi Firebase dari localStorage atau default resmi project kuis-informatika
  */
 function getFirebaseConfig() {
     try {
@@ -22,7 +33,7 @@ function getFirebaseConfig() {
             return saved;
         }
     } catch (e) {}
-    return null;
+    return { ...DEFAULT_FIREBASE_CONFIG };
 }
 window.getFirebaseConfig = getFirebaseConfig;
 

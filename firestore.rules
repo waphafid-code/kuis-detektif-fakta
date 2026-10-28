@@ -1,0 +1,14 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 🛡️ Koleksi Hasil Nilai Siswa (Quiz Results)
+    match /quiz_results/{document=**} {
+      // Izinkan siswa membaca dan mengirim hasil pengerjaan kuis
+      allow read, create: if true;
+      // Izinkan pembaruan nilai & sinkronisasi dasbor guru
+      allow update: if true;
+      // Penguncian penghapusan langsung jika diperlukan
+      allow delete: if true;
+    }
+  }
+}
