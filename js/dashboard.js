@@ -46,6 +46,7 @@ window.sanitizeSpreadsheetValue = sanitizeSpreadsheetValue;
 // 🛡️ SECURITY: SHA-256 Hash PIN Guru resmi (2543) — Mencegah pembacaan PIN dari source/console
 const TEACHER_PIN_HASH = '887846b0aa6af194c7e153372b41453af317c9407cb72cd75b9f633eb8ebf3a4';
 let _isTeacherAuthenticated = false;
+let _cachedValidToken = null;
 
 async function hashPin(str) {
     if (!str) return '';
@@ -60,10 +61,239 @@ async function hashPin(str) {
     }
 }
 
+function getSessionSalt() {
+    let salt = sessionStorage.getItem('__qm_sec_seed');
+    if (!salt) {
+        salt = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : (Math.random().toString(36).slice(2) + Date.now().toString(36));
+        sessionStorage.setItem('__qm_sec_seed', salt);
+    }
+    return salt;
+}
+
+async function generateSignedTeacherToken() {
+    const salt = getSessionSalt();
+    _cachedValidToken = await hashPin(salt + ':' + TEACHER_PIN_HASH);
+    return _cachedValidToken;
+}
+
+// Inisialisasi pengecekan token valid saat skrip dimuat (Mencegah bypass via sessionStorage.setItem di Console)
+(async function initTeacherAuthCheck() {
+    try {
+        const existing = sessionStorage.getItem('quizmaster_teacher_auth_token');
+        if (existing) {
+            const salt = getSessionSalt();
+            const expected = await hashPin(salt + ':' + TEACHER_PIN_HASH);
+            if (existing === expected) {
+                _cachedValidToken = expected;
+                _isTeacherAuthenticated = true;
+            } else {
+                sessionStorage.removeItem('quizmaster_teacher_auth_token');
+                _isTeacherAuthenticated = false;
+            }
+        }
+    } catch(e) {}
+})();
+
 function isTeacherAuthValid() {
-    return _isTeacherAuthenticated || !!sessionStorage.getItem('quizmaster_teacher_auth_token');
+    if (_isTeacherAuthenticated) return true;
+    const token = sessionStorage.getItem('quizmaster_teacher_auth_token');
+    if (!token) return false;
+    if (_cachedValidToken && token === _cachedValidToken) {
+        _isTeacherAuthenticated = true;
+        return true;
+    }
+    return false;
 }
 window.isTeacherAuthValid = isTeacherAuthValid;
+
+// ============================================================
+// 👆 WEBAUTHN BIOMETRIC CONTROLLER (SIDIK JARI / FACE ID M-BANKING)
+// ============================================================
+function bufferToBase64(buffer) {
+    const bytes = new Uint8Array(buffer);
+    let binary = '';
+    for (let i = 0; i < bytes.byteLength; i++) {
+        binary += String.fromCharCode(bytes[i]);
+    }
+    return btoa(binary);
+}
+
+function base64ToBuffer(base64) {
+    const binary = atob(base64);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) {
+        bytes[i] = binary.charCodeAt(i);
+    }
+    return bytes.buffer;
+}
+
+async function isBiometricAvailable() {
+    if (typeof window === 'undefined') return false;
+    if (!window.PublicKeyCredential) return false;
+    if (typeof PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable !== 'function') return false;
+    try {
+        return await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
+    } catch (e) {
+        return false;
+    }
+}
+window.isBiometricAvailable = isBiometricAvailable;
+
+async function initBiometricUI() {
+    const btn = document.getElementById('btn-biometric-login');
+    const label = document.getElementById('biometric-login-label');
+    const hint = document.getElementById('biometric-hint');
+    const section = document.getElementById('biometric-auth-section');
+    if (!btn || !label || !hint) return;
+
+    const available = await isBiometricAvailable();
+    if (!available) {
+        if (hint) hint.textContent = 'Sensor biometrik tidak aktif / didukung pada browser ini. Gunakan PIN.';
+        btn.style.opacity = '0.6';
+        return;
+    }
+
+    btn.style.opacity = '1';
+    const savedCredId = localStorage.getItem('quizmaster_biometric_cred_id');
+    if (savedCredId) {
+        label.textContent = 'Sentuh Sensor Fingerprint / Face ID';
+        hint.textContent = 'Sentuh sensor sidik jari HP / Windows Hello laptop (seperti m-Banking)';
+    } else {
+        label.textContent = 'Daftarkan Sidik Jari (m-Banking)';
+        hint.textContent = 'Sentuh tombol ini untuk mengaktifkan sidik jari pada perangkat Anda';
+    }
+}
+window.initBiometricUI = initBiometricUI;
+
+async function authenticateWithBiometrics() {
+    sfxClick();
+    const errBox = document.getElementById('pin-error-msg');
+    const label = document.getElementById('biometric-login-label');
+    const hint = document.getElementById('biometric-hint');
+
+    const available = await isBiometricAvailable();
+    if (!available) {
+        if (errBox) {
+            errBox.textContent = 'ℹ️ Sensor biometrik tidak tersedia pada browser/perangkat ini. Silakan gunakan 4 digit PIN.';
+            errBox.style.display = 'flex';
+        }
+        return;
+    }
+
+    const savedCredId = localStorage.getItem('quizmaster_biometric_cred_id');
+
+    if (!savedCredId) {
+        // PERTAMA KALI: Pendaftaran Sidik Jari (Enrollment)
+        const pinInput = document.getElementById('pin-input');
+        const pin = pinInput ? pinInput.value.trim() : '';
+        const pinH = await hashPin(pin);
+
+        if (pinH !== TEACHER_PIN_HASH) {
+            if (errBox) {
+                errBox.textContent = '👉 Masukkan 4 digit PIN Guru di bawah terlebih dahulu, lalu sentuh tombol Fingerprint untuk mendaftarkan sensor perangkat ini.';
+                errBox.style.display = 'flex';
+            }
+            if (pinInput) pinInput.focus();
+            return;
+        }
+
+        try {
+            if (label) label.textContent = '⏳ Memindai Sensor Biometrik...';
+            const challenge = new Uint8Array(32);
+            window.crypto.getRandomValues(challenge);
+
+            const userId = new Uint8Array(16);
+            window.crypto.getRandomValues(userId);
+
+            const credential = await navigator.credentials.create({
+                publicKey: {
+                    challenge: challenge,
+                    rp: {
+                        name: "Kuis Informatika SMAN 4",
+                        id: (window.location.hostname && window.location.hostname.includes('.')) ? window.location.hostname : undefined
+                    },
+                    user: {
+                        id: userId,
+                        name: "guru.informatika@sman4.sch.id",
+                        displayName: "Guru Mata Pelajaran Informatika"
+                    },
+                    pubKeyCredParams: [
+                        { alg: -7, type: "public-key" },
+                        { alg: -257, type: "public-key" }
+                    ],
+                    authenticatorSelection: {
+                        authenticatorAttachment: "platform",
+                        userVerification: "required",
+                        residentKey: "preferred"
+                    },
+                    timeout: 60000,
+                    attestation: "none"
+                }
+            });
+
+            if (credential && credential.rawId) {
+                const credIdBase64 = bufferToBase64(credential.rawId);
+                localStorage.setItem('quizmaster_biometric_cred_id', credIdBase64);
+                localStorage.setItem('quizmaster_biometric_registered_at', new Date().toISOString());
+
+                const sessionToken = await generateSignedTeacherToken();
+                sessionStorage.setItem('quizmaster_teacher_auth_token', sessionToken);
+                grantTeacherAccess('Biometric');
+                showToast('🎉 Sidik Jari Perangkat Berhasil Didaftarkan! Mulai sekarang Anda bisa login langsung via sensor.', '👆');
+            }
+        } catch (err) {
+            console.warn('Biometric registration error:', err);
+            if (label) label.textContent = 'Daftarkan Sidik Jari (m-Banking)';
+            if (errBox) {
+                if (err.name === 'NotAllowedError') {
+                    errBox.textContent = '⚠️ Pemindaian dibatalkan atau waktu habis. Coba lagi atau gunakan PIN.';
+                } else {
+                    errBox.textContent = `⚠️ Gagal mendaftarkan sidik jari: ${err.message || 'Error platform'}`;
+                }
+                errBox.style.display = 'flex';
+            }
+        }
+    } else {
+        // LOGIN DENGAN SIDIK JARI TERDAFTAR (VERIFIKASI PERSIS SEPERTI MBANKING)
+        try {
+            if (label) label.textContent = '⏳ Memverifikasi Sidik Jari...';
+            const challenge = new Uint8Array(32);
+            window.crypto.getRandomValues(challenge);
+
+            const assertion = await navigator.credentials.get({
+                publicKey: {
+                    challenge: challenge,
+                    allowCredentials: [{
+                        id: base64ToBuffer(savedCredId),
+                        type: 'public-key',
+                        transports: ['internal']
+                    }],
+                    userVerification: 'required',
+                    timeout: 60000
+                }
+            });
+
+            if (assertion) {
+                const sessionToken = await generateSignedTeacherToken();
+                sessionStorage.setItem('quizmaster_teacher_auth_token', sessionToken);
+                grantTeacherAccess('Biometric');
+            }
+        } catch (err) {
+            console.warn('Biometric assertion error:', err);
+            if (label) label.textContent = 'Sentuh Sensor Fingerprint / Face ID';
+            if (errBox) {
+                if (err.name === 'NotAllowedError') {
+                    errBox.textContent = '⚠️ Pemindaian sidik jari dibatalkan. Silakan sentuh tombol lagi atau ketik PIN.';
+                } else {
+                    errBox.textContent = '⚠️ Verifikasi sidik jari tidak cocok. Silakan masukkan 4 digit PIN Guru.';
+                }
+                errBox.style.display = 'flex';
+            }
+        }
+    }
+}
+window.authenticateWithBiometrics = authenticateWithBiometrics;
+
 
 let pinFailedAttempts = 0;
 let pinLockoutUntil = 0;
@@ -140,6 +370,11 @@ function openPinModal() {
     if (eyeBtn) eyeBtn.textContent = '👁️';
     const errBox = document.getElementById('pin-error-msg');
     if (errBox) errBox.style.display = 'none';
+
+    // Inisialisasi tampilan status biometrik m-banking
+    if (typeof initBiometricUI === 'function') {
+        initBiometricUI();
+    }
 }
 window.openPinModal = openPinModal;
 
@@ -152,6 +387,41 @@ function closeModal() {
     updatePinDots('');
 }
 window.closeModal = closeModal;
+
+function grantTeacherAccess(authMethod = 'PIN') {
+    pinFailedAttempts = 0;
+    pinLockoutUntil = 0;
+    _isTeacherAuthenticated = true;
+
+    sfxCorrect();
+    closeModal();
+    initAudio();
+    const saved = loadTimerSetting();
+    const timerInp = document.getElementById('setting-timer');
+    if (timerInp) timerInp.value = saved;
+    TIMER_MAX = saved;
+
+    const mgSaved = (typeof loadMiniGamesTimerSetting === 'function') ? loadMiniGamesTimerSetting() : 30;
+    const mgTimerInp = document.getElementById('setting-minigames-timer');
+    if (mgTimerInp) mgTimerInp.value = mgSaved;
+
+    checkBackendStatus();
+    switchScreen('teacher');
+    if (window.targetTeacherTabAfterPin && typeof switchTeacherTab === 'function') {
+        switchTeacherTab(window.targetTeacherTabAfterPin);
+        window.targetTeacherTabAfterPin = null;
+    } else if (typeof switchTeacherTab === 'function') {
+        switchTeacherTab('records');
+    }
+    startDashboardAutoRefresh();
+
+    if (authMethod === 'Biometric') {
+        showToast('Akses Sidik Jari / Face ID Terverifikasi 🔓', '👆');
+    } else {
+        showToast('Akses Dasbor Guru Terverifikasi 🔓', '👩‍🏫');
+    }
+}
+window.grantTeacherAccess = grantTeacherAccess;
 
 async function submitPin() {
     const input = document.getElementById('pin-input');
@@ -174,34 +444,9 @@ async function submitPin() {
     const isValid = (pinH === TEACHER_PIN_HASH);
 
     if (isValid) {
-        pinFailedAttempts = 0;
-        pinLockoutUntil = 0;
-        _isTeacherAuthenticated = true;
-        const sessionToken = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : ('auth_' + Date.now());
+        const sessionToken = await generateSignedTeacherToken();
         sessionStorage.setItem('quizmaster_teacher_auth_token', sessionToken);
-
-        sfxCorrect();
-        closeModal();
-        initAudio();
-        const saved = loadTimerSetting();
-        const timerInp = document.getElementById('setting-timer');
-        if (timerInp) timerInp.value = saved;
-        TIMER_MAX = saved;
-
-        const mgSaved = (typeof loadMiniGamesTimerSetting === 'function') ? loadMiniGamesTimerSetting() : 30;
-        const mgTimerInp = document.getElementById('setting-minigames-timer');
-        if (mgTimerInp) mgTimerInp.value = mgSaved;
-
-        checkBackendStatus();
-        switchScreen('teacher');
-        if (window.targetTeacherTabAfterPin && typeof switchTeacherTab === 'function') {
-            switchTeacherTab(window.targetTeacherTabAfterPin);
-            window.targetTeacherTabAfterPin = null;
-        } else if (typeof switchTeacherTab === 'function') {
-            switchTeacherTab('records');
-        }
-        startDashboardAutoRefresh();
-        showToast('Akses Dasbor Guru Terverifikasi 🔓', '👩‍🏫');
+        grantTeacherAccess('PIN');
     } else {
         sfxWrong();
         pinFailedAttempts++;
@@ -492,6 +737,15 @@ async function confirmDeleteSingle() {
         });
     } catch (e) {}
 
+    // 7. Hapus dari Firebase Realtime Database & Firestore (Mencegah Zombie Record)
+    if (typeof deleteFirebaseRecord === 'function') {
+        try {
+            await deleteFirebaseRecord(target.name, target.cls, chosenModule);
+        } catch (e) {
+            console.warn('Firebase delete error:', e);
+        }
+    }
+
     sfxWrong();
     renderDashboard();
 
@@ -535,6 +789,15 @@ async function confirmClearData() {
             }
         });
     } catch (e) {}
+
+    // 3. Hapus dari Firebase Realtime Database & Firestore
+    if (typeof deleteAllFirebaseRecords === 'function') {
+        try {
+            await deleteAllFirebaseRecords();
+        } catch (e) {
+            console.warn('Firebase clear all error:', e);
+        }
+    }
 
     sfxWrong();
     renderDashboard();

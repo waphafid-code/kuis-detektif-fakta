@@ -522,6 +522,19 @@ async function checkBackendStatus() {
         }
     } catch (e) {}
 
+    // 2b. Cek Koneksi ke Google Firebase Realtime Database 24 Jam
+    if (typeof testFirebaseConnection === 'function') {
+        try {
+            const fbTest = await testFirebaseConnection();
+            if (fbTest && fbTest.success) {
+                isBackendOnline = true;
+                updateDbBadge(true);
+                syncWithBackend(false);
+                return;
+            }
+        } catch(e) {}
+    }
+
     // 3. Cadangan Offline (LocalStorage) dengan tombol aksi Supabase
     isBackendOnline = false;
     updateDbBadge(false);
@@ -613,26 +626,10 @@ async function syncWithBackend(showFeedback = false) {
     const tableName = cfg.table || 'quiz_results';
 
     let rawData = null;
+    let fbRecords = [];
+    let isAnyOnline = false;
 
-    // 1. Coba ambil data via REST API langsung (paling cepat & andal di mobile/desktop)
-    try {
-        rawData = await fetchSupabaseRecords(cfg);
-    } catch (restErr) {
-        console.warn('REST sync fetch error, mencoba supabaseClient:', restErr.message);
-        if (supabaseClient) {
-            try {
-                const { data, error } = await supabaseClient
-                    .from(tableName)
-                    .select('*')
-                    .neq('student_class', '__SYSTEM_CONFIG__')
-                    .order('id', { ascending: false })
-                    .limit(5000);
-                if (!error && Array.isArray(data)) rawData = data;
-            } catch (sdkErr) {}
-        }
-    }
-
-    // Ambil status shared state cloud di latar belakang secara terpisah agar tidak mempengaruhi kuota data siswa
+    // Ambil status shared state cloud di latar belakang secara terpisah
     if (typeof fetchCloudSharedState === 'function') {
         fetchCloudSharedState().then(cloudState => {
             if (cloudState && typeof applyCloudSharedStateToLocal === 'function') {
@@ -641,7 +638,51 @@ async function syncWithBackend(showFeedback = false) {
         }).catch(() => {});
     }
 
-    if (Array.isArray(rawData)) {
+    // 1. Tarik data dari Cloud Supabase & Firebase Realtime Database secara paralel & independen
+    const [supabaseResult, firebaseResult] = await Promise.allSettled([
+        (async () => {
+            try {
+                return await fetchSupabaseRecords(cfg);
+            } catch (restErr) {
+                if (supabaseClient) {
+                    const { data, error } = await supabaseClient
+                        .from(tableName)
+                        .select('*')
+                        .neq('student_class', '__SYSTEM_CONFIG__')
+                        .order('id', { ascending: false })
+                        .limit(5000);
+                    if (!error && Array.isArray(data)) return data;
+                }
+                throw restErr;
+            }
+        })(),
+        (async () => {
+            if (typeof fetchFirebaseRecords === 'function') {
+                return await fetchFirebaseRecords();
+            }
+            return [];
+        })()
+    ]);
+
+    if (supabaseResult.status === 'fulfilled' && Array.isArray(supabaseResult.value)) {
+        rawData = supabaseResult.value;
+        isAnyOnline = true;
+    } else if (supabaseResult.status === 'rejected') {
+        console.warn('Supabase fetch note:', supabaseResult.reason?.message || 'offline/unreachable');
+    }
+
+    if (firebaseResult.status === 'fulfilled' && Array.isArray(firebaseResult.value)) {
+        fbRecords = firebaseResult.value;
+        if (fbRecords.length > 0) {
+            isAnyOnline = true;
+            console.log(`🔥 [Firebase RTDB] Memuat ${fbRecords.length} data siswa secara independen.`);
+        }
+    } else if (firebaseResult.status === 'rejected') {
+        console.warn('Firebase fetch note:', firebaseResult.reason?.message);
+    }
+
+    let supabaseFormatted = [];
+    if (Array.isArray(rawData) && rawData.length > 0) {
         // A. Filter baris data siswa vs baris konfigurasi sistem
         const studentRows = rawData.filter(r => {
             const sName = String(r.student_name || '');
@@ -655,7 +696,7 @@ async function syncWithBackend(showFeedback = false) {
             window.QuizManager.syncCloudModulesList(moduleRows);
         }
 
-        const formatted = studentRows.map(r => {
+        supabaseFormatted = studentRows.map(r => {
             let extractedModId = null;
             let extractedModTitle = null;
             let extractedWrong = [];
@@ -689,40 +730,27 @@ async function syncWithBackend(showFeedback = false) {
                 isCheated: r.is_cheated !== undefined ? r.is_cheated : !!r.isCheated
             };
         });
+    }
 
-        // Selalu gabungkan dengan baseline data resmi (155 data resmi Misi Detektif Fakta) dan data lokal saat ini
-        const baseline = (typeof OFFICIAL_EXAM_RESULTS !== 'undefined' && Array.isArray(OFFICIAL_EXAM_RESULTS)) ? purgeFakeJkiRecords(OFFICIAL_EXAM_RESULTS) : [];
-        const currentLocal = purgeFakeJkiRecords(JSON.parse(localStorage.getItem(STORAGE_KEY)) || []);
-        const mergedBaseline = mergeRecordsList(baseline, currentLocal);
-        let cloudList = formatted;
+    // Gabungkan baseline data resmi, data lokal, Supabase, dan Firebase
+    const baseline = (typeof OFFICIAL_EXAM_RESULTS !== 'undefined' && Array.isArray(OFFICIAL_EXAM_RESULTS)) ? purgeFakeJkiRecords(OFFICIAL_EXAM_RESULTS) : [];
+    const currentLocal = purgeFakeJkiRecords(JSON.parse(localStorage.getItem(STORAGE_KEY)) || []);
+    const mergedBaseline = mergeRecordsList(baseline, currentLocal);
+    const combinedCloud = mergeRecordsList(supabaseFormatted, fbRecords);
 
-        // Ambil data dari Firebase Cloud Firestore jika aktif
-        if (typeof fetchFirebaseRecords === 'function') {
-            try {
-                const fbRecords = await fetchFirebaseRecords();
-                if (Array.isArray(fbRecords) && fbRecords.length > 0) {
-                    cloudList = mergeRecordsList(cloudList, fbRecords);
-                    console.log(`🔥 [Firebase] ${fbRecords.length} data nilai digabungkan ke dasbor.`);
-                }
-            } catch(fbErr) {
-                console.warn('Firebase sync warning:', fbErr.message);
-            }
-        }
-
-        const finalRecords = filterDeletedRecords(purgeFakeJkiRecords(mergeRecordsList(mergedBaseline, cloudList)));
+    if (isAnyOnline || combinedCloud.length > 0) {
+        const finalRecords = filterDeletedRecords(purgeFakeJkiRecords(mergeRecordsList(mergedBaseline, combinedCloud)));
 
         localStorage.setItem(STORAGE_KEY, JSON.stringify(finalRecords));
         localStorage.setItem(OFFICIAL_DATA_SYNC_KEY, CURRENT_OFFICIAL_VERSION);
-        
+
         isBackendOnline = true;
         updateDbBadge(true, finalRecords.length);
 
-        // Pastikan antrean nilai offline terunggah jika ada
         if (typeof flushPendingRecords === 'function') {
             flushPendingRecords();
         }
 
-        // Pastikan Realtime Subscription aktif
         initSupabaseRealtime();
         if (typeof initFirebaseRealtime === 'function') {
             initFirebaseRealtime();
@@ -730,36 +758,12 @@ async function syncWithBackend(showFeedback = false) {
 
         if (typeof renderDashboard === 'function') renderDashboard();
         if (showFeedback) {
-            showToast(`✅ Berhasil menyinkronkan data cloud! (Total: ${finalRecords.length} Siswa)`, '☁️');
+            showToast(`✅ Basis data Cloud tersinkronisasi! (Total: ${finalRecords.length} Siswa)`, '🔥');
         }
         return true;
     } else {
-        // Coba sinkronkan dari Firebase jika Supabase offline/bermasalah
-        if (typeof fetchFirebaseRecords === 'function') {
-            try {
-                const fbRecords = await fetchFirebaseRecords();
-                if (Array.isArray(fbRecords) && fbRecords.length > 0) {
-                    const baseline = (typeof OFFICIAL_EXAM_RESULTS !== 'undefined' && Array.isArray(OFFICIAL_EXAM_RESULTS)) ? purgeFakeJkiRecords(OFFICIAL_EXAM_RESULTS) : [];
-                    const currentLocal = purgeFakeJkiRecords(JSON.parse(localStorage.getItem(STORAGE_KEY)) || []);
-                    const mergedBaseline = mergeRecordsList(baseline, currentLocal);
-                    const finalRecords = filterDeletedRecords(purgeFakeJkiRecords(mergeRecordsList(mergedBaseline, fbRecords)));
-                    
-                    localStorage.setItem(STORAGE_KEY, JSON.stringify(finalRecords));
-                    localStorage.setItem(OFFICIAL_DATA_SYNC_KEY, CURRENT_OFFICIAL_VERSION);
-                    isBackendOnline = true;
-                    updateDbBadge(true, finalRecords.length);
-                    if (typeof initFirebaseRealtime === 'function') initFirebaseRealtime();
-                    if (typeof renderDashboard === 'function') renderDashboard();
-                    if (showFeedback) {
-                        showToast(`🔥 Berhasil menyinkronkan ${fbRecords.length} data dari Google Firebase!`, '🔥');
-                    }
-                    return true;
-                }
-            } catch(fbErr) {}
-        }
-
         if (showFeedback) {
-            showToast('⚠️ Gagal terhubung ke basis data Supabase. Periksa URL / Key atau gunakan Firebase.', '⚠️');
+            showToast('⚠️ Sedang offline atau server cloud sedang sibuk. Menggunakan data lokal.', '⚠️');
         }
     }
 

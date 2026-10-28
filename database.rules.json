@@ -2,7 +2,10 @@
   "rules": {
     "quiz_results": {
       ".read": true,
-      ".write": true
+      "$record_id": {
+        ".write": true,
+        ".validate": "!newData.exists() || (newData.hasChildren(['student_name', 'student_class', 'score', 'total_questions', 'correct_count']) && newData.child('score').isNumber() && newData.child('score').val() >= 0 && newData.child('score').val() <= 100 && newData.child('total_questions').isNumber() && newData.child('total_questions').val() > 0 && newData.child('student_name').isString() && newData.child('student_name').val().length > 0)"
+      }
     }
   }
 }

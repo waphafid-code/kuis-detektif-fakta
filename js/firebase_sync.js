@@ -409,7 +409,103 @@ async function testFirebaseConnection() {
         return { success: false, message: `Gagal terhubung: ${err.message}` };
     }
 }
-window.testFirebaseConnection = testFirebaseConnection;
+/**
+ * Menghapus satu data nilai siswa dari Firebase Realtime Database (& Firestore)
+ */
+async function deleteFirebaseRecord(studentName, studentClass, moduleId) {
+    if (!studentName) return false;
+    const cfg = getFirebaseConfig();
+    const dbUrl = (cfg && cfg.databaseURL) ? cfg.databaseURL.replace(/\/$/, '') : 'https://kuis-informatika-c8781-default-rtdb.firebaseio.com';
+
+    let deletedAny = false;
+
+    try {
+        const res = await fetch(`${dbUrl}/quiz_results.json`);
+        if (res.ok) {
+            const data = await res.json();
+            if (data && typeof data === 'object') {
+                const targetName = String(studentName).trim().toLowerCase();
+                const targetClass = studentClass ? String(studentClass).trim().toLowerCase() : null;
+
+                for (const [key, r] of Object.entries(data)) {
+                    if (!r || typeof r !== 'object') continue;
+                    const rName = String(r.student_name || '').trim().toLowerCase();
+                    const rClass = String(r.student_class || '').trim().toLowerCase();
+                    const rModId = (r.wrong_questions && r.wrong_questions.moduleId) ? r.wrong_questions.moduleId : 'modul_detektif_fakta';
+
+                    const nameMatch = (rName === targetName);
+                    const classMatch = (!targetClass || targetClass === '-' || rClass === targetClass);
+                    const modMatch = (!moduleId || moduleId === 'all' || rModId === moduleId);
+
+                    if (nameMatch && classMatch && modMatch) {
+                        try {
+                            const delRes = await fetch(`${dbUrl}/quiz_results/${encodeURIComponent(key)}.json`, {
+                                method: 'DELETE'
+                            });
+                            if (delRes.ok) {
+                                deletedAny = true;
+                                console.log('🔥 [Firebase RTDB] Berhasil menghapus baris:', key);
+                            }
+                        } catch (e) {
+                            console.warn('Firebase RTDB delete error for key:', key, e);
+                        }
+
+                        // Hapus juga di Cloud Firestore jika aktif
+                        const db = window.firestoreDb;
+                        if (db) {
+                            try {
+                                await db.collection(FIRESTORE_COLLECTION).doc(key).delete();
+                            } catch(e) {}
+                        }
+                    }
+                }
+            }
+        }
+    } catch (err) {
+        console.warn('Firebase delete fetch warning:', err.message);
+    }
+
+    return deletedAny;
+}
+window.deleteFirebaseRecord = deleteFirebaseRecord;
+
+/**
+ * Menghapus seluruh data nilai dari Firebase Realtime Database (& Firestore)
+ */
+async function deleteAllFirebaseRecords() {
+    const cfg = getFirebaseConfig();
+    const dbUrl = (cfg && cfg.databaseURL) ? cfg.databaseURL.replace(/\/$/, '') : 'https://kuis-informatika-c8781-default-rtdb.firebaseio.com';
+
+    let count = 0;
+    try {
+        const res = await fetch(`${dbUrl}/quiz_results.json?shallow=true`);
+        if (res.ok) {
+            const keysObj = await res.json();
+            if (keysObj && typeof keysObj === 'object') {
+                for (const key of Object.keys(keysObj)) {
+                    try {
+                        const delRes = await fetch(`${dbUrl}/quiz_results/${encodeURIComponent(key)}.json`, {
+                            method: 'DELETE'
+                        });
+                        if (delRes.ok) count++;
+                    } catch(e) {}
+
+                    const db = window.firestoreDb;
+                    if (db) {
+                        try {
+                            await db.collection(FIRESTORE_COLLECTION).doc(key).delete();
+                        } catch(e) {}
+                    }
+                }
+                console.log(`🔥 [Firebase RTDB] Berhasil menghapus total ${count} data record.`);
+            }
+        }
+    } catch(err) {
+        console.warn('Firebase deleteAll error:', err.message);
+    }
+    return count;
+}
+window.deleteAllFirebaseRecords = deleteAllFirebaseRecords;
 
 // Jalankan inisialisasi awal saat skrip dimuat
 if (typeof window !== 'undefined') {

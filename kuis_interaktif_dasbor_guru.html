@@ -155,7 +155,24 @@
             <span>🔐</span>
         </div>
         <h3 class="pin-modal-title">Verifikasi Akses Guru</h3>
-        <p class="pin-modal-subtitle">Masukkan 4 digit PIN keamanan untuk membuka dasbor manajemen guru, rekap nilai siswa, dan editor soal.</p>
+        <p class="pin-modal-subtitle">Gunakan autentikasi biometrik sidik jari (m-Banking) atau masukkan 4 digit PIN resmi guru.</p>
+        
+        <!-- 👆 Biometric / Fingerprint Authentication (m-Banking WebAuthn) -->
+        <div id="biometric-auth-section" style="margin: 12px 0 16px 0; width: 100%;">
+            <button type="button" id="btn-biometric-login" onclick="authenticateWithBiometrics()" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 10px; padding: 12px 18px; border-radius: 12px; font-weight: 800; font-size: 0.88rem; background: linear-gradient(135deg, rgba(14,165,233,0.18), rgba(99,102,241,0.25)); border: 1.5px solid rgba(14,165,233,0.45); color: #38bdf8; cursor: pointer; transition: all 0.25s ease; box-shadow: 0 4px 15px rgba(14,165,233,0.15);">
+                <span style="font-size: 1.4rem; filter: drop-shadow(0 0 8px rgba(56,189,248,0.5));">👆</span>
+                <span id="biometric-login-label">Masuk dengan Fingerprint / Face ID</span>
+            </button>
+            <div id="biometric-hint" style="font-size: 0.72rem; color: var(--text-muted); text-align: center; margin-top: 6px;">
+                Sentuh sensor sidik jari HP / Windows Hello laptop (seperti m-Banking)
+            </div>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 12px; width: 100%; margin: 4px 0 14px 0;">
+            <div style="flex: 1; height: 1px; background: rgba(255,255,255,0.1);"></div>
+            <span style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700;">atau gunakan PIN</span>
+            <div style="flex: 1; height: 1px; background: rgba(255,255,255,0.1);"></div>
+        </div>
         
         <!-- 4 Digit Indicator Slots -->
         <div class="pin-slot-group">

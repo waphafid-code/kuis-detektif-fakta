@@ -12,7 +12,7 @@ const _secureAnswerVault = new Map();
 function vaultAnswers(questions) {
     if (!Array.isArray(questions)) return [];
     _secureAnswerVault.clear();
-    return questions.map((q, idx) => {
+    const sanitizedList = questions.map((q, idx) => {
         const qId = q.id || `q_${idx}`;
         _secureAnswerVault.set(qId, {
             answer: q.answer,
@@ -25,6 +25,35 @@ function vaultAnswers(questions) {
         delete sanitized.explanation;
         return sanitized;
     });
+
+    // 🛡️ SECURITY: Bersihkan kunci mentah dari window.DEFAULT_BUILTIN_QUESTIONS & window.NETWORK_SECURITY_BUILTIN_QUESTIONS
+    // Mencegah siswa membuka Console DevTools dan membaca kunci jawaban langsung
+    try {
+        if (typeof window !== 'undefined') {
+            if (Array.isArray(window.DEFAULT_BUILTIN_QUESTIONS)) {
+                window.DEFAULT_BUILTIN_QUESTIONS.forEach((q, idx) => {
+                    const qId = q.id || `q_${idx}`;
+                    if (!_secureAnswerVault.has(qId) && q.answer !== undefined) {
+                        _secureAnswerVault.set(qId, { answer: q.answer, explanation: q.explanation });
+                    }
+                    delete q.answer;
+                    delete q.explanation;
+                });
+            }
+            if (Array.isArray(window.NETWORK_SECURITY_BUILTIN_QUESTIONS)) {
+                window.NETWORK_SECURITY_BUILTIN_QUESTIONS.forEach((q, idx) => {
+                    const qId = q.id || `net_q_${idx}`;
+                    if (!_secureAnswerVault.has(qId) && q.answer !== undefined) {
+                        _secureAnswerVault.set(qId, { answer: q.answer, explanation: q.explanation });
+                    }
+                    delete q.answer;
+                    delete q.explanation;
+                });
+            }
+        }
+    } catch(e) {}
+
+    return sanitizedList;
 }
 
 function getAnswerFromVault(q, origQIdx) {
@@ -182,6 +211,21 @@ let fullscreenWarningTimer = null;
 let fullscreenWarningCountdownVal = 15;
 
 function isBrowserInFullscreen() {
+    // 🍏 Deteksi iOS Safari (iPhone / iPad) yang tidak mendukung Fullscreen API untuk elemen HTML biasa
+    const isIOS = (/iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)) && !window.MSStream;
+    const isFullscreenSupported = !!(
+        document.fullscreenEnabled || 
+        document.webkitFullscreenEnabled || 
+        document.mozFullScreenEnabled || 
+        document.msFullscreenEnabled ||
+        (document.documentElement && (document.documentElement.requestFullscreen || document.documentElement.webkitRequestFullscreen))
+    );
+
+    // Jika perangkat adalah iOS atau browser tidak mendukung HTML fullscreen, bypass agar siswa tidak terdiskualifikasi palsu
+    if (isIOS || !isFullscreenSupported) {
+        return true;
+    }
+
     return !!(document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement);
 }
 window.isBrowserInFullscreen = isBrowserInFullscreen;
