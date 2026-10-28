@@ -124,6 +124,10 @@ function restoreQuizSession() {
             return;
         }
         initAudio();
+        isQuizFinishing = false;
+        isCheatingTriggered = false;
+        isCheatWarningActive = false;
+        cheatStrikes = 0;
 
         studentName = data.studentName;
         studentClass = data.studentClass;
@@ -151,6 +155,10 @@ function restoreQuizSession() {
 
 function discardQuizSession() {
     sfxClick();
+    isQuizFinishing = false;
+    isCheatingTriggered = false;
+    isCheatWarningActive = false;
+    cheatStrikes = 0;
     sessionStorage.removeItem(SESSION_QUIZ_ACTIVE_KEY);
     document.getElementById('resume-modal').classList.remove('active');
     goHome();
@@ -162,9 +170,11 @@ let cheatStrikes = 0;
 const MAX_CHEAT_STRIKES = 3;
 let isCheatWarningActive = false;
 let lastCheatEventTime = 0;
+let isQuizFinishing = false;
+window.isQuizFinishing = isQuizFinishing;
 
 function isQuizActive() {
-    return screens.quiz && screens.quiz.classList.contains('active') && !isCheatingTriggered;
+    return screens.quiz && screens.quiz.classList.contains('active') && !isCheatingTriggered && !isQuizFinishing;
 }
 
 // 🖥️ FULLSCREEN LOCKDOWN UTILITIES & CONTROLLERS
@@ -239,7 +249,7 @@ function clearFullscreenWarningCountdown() {
 window.clearFullscreenWarningCountdown = clearFullscreenWarningCountdown;
 
 function handleFullscreenChange() {
-    if (!isQuizActive()) return;
+    if (!isQuizActive() || isQuizFinishing) return;
 
     const isWajib = (typeof isEnforcedFullscreen === 'function') 
         ? isEnforcedFullscreen() 
@@ -263,7 +273,7 @@ document.addEventListener('MSFullscreenChange', handleFullscreenChange);
 
 // 🛡️ Sistem Toleransi Anti-Cheat (3-Strike Warning System)
 function handleAntiCheatEvent(reason = 'Kecurangan / Aktivitas Terlarang', isCritical = false) {
-    if (isCheatingTriggered || isCheatWarningActive) return;
+    if (isCheatingTriggered || isCheatWarningActive || isQuizFinishing) return;
     if (!isQuizActive()) return;
 
     // Debounce agar event beruntun (misal blur + visibilitychange bersamaan) tidak menghabiskan 2 strike sekaligus
@@ -325,7 +335,7 @@ function resumeFromCheatWarning() {
 
 // 🚨 Anti-Cheating Handler (Immediate Disqualification setelah 3 Strike atau Pelanggaran Fatal)
 function triggerCheatPenalty(reason = 'Kecurangan / Buka Tab Lain') {
-    if (isCheatingTriggered) return;
+    if (isCheatingTriggered || isQuizFinishing) return;
     if (!screens.quiz || !screens.quiz.classList.contains('active')) return;
 
     isCheatingTriggered = true;
@@ -383,6 +393,7 @@ function acknowledgeCheatPenalty() {
     isCheatingTriggered = false;
     cheatStrikes = 0;
     isCheatWarningActive = false;
+    isQuizFinishing = false;
     if (alarmSirenTimer) { clearInterval(alarmSirenTimer); alarmSirenTimer = null; }
     if (cheatVibrationTimer) { clearInterval(cheatVibrationTimer); cheatVibrationTimer = null; }
     try { navigator.vibrate(0); } catch(e) {}
@@ -400,7 +411,7 @@ function clearBlurGraceTimer() {
 }
 
 document.addEventListener('visibilitychange', () => {
-    if (!isQuizActive() || isCheatWarningActive) {
+    if (!isQuizActive() || isCheatWarningActive || isQuizFinishing) {
         clearBlurGraceTimer();
         return;
     }
@@ -408,7 +419,7 @@ document.addEventListener('visibilitychange', () => {
         clearBlurGraceTimer();
         // Berikan waktu toleransi 2.5 detik agar pop-up banner WA/SMS/baterai di HP tidak langsung memicu penalti
         blurGraceTimer = setTimeout(() => {
-            if (document.hidden && isQuizActive() && !isCheatWarningActive) {
+            if (document.hidden && isQuizActive() && !isCheatWarningActive && !isQuizFinishing) {
                 handleAntiCheatEvent('🌐 Berpindah Tab / Meminimalkan Browser');
             }
             blurGraceTimer = null;
@@ -419,10 +430,10 @@ document.addEventListener('visibilitychange', () => {
 });
 
 window.addEventListener('blur', () => {
-    if (!isQuizActive() || isCheatWarningActive) return;
+    if (!isQuizActive() || isCheatWarningActive || isQuizFinishing) return;
     clearBlurGraceTimer();
     blurGraceTimer = setTimeout(() => {
-        if ((document.hidden || !document.hasFocus()) && isQuizActive() && !isCheatWarningActive) {
+        if ((document.hidden || !document.hasFocus()) && isQuizActive() && !isCheatWarningActive && !isQuizFinishing) {
             handleAntiCheatEvent('🌐 Keluar dari Aplikasi Browser / Buka Aplikasi Lain');
         }
         blurGraceTimer = null;
@@ -546,7 +557,7 @@ document.addEventListener('selectionchange', () => {
 
 // 📱 5. DETEKSI SPLIT SCREEN / LAYAR TERBELAH / RESIZE DRASTIS DI HP & DESKTOP
 window.addEventListener('resize', () => {
-    if (!isQuizActive()) return;
+    if (!isQuizActive() || isQuizFinishing) return;
     if (initialQuizHeight > 0 && initialQuizWidth > 0) {
         // Jika tinggi layar berkurang drastis (indikasi split screen / floating app)
         if (window.innerHeight < initialQuizHeight * 0.60 || window.innerWidth < initialQuizWidth * 0.60) {
@@ -870,7 +881,10 @@ function runCountdown() {
 }
 
 function startQuizActual() {
+    isQuizFinishing = false;
     isCheatingTriggered = false;
+    isCheatWarningActive = false;
+    cheatStrikes = 0;
     sessionHintsUsedCount = 0;
     initialQuizWidth = window.innerWidth;
     initialQuizHeight = window.innerHeight;
@@ -1010,8 +1024,15 @@ function autoSubmitTimeout() {
     fb.innerHTML = `<h4>⏰ Waktu Habis (Belum Ada Jawaban Terpilih)!</h4><p>${typeof formatPedagogicalFeedback === 'function' ? formatPedagogicalFeedback(expText) : expText}</p>`;
     fb.style.display = 'block';
 
-    document.getElementById('btn-check').style.display = 'none';
-    document.getElementById('btn-next').style.display = 'inline-flex';
+    const isFinalQ = (currentQ >= quizData.length - 1);
+    const checkBtn = document.getElementById('btn-check');
+    const nextBtn = document.getElementById('btn-next');
+    if (checkBtn) checkBtn.style.display = 'none';
+    if (nextBtn) {
+        nextBtn.style.display = 'inline-flex';
+        nextBtn.disabled = false;
+        nextBtn.innerHTML = isFinalQ ? '🏁 Selesai & Kirim Nilai ➔' : 'Lanjut Soal ➡️';
+    }
 
     const app = document.getElementById('main-app');
     app.classList.remove('shake-it'); void app.offsetWidth; app.classList.add('shake-it');
@@ -1249,9 +1270,19 @@ function loadQuestion(index) {
     fb.style.display = 'none';
     fb.className = 'feedback-box';
 
-    document.getElementById('btn-next').style.display = 'none';
-    document.getElementById('btn-check').style.display = 'inline-flex';
-    document.getElementById('btn-check').disabled = false;
+    const isFinalQ = (index >= quizData.length - 1);
+    const checkBtn = document.getElementById('btn-check');
+    const nextBtn = document.getElementById('btn-next');
+    if (checkBtn) {
+        checkBtn.style.display = 'inline-flex';
+        checkBtn.disabled = false;
+        checkBtn.innerHTML = isFinalQ ? 'Periksa Jawaban Terakhir 🔍' : 'Cek Jawaban ✔️';
+    }
+    if (nextBtn) {
+        nextBtn.style.display = 'none';
+        nextBtn.disabled = false;
+        nextBtn.innerHTML = isFinalQ ? '🏁 Selesai & Kirim Nilai ➔' : 'Lanjut Soal ➡️';
+    }
 
     const pct = Math.round((index / quizData.length) * 100);
     document.getElementById('progress-fill').style.width = `${pct}%`;
@@ -1698,16 +1729,33 @@ function checkAnswer(isAutoTimeout = false) {
     document.getElementById('streak-display').textContent = `🔥 ${streak}`;
     document.getElementById('streak-display').classList.toggle('on-fire', streak >= 3);
 
-    document.getElementById('btn-check').style.display = 'none';
-    document.getElementById('btn-next').style.display = 'inline-flex';
+    const isFinalQ = (currentQ >= quizData.length - 1);
+    const checkBtn = document.getElementById('btn-check');
+    const nextBtn = document.getElementById('btn-next');
+    if (checkBtn) checkBtn.style.display = 'none';
+    if (nextBtn) {
+        nextBtn.style.display = 'inline-flex';
+        nextBtn.disabled = false;
+        nextBtn.innerHTML = isFinalQ ? '🏁 Selesai & Kirim Nilai ➔' : 'Lanjut Soal ➡️';
+    }
     saveCurrentQuizSession();
 }
 
 function nextQuestion() {
+    const isFinalQ = (currentQ >= quizData.length - 1);
+    const nextBtn = document.getElementById('btn-next');
+    if (nextBtn) {
+        nextBtn.disabled = true;
+        if (isFinalQ) {
+            nextBtn.innerHTML = '⏳ Menyiapkan & Mengirim Nilai...';
+        }
+    }
     sfxClick();
     const qContent = document.getElementById('q-content');
-    qContent.classList.remove('slide-in');
-    qContent.classList.add('slide-out');
+    if (qContent) {
+        qContent.classList.remove('slide-in');
+        qContent.classList.add('slide-out');
+    }
 
     setTimeout(() => {
         currentQ++;
@@ -1716,13 +1764,21 @@ function nextQuestion() {
     }, 300);
 }
 
-let isQuizFinishing = false;
 async function finishQuiz() {
     if (isQuizFinishing) return;
     isQuizFinishing = true;
 
+    // 🛡️ Bersihkan semua toleransi countdown & modal anti-cheat seketika
     try {
         clearFullscreenWarningCountdown();
+        clearBlurGraceTimer();
+        isCheatWarningActive = false;
+        const warningModal = document.getElementById('cheat-warning-modal');
+        if (warningModal) warningModal.classList.remove('active');
+    } catch(e) {}
+
+    // 🖥️ Lepaskan Fullscreen secara aman (anti-cheat dijamin diam karena isQuizFinishing = true)
+    try {
         exitExamFullscreen();
     } catch(e) {}
 

@@ -222,10 +222,12 @@ async function saveRecord(record) {
     record.score = Math.round(numericScore);
 
     // 3. Deteksi anomali kecepatan mustahil (Anti-Bot / Script Tampering di console)
-    // Jika soal >= 10 butir dan selesai dalam durasi < 5 detik dengan skor tinggi, flag anomali
-    if (record.rawDurationMs && record.rawDurationMs < 5000 && record.total >= 10 && record.score > 50 && !record.isCheated) {
+    // Hanya flag jika durasi benar-benar mustahil secara biologis/fisik (< 1000ms untuk >= 10 soal dengan skor > 80)
+    // dan bukan akun pengujian guru (Rini Syafitri / Guru / Penguji / Admin / Test)
+    const isTesterOrTeacher = /guru|rini|admin|test|uji/i.test(String(record.name || ''));
+    if (!isTesterOrTeacher && record.rawDurationMs && record.rawDurationMs > 0 && record.rawDurationMs < 1000 && record.total >= 10 && record.score > 80 && !record.isCheated) {
         record.isCheated = true;
-        record.statusNote = '🚨 DISKUALIFIKASI (Anomali Kecepatan Mustahil: < 5 Detik)';
+        record.statusNote = '🚨 DISKUALIFIKASI (Anomali Kecepatan Mustahil: < 1 Detik)';
         record.score = 0;
     }
 

@@ -443,6 +443,7 @@ function goHome() {
     window.isRemedialSession = false;
     remedialSourceRecord = null;
     window.remedialSourceRecord = null;
+    window.isQuizFinishing = false;
     const remInd = document.getElementById('quiz-remedial-indicator');
     if (remInd) remInd.style.display = 'none';
 
