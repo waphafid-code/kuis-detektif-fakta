@@ -983,8 +983,13 @@ function getDayName(dayIndex) {
 }
 
 function getClassSchedule(cls) {
-    if (typeof SCHEDULE_BUK_RINI !== 'undefined' && SCHEDULE_BUK_RINI[cls]) return SCHEDULE_BUK_RINI[cls];
-    if (typeof SCHEDULE_RINI_SYAFITRI !== 'undefined' && SCHEDULE_RINI_SYAFITRI[cls]) return SCHEDULE_RINI_SYAFITRI[cls];
+    const schedules = (typeof SCHEDULE_BUK_RINI !== 'undefined') ? SCHEDULE_BUK_RINI : ((typeof SCHEDULE_RINI_SYAFITRI !== 'undefined') ? SCHEDULE_RINI_SYAFITRI : {});
+    if (cls && schedules[cls]) return schedules[cls];
+    if (cls && typeof isClassEquivalent === 'function') {
+        for (const [k, v] of Object.entries(schedules)) {
+            if (isClassEquivalent(k, cls)) return v;
+        }
+    }
     return { day: 1, dayName: 'Senin', start: '08:00', end: '10:00', period: 'Jam Mengajar' };
 }
 
@@ -1001,10 +1006,24 @@ function checkClassAccess(cls, moduleId) {
     const nowFullStr = `${getDayName(currentDay)}, ${currentTimeStr} WIB`;
     const schedule = getClassSchedule(cls);
 
+    const findDictVal = (dict) => {
+        if (!dict || !cls) return undefined;
+        if (dict[cls] !== undefined) return dict[cls];
+        if (typeof isClassEquivalent === 'function') {
+            for (const [k, v] of Object.entries(dict)) {
+                if (isClassEquivalent(k, cls)) return v;
+            }
+        }
+        return undefined;
+    };
+
     // 1. ATURAN MUTLAK GURU: Jika kelas dibuka manual oleh Guru, TIDAK BISA DITUTUP OTOMATIS OLEH JADWAL APAPUN!
     // Harus Guru sendiri yang menutupnya secara manual (classOverrides[cls] === false).
-    if (accessSettings.manualOpenedClasses && accessSettings.manualOpenedClasses[cls] === true) {
-        if (accessSettings.classOverrides && accessSettings.classOverrides[cls] === false) {
+    const manualOpen = findDictVal(accessSettings.manualOpenedClasses);
+    const classOverride = findDictVal(accessSettings.classOverrides);
+
+    if (manualOpen === true) {
+        if (classOverride === false) {
             return {
                 allowed: false,
                 schedule: schedule,
@@ -1019,14 +1038,14 @@ function checkClassAccess(cls, moduleId) {
         };
     }
 
-    if (accessSettings.classOverrides && accessSettings.classOverrides[cls] !== undefined) {
-        if (accessSettings.classOverrides[cls] === true) {
+    if (classOverride !== undefined) {
+        if (classOverride === true) {
             return {
                 allowed: true,
                 isManualOpen: true,
                 reason: 'Kelas ini dibuka manual oleh Guru (Terbuka sampai ditutup Guru)'
             };
-        } else if (accessSettings.classOverrides[cls] === false) {
+        } else if (classOverride === false) {
             return {
                 allowed: false,
                 schedule: schedule,

@@ -33,7 +33,7 @@ function mergeRecordsList(existingList, incomingList) {
     const map = new Map();
     const makeKey = (r) => {
         const modId = normalizeModuleId(r.moduleId || r.module_id, r.id, r.date || r.quiz_date);
-        const normCls = (r.class || r.student_class || '').replace(/\s+/g, ' ').trim().toUpperCase();
+        const normCls = (r.class || r.student_class || '').replace(/\s+/g, '').toUpperCase();
         const normName = (r.name || r.student_name || '').toLowerCase().trim();
         return `${normName}|${normCls}|${modId}`;
     };

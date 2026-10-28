@@ -2045,32 +2045,35 @@ async function finishQuiz() {
             titleEl.textContent = '🎉 Selamat! Remedial Berhasil Tuntas!';
             titleEl.style.color = 'var(--success)';
             descEl.textContent = `Luar biasa ${studentName}! Anda berhasil memperbaiki pemahaman konsep dengan nilai baru ${displayScore} dari 100 (Melampaui KKM ${KKM}). Nilai perbaikan telah dikirim ke Dasbor Guru.`;
-            sfxVictory(); shootConfetti();
-            spawnRandomEmojis('🎉', 4);
+            if (typeof sfxVictory === 'function') sfxVictory();
+            if (typeof shootConfetti === 'function') shootConfetti();
+            if (typeof spawnRandomEmojis === 'function') spawnRandomEmojis('🎉', 4);
         } else {
             titleEl.textContent = '📉 Remedial Belum Mencapai KKM';
             titleEl.style.color = 'var(--danger)';
             descEl.textContent = `Nilai akhir perbaikan Anda ${displayScore} dari 100 belum mencapai KKM ${KKM}. Pelajari ulasan pembahasan di bawah ini untuk konsultasi dengan guru mata pelajaran.`;
-            sfxWrong();
+            if (typeof sfxWrong === 'function') sfxWrong();
         }
     } else {
         if (displayScore >= 90) {
             titleEl.textContent = '🏆 Evaluasi Cemerlang — Nilai Sempurna!';
             titleEl.style.color = 'var(--success)';
             descEl.textContent = `Luar biasa ${studentName}! Nilai akhir Anda ${displayScore} dari 100 (Melampaui KKM ${KKM}). Pemahaman konsep Anda sangat matang!`;
-            sfxVictory(); shootConfetti();
-            spawnRandomEmojis('🏆', 6);
+            if (typeof sfxVictory === 'function') sfxVictory();
+            if (typeof shootConfetti === 'function') shootConfetti();
+            if (typeof spawnRandomEmojis === 'function') spawnRandomEmojis('🏆', 6);
         } else if (displayScore >= 80) {
             titleEl.textContent = '🎉 Kompeten — Lulus Memenuhi KKM!';
             titleEl.style.color = 'var(--success)';
             descEl.textContent = `Selamat ${studentName}! Anda dinyatakan LULUS dengan nilai akhir ${displayScore} dari 100 (Batas KKM: ${KKM}). Pertahankan prestasi Anda!`;
-            sfxVictory(); shootConfetti();
-            spawnRandomEmojis('🎉', 4);
+            if (typeof sfxVictory === 'function') sfxVictory();
+            if (typeof shootConfetti === 'function') shootConfetti();
+            if (typeof spawnRandomEmojis === 'function') spawnRandomEmojis('🎉', 4);
         } else {
             titleEl.textContent = '📉 Belum Mencapai KKM — Tetap Semangat!';
             titleEl.style.color = 'var(--danger)';
             descEl.textContent = `Nilai akhir Anda ${displayScore} dari 100 belum mencapai standar kelulusan KKM ${KKM}. Silakan pelajari kembali ulasan soal di bawah ini dan ikuti remedial.`;
-            sfxWrong();
+            if (typeof sfxWrong === 'function') sfxWrong();
         }
     }
 
