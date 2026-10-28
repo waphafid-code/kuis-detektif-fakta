@@ -230,7 +230,12 @@ async function fetchFirebaseRecords() {
                                 localStorage.removeItem(STORAGE_KEY);
                                 localStorage.removeItem('quizmaster_emergency_backup_records');
                             } else if (wq.deletedKey) {
-                                let localDels = JSON.parse(localStorage.getItem('quizmaster_deleted_records') || '[]');
+                                let localDels = [];
+                                try {
+                                    localDels = JSON.parse(localStorage.getItem('quizmaster_deleted_records') || '[]');
+                                } catch(e) {
+                                    localDels = [];
+                                }
                                 if (!Array.isArray(localDels)) localDels = [];
                                 if (!localDels.includes(wq.deletedKey)) {
                                     localDels.push(wq.deletedKey);
@@ -687,9 +692,8 @@ async function verifyAndPurgeIfDeletedByTeacher(studentName, studentClass, targe
         if (!res.ok) return false;
         const data = await res.json();
         if (!data || typeof data !== 'object') {
-            // Data cloud kosong = guru telah mereset data
-            purgeStudentFromLocalStorage(studentName, studentClass, modId);
-            return true;
+            // Data cloud kosong atau koneksi hampa — jangan bersihkan lokal tanpa tombstone eksplisit
+            return false;
         }
 
         let hasActiveRecordInCloud = false;
@@ -748,9 +752,9 @@ async function verifyAndPurgeIfDeletedByTeacher(studentName, studentClass, targe
         }
 
         // KELULUSAN RETAKE:
-        // Jika guru telah menghapus nilai (tidak ada record aktif di cloud) atau ada tombstone eksplisit
-        if (hasExplicitTombstone || !hasActiveRecordInCloud) {
-            console.log(`✨ [Cloud Verification] Siswa ${studentName} (${studentClass}) diizinkan retake: tidak ada nilai aktif di server guru.`);
+        // HANYA jika guru telah menerbitkan tombstone penghapusan resmi untuk siswa ini atau reset total
+        if (hasExplicitTombstone) {
+            console.log(`✨ [Cloud Verification] Guru telah menghapus nilai siswa ${studentName} (${studentClass}): izin retake diberikan.`);
             purgeStudentFromLocalStorage(studentName, studentClass, modId);
             return true;
         }

@@ -54,6 +54,10 @@ function handleImportExcel(event) {
             const dateIdx = headers.findIndex(c => c.includes('tanggal'));
 
             const importedRecords = [];
+            const totalIdx = headers.findIndex(c => c.includes('total') || c.includes('jumlah') || c.includes('butir'));
+            const activeTotal = (typeof quizData !== 'undefined' && Array.isArray(quizData) && quizData.length > 0) ? quizData.length : 20;
+            const activeModuleId = (window.QuizManager && typeof QuizManager.getActiveModuleId === 'function') ? QuizManager.getActiveModuleId() : 'modul_detektif_fakta';
+
             for (let i = headerRowIndex + 1; i < json.length; i++) {
                 const row = json[i];
                 if (!row || !row[nameIdx]) continue;
@@ -63,7 +67,8 @@ function handleImportExcel(event) {
 
                 const cls = classIdx !== -1 && row[classIdx] ? String(row[classIdx]).trim() : 'X E 1';
                 const scoreVal = scoreIdx !== -1 && !isNaN(parseInt(row[scoreIdx])) ? parseInt(row[scoreIdx]) : 0;
-                const correctVal = correctIdx !== -1 && !isNaN(parseInt(row[correctIdx])) ? parseInt(row[correctIdx]) : Math.round(scoreVal * 12 / 100);
+                const totalVal = totalIdx !== -1 && !isNaN(parseInt(row[totalIdx])) ? parseInt(row[totalIdx]) : activeTotal;
+                const correctVal = correctIdx !== -1 && !isNaN(parseInt(row[correctIdx])) ? parseInt(row[correctIdx]) : Math.round(scoreVal * totalVal / 100);
                 const durationVal = durationIdx !== -1 && row[durationIdx] ? String(row[durationIdx]) : '1m 30s';
                 const timeVal = timeIdx !== -1 && row[timeIdx] ? String(row[timeIdx]) : '12:00 WIB';
                 const dateVal = dateIdx !== -1 && row[dateIdx] ? String(row[dateIdx]) : new Date().toLocaleDateString('id-ID');
@@ -73,7 +78,8 @@ function handleImportExcel(event) {
                     class: cls,
                     score: scoreVal,
                     correct: correctVal,
-                    total: 12,
+                    total: totalVal,
+                    moduleId: activeModuleId,
                     wrongQuestions: [],
                     duration: durationVal,
                     time: timeVal,

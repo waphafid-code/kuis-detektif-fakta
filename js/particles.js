@@ -56,8 +56,13 @@ function initParticles() {
     for (let i = 0; i < count; i++) particles.push(new Particle());
 }
 
+let particleAnimFrameId = null;
+
 function drawParticles() {
-    if (!isTabVisible || !ensureCanvas()) return;
+    if (!isTabVisible || !ensureCanvas()) {
+        particleAnimFrameId = null;
+        return;
+    }
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     const isMobile = window.innerWidth < 768;
     particles.forEach(p => { p.update(); p.draw(); });
@@ -80,12 +85,26 @@ function drawParticles() {
             }
         }
     }
-    requestAnimationFrame(drawParticles);
+    if (particleAnimFrameId) {
+        cancelAnimationFrame(particleAnimFrameId);
+    }
+    particleAnimFrameId = requestAnimationFrame(drawParticles);
 }
 
 document.addEventListener('visibilitychange', () => {
     isTabVisible = !document.hidden;
-    if (isTabVisible) requestAnimationFrame(drawParticles);
+    if (isTabVisible) {
+        if (particleAnimFrameId) {
+            cancelAnimationFrame(particleAnimFrameId);
+            particleAnimFrameId = null;
+        }
+        particleAnimFrameId = requestAnimationFrame(drawParticles);
+    } else {
+        if (particleAnimFrameId) {
+            cancelAnimationFrame(particleAnimFrameId);
+            particleAnimFrameId = null;
+        }
+    }
 });
 
 initParticles();

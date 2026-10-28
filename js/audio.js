@@ -261,7 +261,12 @@ async function saveRecord(record) {
         const key = `${normName}|${normCls}|${curMod}`;
         const keyAll = `${normName}|${normCls}|all`;
 
-        let delList = JSON.parse(localStorage.getItem('quizmaster_deleted_records') || '[]');
+        let delList = [];
+        try {
+            delList = JSON.parse(localStorage.getItem('quizmaster_deleted_records') || '[]');
+        } catch(e) {
+            delList = [];
+        }
         if (Array.isArray(delList) && delList.length > 0) {
             delList = delList.filter(k => k !== key && k !== keyAll && k !== normName);
             localStorage.setItem('quizmaster_deleted_records', JSON.stringify(delList));
@@ -288,21 +293,6 @@ async function saveRecord(record) {
     let savedToFirebase = false;
     let savedToSupabase = false;
 
-    // 1. Simpan ke Google Firebase Realtime Database (Utama, Teruji 100% Aktif & Cepat)
-    if (typeof saveRecordToFirebase === 'function') {
-        try {
-            const fbPromise = saveRecordToFirebase(record, proofCode);
-            const fbTimeout = new Promise((_, reject) => setTimeout(() => reject(new Error('Firebase timeout')), 3500));
-            savedToFirebase = await Promise.race([fbPromise, fbTimeout]);
-            if (savedToFirebase) {
-                console.log('🔥 Nilai siswa berhasil disimpan ke Google Firebase Realtime Database! ID Bukti:', proofCode);
-            }
-        } catch (fbErr) {
-            console.warn('Firebase save warning:', fbErr.message);
-        }
-    }
-
-    // 2. Simpan ke Cloud Supabase dengan batas waktu ketat (2 detik) agar tidak membekukan browser seluler
     const cfg = (typeof getSupabaseConfig === 'function') ? getSupabaseConfig() : { url: DEFAULT_SUPABASE_URL, key: DEFAULT_SUPABASE_ANON_KEY, table: 'quiz_results' };
     
     // Simpan moduleId, moduleTitle, dan proofId di dalam wrong_questions JSON payload (kompatibel penuh dengan Supabase jsonb)
@@ -323,18 +313,44 @@ async function saveRecord(record) {
         quiz_date: record.date
     };
 
+    // 🚀 Simpan ke Google Firebase dan Supabase secara PARALEL (Promise.allSettled)
+    // Mengurangi waktu tunggu dari 5.5 detik menjadi maksimal ~2 detik
+    const syncPromises = [];
+
+    // 1. Google Firebase Realtime Database (REST API)
+    if (typeof saveRecordToFirebase === 'function') {
+        const fbTask = (async () => {
+            const fbPromise = saveRecordToFirebase(record, proofCode);
+            const fbTimeout = new Promise((_, reject) => setTimeout(() => reject(new Error('Firebase timeout')), 2500));
+            const ok = await Promise.race([fbPromise, fbTimeout]);
+            if (ok) {
+                savedToFirebase = true;
+                console.log('🔥 [Firebase RTDB] Nilai siswa berhasil disimpan! ID Bukti:', proofCode);
+            }
+        })().catch(fbErr => {
+            console.warn('Firebase save warning:', fbErr.message);
+        });
+        syncPromises.push(fbTask);
+    }
+
+    // 2. Cloud Supabase (SDK / REST)
     if (supabaseClient) {
-        try {
+        const spTask = (async () => {
             const spPromise = supabaseClient.from(cfg.table || 'quiz_results').insert([rowPayload]);
             const spTimeout = new Promise((_, reject) => setTimeout(() => reject(new Error('Supabase timeout')), 2000));
             const { error } = await Promise.race([spPromise, spTimeout]);
             if (!error) {
                 savedToSupabase = true;
-                console.log('✅ Nilai siswa berhasil disimpan ke Cloud Supabase via SDK! ID Bukti:', proofCode);
+                console.log('✅ [Cloud Supabase] Nilai siswa berhasil disimpan! ID Bukti:', proofCode);
             }
-        } catch (err) {
+        })().catch(err => {
             console.warn('Supabase SDK sync skipped/timeout:', err.message);
-        }
+        });
+        syncPromises.push(spTask);
+    }
+
+    if (syncPromises.length > 0) {
+        await Promise.allSettled(syncPromises);
     }
 
     // 3. Jika sedang offline atau jaringan mobile terputus, masukkan ke Antrean Offline Sync
@@ -749,7 +765,13 @@ async function syncWithBackend(showFeedback = false) {
 
     // Gabungkan baseline data resmi, data lokal, Supabase, dan Firebase
     const baseline = (typeof OFFICIAL_EXAM_RESULTS !== 'undefined' && Array.isArray(OFFICIAL_EXAM_RESULTS)) ? purgeFakeJkiRecords(OFFICIAL_EXAM_RESULTS) : [];
-    const currentLocal = purgeFakeJkiRecords(JSON.parse(localStorage.getItem(STORAGE_KEY)) || []);
+    let rawLocal = [];
+    try {
+        rawLocal = typeof loadRecords === 'function' ? loadRecords() : (JSON.parse(localStorage.getItem(STORAGE_KEY)) || []);
+    } catch(e) {
+        rawLocal = [];
+    }
+    const currentLocal = purgeFakeJkiRecords(Array.isArray(rawLocal) ? rawLocal : []);
     const mergedBaseline = mergeRecordsList(baseline, currentLocal);
     const combinedCloud = mergeRecordsList(supabaseFormatted, fbRecords);
 

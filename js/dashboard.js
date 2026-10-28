@@ -704,8 +704,7 @@ async function confirmDeleteSingle() {
             } else if (chosenModule === 'modul_detektif_fakta') {
                 await supabaseClient.from('quiz_results').delete()
                     .eq('student_name', target.name)
-                    .eq('student_class', target.cls)
-                    .neq('quiz_date', '25/10/2026');
+                    .eq('student_class', target.cls);
             }
         } catch (e) {
             console.warn('Supabase delete error:', e);
@@ -3100,7 +3099,9 @@ function exportStudentPDF() {
     try {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF('p', 'mm', 'a4');
-        const finalScore = Math.round((score / quizData.length) * 100);
+        const finalScore = (typeof window.lastQuizScore === 'number')
+            ? window.lastQuizScore
+            : ((typeof score !== 'undefined' && quizData && quizData.length) ? Math.round((score / quizData.length) * 100) : 0);
         const nowStr = new Date().toLocaleString('id-ID');
         const isLulus = finalScore >= 80;
 
@@ -3164,20 +3165,28 @@ function exportStudentPDF() {
         const tableBody = shuffledQuizOrder.map((origIdx, playIdx) => {
             const qData = quizData[origIdx];
             const isRight = answeredCorrectly[origIdx];
-            let correctAns;
-            if (Array.isArray(qData.answer)) {
-                correctAns = qData.answer.map(a => qData.options[a]).join(' | ');
-            } else {
-                correctAns = qData.options[qData.answer];
+            const ansKey = (typeof getAnswerFromVault === 'function') ? getAnswerFromVault(qData, origIdx) : qData.answer;
+            const expReview = (typeof getExplanationFromVault === 'function') ? getExplanationFromVault(qData, origIdx) : (qData.explanation || '-');
+
+            let correctAns = '-';
+            if (window.isAnswersLocked) {
+                correctAns = '🔒 Dikunci oleh Guru';
+            } else if (qData.type === 'matrix_tf') {
+                correctAns = (Array.isArray(ansKey) ? ansKey : []).map((ans, i) => `[#${i+1}] ${ans === 0 ? 'Benar' : 'Salah'}`).join(' • ');
+            } else if (Array.isArray(ansKey)) {
+                correctAns = ansKey.map(a => (qData.options && qData.options[a]) || a).join(' | ');
+            } else if (ansKey !== null && ansKey !== undefined) {
+                correctAns = (qData.options && qData.options[ansKey]) || ansKey;
             }
             const diffStr = qData.difficulty === 'Easy' ? 'Mudah' : (qData.difficulty === 'Hard' ? 'Sulit' : 'Sedang');
+            const safeExp = window.isAnswersLocked ? '🔒 Pembahasan dikunci selama mode ujian' : expReview;
 
             return [
                 playIdx + 1,
                 `[${diffStr}] ${qData.q}`,
                 isRight ? 'BENAR' : 'SALAH',
                 correctAns,
-                qData.explanation || '-'
+                safeExp
             ];
         });
 
@@ -3262,7 +3271,9 @@ function downloadExcelWorkbook(wb, fileName) {
 function exportStudentExcel() {
     sfxClick();
     try {
-        const finalScore = Math.round((score / quizData.length) * 100);
+        const finalScore = (typeof window.lastQuizScore === 'number')
+            ? window.lastQuizScore
+            : ((typeof score !== 'undefined' && quizData && quizData.length) ? Math.round((score / quizData.length) * 100) : 0);
         const sName = studentName || 'Siswa';
         const sClass = studentClass || 'Kelas';
         const safeClass = sClass.replace(/[/\\?%*:|"<> ]/g, '_');
@@ -3297,8 +3308,21 @@ function exportStudentExcel() {
                 shuffledQuizOrder.forEach((origIdx, playIdx) => {
                     const qData = quizData[origIdx];
                     const isRight = answeredCorrectly[origIdx];
-                    let correctAns = Array.isArray(qData.answer) ? qData.answer.map(a => qData.options[a]).join(' | ') : qData.options[qData.answer];
+                    const ansKey = (typeof getAnswerFromVault === 'function') ? getAnswerFromVault(qData, origIdx) : qData.answer;
+                    const expReview = (typeof getExplanationFromVault === 'function') ? getExplanationFromVault(qData, origIdx) : (qData.explanation || '-');
+
+                    let correctAns = '-';
+                    if (window.isAnswersLocked) {
+                        correctAns = '🔒 Dikunci oleh Guru';
+                    } else if (qData.type === 'matrix_tf') {
+                        correctAns = (Array.isArray(ansKey) ? ansKey : []).map((ans, i) => `[#${i+1}] ${ans === 0 ? 'Benar' : 'Salah'}`).join(' • ');
+                    } else if (Array.isArray(ansKey)) {
+                        correctAns = ansKey.map(a => (qData.options && qData.options[a]) || a).join(' | ');
+                    } else if (ansKey !== null && ansKey !== undefined) {
+                        correctAns = (qData.options && qData.options[ansKey]) || ansKey;
+                    }
                     const diffStr = qData.difficulty === 'Easy' ? 'Mudah' : (qData.difficulty === 'Hard' ? 'Sulit' : 'Sedang');
+                    const safeExp = window.isAnswersLocked ? '🔒 Pembahasan dikunci selama mode ujian' : expReview;
 
                     sheetData.push([
                         playIdx + 1,
@@ -3306,7 +3330,7 @@ function exportStudentExcel() {
                         qData.q,
                         isRight ? 'BENAR' : 'SALAH',
                         correctAns,
-                        qData.explanation || '-'
+                        safeExp
                     ]);
                 });
 
@@ -3348,7 +3372,7 @@ function exportStudentExcel() {
         <body>
             <table>
                 <tr><td colspan="6" class="title">RAPOR HASIL EVALUASI PEMBELAJARAN SISWA</td></tr>
-                <tr><td colspan="6" class="subtitle">Misi Detektif Fakta Digital (Standar Kelulusan KKM: 80)</td></tr>
+                <tr><td colspan="6" class="subtitle">${modTitle} (Standar Kelulusan KKM: 80)</td></tr>
                 <tr><td colspan="6" style="height: 10px;"></td></tr>
                 <tr><td class="info-label">Nama Siswa</td><td colspan="5">${sName}</td></tr>
                 <tr><td class="info-label">Kelas</td><td colspan="5">${sClass}</td></tr>
@@ -3370,10 +3394,23 @@ function exportStudentExcel() {
         shuffledQuizOrder.forEach((origIdx, playIdx) => {
             const qData = quizData[origIdx];
             const isRight = answeredCorrectly[origIdx];
-            let correctAns = Array.isArray(qData.answer) ? qData.answer.map(a => qData.options[a]).join(' | ') : qData.options[qData.answer];
+            const ansKey = (typeof getAnswerFromVault === 'function') ? getAnswerFromVault(qData, origIdx) : qData.answer;
+            const expReview = (typeof getExplanationFromVault === 'function') ? getExplanationFromVault(qData, origIdx) : (qData.explanation || '-');
+
+            let correctAns = '-';
+            if (window.isAnswersLocked) {
+                correctAns = '🔒 Dikunci oleh Guru';
+            } else if (qData.type === 'matrix_tf') {
+                correctAns = (Array.isArray(ansKey) ? ansKey : []).map((ans, i) => `[#${i+1}] ${ans === 0 ? 'Benar' : 'Salah'}`).join(' • ');
+            } else if (Array.isArray(ansKey)) {
+                correctAns = ansKey.map(a => (qData.options && qData.options[a]) || a).join(' | ');
+            } else if (ansKey !== null && ansKey !== undefined) {
+                correctAns = (qData.options && qData.options[ansKey]) || ansKey;
+            }
             const statusClass = isRight ? 'status-lulus' : 'status-remedial';
             const statusText = isRight ? 'BENAR' : 'SALAH';
             const diffStr = qData.difficulty === 'Easy' ? 'Mudah' : (qData.difficulty === 'Hard' ? 'Sulit' : 'Sedang');
+            const safeExp = window.isAnswersLocked ? '🔒 Pembahasan dikunci selama mode ujian' : expReview;
 
             htmlContent += `
                 <tr>
@@ -3382,7 +3419,7 @@ function exportStudentExcel() {
                     <td>${qData.q}</td>
                     <td align="center" class="${statusClass}">${statusText}</td>
                     <td>${correctAns}</td>
-                    <td>${qData.explanation || '-'}</td>
+                    <td>${safeExp}</td>
                 </tr>
             `;
         });

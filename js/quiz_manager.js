@@ -434,7 +434,7 @@ const QuizManager = {
             }
         }
 
-        if (targetId === this.NETWORK_SECURITY_MODULE.id) {
+        if (targetId === this.NETWORK_SECURITY_MODULE.id || targetId === 'modul_keamanan_jaringan') {
             try {
                 const res = await fetch('bank_soal/modul_jaringan_keamanan.json');
                 if (res.ok) {

@@ -1515,19 +1515,21 @@
         const isTeacher = isTeacherMode();
         const botAvatar = isTeacher ? '✨' : '🎓';
         const area = document.getElementById('chatbot-messages-area');
-        const typingDiv = document.createElement('div');
-        typingDiv.className = 'chatbot-msg bot typing-msg';
-        typingDiv.id = 'chatbot-typing-indicator';
-        typingDiv.innerHTML = `
-            <div class="msg-avatar">${botAvatar}</div>
-            <div class="msg-content">
-                <div class="typing-dots">
-                    <span></span><span></span><span></span>
+        if (area) {
+            const typingDiv = document.createElement('div');
+            typingDiv.className = 'chatbot-msg bot typing-msg';
+            typingDiv.id = 'chatbot-typing-indicator';
+            typingDiv.innerHTML = `
+                <div class="msg-avatar">${botAvatar}</div>
+                <div class="msg-content">
+                    <div class="typing-dots">
+                        <span></span><span></span><span></span>
+                    </div>
                 </div>
-            </div>
-        `;
-        area.appendChild(typingDiv);
-        area.scrollTop = area.scrollHeight;
+            `;
+            area.appendChild(typingDiv);
+            area.scrollTop = area.scrollHeight;
+        }
 
         setTimeout(() => {
             const typingEl = document.getElementById('chatbot-typing-indicator');

@@ -456,7 +456,7 @@ function goHome() {
 // ============================================================
 //  🎵 MODERN CHILL & UPLIFTING STUDY-BEATS AUDIO SYNTHESIZER
 // ============================================================
-const ACConstructor = window.AudioContext || window.webkitAudioContext;
+const ACConstructor = typeof window !== 'undefined' ? (window.AudioContext || window.webkitAudioContext) : null;
 let actx = null;
 let isMuted = false;
 let bgmInterval = null;
@@ -464,8 +464,16 @@ let bgmRunning = false;
 let bgmStep = 0;
 
 function initAudio() {
-    if (!actx) actx = new ACConstructor();
-    if (actx.state === 'suspended') actx.resume();
+    try {
+        if (!actx && ACConstructor) {
+            actx = new ACConstructor();
+        }
+        if (actx && actx.state === 'suspended') {
+            actx.resume().catch(() => {});
+        }
+    } catch (e) {
+        console.warn('initAudio unavailable:', e);
+    }
 }
 
 function tone(freq, type, dur, vol, slide = null, delay = 0, filterFreq = null) {
@@ -755,7 +763,8 @@ function cleanupExpiredStorageFiles() {
                         const isOlderThan7Days = (createdTime > 0) && (now - createdTime > STORAGE_RETENTION_MS);
                         
                         // Modul default bawaan tidak boleh dihapus
-                        if (isOlderThan7Days && !m.isDefault && m.id !== 'modul_detektif_fakta') {
+                        const BUILTIN_MODULE_IDS = ['modul_detektif_fakta', 'modul_jaringan_keamanan', 'modul_keamanan_jaringan'];
+                        if (isOlderThan7Days && !m.isDefault && !BUILTIN_MODULE_IDS.includes(m.id)) {
                             const dataKey = 'quizmaster_quiz_data_' + m.id;
                             const dataVal = localStorage.getItem(dataKey);
                             if (dataVal) {

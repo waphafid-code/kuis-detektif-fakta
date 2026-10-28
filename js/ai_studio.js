@@ -248,17 +248,18 @@ async function handleAiFileUpload(e) {
     statusEl.style.background = 'rgba(79, 70, 229, 0.08)';
     statusEl.style.border = '1px solid rgba(79, 70, 229, 0.25)';
     statusEl.style.color = 'var(--text)';
-    statusEl.innerHTML = `⏳ Membaca dan mengekstrak materi dari <strong>${file.name}</strong>...`;
+    const safeFileName = typeof escapeHtml === 'function' ? escapeHtml(file.name) : file.name;
+    statusEl.innerHTML = `⏳ Membaca dan mengekstrak materi dari <strong>${safeFileName}</strong>...`;
 
     try {
         const result = await DocParser.extractText(file, (pct, msg) => {
-            statusEl.innerHTML = `⏳ <strong>${pct}%</strong> &bull; ${msg}`;
+            statusEl.innerHTML = `⏳ <strong>${pct}%</strong> &bull; ${typeof escapeHtml === 'function' ? escapeHtml(msg) : msg}`;
         });
 
         statusEl.style.background = 'rgba(16, 185, 129, 0.12)';
         statusEl.style.border = '1px solid rgba(16, 185, 129, 0.3)';
         statusEl.style.color = 'var(--success)';
-        statusEl.innerHTML = `✨ Berhasil membaca dokumen <strong>${file.name}</strong> (${result.meta.fileType || 'Dokumen'}, ${result.meta.totalPages || 1} Halaman/Slide, ~${result.meta.wordCount} Kata). AI Agent sedang merumuskan draft soal HOTS...`;
+        statusEl.innerHTML = `✨ Berhasil membaca dokumen <strong>${safeFileName}</strong> (${result.meta.fileType || 'Dokumen'}, ${result.meta.totalPages || 1} Halaman/Slide, ~${result.meta.wordCount} Kata). AI Agent sedang merumuskan draft soal HOTS...`;
         sfxCorrect();
 
         if (rawTextArea) {
