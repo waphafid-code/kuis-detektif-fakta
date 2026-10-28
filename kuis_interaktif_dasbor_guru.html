@@ -1017,6 +1017,28 @@
             <div style="display: flex; justify-content: center; margin-bottom: 8px;">
                 <div id="kkm-status-banner" class="kkm-status-banner"></div>
             </div>
+
+            <!-- 🛡️ BUKTI RESMI HASIL SUBMIT TERVERIFIKASI -->
+            <div id="submission-proof-banner" class="submission-proof-banner" style="margin: 10px auto 14px; padding: 12px 18px; border-radius: 12px; background: rgba(16, 185, 129, 0.12); border: 1.5px solid rgba(16, 185, 129, 0.4); text-align: left; max-width: 680px;">
+                <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <span style="font-size: 1.6rem;">🛡️</span>
+                        <div>
+                            <div style="font-weight: 800; font-size: 0.92rem; color: var(--success); display: flex; align-items: center; gap: 6px;">
+                                <span>BUKTI RESMI: HASIL UJIAN TERVERIFIKASI</span>
+                                <span id="proof-status-pill" style="font-size: 0.72rem; padding: 2px 8px; border-radius: 10px; background: #10b981; color: #fff; font-weight: 700;">🟢 TERKIRIM</span>
+                            </div>
+                            <div id="proof-details-text" style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 3px;">
+                                Tersimpan di Cloud Database &amp; Dasbor Guru (Rini Syafitri) • No. Bukti: <strong id="proof-id-code" style="color: var(--accent); font-family: monospace;">-</strong>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="proof-timestamp-badge" style="font-size: 0.75rem; background: rgba(255,255,255,0.08); padding: 4px 10px; border-radius: 8px; font-family: monospace; color: var(--text-muted);">
+                        Waktu: -
+                    </div>
+                </div>
+            </div>
+
             <h3 class="result-title" id="result-title"></h3>
             <p class="result-desc" id="result-desc"></p>
 
@@ -1506,6 +1528,7 @@
                 <button class="btn btn-secondary" style="border: 1px solid var(--accent); color: var(--accent);" onclick="triggerImportExcel()">📤 Impor dari Excel / CSV</button>
                 <input type="file" id="excel-file-input" accept=".xlsx, .xls, .csv" style="display: none;" onchange="handleImportExcel(event)">
                 <button class="btn btn-accent" onclick="exportCSV()">📥 Ekspor CSV</button>
+                <button class="btn btn-info" style="background: linear-gradient(135deg, #0284c7, #2563eb); color: #fff;" onclick="exportFullJsonBackup()" title="Unduh file cadangan resmi lengkap (JSON) seluruh nilai siswa Kuis 1 &amp; Kuis 2">💾 Unduh Cadangan JSON (Backup)</button>
                 <button class="btn btn-danger" onclick="openDeleteModal()">🗑️ Hapus Semua Data</button>
             </div>
             </div> <!-- End #teacher-tab-records -->

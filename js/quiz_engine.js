@@ -1717,7 +1717,7 @@ function nextQuestion() {
 }
 
 let isQuizFinishing = false;
-function finishQuiz() {
+async function finishQuiz() {
     if (isQuizFinishing) return;
     isQuizFinishing = true;
 
@@ -1802,8 +1802,9 @@ function finishQuiz() {
     };
 
     // 🛡️ REKAM KE BASIS DATA & EMERGENCY BACKUP SEGERA SEBELUM RESUME DIHAPUS
+    let saveResult = null;
     try {
-        saveRecord(record);
+        saveResult = await saveRecord(record);
     } catch(errSave) {
         console.error('CRITICAL: saveRecord gagal, memicu cadangan darurat lokal:', errSave);
         try {
@@ -1819,6 +1820,35 @@ function finishQuiz() {
     } catch(e) {}
 
     switchScreen('result');
+
+    // 🛡️ TAMPILKAN BUKTI RESMI HASIL SUBMIT TERVERIFIKASI
+    try {
+        const proofCodeEl = document.getElementById('proof-id-code');
+        const proofPill = document.getElementById('proof-status-pill');
+        const proofTime = document.getElementById('proof-timestamp-badge');
+        const proofDetail = document.getElementById('proof-details-text');
+        const safeCls = (studentClass || 'XE').replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+        const fallbackCode = `SMAN4-${safeCls}-${displayScore}-${Date.now().toString(36).toUpperCase()}`;
+        const proofCode = (saveResult && saveResult.proofId) ? saveResult.proofId : (record.submissionProofId || fallbackCode);
+        const isCloudSaved = !!(saveResult && saveResult.savedToSupabase);
+
+        if (proofCodeEl) proofCodeEl.textContent = proofCode;
+        if (proofTime) proofTime.textContent = `Waktu: ${clockStr} • ${record.date}`;
+        if (proofPill) {
+            if (isCloudSaved) {
+                proofPill.innerHTML = '🟢 100% TERKIRIM KE CLOUD';
+                proofPill.style.background = '#10b981';
+            } else {
+                proofPill.innerHTML = '💾 TERSIMPAN DI BROWSER & ANTREAN SYNC';
+                proofPill.style.background = '#f59e0b';
+            }
+        }
+        if (proofDetail) {
+            proofDetail.innerHTML = isCloudSaved
+                ? `Tersimpan di Cloud Supabase & Dasbor Guru (Rini Syafitri) • No. Bukti: <strong style="color:var(--accent); font-family:monospace;">${proofCode}</strong>`
+                : `Tersimpan aman di Memori Lokal & Segera Masuk ke Dasbor Guru saat Online • No. Bukti: <strong style="color:var(--accent); font-family:monospace;">${proofCode}</strong>`;
+        }
+    } catch(e) {}
 
     const card = document.querySelector('#screen-quiz .glass-card');
     if (card) card.classList.remove('streak-on-fire');

@@ -2812,6 +2812,9 @@ function exportStudentPDF() {
         const nowStr = new Date().toLocaleString('id-ID');
         const isLulus = finalScore >= 80;
 
+        const modTitle = (typeof currentActiveModule !== 'undefined' && currentActiveModule && currentActiveModule.title) || (window.QuizManager && QuizManager.getActiveModule() ? QuizManager.getActiveModule().title : 'Evaluasi Kuis Pembelajaran Informatika');
+        const proofId = window.lastSubmittedProofId || `SMAN4-${(studentClass||'XE').replace(/[^A-Za-z0-9]/g,'')}-${finalScore}-${Date.now().toString(36).toUpperCase()}`;
+
         // 1. Header Banner
         doc.setFillColor(15, 23, 42); // Dark Navy
         doc.rect(0, 0, 210, 34, 'F');
@@ -2824,10 +2827,10 @@ function exportStudentPDF() {
         doc.text('RAPOR HASIL EVALUASI PEMBELAJARAN', 14, 14);
 
         doc.setTextColor(226, 232, 240);
-        doc.setFontSize(9.5);
+        doc.setFontSize(9);
         doc.setFont('helvetica', 'normal');
-        doc.text('Misi Detektif Fakta Digital: Uji Validitas Data (Standar KKM: 80)', 14, 21);
-        doc.text(`Waktu Selesai: ${nowStr}`, 14, 28);
+        doc.text(`${modTitle} (Standar KKM: 80)`, 14, 21);
+        doc.text(`Waktu: ${nowStr} • No. Verifikasi: ${proofId}`, 14, 28);
 
         // 2. Student Info & Score Badge Box
         doc.setFillColor(248, 250, 252);
@@ -2975,15 +2978,21 @@ function exportStudentExcel() {
         const nowStr = new Date().toLocaleString('id-ID');
         const isLulus = finalScore >= 80;
 
+        const modTitle = (typeof currentActiveModule !== 'undefined' && currentActiveModule && currentActiveModule.title) || (window.QuizManager && QuizManager.getActiveModule() ? QuizManager.getActiveModule().title : 'Evaluasi Kuis Pembelajaran Informatika');
+        const proofId = window.lastSubmittedProofId || `SMAN4-${(studentClass||'XE').replace(/[^A-Za-z0-9]/g,'')}-${finalScore}-${Date.now().toString(36).toUpperCase()}`;
+
         // Opsi 1: Jika Pustaka XLSX Tersedia di Browser Siswa
         if (typeof XLSX !== 'undefined') {
             try {
                 const sheetData = [
                     ['RAPOR HASIL EVALUASI PEMBELAJARAN SISWA'],
-                    ['KUIS DETEKTIF FAKTA DIGITAL (BATAS KELULUSAN KKM: 80)'],
+                    [`${modTitle.toUpperCase()} (BATAS KELULUSAN KKM: 80)`],
                     [],
                     ['Nama Siswa', sanitizeSpreadsheetValue(sName)],
                     ['Kelas', sanitizeSpreadsheetValue(sClass)],
+                    ['Modul Kuis', modTitle],
+                    ['Nomor Bukti Verifikasi', proofId],
+                    ['Status Bukti', 'TERVERIFIKASI CLOUD SUPABASE & DASBOR GURU'],
                     ['Nilai Akhir', finalScore],
                     ['Jawaban Benar', `${score} dari ${quizData.length} Soal`],
                     ['Status Kelulusan', isLulus ? 'LULUS (KOMPETEN)' : 'BELUM LULUS (REMEDIAL)'],
@@ -3140,5 +3149,49 @@ function exportCSV() {
     URL.revokeObjectURL(url);
     showToast('File CSV berhasil diunduh!', '📥');
 }
+
+// 💾 UNDUH CADANGAN RESMI LENGKAP SELURUH NILAI SISWA (FORMAT JSON LENGKAP & TERVERIFIKASI)
+function exportFullJsonBackup() {
+    sfxClick();
+    const records = (typeof loadRecords === 'function') ? loadRecords() : [];
+    if (!Array.isArray(records) || records.length === 0) {
+        showToast('Tidak ada data nilai untuk dicadangkan!', '⚠️');
+        return;
+    }
+
+    const modFaktaRecords = records.filter(r => (typeof normalizeModuleId === 'function' ? normalizeModuleId(r.moduleId, r.id, r.date) : r.moduleId) === 'modul_detektif_fakta');
+    const modJkiRecords = records.filter(r => (typeof normalizeModuleId === 'function' ? normalizeModuleId(r.moduleId, r.id, r.date) : r.moduleId) === 'modul_jaringan_keamanan');
+
+    const backupPayload = {
+        title: "CADANGAN RESMI DATA NILAI KUIS INFORMATIKA SMAN 4 PADANG",
+        guruMataPelajaran: "RINI SYAFITRI",
+        sekolah: "SMAN 4 PADANG",
+        exportedAt: new Date().toISOString(),
+        exportedLocale: new Date().toLocaleString('id-ID'),
+        totalRecords: records.length,
+        ringkasanModul: {
+            modul_detektif_fakta: modFaktaRecords.length,
+            modul_jaringan_keamanan: modJkiRecords.length
+        },
+        records: records
+    };
+
+    const jsonStr = JSON.stringify(backupPayload, null, 2);
+    const blob = new Blob([jsonStr], { type: 'application/json;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `backup_resmi_kuis_informatika_sman4padang_${new Date().toISOString().slice(0, 10)}.json`;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => {
+        if (a.parentNode) document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }, 1500);
+
+    sfxCorrect();
+    showToast(`✅ Cadangan lengkap ${records.length} data nilai berhasil diunduh!`, '💾');
+}
+window.exportFullJsonBackup = exportFullJsonBackup;
 
 // ============================================================

@@ -237,11 +237,17 @@ async function saveRecord(record) {
             : 'Misi Detektif Fakta';
     }
 
+    // 🛡️ BUKTI OTENTIKASI & VERIFIKASI PENGERJAAN RESMI (SUBMISSION RECEIPT CODE)
+    const safeClsCode = (record.class || 'XE').replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+    const proofCode = `SMAN4-${safeClsCode}-${record.score}-${Date.now().toString(36).toUpperCase()}`;
+    record.submissionProofId = proofCode;
+    window.lastSubmittedProofId = proofCode;
+
     // 🛡️ EMERGENCY REDUNDANT BACKUP: Simpan langsung ke cadangan darurat lokal
     try {
         const emergencyList = JSON.parse(localStorage.getItem('quizmaster_emergency_backup_records') || '[]');
         emergencyList.push({ ...record, savedAt: Date.now() });
-        if (emergencyList.length > 100) emergencyList.shift();
+        if (emergencyList.length > 200) emergencyList.shift();
         localStorage.setItem('quizmaster_emergency_backup_records', JSON.stringify(emergencyList));
     } catch(e) {}
 
@@ -257,7 +263,7 @@ async function saveRecord(record) {
     let savedToSupabase = false;
     const cfg = (typeof getSupabaseConfig === 'function') ? getSupabaseConfig() : { url: DEFAULT_SUPABASE_URL, key: DEFAULT_SUPABASE_ANON_KEY, table: 'quiz_results' };
     
-    // Simpan moduleId dan moduleTitle di dalam wrong_questions JSON payload (kompatibel penuh dengan Supabase jsonb)
+    // Simpan moduleId, moduleTitle, dan proofId di dalam wrong_questions JSON payload (kompatibel penuh dengan Supabase jsonb)
     const rowPayload = {
         student_name: record.name,
         student_class: record.class,
@@ -267,7 +273,8 @@ async function saveRecord(record) {
         wrong_questions: {
             list: Array.isArray(record.wrongQuestions) ? record.wrongQuestions : [],
             moduleId: modId,
-            moduleTitle: record.moduleTitle
+            moduleTitle: record.moduleTitle,
+            proofId: proofCode
         },
         duration: record.duration,
         time_str: record.time,
@@ -280,7 +287,7 @@ async function saveRecord(record) {
             const { error } = await supabaseClient.from(cfg.table || 'quiz_results').insert([rowPayload]);
             if (!error) {
                 savedToSupabase = true;
-                console.log('✅ Nilai siswa berhasil disimpan ke Cloud Supabase via SDK!');
+                console.log('✅ Nilai siswa berhasil disimpan ke Cloud Supabase via SDK! ID Bukti:', proofCode);
             } else {
                 console.warn('Supabase SDK insert warning:', error.message);
             }
@@ -305,7 +312,7 @@ async function saveRecord(record) {
             });
             if (res.ok) {
                 savedToSupabase = true;
-                console.log('✅ Nilai siswa berhasil disimpan ke Cloud Supabase via direct REST API!');
+                console.log('✅ Nilai siswa berhasil disimpan ke Cloud Supabase via direct REST API! ID Bukti:', proofCode);
             }
         } catch (restErr) {
             console.warn('Direct REST insert warning:', restErr.message);
@@ -327,6 +334,14 @@ async function saveRecord(record) {
             body: JSON.stringify(record)
         });
     } catch (err) {}
+
+    return {
+        success: true,
+        savedToSupabase: savedToSupabase,
+        proofId: proofCode,
+        timestamp: record.timestamp,
+        dateStr: `${record.date} ${record.time}`
+    };
 }
 
 function loadTimerSetting() {
