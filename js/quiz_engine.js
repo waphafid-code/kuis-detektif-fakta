@@ -1830,7 +1830,10 @@ async function finishQuiz() {
         const safeCls = (studentClass || 'XE').replace(/[^A-Za-z0-9]/g, '').toUpperCase();
         const fallbackCode = `SMAN4-${safeCls}-${displayScore}-${Date.now().toString(36).toUpperCase()}`;
         const proofCode = (saveResult && saveResult.proofId) ? saveResult.proofId : (record.submissionProofId || fallbackCode);
-        const isCloudSaved = !!(saveResult && saveResult.savedToSupabase);
+        const isCloudSaved = !!(saveResult && (saveResult.savedToSupabase || saveResult.savedToFirebase));
+        const cloudDestName = (saveResult && saveResult.savedToFirebase && saveResult.savedToSupabase) 
+            ? 'Firebase & Supabase' 
+            : ((saveResult && saveResult.savedToFirebase) ? 'Google Firebase' : 'Cloud Supabase');
 
         if (proofCodeEl) proofCodeEl.textContent = proofCode;
         if (proofTime) proofTime.textContent = `Waktu: ${clockStr} • ${record.date}`;
@@ -1845,7 +1848,7 @@ async function finishQuiz() {
         }
         if (proofDetail) {
             proofDetail.innerHTML = isCloudSaved
-                ? `Tersimpan di Cloud Supabase & Dasbor Guru (Rini Syafitri) • No. Bukti: <strong style="color:var(--accent); font-family:monospace;">${proofCode}</strong>`
+                ? `Tersimpan di Cloud Database (${cloudDestName}) & Dasbor Guru (Rini Syafitri) • No. Bukti: <strong style="color:var(--accent); font-family:monospace;">${proofCode}</strong>`
                 : `Tersimpan aman di Memori Lokal & Segera Masuk ke Dasbor Guru saat Online • No. Bukti: <strong style="color:var(--accent); font-family:monospace;">${proofCode}</strong>`;
         }
     } catch(e) {}

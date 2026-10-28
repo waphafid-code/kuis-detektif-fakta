@@ -19,6 +19,9 @@
     <!-- Supabase JS Client Library (Cloud Database Online Real-Time) -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>if (typeof supabase === 'undefined') { document.write('<script src="https://unpkg.com/@supabase/supabase-js@2"><\/script>'); }</script>
+    <!-- Firebase JS Client Library (Cloud Firestore Database Online Real-Time 24/7) -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
     <!-- JSZip Library untuk Ekstraksi Slide PowerPoint (.pptx) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <!-- Mammoth.js Library untuk Ekstraksi Dokumen Microsoft Word (.docx) -->
@@ -275,6 +278,81 @@
             </button>
             <button class="btn btn-secondary" onclick="uploadAllLocalRecordsToSupabase()" style="padding: 10px; font-size: 0.82rem; display: flex; align-items: center; justify-content: center; gap: 8px;">
                 ⬆️ Unggah Semua Data Siswa (Termasuk 155 Nilai PDF) ke Supabase
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- 🔥 GOOGLE FIREBASE CLOUD FIRESTORE CONFIGURATION & SYNC MODAL -->
+<!-- ============================================================ -->
+<div class="modal-overlay" id="firebase-modal">
+    <div class="modal-box" style="max-width: 540px; width: 92%;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+            <h3 style="margin: 0; color: #f59e0b; font-size: 1.15rem; display: flex; align-items: center; gap: 8px;">
+                <span>🔥 Google Firebase Cloud Firestore (24 Jam Aktif)</span>
+            </h3>
+            <button class="modal-close" onclick="closeFirebaseModal()" style="background: none; border: none; font-size: 1.3rem; cursor: pointer; color: var(--text-muted);">✕</button>
+        </div>
+
+        <div id="fb-status-box" style="font-size: 0.82rem; padding: 10px 14px; border-radius: 10px; background: rgba(245,158,11,0.06); border: 1px solid rgba(245,158,11,0.25); margin-bottom: 16px; line-height: 1.45;">
+            <!-- Status rendered by JS -->
+        </div>
+
+        <!-- Quick Paste Area for firebaseConfig snippet -->
+        <div style="background: rgba(255,255,255,0.03); border: 1px dashed rgba(245,158,11,0.3); border-radius: 10px; padding: 12px; margin-bottom: 16px;">
+            <label for="fb-paste-snippet" style="font-size: 0.8rem; font-weight: 700; color: #f59e0b; display: block; margin-bottom: 6px;">
+                📋 Tempel Cepat Kode <code>firebaseConfig</code> dari Firebase Console:
+            </label>
+            <textarea id="fb-paste-snippet" placeholder="Tempel blok const firebaseConfig = { ... } di sini..." rows="3" style="width: 100%; box-sizing: border-box; background: rgba(0,0,0,0.25); color: var(--text); border: 1px solid var(--glass-border); border-radius: 8px; padding: 8px 10px; font-family: monospace; font-size: 0.78rem; resize: vertical;"></textarea>
+            <button type="button" class="btn btn-secondary" onclick="handlePasteFirebaseSnippet()" style="margin-top: 6px; padding: 6px 14px; font-size: 0.76rem; font-weight: 700; width: 100%; justify-content: center; display: flex; gap: 6px;">
+                ⚡ Ekstrak &amp; Isi Otomatis Kolom di Bawah
+            </button>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px;">
+            <div class="supabase-field-group">
+                <label for="fb-input-project" style="font-size: 0.78rem;">Project ID:</label>
+                <input type="text" id="fb-input-project" placeholder="kuis-xxxxx" autocomplete="off" spellcheck="false" style="font-size: 0.85rem; padding: 8px 12px;">
+            </div>
+            <div class="supabase-field-group">
+                <label for="fb-input-key" style="font-size: 0.78rem;">API Key:</label>
+                <input type="password" id="fb-input-key" placeholder="AIzaSy..." autocomplete="off" spellcheck="false" style="font-size: 0.85rem; padding: 8px 12px;">
+            </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px;">
+            <div class="supabase-field-group">
+                <label for="fb-input-auth" style="font-size: 0.78rem;">Auth Domain:</label>
+                <input type="text" id="fb-input-auth" placeholder="kuis-xxxxx.firebaseapp.com" autocomplete="off" spellcheck="false" style="font-size: 0.85rem; padding: 8px 12px;">
+            </div>
+            <div class="supabase-field-group">
+                <label for="fb-input-app" style="font-size: 0.78rem;">App ID:</label>
+                <input type="text" id="fb-input-app" placeholder="1:12345:web:67890" autocomplete="off" spellcheck="false" style="font-size: 0.85rem; padding: 8px 12px;">
+            </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px;">
+            <div class="supabase-field-group">
+                <label for="fb-input-bucket" style="font-size: 0.78rem;">Storage Bucket:</label>
+                <input type="text" id="fb-input-bucket" placeholder="kuis-xxxxx.firebasestorage.app" autocomplete="off" spellcheck="false" style="font-size: 0.85rem; padding: 8px 12px;">
+            </div>
+            <div class="supabase-field-group">
+                <label for="fb-input-sender" style="font-size: 0.78rem;">Messaging Sender ID:</label>
+                <input type="text" id="fb-input-sender" placeholder="1234567890" autocomplete="off" spellcheck="false" style="font-size: 0.85rem; padding: 8px 12px;">
+            </div>
+        </div>
+
+        <div style="background: rgba(245,158,11,0.06); border: 1px solid rgba(245,158,11,0.25); border-radius: 10px; padding: 10px 12px; margin-bottom: 16px; font-size: 0.76rem; color: var(--text-secondary); line-height: 1.45;">
+            💡 <strong>Keunggulan Firebase Cloud Firestore:</strong> Berjalan 24 jam nonstop di Google Cloud tanpa pernah mengalami sleep/paused. Mendukung sinkronisasi offline di HP siswa, dan otomatis menyegarkan dasbor guru secara real-time saat siswa klik kirim nilai.
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+            <button class="btn btn-primary" id="btn-fb-test" onclick="saveAndTestFirebase()" style="padding: 11px; font-weight: 700; background: linear-gradient(135deg, #f59e0b, #d97706); display: flex; align-items: center; justify-content: center; gap: 8px;">
+                🔥 Simpan &amp; Tes Koneksi Firebase
+            </button>
+            <button class="btn btn-secondary" onclick="uploadAllLocalRecordsToFirebaseAction()" style="padding: 10px; font-size: 0.82rem; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                ⬆️ Unggah Semua Data Siswa (221 Nilai Resmi) ke Firebase Firestore
             </button>
         </div>
     </div>
@@ -1127,6 +1205,9 @@
                         </div>
                         <button type="button" class="btn btn-secondary" onclick="openSupabaseModal()" style="padding: 5px 14px; font-size: 0.76rem; font-weight: 700; border-radius: 20px; display: inline-flex; align-items: center; gap: 6px;" title="Kelola Koneksi &amp; Sinkronisasi Cloud Supabase Database">
                             ☁️ Sinkronkan Supabase
+                        </button>
+                        <button type="button" class="btn btn-secondary" onclick="openFirebaseModal()" style="padding: 5px 14px; font-size: 0.76rem; font-weight: 700; border-radius: 20px; display: inline-flex; align-items: center; gap: 6px; background: rgba(245,158,11,0.12); border-color: rgba(245,158,11,0.35); color: #f59e0b;" title="Kelola Koneksi &amp; Sinkronisasi Google Firebase Cloud Firestore 24 Jam">
+                            🔥 Firebase Database
                         </button>
                     </div>
                 </div>
@@ -2170,6 +2251,7 @@ Kunci Jawaban: B"></textarea>
 <script src="js/quiz_manager.js?v=20261026-secfix"></script>
 <script src="js/question_editor.js?v=20261026-secfix"></script>
 <script src="js/exam_doc_importer.js?v=20261026-ai-rolefix"></script>
+<script src="js/firebase_sync.js?v=20261028-v1"></script>
 <script src="js/storage.js?v=20261026-examlock"></script>
 <script src="js/audio.js?v=20261026-examlock"></script>
 <script src="js/particles.js?v=20261026-examlock"></script>

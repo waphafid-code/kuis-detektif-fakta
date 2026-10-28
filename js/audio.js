@@ -319,8 +319,21 @@ async function saveRecord(record) {
         }
     }
 
+    // 2b. Simpan ke Google Firebase Cloud Firestore (Berjalan 24 Jam Non-Stop)
+    let savedToFirebase = false;
+    if (typeof saveRecordToFirebase === 'function') {
+        try {
+            savedToFirebase = await saveRecordToFirebase(record, proofCode);
+            if (savedToFirebase) {
+                console.log('🔥 Nilai siswa berhasil disimpan ke Google Firebase Cloud Firestore! ID Bukti:', proofCode);
+            }
+        } catch (fbErr) {
+            console.warn('Firebase save warning:', fbErr.message);
+        }
+    }
+
     // 3. Jika sedang offline atau jaringan mobile terputus, masukkan ke Antrean Offline Sync
-    if (!savedToSupabase) {
+    if (!savedToSupabase && !savedToFirebase) {
         if (typeof queueRecordForSync === 'function') {
             queueRecordForSync(record);
         }
@@ -338,6 +351,7 @@ async function saveRecord(record) {
     return {
         success: true,
         savedToSupabase: savedToSupabase,
+        savedToFirebase: savedToFirebase,
         proofId: proofCode,
         timestamp: record.timestamp,
         dateStr: `${record.date} ${record.time}`
@@ -678,13 +692,28 @@ async function syncWithBackend(showFeedback = false) {
         const baseline = (typeof OFFICIAL_EXAM_RESULTS !== 'undefined' && Array.isArray(OFFICIAL_EXAM_RESULTS)) ? purgeFakeJkiRecords(OFFICIAL_EXAM_RESULTS) : [];
         const currentLocal = purgeFakeJkiRecords(JSON.parse(localStorage.getItem(STORAGE_KEY)) || []);
         const mergedBaseline = mergeRecordsList(baseline, currentLocal);
-        const finalRecords = filterDeletedRecords(purgeFakeJkiRecords(mergeRecordsList(mergedBaseline, formatted)));
+        let cloudList = formatted;
+
+        // Ambil data dari Firebase Cloud Firestore jika aktif
+        if (typeof fetchFirebaseRecords === 'function') {
+            try {
+                const fbRecords = await fetchFirebaseRecords();
+                if (Array.isArray(fbRecords) && fbRecords.length > 0) {
+                    cloudList = mergeRecordsList(cloudList, fbRecords);
+                    console.log(`🔥 [Firebase] ${fbRecords.length} data nilai digabungkan ke dasbor.`);
+                }
+            } catch(fbErr) {
+                console.warn('Firebase sync warning:', fbErr.message);
+            }
+        }
+
+        const finalRecords = filterDeletedRecords(purgeFakeJkiRecords(mergeRecordsList(mergedBaseline, cloudList)));
 
         localStorage.setItem(STORAGE_KEY, JSON.stringify(finalRecords));
         localStorage.setItem(OFFICIAL_DATA_SYNC_KEY, CURRENT_OFFICIAL_VERSION);
         
         isBackendOnline = true;
-        updateDbBadge(true, formatted.length);
+        updateDbBadge(true, finalRecords.length);
 
         // Pastikan antrean nilai offline terunggah jika ada
         if (typeof flushPendingRecords === 'function') {
@@ -693,15 +722,42 @@ async function syncWithBackend(showFeedback = false) {
 
         // Pastikan Realtime Subscription aktif
         initSupabaseRealtime();
+        if (typeof initFirebaseRealtime === 'function') {
+            initFirebaseRealtime();
+        }
 
         if (typeof renderDashboard === 'function') renderDashboard();
         if (showFeedback) {
-            showToast(`✅ Berhasil menyinkronkan ${formatted.length} data dari Supabase! (Total: ${finalRecords.length})`, '☁️');
+            showToast(`✅ Berhasil menyinkronkan data cloud! (Total: ${finalRecords.length} Siswa)`, '☁️');
         }
         return true;
     } else {
+        // Coba sinkronkan dari Firebase jika Supabase offline/bermasalah
+        if (typeof fetchFirebaseRecords === 'function') {
+            try {
+                const fbRecords = await fetchFirebaseRecords();
+                if (Array.isArray(fbRecords) && fbRecords.length > 0) {
+                    const baseline = (typeof OFFICIAL_EXAM_RESULTS !== 'undefined' && Array.isArray(OFFICIAL_EXAM_RESULTS)) ? purgeFakeJkiRecords(OFFICIAL_EXAM_RESULTS) : [];
+                    const currentLocal = purgeFakeJkiRecords(JSON.parse(localStorage.getItem(STORAGE_KEY)) || []);
+                    const mergedBaseline = mergeRecordsList(baseline, currentLocal);
+                    const finalRecords = filterDeletedRecords(purgeFakeJkiRecords(mergeRecordsList(mergedBaseline, fbRecords)));
+                    
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify(finalRecords));
+                    localStorage.setItem(OFFICIAL_DATA_SYNC_KEY, CURRENT_OFFICIAL_VERSION);
+                    isBackendOnline = true;
+                    updateDbBadge(true, finalRecords.length);
+                    if (typeof initFirebaseRealtime === 'function') initFirebaseRealtime();
+                    if (typeof renderDashboard === 'function') renderDashboard();
+                    if (showFeedback) {
+                        showToast(`🔥 Berhasil menyinkronkan ${fbRecords.length} data dari Google Firebase!`, '🔥');
+                    }
+                    return true;
+                }
+            } catch(fbErr) {}
+        }
+
         if (showFeedback) {
-            showToast('⚠️ Gagal terhubung ke basis data Supabase. Periksa URL / Key.', '⚠️');
+            showToast('⚠️ Gagal terhubung ke basis data Supabase. Periksa URL / Key atau gunakan Firebase.', '⚠️');
         }
     }
 
@@ -722,6 +778,132 @@ async function syncWithBackend(showFeedback = false) {
     return false;
 }
 window.syncWithBackend = syncWithBackend;
+
+// 🔥 FIREBASE MODAL ACTIONS & CONTROLLERS
+function openFirebaseModal() {
+    sfxClick();
+    const modal = document.getElementById('firebase-modal');
+    if (!modal) return;
+    const cfg = (typeof getFirebaseConfig === 'function') ? getFirebaseConfig() : null;
+    const keyInp = document.getElementById('fb-input-key');
+    const projInp = document.getElementById('fb-input-project');
+    const authInp = document.getElementById('fb-input-auth');
+    const bucketInp = document.getElementById('fb-input-bucket');
+    const senderInp = document.getElementById('fb-input-sender');
+    const appInp = document.getElementById('fb-input-app');
+    const statusBox = document.getElementById('fb-status-box');
+
+    if (cfg) {
+        if (keyInp) keyInp.value = cfg.apiKey || '';
+        if (projInp) projInp.value = cfg.projectId || '';
+        if (authInp) authInp.value = cfg.authDomain || '';
+        if (bucketInp) bucketInp.value = cfg.storageBucket || '';
+        if (senderInp) senderInp.value = cfg.messagingSenderId || '';
+        if (appInp) appInp.value = cfg.appId || '';
+    }
+
+    const isConnected = !!(window.firestoreDb);
+    if (statusBox) {
+        statusBox.innerHTML = isConnected
+            ? `🟢 <strong>Status: Terhubung Aktif</strong> ke Cloud Firestore (Project: <strong>${cfg?.projectId || 'Kuis'}</strong>)!`
+            : '⚠️ <strong>Status: Belum Terhubung</strong>. Masukkan Project ID & API Key atau tempel kode <code>firebaseConfig</code> dari Firebase Console.';
+        statusBox.style.color = isConnected ? 'var(--success)' : '#f59e0b';
+    }
+
+    modal.classList.add('active');
+}
+window.openFirebaseModal = openFirebaseModal;
+
+function closeFirebaseModal() {
+    sfxClick();
+    const modal = document.getElementById('firebase-modal');
+    if (modal) modal.classList.remove('active');
+}
+window.closeFirebaseModal = closeFirebaseModal;
+
+function handlePasteFirebaseSnippet() {
+    const pasteArea = document.getElementById('fb-paste-snippet');
+    if (!pasteArea) return;
+    const parsed = (typeof parseFirebaseConfigSnippet === 'function') ? parseFirebaseConfigSnippet(pasteArea.value) : null;
+    if (parsed) {
+        if (document.getElementById('fb-input-key')) document.getElementById('fb-input-key').value = parsed.apiKey || '';
+        if (document.getElementById('fb-input-project')) document.getElementById('fb-input-project').value = parsed.projectId || '';
+        if (document.getElementById('fb-input-auth')) document.getElementById('fb-input-auth').value = parsed.authDomain || '';
+        if (document.getElementById('fb-input-bucket')) document.getElementById('fb-input-bucket').value = parsed.storageBucket || '';
+        if (document.getElementById('fb-input-sender')) document.getElementById('fb-input-sender').value = parsed.messagingSenderId || '';
+        if (document.getElementById('fb-input-app')) document.getElementById('fb-input-app').value = parsed.appId || '';
+        pasteArea.value = '';
+        showToast('✅ Berhasil membaca kode Firebase Config!', '📋');
+    } else {
+        showToast('Format kode tidak dikenali. Pastikan menyalin blok firebaseConfig.', '⚠️');
+    }
+}
+window.handlePasteFirebaseSnippet = handlePasteFirebaseSnippet;
+
+async function saveAndTestFirebase() {
+    sfxClick();
+    const key = document.getElementById('fb-input-key')?.value.trim();
+    const projectId = document.getElementById('fb-input-project')?.value.trim();
+    const authDomain = document.getElementById('fb-input-auth')?.value.trim() || `${projectId}.firebaseapp.com`;
+    const storageBucket = document.getElementById('fb-input-bucket')?.value.trim() || `${projectId}.firebasestorage.app`;
+    const messagingSenderId = document.getElementById('fb-input-sender')?.value.trim();
+    const appId = document.getElementById('fb-input-app')?.value.trim();
+
+    if (!projectId || !key) {
+        showToast('Project ID dan API Key tidak boleh kosong!', '⚠️');
+        return;
+    }
+
+    const cfg = { apiKey: key, projectId, authDomain, storageBucket, messagingSenderId, appId };
+    saveFirebaseConfig(cfg);
+    initFirebaseClient();
+
+    const btn = document.getElementById('btn-fb-test');
+    if (btn) btn.innerHTML = '⏳ Menghubungkan ke Cloud Firestore...';
+
+    const testRes = (typeof testFirebaseConnection === 'function') ? await testFirebaseConnection() : { success: false, message: 'Fungsi tes tidak ditemukan' };
+    if (btn) btn.innerHTML = '🔥 Simpan & Tes Koneksi Firebase';
+
+    const statusBox = document.getElementById('fb-status-box');
+    if (testRes.success) {
+        sfxCorrect();
+        if (statusBox) {
+            statusBox.innerHTML = `🟢 <strong>Sukses:</strong> ${testRes.message}!`;
+            statusBox.style.color = 'var(--success)';
+        }
+        showToast('🔥 Berhasil terhubung ke Google Cloud Firestore!', '✅');
+        if (typeof initFirebaseRealtime === 'function') initFirebaseRealtime();
+        syncWithBackend(false);
+        setTimeout(() => closeFirebaseModal(), 1500);
+    } else {
+        sfxWrong();
+        if (statusBox) {
+            statusBox.innerHTML = `❌ <strong>Gagal Terhubung:</strong> ${testRes.message}<br><small style="color:var(--text-muted);">Pastikan Cloud Firestore sudah dibuat dan diaktifkan dalam "Test mode" di console.firebase.google.com</small>`;
+            statusBox.style.color = 'var(--danger)';
+        }
+    }
+}
+window.saveAndTestFirebase = saveAndTestFirebase;
+
+async function uploadAllLocalRecordsToFirebaseAction() {
+    sfxClick();
+    if (typeof uploadAllRecordsToFirebase !== 'function') {
+        showToast('Modul Firebase belum siap.', '⚠️');
+        return;
+    }
+
+    showToast('🔥 Mengunggah seluruh data kuis ke Cloud Firestore...', '⏳');
+    try {
+        const count = await uploadAllRecordsToFirebase();
+        sfxCorrect();
+        showToast(`✅ Sukses! ${count} data kuis resmi tersimpan permanen di Cloud Firestore.`, '🔥');
+        syncWithBackend(false);
+    } catch (err) {
+        sfxWrong();
+        showToast(`⚠️ Gagal mengunggah: ${err.message}`, '❌');
+    }
+}
+window.uploadAllLocalRecordsToFirebaseAction = uploadAllLocalRecordsToFirebaseAction;
 
 // ☁️ SUPABASE MODAL ACTIONS & CONTROLLERS
 function openSupabaseModal() {
