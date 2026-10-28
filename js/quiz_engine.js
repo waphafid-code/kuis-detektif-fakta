@@ -698,7 +698,10 @@ function updateHomeStudentDisplay() {
 }
 window.updateHomeStudentDisplay = updateHomeStudentDisplay;
 
+let isInitiatingQuiz = false;
+
 async function initiateQuiz() {
+    if (isInitiatingQuiz) return;
     const clsSelect = document.getElementById('input-class');
     const nameSelect = document.getElementById('input-name');
     const cls = clsSelect ? clsSelect.value : '';
@@ -707,7 +710,7 @@ async function initiateQuiz() {
     const moduleId = moduleSelect ? moduleSelect.value : (window.QuizManager ? QuizManager.getActiveModuleId() : 'modul_detektif_fakta');
 
     if (!cls) {
-        sfxWrong();
+        if (typeof sfxWrong === 'function') sfxWrong();
         if (clsSelect) {
             clsSelect.style.borderColor = 'var(--danger)';
             clsSelect.style.animation = 'shake 0.4s';
@@ -718,7 +721,7 @@ async function initiateQuiz() {
     }
 
     if (!name) {
-        sfxWrong();
+        if (typeof sfxWrong === 'function') sfxWrong();
         if (nameSelect) {
             nameSelect.style.borderColor = 'var(--danger)';
             nameSelect.style.animation = 'shake 0.4s';
@@ -732,177 +735,193 @@ async function initiateQuiz() {
     if (window.STUDENT_ROSTER && window.STUDENT_ROSTER[cls]) {
         const officialNames = window.STUDENT_ROSTER[cls].map(n => n.trim().toLowerCase());
         if (!officialNames.includes(name.trim().toLowerCase())) {
-            sfxWrong();
+            if (typeof sfxWrong === 'function') sfxWrong();
             showToast('Nama siswa tidak terdaftar dalam absensi resmi kelas terpilih!', '⚠️');
             return;
         }
     }
 
-    isQuizFinishing = false;
-
-    // 📦 Tentukan Modul Pembelajaran Terpilih terlebih dahulu
-    const targetModId = moduleId || (currentActiveModule ? currentActiveModule.id : (window.QuizManager ? QuizManager.getActiveModuleId() : 'modul_detektif_fakta'));
-
-    // 🔒 Verifikasi Akses Jadwal RINI SYAFITRI & Pengaturan Guru
-    const access = checkClassAccess(cls, targetModId);
-    if (!access.allowed) {
-        sfxWrong();
-        const schedule = access.schedule || (typeof getClassSchedule === 'function' ? getClassSchedule(cls) : (SCHEDULE_RINI_SYAFITRI[cls] || {}));
-        document.getElementById('locked-class-name').textContent = `Kelas ${cls}`;
-        document.getElementById('locked-class-schedule').innerHTML = `
-            📅 <strong>Jadwal Resmi Mata Pelajaran (Rini Syafitri):</strong> ${schedule.dayName || '-'}, Pukul <strong>${schedule.start || '-'} - ${schedule.end || '-'} WIB</strong> (${schedule.period || '-'})
-        `;
-        document.getElementById('locked-current-time').textContent = `Waktu Saat Ini: ${access.currentInfo || new Date().toLocaleString('id-ID')}`;
-        document.getElementById('access-locked-modal').classList.add('active');
-        return;
+    isInitiatingQuiz = true;
+    const startBtn = document.getElementById('btn-start-quiz');
+    const origBtnHtml = startBtn ? startBtn.innerHTML : '';
+    if (startBtn) {
+        startBtn.disabled = true;
+        startBtn.innerHTML = '<span>⏳</span><span>Memverifikasi Akses...</span>';
     }
 
-    // 🔄 Verifikasi Batas Respon Siswa (Submission Policy) & Integritas Ujian
-    const policy = (typeof loadSubmissionPolicy === 'function') 
-        ? loadSubmissionPolicy() 
-        : (localStorage.getItem('quizmaster_submission_policy') || 'single_only');
-    
-    let previousAttempts = loadRecords().filter(r => {
-        const rMod = (typeof normalizeModuleId === 'function') ? normalizeModuleId(r.moduleId, r.id, r.date) : (r.moduleId || 'modul_detektif_fakta');
-        const nameMatch = (typeof isNameEquivalent === 'function') ? isNameEquivalent(r.name, name) : (r.name || '').trim().toLowerCase() === name.trim().toLowerCase();
-        const classMatch = (typeof isClassEquivalent === 'function') ? isClassEquivalent(r.class, cls) : (r.class || '').replace(/\s+/g, '').toUpperCase() === cls.replace(/\s+/g, '').toUpperCase();
-        return nameMatch && classMatch && rMod === targetModId;
-    });
+    try {
+        isQuizFinishing = false;
 
-    // 🔄 CLOUD INTEGRITY GUARD:
-    // Jika secara lokal siswa tercatat sudah pernah mengerjakan (sehingga berpotensi diblokir),
-    // LAKUKAN PENGECEKAN KE CLOUD FIREBASE untuk memastikan apakah data siswa ini sebenarnya SUDAH DIHAPUS OLEH GURU!
-    if (previousAttempts.length > 0 && typeof verifyAndPurgeIfDeletedByTeacher === 'function') {
-        try {
-            const isDeletedByTeacher = await verifyAndPurgeIfDeletedByTeacher(name, cls, targetModId);
-            if (isDeletedByTeacher) {
-                previousAttempts = [];
-                if (typeof showToast === 'function') {
-                    showToast('✨ Izin Ujian Terbuka: Catatan nilai sebelumnya telah direset oleh Guru. Selamat mengerjakan!', '🎉');
+        // 📦 Tentukan Modul Pembelajaran Terpilih terlebih dahulu
+        const targetModId = moduleId || (currentActiveModule ? currentActiveModule.id : (window.QuizManager ? QuizManager.getActiveModuleId() : 'modul_detektif_fakta'));
+
+        // 🔒 Verifikasi Akses Jadwal RINI SYAFITRI & Pengaturan Guru
+        const access = checkClassAccess(cls, targetModId);
+        if (!access.allowed) {
+            if (typeof sfxWrong === 'function') sfxWrong();
+            const schedule = access.schedule || (typeof getClassSchedule === 'function' ? getClassSchedule(cls) : (SCHEDULE_RINI_SYAFITRI[cls] || {}));
+            document.getElementById('locked-class-name').textContent = `Kelas ${cls}`;
+            document.getElementById('locked-class-schedule').innerHTML = `
+                📅 <strong>Jadwal Resmi Mata Pelajaran (Rini Syafitri):</strong> ${schedule.dayName || '-'}, Pukul <strong>${schedule.start || '-'} - ${schedule.end || '-'} WIB</strong> (${schedule.period || '-'})
+            `;
+            document.getElementById('locked-current-time').textContent = `Waktu Saat Ini: ${access.currentInfo || new Date().toLocaleString('id-ID')}`;
+            document.getElementById('access-locked-modal').classList.add('active');
+            return;
+        }
+
+        // 🔄 Verifikasi Batas Respon Siswa (Submission Policy) & Integritas Ujian
+        const policy = (typeof loadSubmissionPolicy === 'function') 
+            ? loadSubmissionPolicy() 
+            : (localStorage.getItem('quizmaster_submission_policy') || 'single_only');
+        
+        let previousAttempts = loadRecords().filter(r => {
+            const rMod = (typeof normalizeModuleId === 'function') ? normalizeModuleId(r.moduleId, r.id, r.date) : (r.moduleId || 'modul_detektif_fakta');
+            const nameMatch = (typeof isNameEquivalent === 'function') ? isNameEquivalent(r.name, name) : (r.name || '').trim().toLowerCase() === name.trim().toLowerCase();
+            const classMatch = (typeof isClassEquivalent === 'function') ? isClassEquivalent(r.class, cls) : (r.class || '').replace(/\s+/g, '').toUpperCase() === cls.replace(/\s+/g, '').toUpperCase();
+            return nameMatch && classMatch && rMod === targetModId;
+        });
+
+        // 🔄 CLOUD INTEGRITY GUARD:
+        // Jika secara lokal siswa tercatat sudah pernah mengerjakan (sehingga berpotensi diblokir),
+        // LAKUKAN PENGECEKAN KE CLOUD FIREBASE untuk memastikan apakah data siswa ini sebenarnya SUDAH DIHAPUS OLEH GURU!
+        if (previousAttempts.length > 0 && typeof verifyAndPurgeIfDeletedByTeacher === 'function') {
+            try {
+                const isDeletedByTeacher = await verifyAndPurgeIfDeletedByTeacher(name, cls, targetModId);
+                if (isDeletedByTeacher) {
+                    previousAttempts = [];
+                    if (typeof showToast === 'function') {
+                        showToast('✨ Izin Ujian Terbuka: Catatan nilai sebelumnya telah direset oleh Guru. Selamat mengerjakan!', '🎉');
+                    }
                 }
+            } catch(e) {
+                console.warn('Verifikasi status hapus guru gagal:', e);
             }
-        } catch(e) {
-            console.warn('Verifikasi status hapus guru gagal:', e);
         }
-    }
 
-    const isRemedialAllowed = (typeof loadRemedialSetting === 'function') ? loadRemedialSetting() : false;
-    const bestScore = previousAttempts.length > 0 ? Math.max(...previousAttempts.map(r => Number(r.score) || 0)) : 0;
-    const attemptCount = previousAttempts.length;
+        const isRemedialAllowed = (typeof loadRemedialSetting === 'function') ? loadRemedialSetting() : false;
+        const bestScore = previousAttempts.length > 0 ? Math.max(...previousAttempts.map(r => Number(r.score) || 0)) : 0;
+        const attemptCount = previousAttempts.length;
 
-    let canProceed = true;
-    let blockMessage = '';
+        let canProceed = true;
+        let blockMessage = '';
 
-    if (policy === 'allow_twice_highest') {
-        // ✌️ OPSI GURU: Dapat dikumpulkan 2 kali dan ambil nilai tertinggi
-        // Tidak peduli apakah anak sudah atau belum kumpulkan jawaban (attempt 0 atau 1), TETAP BISA!
-        if (attemptCount >= 2) {
-            canProceed = false;
-            blockMessage = `Batas Pengumpulan Tercapai: Anda telah mengirimkan jawaban sebanyak 2 kali untuk modul ini. Nilai tertinggi Anda (${bestScore}/100) telah tersimpan permanen di dasbor guru.`;
-        }
-    } else if (policy === 'allow_multiple') {
-        // ♾️ Ujian bebas tanpa batas pengulangan
-        canProceed = true;
-    } else if (policy === 'allow_remedy') {
-        // ⭐ Boleh remedi jika belum tuntas KKM 80
-        if (attemptCount > 0 && bestScore >= 80 && !isRemedialAllowed) {
-            canProceed = false;
-            blockMessage = `Anda sudah lulus KKM pada modul ini dengan nilai ${bestScore}/100. Pengerjaan ulang hanya dibuka untuk siswa remedial.`;
-        }
-    } else {
-        // 1️⃣ single_only: Hanya 1 kali pengerjaan
-        if (attemptCount > 0 && !(isRemedialAllowed && bestScore < 80)) {
-            canProceed = false;
-            blockMessage = `Siswa ${name} sudah pernah mengirimkan jawaban kuis untuk modul ini (Nilai: ${bestScore}/100). Sesuai pengaturan guru, kuis hanya dapat dikerjakan 1 kali.`;
-        }
-    }
-
-    if (!canProceed) {
-        sfxWrong();
-        const prev = previousAttempts[0] || {};
-        const dupModal = document.getElementById('already-submitted-modal');
-        if (dupModal) {
-            const elName = document.getElementById('dup-student-name');
-            const elClass = document.getElementById('dup-student-class');
-            const elScore = document.getElementById('dup-student-score');
-            const elMeta = document.getElementById('dup-student-meta');
-            const pDesc = dupModal.querySelector('p');
-            if (elName) elName.textContent = name;
-            if (elClass) elClass.textContent = `Kelas: ${cls}`;
-            if (elScore) elScore.textContent = `Nilai Terbaik: ${bestScore} / 100 (${attemptCount}x Pengumpulan)`;
-            if (elMeta) elMeta.textContent = `Waktu Submit: ${prev.time || '-'}, ${prev.date || ''} · Durasi: ${prev.duration || '-'}`;
-            if (pDesc && blockMessage) pDesc.textContent = blockMessage;
-            dupModal.classList.add('active');
+        if (policy === 'allow_twice_highest') {
+            // ✌️ OPSI GURU: Dapat dikumpulkan 2 kali dan ambil nilai tertinggi
+            // Tidak peduli apakah anak sudah atau belum kumpulkan jawaban (attempt 0 atau 1), TETAP BISA!
+            if (attemptCount >= 2) {
+                canProceed = false;
+                blockMessage = `Batas Pengumpulan Tercapai: Anda telah mengirimkan jawaban sebanyak 2 kali untuk modul ini. Nilai tertinggi Anda (${bestScore}/100) telah tersimpan permanen di dasbor guru.`;
+            }
+        } else if (policy === 'allow_multiple') {
+            // ♾️ Ujian bebas tanpa batas pengulangan
+            canProceed = true;
+        } else if (policy === 'allow_remedy') {
+            // ⭐ Boleh remedi jika belum tuntas KKM 80
+            if (attemptCount > 0 && bestScore >= 80 && !isRemedialAllowed) {
+                canProceed = false;
+                blockMessage = `Anda sudah lulus KKM pada modul ini dengan nilai ${bestScore}/100. Pengerjaan ulang hanya dibuka untuk siswa remedial.`;
+            }
         } else {
-            showToast(blockMessage, '⚠️');
+            // 1️⃣ single_only: Hanya 1 kali pengerjaan
+            if (attemptCount > 0 && !(isRemedialAllowed && bestScore < 80)) {
+                canProceed = false;
+                blockMessage = `Siswa ${name} sudah pernah mengirimkan jawaban kuis untuk modul ini (Nilai: ${bestScore}/100). Sesuai pengaturan guru, kuis hanya dapat dikerjakan 1 kali.`;
+            }
         }
-        return;
-    }
 
-    if (policy === 'allow_twice_highest' && attemptCount === 1) {
-        showToast(`Percobaan ke-2 Kuis Aktif! Nilai tertinggi dari kedua percobaan yang akan diambil sebagai nilai akhir (${bestScore}/100 vs nilai baru). Selamat berjuang! ✌️⭐`, 'ℹ️');
-    } else if (previousAttempts.length > 0 && isRemedialAllowed && bestScore < 80) {
-        showToast(`Sesi Remedial Terarah: Nilai terbaik Anda (${bestScore}/100) tetap dipertahankan jika nilai baru lebih rendah! ⭐`, 'ℹ️');
-    } else if (policy === 'allow_remedy' && previousAttempts.length > 0) {
-        showToast(`Sesi Remedi: Nilai tertinggi Anda (${bestScore}/100) akan dipertahankan! ⭐`, 'ℹ️');
-    }
+        if (!canProceed) {
+            if (typeof sfxWrong === 'function') sfxWrong();
+            const prev = previousAttempts[0] || {};
+            const dupModal = document.getElementById('already-submitted-modal');
+            if (dupModal) {
+                const elName = document.getElementById('dup-student-name');
+                const elClass = document.getElementById('dup-student-class');
+                const elScore = document.getElementById('dup-student-score');
+                const elMeta = document.getElementById('dup-student-meta');
+                const pDesc = dupModal.querySelector('p');
+                if (elName) elName.textContent = name;
+                if (elClass) elClass.textContent = `Kelas: ${cls}`;
+                if (elScore) elScore.textContent = `Nilai Terbaik: ${bestScore} / 100 (${attemptCount}x Pengumpulan)`;
+                if (elMeta) elMeta.textContent = `Waktu Submit: ${prev.time || '-'}, ${prev.date || ''} · Durasi: ${prev.duration || '-'}`;
+                if (pDesc && blockMessage) pDesc.textContent = blockMessage;
+                dupModal.classList.add('active');
+            } else {
+                showToast(blockMessage, '⚠️');
+            }
+            return;
+        }
 
-    // 📦 Muat Soal Sesuai Modul Pembelajaran Terpilih
-    if (window.QuizManager) {
-        QuizManager.setActiveModuleId(moduleId);
-        const allMods = await QuizManager.getAllModules();
-        currentActiveModule = allMods.find(m => m.id === moduleId) || QuizManager.DEFAULT_MODULE;
-        const loadedQuestions = await QuizManager.loadQuestionsForModule(moduleId);
-        if (loadedQuestions && loadedQuestions.length > 0) {
-            quizData = loadedQuestions;
+        if (policy === 'allow_twice_highest' && attemptCount === 1) {
+            showToast(`Percobaan ke-2 Kuis Aktif! Nilai tertinggi dari kedua percobaan yang akan diambil sebagai nilai akhir (${bestScore}/100 vs nilai baru). Selamat berjuang! ✌️⭐`, 'ℹ️');
+        } else if (previousAttempts.length > 0 && isRemedialAllowed && bestScore < 80) {
+            showToast(`Sesi Remedial Terarah: Nilai terbaik Anda (${bestScore}/100) tetap dipertahankan jika nilai baru lebih rendah! ⭐`, 'ℹ️');
+        } else if (policy === 'allow_remedy' && previousAttempts.length > 0) {
+            showToast(`Sesi Remedi: Nilai tertinggi Anda (${bestScore}/100) akan dipertahankan! ⭐`, 'ℹ️');
+        }
+
+        // 📦 Muat Soal Sesuai Modul Pembelajaran Terpilih
+        if (window.QuizManager) {
+            QuizManager.setActiveModuleId(moduleId);
+            const allMods = await QuizManager.getAllModules();
+            currentActiveModule = allMods.find(m => m.id === moduleId) || QuizManager.DEFAULT_MODULE;
+            const loadedQuestions = await QuizManager.loadQuestionsForModule(moduleId);
+            if (loadedQuestions && loadedQuestions.length > 0) {
+                quizData = loadedQuestions;
+            }
+        }
+
+        initAudio();
+        studentName = name;
+        studentClass = cls;
+        currentQ = 0;
+        score = 0;
+        earnedPointsTotal = 0;
+
+        // Reset dan simpan bank soal master untuk kebutuhan sesi remedial adaptif
+        isRemedialSession = false;
+        window.isRemedialSession = false;
+        remedialSourceRecord = null;
+        window.remedialSourceRecord = null;
+        remedialOriginalQuestions = [...quizData];
+        window.remedialOriginalQuestions = remedialOriginalQuestions;
+        const remInd = document.getElementById('quiz-remedial-indicator');
+        if (remInd) remInd.style.display = 'none';
+
+        // 🛡️ SECURITY: Pindahkan kunci jawaban ke vault privat & bersihkan window.quizData
+        quizData = vaultAnswers(quizData);
+        window.quizData = quizData;
+
+        totalPossiblePoints = quizData.reduce((acc, q) => acc + (q.points || 5), 0);
+        if (totalPossiblePoints === 0) totalPossiblePoints = quizData.length * 5;
+        streak = 0;
+        maxStreak = 0;
+        isCheatingTriggered = false;
+        cheatStrikes = 0;
+        isCheatWarningActive = false;
+
+        const indices = Array.from({ length: quizData.length }, (_, i) => i);
+        shuffledQuizOrder = shuffleArray(indices).map(item => item.val);
+
+        answeredCorrectly = new Array(quizData.length).fill(null);
+        detailedAnswers = new Array(quizData.length).fill(null);
+        TIMER_MAX = loadTimerSetting();
+
+        // 🖥️ Kunci Layar Penuh Otomatis jika Mode Wajib Aktif
+        const isWajib = (typeof isEnforcedFullscreen === 'function') 
+            ? isEnforcedFullscreen() 
+            : (localStorage.getItem('quizmaster_fullscreen_mode') !== 'opsional');
+        if (isWajib) {
+            enterExamFullscreen();
+        }
+
+        runCountdown();
+    } finally {
+        isInitiatingQuiz = false;
+        if (startBtn) {
+            startBtn.disabled = false;
+            startBtn.innerHTML = origBtnHtml;
         }
     }
-
-    initAudio();
-    studentName = name;
-    studentClass = cls;
-    currentQ = 0;
-    score = 0;
-    earnedPointsTotal = 0;
-
-    // Reset dan simpan bank soal master untuk kebutuhan sesi remedial adaptif
-    isRemedialSession = false;
-    window.isRemedialSession = false;
-    remedialSourceRecord = null;
-    window.remedialSourceRecord = null;
-    remedialOriginalQuestions = [...quizData];
-    window.remedialOriginalQuestions = remedialOriginalQuestions;
-    const remInd = document.getElementById('quiz-remedial-indicator');
-    if (remInd) remInd.style.display = 'none';
-
-    // 🛡️ SECURITY: Pindahkan kunci jawaban ke vault privat & bersihkan window.quizData
-    quizData = vaultAnswers(quizData);
-    window.quizData = quizData;
-
-    totalPossiblePoints = quizData.reduce((acc, q) => acc + (q.points || 5), 0);
-    if (totalPossiblePoints === 0) totalPossiblePoints = quizData.length * 5;
-    streak = 0;
-    maxStreak = 0;
-    isCheatingTriggered = false;
-    cheatStrikes = 0;
-    isCheatWarningActive = false;
-
-    const indices = Array.from({ length: quizData.length }, (_, i) => i);
-    shuffledQuizOrder = shuffleArray(indices).map(item => item.val);
-
-    answeredCorrectly = new Array(quizData.length).fill(null);
-    detailedAnswers = new Array(quizData.length).fill(null);
-    TIMER_MAX = loadTimerSetting();
-
-    // 🖥️ Kunci Layar Penuh Otomatis jika Mode Wajib Aktif
-    const isWajib = (typeof isEnforcedFullscreen === 'function') 
-        ? isEnforcedFullscreen() 
-        : (localStorage.getItem('quizmaster_fullscreen_mode') !== 'opsional');
-    if (isWajib) {
-        enterExamFullscreen();
-    }
-
-    runCountdown();
 }
 
 function runCountdown() {
@@ -949,8 +968,10 @@ function startQuizActual() {
     sessionHintsUsedCount = 0;
     initialQuizWidth = window.innerWidth;
     initialQuizHeight = window.innerHeight;
-    document.getElementById('display-name').textContent = studentName;
-    document.getElementById('display-class').textContent = studentClass;
+    const dispName = document.getElementById('display-name');
+    const dispClass = document.getElementById('display-class');
+    if (dispName) dispName.textContent = studentName;
+    if (dispClass) dispClass.textContent = studentClass;
     quizStartTime = Date.now();
     switchScreen('quiz');
     loadQuestion(0);
@@ -1346,12 +1367,20 @@ function loadQuestion(index) {
     }
 
     const pct = Math.round((index / quizData.length) * 100);
-    document.getElementById('progress-fill').style.width = `${pct}%`;
-    document.getElementById('progress-label').textContent = `Soal ${index + 1} dari ${quizData.length}`;
-    document.getElementById('progress-pct').textContent = `${pct}%`;
-    document.getElementById('score-display').textContent = `⭐ ${score}`;
-    document.getElementById('streak-display').textContent = `🔥 ${streak}`;
-    document.getElementById('streak-display').classList.toggle('on-fire', streak >= 3);
+    const progressFill = document.getElementById('progress-fill');
+    const progressLabel = document.getElementById('progress-label');
+    const progressPct = document.getElementById('progress-pct');
+    const scoreDisplay = document.getElementById('score-display');
+    const streakDisplay = document.getElementById('streak-display');
+
+    if (progressFill) progressFill.style.width = `${pct}%`;
+    if (progressLabel) progressLabel.textContent = `Soal ${index + 1} dari ${quizData.length}`;
+    if (progressPct) progressPct.textContent = `${pct}%`;
+    if (scoreDisplay) scoreDisplay.textContent = earnedPointsTotal > 0 ? `⭐ ${earnedPointsTotal} Poin` : `⭐ ${score}`;
+    if (streakDisplay) {
+        streakDisplay.textContent = `🔥 ${streak}`;
+        streakDisplay.classList.toggle('on-fire', streak >= 3);
+    }
 
     const card = document.querySelector('#screen-quiz .glass-card');
     if (card) card.classList.toggle('streak-on-fire', streak >= 3);
@@ -1429,9 +1458,11 @@ function loadQuestion(index) {
     } else { csBox.style.display = 'none'; }
 
     const cleanedQ = stripQuestionPrefix(data.q);
-    document.getElementById('q-text').innerHTML = `${typeof escapeHtml === 'function' ? escapeHtml(cleanedQ) : cleanedQ}`;
+    const qTextEl = document.getElementById('q-text');
+    if (qTextEl) qTextEl.innerHTML = `${typeof escapeHtml === 'function' ? escapeHtml(cleanedQ) : cleanedQ}`;
 
     const grid = document.getElementById('options-grid');
+    if (!grid) return;
     grid.innerHTML = '';
 
     // ═══ RENDER MATRIX TABLE (AKM STANDARD — MUTUAL EXCLUSIVE PER ROW) ═══
@@ -2106,11 +2137,16 @@ async function finishQuiz() {
     if (resCorrectEl) resCorrectEl.textContent = `${numCorrect} Soal`;
     if (resWrongEl) resWrongEl.textContent = `${quizData.length - numCorrect} Soal`;
     if (resStreakEl) resStreakEl.textContent = maxStreak;
-    buildReview();
+    try {
+        buildReview();
+    } catch(errReview) {
+        console.warn('buildReview warning:', errReview);
+    }
 }
 
 function buildReview() {
     const list = document.getElementById('review-list');
+    if (!list) return;
     list.innerHTML = '';
 
     // Cek apakah modul saat ini adalah Modul Ujian Keamanan Jaringan dan status kunci jawaban ujian aktif
@@ -2176,7 +2212,7 @@ function buildReview() {
                 <div style="font-weight: 800; font-size: 0.88rem; color: ${isRight ? 'var(--success)' : '#fb7185'}; margin-bottom: 6px;">
                     💡 Bedah Soal &amp; Analisis Pedagogis:
                 </div>
-                ${formatPedagogicalFeedback(expReview)}
+                ${typeof formatPedagogicalFeedback === 'function' ? formatPedagogicalFeedback(expReview) : (typeof escapeHtml === 'function' ? escapeHtml(expReview) : expReview)}
                </div>`;
 
         div.innerHTML = `
