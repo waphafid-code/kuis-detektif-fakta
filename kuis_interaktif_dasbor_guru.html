@@ -290,7 +290,7 @@
     <div class="modal-box" style="max-width: 540px; width: 92%;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
             <h3 style="margin: 0; color: #f59e0b; font-size: 1.15rem; display: flex; align-items: center; gap: 8px;">
-                <span>🔥 Google Firebase Cloud Firestore (24 Jam Aktif)</span>
+                <span>🔥 Google Firebase Realtime Database (24 Jam Nonstop)</span>
             </h3>
             <button class="modal-close" onclick="closeFirebaseModal()" style="background: none; border: none; font-size: 1.3rem; cursor: pointer; color: var(--text-muted);">✕</button>
         </div>
@@ -304,47 +304,41 @@
             <label for="fb-paste-snippet" style="font-size: 0.8rem; font-weight: 700; color: #f59e0b; display: block; margin-bottom: 6px;">
                 📋 Tempel Cepat Kode <code>firebaseConfig</code> dari Firebase Console:
             </label>
-            <textarea id="fb-paste-snippet" placeholder="Tempel blok const firebaseConfig = { ... } di sini..." rows="3" style="width: 100%; box-sizing: border-box; background: rgba(0,0,0,0.25); color: var(--text); border: 1px solid var(--glass-border); border-radius: 8px; padding: 8px 10px; font-family: monospace; font-size: 0.78rem; resize: vertical;"></textarea>
+            <textarea id="fb-paste-snippet" placeholder="Tempel blok const firebaseConfig = { ... } di sini..." rows="2" style="width: 100%; box-sizing: border-box; background: rgba(0,0,0,0.25); color: var(--text); border: 1px solid var(--glass-border); border-radius: 8px; padding: 8px 10px; font-family: monospace; font-size: 0.78rem; resize: vertical;"></textarea>
             <button type="button" class="btn btn-secondary" onclick="handlePasteFirebaseSnippet()" style="margin-top: 6px; padding: 6px 14px; font-size: 0.76rem; font-weight: 700; width: 100%; justify-content: center; display: flex; gap: 6px;">
                 ⚡ Ekstrak &amp; Isi Otomatis Kolom di Bawah
             </button>
         </div>
 
+        <div class="supabase-field-group" style="margin-bottom: 12px;">
+            <label for="fb-input-rtdb" style="font-size: 0.78rem;">🌐 Database URL (Realtime DB):</label>
+            <input type="url" id="fb-input-rtdb" value="https://kuis-informatika-c8781-default-rtdb.firebaseio.com" placeholder="https://kuis-informatika-c8781-default-rtdb.firebaseio.com" autocomplete="off" spellcheck="false" style="font-size: 0.85rem; padding: 8px 12px;">
+        </div>
+
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px;">
             <div class="supabase-field-group">
                 <label for="fb-input-project" style="font-size: 0.78rem;">Project ID:</label>
-                <input type="text" id="fb-input-project" placeholder="kuis-xxxxx" autocomplete="off" spellcheck="false" style="font-size: 0.85rem; padding: 8px 12px;">
+                <input type="text" id="fb-input-project" value="kuis-informatika-c8781" placeholder="kuis-xxxxx" autocomplete="off" spellcheck="false" style="font-size: 0.85rem; padding: 8px 12px;">
             </div>
             <div class="supabase-field-group">
                 <label for="fb-input-key" style="font-size: 0.78rem;">API Key:</label>
-                <input type="password" id="fb-input-key" placeholder="AIzaSy..." autocomplete="off" spellcheck="false" style="font-size: 0.85rem; padding: 8px 12px;">
+                <input type="password" id="fb-input-key" value="AIzaSyDF1bsT8NFwu5qc33UrHcFiECxH63-J9P0" placeholder="AIzaSy..." autocomplete="off" spellcheck="false" style="font-size: 0.85rem; padding: 8px 12px;">
             </div>
         </div>
 
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px;">
             <div class="supabase-field-group">
                 <label for="fb-input-auth" style="font-size: 0.78rem;">Auth Domain:</label>
-                <input type="text" id="fb-input-auth" placeholder="kuis-xxxxx.firebaseapp.com" autocomplete="off" spellcheck="false" style="font-size: 0.85rem; padding: 8px 12px;">
+                <input type="text" id="fb-input-auth" value="kuis-informatika-c8781.firebaseapp.com" placeholder="kuis-xxxxx.firebaseapp.com" autocomplete="off" spellcheck="false" style="font-size: 0.85rem; padding: 8px 12px;">
             </div>
             <div class="supabase-field-group">
                 <label for="fb-input-app" style="font-size: 0.78rem;">App ID:</label>
-                <input type="text" id="fb-input-app" placeholder="1:12345:web:67890" autocomplete="off" spellcheck="false" style="font-size: 0.85rem; padding: 8px 12px;">
-            </div>
-        </div>
-
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px;">
-            <div class="supabase-field-group">
-                <label for="fb-input-bucket" style="font-size: 0.78rem;">Storage Bucket:</label>
-                <input type="text" id="fb-input-bucket" placeholder="kuis-xxxxx.firebasestorage.app" autocomplete="off" spellcheck="false" style="font-size: 0.85rem; padding: 8px 12px;">
-            </div>
-            <div class="supabase-field-group">
-                <label for="fb-input-sender" style="font-size: 0.78rem;">Messaging Sender ID:</label>
-                <input type="text" id="fb-input-sender" placeholder="1234567890" autocomplete="off" spellcheck="false" style="font-size: 0.85rem; padding: 8px 12px;">
+                <input type="text" id="fb-input-app" value="1:707112824956:web:01c89af0c315927c3719f9" placeholder="1:12345:web:67890" autocomplete="off" spellcheck="false" style="font-size: 0.85rem; padding: 8px 12px;">
             </div>
         </div>
 
         <div style="background: rgba(245,158,11,0.06); border: 1px solid rgba(245,158,11,0.25); border-radius: 10px; padding: 10px 12px; margin-bottom: 16px; font-size: 0.76rem; color: var(--text-secondary); line-height: 1.45;">
-            💡 <strong>Keunggulan Firebase Cloud Firestore:</strong> Berjalan 24 jam nonstop di Google Cloud tanpa pernah mengalami sleep/paused. Mendukung sinkronisasi offline di HP siswa, dan otomatis menyegarkan dasbor guru secara real-time saat siswa klik kirim nilai.
+            💡 <strong>Keunggulan Firebase Realtime Database:</strong> Berjalan 24 jam nonstop di Google Cloud tanpa pernah mengalami sleep/paused. Mendukung sinkronisasi live stream otomatis saat siswa mengirim nilai kuis.
         </div>
 
         <div style="display: flex; flex-direction: column; gap: 10px;">
@@ -352,7 +346,7 @@
                 🔥 Simpan &amp; Tes Koneksi Firebase
             </button>
             <button class="btn btn-secondary" onclick="uploadAllLocalRecordsToFirebaseAction()" style="padding: 10px; font-size: 0.82rem; display: flex; align-items: center; justify-content: center; gap: 8px;">
-                ⬆️ Unggah Semua Data Siswa (221 Nilai Resmi) ke Firebase Firestore
+                ⬆️ Unggah / Sinkronkan Semua 221 Data Siswa ke Firebase
             </button>
         </div>
     </div>
