@@ -354,8 +354,9 @@
             ⚠️ <em>Pengaturan kuis saat ini diset oleh guru mata pelajaran hanya menerima <strong>1 kali pengiriman (Single Submission)</strong>. Jika Anda memerlukan ujian perbaikan atau remedi, silakan hubungi guru mata pelajaran untuk membuka akses respon.</em>
         </p>
 
-        <div class="modal-actions" style="justify-content: center;">
-            <button class="btn btn-secondary" onclick="closeAlreadySubmittedModal()" style="padding: 10px 32px; font-weight: 700; min-width: 140px;">Mengerti & Kembali 🔙</button>
+        <div class="modal-actions" style="justify-content: center; gap: 12px; flex-wrap: wrap;">
+            <button class="btn btn-secondary" onclick="closeAlreadySubmittedModal()" style="padding: 10px 24px; font-weight: 700; min-width: 140px;">Mengerti & Kembali 🔙</button>
+            <button class="btn btn-primary" id="btn-recheck-permission" onclick="recheckStudentSubmissionPermission()" style="padding: 10px 24px; font-weight: 700; background: linear-gradient(135deg, #2563eb, #1d4ed8); border: none; box-shadow: 0 4px 15px rgba(37,99,235,0.35); min-width: 180px;">🔄 Cek Ulang Izin Guru</button>
         </div>
     </div>
 </div>

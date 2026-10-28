@@ -650,8 +650,18 @@ async function confirmDeleteSingle() {
     if (chosenModule === 'all' || chosenModule === 'modul_jaringan_keamanan') {
         deletedRecords.push(`${normName}|${normCls}|modul_jaringan_keamanan`);
     }
+    if (chosenModule === 'all') {
+        deletedRecords.push(`${normName}|${normCls}|all`);
+    }
     deletedRecords = Array.from(new Set(deletedRecords));
     localStorage.setItem('quizmaster_deleted_records', JSON.stringify(deletedRecords));
+
+    // Sinkronisasi status penghapusan ke Cloud Shared State jika aktif
+    if (typeof saveCloudSharedState === 'function') {
+        try {
+            saveCloudSharedState({ deletedRecords: deletedRecords }).catch(() => {});
+        } catch(e) {}
+    }
 
     // 2. Hapus dari LocalStorage
     let records = loadRecords();

@@ -762,12 +762,29 @@ async function initiateQuiz() {
         ? loadSubmissionPolicy() 
         : (localStorage.getItem('quizmaster_submission_policy') || 'single_only');
     
-    const previousAttempts = loadRecords().filter(r => {
+    let previousAttempts = loadRecords().filter(r => {
         const rMod = (typeof normalizeModuleId === 'function') ? normalizeModuleId(r.moduleId, r.id, r.date) : (r.moduleId || 'modul_detektif_fakta');
         const nameMatch = (typeof isNameEquivalent === 'function') ? isNameEquivalent(r.name, name) : (r.name || '').trim().toLowerCase() === name.trim().toLowerCase();
         const classMatch = (typeof isClassEquivalent === 'function') ? isClassEquivalent(r.class, cls) : (r.class || '').replace(/\s+/g, '').toUpperCase() === cls.replace(/\s+/g, '').toUpperCase();
         return nameMatch && classMatch && rMod === targetModId;
     });
+
+    // 🔄 CLOUD INTEGRITY GUARD:
+    // Jika secara lokal siswa tercatat sudah pernah mengerjakan (sehingga berpotensi diblokir),
+    // LAKUKAN PENGECEKAN KE CLOUD FIREBASE untuk memastikan apakah data siswa ini sebenarnya SUDAH DIHAPUS OLEH GURU!
+    if (previousAttempts.length > 0 && typeof verifyAndPurgeIfDeletedByTeacher === 'function') {
+        try {
+            const isDeletedByTeacher = await verifyAndPurgeIfDeletedByTeacher(name, cls, targetModId);
+            if (isDeletedByTeacher) {
+                previousAttempts = [];
+                if (typeof showToast === 'function') {
+                    showToast('✨ Izin Ujian Terbuka: Catatan nilai sebelumnya telah direset oleh Guru. Selamat mengerjakan!', '🎉');
+                }
+            }
+        } catch(e) {
+            console.warn('Verifikasi status hapus guru gagal:', e);
+        }
+    }
 
     const isRemedialAllowed = (typeof loadRemedialSetting === 'function') ? loadRemedialSetting() : false;
     const bestScore = previousAttempts.length > 0 ? Math.max(...previousAttempts.map(r => Number(r.score) || 0)) : 0;

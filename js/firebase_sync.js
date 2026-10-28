@@ -220,6 +220,30 @@ async function fetchFirebaseRecords() {
                     if (!r || typeof r !== 'object') return;
                     const sName = String(r.student_name || '');
                     const sClass = String(r.student_class || '');
+
+                    // 🗑️ Deteksi Tombstone Penghapusan oleh Guru (Sync penghapusan ke seluruh perangkat)
+                    if (sName === '__TOMBSTONE__' || (r.wrong_questions && r.wrong_questions.tombstone)) {
+                        try {
+                            const wq = r.wrong_questions || {};
+                            if (wq.deletedAll) {
+                                localStorage.setItem('quizmaster_deleted_records', JSON.stringify(['__ALL__']));
+                                localStorage.removeItem(STORAGE_KEY);
+                                localStorage.removeItem('quizmaster_emergency_backup_records');
+                            } else if (wq.deletedKey) {
+                                let localDels = JSON.parse(localStorage.getItem('quizmaster_deleted_records') || '[]');
+                                if (!Array.isArray(localDels)) localDels = [];
+                                if (!localDels.includes(wq.deletedKey)) {
+                                    localDels.push(wq.deletedKey);
+                                    localStorage.setItem('quizmaster_deleted_records', JSON.stringify(localDels));
+                                }
+                                if (typeof purgeStudentFromLocalStorage === 'function') {
+                                    purgeStudentFromLocalStorage(wq.deletedName, wq.deletedClass, wq.deletedModule);
+                                }
+                            }
+                        } catch(e) {}
+                        return;
+                    }
+
                     if (sName.startsWith('__') || sClass === '__SYSTEM_CONFIG__') return;
 
                     let extractedModId = null;
@@ -414,30 +438,44 @@ async function testFirebaseConnection() {
 /**
  * Menghapus satu data nilai siswa dari Firebase Realtime Database (& Firestore)
  */
+/**
+ * Menghapus satu data nilai siswa dari Firebase Realtime Database (& Firestore)
+ * serta mendaftarkan Tombstone agar perangkat siswa dapat mengetahui izin retake
+ */
 async function deleteFirebaseRecord(studentName, studentClass, moduleId) {
     if (!studentName) return false;
     const cfg = getFirebaseConfig();
     const dbUrl = (cfg && cfg.databaseURL) ? cfg.databaseURL.replace(/\/$/, '') : 'https://kuis-informatika-c8781-default-rtdb.firebaseio.com';
 
     let deletedAny = false;
+    const targetName = String(studentName).trim().toLowerCase();
+    const targetClass = studentClass ? String(studentClass).replace(/\s+/g, '').toUpperCase() : null;
 
     try {
         const res = await fetch(`${dbUrl}/quiz_results.json`);
         if (res.ok) {
             const data = await res.json();
             if (data && typeof data === 'object') {
-                const targetName = String(studentName).trim().toLowerCase();
-                const targetClass = studentClass ? String(studentClass).trim().toLowerCase() : null;
-
                 for (const [key, r] of Object.entries(data)) {
                     if (!r || typeof r !== 'object') continue;
                     const rName = String(r.student_name || '').trim().toLowerCase();
-                    const rClass = String(r.student_class || '').trim().toLowerCase();
-                    const rModId = (r.wrong_questions && r.wrong_questions.moduleId) ? r.wrong_questions.moduleId : 'modul_detektif_fakta';
+                    const rClass = String(r.student_class || '').replace(/\s+/g, '').toUpperCase();
+                    
+                    let rModId = null;
+                    if (r.wrong_questions && typeof r.wrong_questions === 'object' && !Array.isArray(r.wrong_questions)) {
+                        rModId = r.wrong_questions.moduleId;
+                    }
+                    const itemMod = (typeof normalizeModuleId === 'function')
+                        ? normalizeModuleId(rModId || r.moduleId, r.id || key, r.quiz_date)
+                        : (rModId || r.moduleId || 'modul_detektif_fakta');
 
-                    const nameMatch = (rName === targetName);
-                    const classMatch = (!targetClass || targetClass === '-' || rClass === targetClass);
-                    const modMatch = (!moduleId || moduleId === 'all' || rModId === moduleId);
+                    const nameMatch = (typeof isNameEquivalent === 'function')
+                        ? isNameEquivalent(rName, targetName)
+                        : (rName === targetName);
+                    const classMatch = (typeof isClassEquivalent === 'function')
+                        ? (!targetClass || targetClass === '-' || isClassEquivalent(rClass, targetClass))
+                        : (!targetClass || targetClass === '-' || rClass === targetClass);
+                    const modMatch = (!moduleId || moduleId === 'all' || itemMod === moduleId);
 
                     if (nameMatch && classMatch && modMatch) {
                         try {
@@ -465,6 +503,38 @@ async function deleteFirebaseRecord(studentName, studentClass, moduleId) {
         }
     } catch (err) {
         console.warn('Firebase delete fetch warning:', err.message);
+    }
+
+    // 🛡️ Tulis Tombstone ke Firebase RTDB agar siswa di perangkat mereka tahu bahwa nilai ini telah resmi dihapus guru
+    try {
+        const normCls = targetClass || 'ALL';
+        const targetMod = moduleId || 'all';
+        const safeKey = `del_${encodeURIComponent(targetName).replace(/[^a-zA-Z0-9]/g, '_')}_${encodeURIComponent(normCls).replace(/[^a-zA-Z0-9]/g, '_')}_${encodeURIComponent(targetMod).replace(/[^a-zA-Z0-9]/g, '_')}`;
+
+        await fetch(`${dbUrl}/quiz_results/${safeKey}.json`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                student_name: '__TOMBSTONE__',
+                student_class: '__SYSTEM_CONFIG__',
+                score: 0,
+                total_questions: 1,
+                correct_count: 0,
+                quiz_date: new Date().toLocaleDateString('id-ID'),
+                wrong_questions: {
+                    tombstone: true,
+                    deletedName: studentName,
+                    deletedClass: studentClass,
+                    deletedModule: targetMod,
+                    deletedKey: `${targetName}|${normCls}|${targetMod}`,
+                    timestamp: Date.now()
+                }
+            })
+        });
+        deletedAny = true;
+        console.log('🔥 [Firebase RTDB] Tombstone terdaftar untuk:', studentName, safeKey);
+    } catch(tombErr) {
+        console.warn('Firebase RTDB tombstone warning:', tombErr.message);
     }
 
     return deletedAny;
@@ -502,12 +572,243 @@ async function deleteAllFirebaseRecords() {
                 console.log(`🔥 [Firebase RTDB] Berhasil menghapus total ${count} data record.`);
             }
         }
+
+        // Tulis tombstone reset total ke Firebase RTDB
+        await fetch(`${dbUrl}/quiz_results/del_all.json`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                student_name: '__TOMBSTONE__',
+                student_class: '__SYSTEM_CONFIG__',
+                score: 0,
+                total_questions: 1,
+                correct_count: 0,
+                quiz_date: new Date().toLocaleDateString('id-ID'),
+                wrong_questions: {
+                    tombstone: true,
+                    deletedAll: true,
+                    timestamp: Date.now()
+                }
+            })
+        });
     } catch(err) {
         console.warn('Firebase deleteAll error:', err.message);
     }
     return count;
 }
 window.deleteAllFirebaseRecords = deleteAllFirebaseRecords;
+
+/**
+ * Membersihkan catatan siswa dari localStorage (STORAGE_KEY & Emergency Backup)
+ * agar siswa dapat langsung memulai ujian kembali tanpa terblokir.
+ */
+function purgeStudentFromLocalStorage(studentName, studentClass, targetModuleId) {
+    if (!studentName) return;
+    const normName = String(studentName).trim().toLowerCase();
+    const normCls = studentClass ? String(studentClass).replace(/\s+/g, '').toUpperCase() : '';
+    const modId = targetModuleId || 'modul_detektif_fakta';
+
+    const nameMatches = (typeof isNameEquivalent === 'function') 
+        ? (n) => isNameEquivalent(n, normName)
+        : (n) => String(n || '').trim().toLowerCase() === normName;
+    const classMatches = (typeof isClassEquivalent === 'function')
+        ? (c) => isClassEquivalent(c, normCls)
+        : (c) => String(c || '').replace(/\s+/g, '').toUpperCase() === normCls;
+
+    // 1. Hapus dari STORAGE_KEY ('quizmaster_records')
+    try {
+        let saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+        if (Array.isArray(saved)) {
+            saved = saved.filter(r => {
+                if (!r) return false;
+                if (!nameMatches(r.name) || !classMatches(r.class)) return true;
+                const rMod = (typeof normalizeModuleId === 'function') ? normalizeModuleId(r.moduleId, r.id, r.date) : (r.moduleId || 'modul_detektif_fakta');
+                if (modId === 'all' || rMod === modId) return false;
+                return true;
+            });
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(saved));
+        }
+    } catch(e) {}
+
+    // 2. Hapus dari emergency backup
+    try {
+        let emergency = JSON.parse(localStorage.getItem('quizmaster_emergency_backup_records') || '[]');
+        if (Array.isArray(emergency)) {
+            emergency = emergency.filter(r => {
+                if (!r) return false;
+                if (!nameMatches(r.name) || !classMatches(r.class)) return true;
+                const rMod = (typeof normalizeModuleId === 'function') ? normalizeModuleId(r.moduleId, r.id, r.date) : (r.moduleId || 'modul_detektif_fakta');
+                if (modId === 'all' || rMod === modId) return false;
+                return true;
+            });
+            localStorage.setItem('quizmaster_emergency_backup_records', JSON.stringify(emergency));
+        }
+    } catch(e) {}
+
+    // 3. Tambahkan ke quizmaster_deleted_records
+    try {
+        let delList = JSON.parse(localStorage.getItem('quizmaster_deleted_records') || '[]');
+        if (!Array.isArray(delList)) delList = [];
+        const key = `${normName}|${normCls}|${modId}`;
+        const keyAll = `${normName}|${normCls}|all`;
+        if (!delList.includes(key)) delList.push(key);
+        if (modId === 'all' && !delList.includes(keyAll)) delList.push(keyAll);
+        localStorage.setItem('quizmaster_deleted_records', JSON.stringify(delList));
+    } catch(e) {}
+
+    // 4. Hapus sesi kuis aktif jika ada
+    try {
+        sessionStorage.removeItem('quizmaster_active_session');
+    } catch(e) {}
+}
+window.purgeStudentFromLocalStorage = purgeStudentFromLocalStorage;
+
+/**
+ * Memverifikasi ke Cloud Firebase apakah nilai siswa ini telah dihapus oleh Guru di Dasbor.
+ * Jika di server Firebase nilai ini TIDAK LAGI DITEMUKAN (atau ditandai tombstone),
+ * maka memori lokal (localStorage) siswa akan otomatis dibersihkan sehingga siswa BISA IKUT UJIAN LAGI.
+ */
+async function verifyAndPurgeIfDeletedByTeacher(studentName, studentClass, targetModuleId) {
+    if (!studentName) return false;
+    const cfg = getFirebaseConfig();
+    const dbUrl = (cfg && cfg.databaseURL) ? cfg.databaseURL.replace(/\/$/, '') : 'https://kuis-informatika-c8781-default-rtdb.firebaseio.com';
+
+    const normName = String(studentName).trim().toLowerCase();
+    const normCls = studentClass ? String(studentClass).replace(/\s+/g, '').toUpperCase() : '';
+    const modId = targetModuleId || 'modul_detektif_fakta';
+
+    try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 2500);
+
+        const res = await fetch(`${dbUrl}/quiz_results.json`, { signal: controller.signal });
+        clearTimeout(timeoutId);
+
+        if (!res.ok) return false;
+        const data = await res.json();
+        if (!data || typeof data !== 'object') {
+            // Data cloud kosong = guru telah mereset data
+            purgeStudentFromLocalStorage(studentName, studentClass, modId);
+            return true;
+        }
+
+        let hasActiveRecordInCloud = false;
+        let hasExplicitTombstone = false;
+
+        for (const [key, r] of Object.entries(data)) {
+            if (!r || typeof r !== 'object') continue;
+
+            const sName = String(r.student_name || '').trim().toLowerCase();
+            const sClass = String(r.student_class || '').replace(/\s+/g, '').toUpperCase();
+
+            // Cek tombstone
+            if (sName === '__TOMBSTONE__' || (r.wrong_questions && r.wrong_questions.tombstone)) {
+                const wq = r.wrong_questions || {};
+                if (wq.deletedAll) {
+                    hasExplicitTombstone = true;
+                    break;
+                }
+                const delName = String(wq.deletedName || '').trim().toLowerCase();
+                const delClass = String(wq.deletedClass || '').replace(/\s+/g, '').toUpperCase();
+                const delMod = wq.deletedModule || 'all';
+
+                const nameMatch = (typeof isNameEquivalent === 'function') 
+                    ? isNameEquivalent(delName, normName) 
+                    : (delName === normName);
+                const classMatch = (!delClass || delClass === 'ALL' || (typeof isClassEquivalent === 'function' ? isClassEquivalent(delClass, normCls) : delClass === normCls));
+                const modMatch = (delMod === 'all' || delMod === modId);
+
+                if (nameMatch && classMatch && modMatch) {
+                    hasExplicitTombstone = true;
+                }
+                continue;
+            }
+
+            if (sName.startsWith('__') || sClass === '__SYSTEM_CONFIG__') continue;
+
+            // Cek apakah ada record aktif untuk siswa ini pada modul ini
+            const nameMatch = (typeof isNameEquivalent === 'function') 
+                ? isNameEquivalent(sName, normName) 
+                : (sName === normName);
+            const classMatch = (typeof isClassEquivalent === 'function') 
+                ? isClassEquivalent(sClass, normCls) 
+                : (sClass === normCls);
+
+            let rModId = null;
+            if (r.wrong_questions && typeof r.wrong_questions === 'object' && !Array.isArray(r.wrong_questions)) {
+                rModId = r.wrong_questions.moduleId;
+            }
+            const itemMod = (typeof normalizeModuleId === 'function')
+                ? normalizeModuleId(rModId || r.moduleId, r.id || key, r.quiz_date)
+                : (rModId || r.moduleId || 'modul_detektif_fakta');
+
+            if (nameMatch && classMatch && itemMod === modId) {
+                hasActiveRecordInCloud = true;
+            }
+        }
+
+        // KELULUSAN RETAKE:
+        // Jika guru telah menghapus nilai (tidak ada record aktif di cloud) atau ada tombstone eksplisit
+        if (hasExplicitTombstone || !hasActiveRecordInCloud) {
+            console.log(`✨ [Cloud Verification] Siswa ${studentName} (${studentClass}) diizinkan retake: tidak ada nilai aktif di server guru.`);
+            purgeStudentFromLocalStorage(studentName, studentClass, modId);
+            return true;
+        }
+
+        return false;
+    } catch (err) {
+        console.warn('verifyAndPurgeIfDeletedByTeacher warning:', err.message);
+        return false;
+    }
+}
+window.verifyAndPurgeIfDeletedByTeacher = verifyAndPurgeIfDeletedByTeacher;
+
+/**
+ * Aksi tombol pada dialog modal 'Respon Sudah Tercatat'
+ * Siswa dapat mengecek ulang apakah guru sudah menghapus nilainya di dasbor.
+ */
+async function recheckStudentSubmissionPermission() {
+    const clsSelect = document.getElementById('input-class');
+    const nameSelect = document.getElementById('input-name');
+    const moduleSelect = document.getElementById('input-module');
+    const cls = clsSelect ? clsSelect.value : '';
+    const name = nameSelect ? nameSelect.value.trim() : '';
+    const moduleId = moduleSelect ? moduleSelect.value : (window.QuizManager ? QuizManager.getActiveModuleId() : 'modul_detektif_fakta');
+
+    const btn = document.getElementById('btn-recheck-permission');
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '⏳ Menghubungi Dasbor Guru...';
+    }
+
+    try {
+        const isDeleted = await verifyAndPurgeIfDeletedByTeacher(name, cls, moduleId);
+        if (isDeleted) {
+            if (typeof closeAlreadySubmittedModal === 'function') closeAlreadySubmittedModal();
+            if (typeof showToast === 'function') {
+                showToast('🎉 Izin Ujian Terbuka! Guru telah menghapus nilai Anda. Memulai kuis...', '✅');
+            }
+            if (typeof initiateQuiz === 'function') {
+                setTimeout(() => initiateQuiz(), 300);
+            }
+        } else {
+            if (typeof sfxWrong === 'function') sfxWrong();
+            if (typeof showToast === 'function') {
+                showToast('⚠️ Nilai Anda masih tercatat di server. Pastikan Guru sudah menekan tombol Hapus Nilai di dasbor.', '🔒');
+            }
+        }
+    } catch(e) {
+        if (typeof showToast === 'function') {
+            showToast('Gagal memverifikasi ke server. Pastikan Anda terhubung ke internet.', '⚠️');
+        }
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = '🔄 Cek Ulang Izin Guru';
+        }
+    }
+}
+window.recheckStudentSubmissionPermission = recheckStudentSubmissionPermission;
 
 // Jalankan inisialisasi awal saat skrip dimuat
 if (typeof window !== 'undefined') {

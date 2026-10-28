@@ -110,6 +110,7 @@ function filterDeletedRecords(list) {
         }
     } catch(e) {}
     if (!deletedKeys.size) return list;
+    if (deletedKeys.has('__ALL__')) return [];
 
     return list.filter(r => {
         if (!r) return false;
@@ -117,7 +118,8 @@ function filterDeletedRecords(list) {
         const normCls = (r.class || r.student_class || '').replace(/\s+/g, '').toUpperCase();
         const modId = normalizeModuleId(r.moduleId || r.module_id, r.id, r.date || r.quiz_date);
         const k = `${normName}|${normCls}|${modId}`;
-        if (deletedKeys.has(k)) return false;
+        const kAll = `${normName}|${normCls}|all`;
+        if (deletedKeys.has(k) || deletedKeys.has(kAll)) return false;
         if (r.id && deletedKeys.has(String(r.id))) return false;
         return true;
     });
@@ -249,6 +251,29 @@ async function saveRecord(record) {
         emergencyList.push({ ...record, savedAt: Date.now() });
         if (emergencyList.length > 200) emergencyList.shift();
         localStorage.setItem('quizmaster_emergency_backup_records', JSON.stringify(emergencyList));
+    } catch(e) {}
+
+    // 🛡️ UN-TOMBSTONE: Bersihkan kunci penghapusan siswa ini karena telah mengirimkan nilai baru resmi
+    try {
+        const normName = String(record.name || '').trim().toLowerCase();
+        const normCls = String(record.class || '').replace(/\s+/g, '').toUpperCase();
+        const curMod = record.moduleId || 'modul_detektif_fakta';
+        const key = `${normName}|${normCls}|${curMod}`;
+        const keyAll = `${normName}|${normCls}|all`;
+
+        let delList = JSON.parse(localStorage.getItem('quizmaster_deleted_records') || '[]');
+        if (Array.isArray(delList) && delList.length > 0) {
+            delList = delList.filter(k => k !== key && k !== keyAll && k !== normName);
+            localStorage.setItem('quizmaster_deleted_records', JSON.stringify(delList));
+        }
+
+        // Hapus tombstone dari Firebase RTDB jika ada
+        const cfgFb = (typeof getFirebaseConfig === 'function') ? getFirebaseConfig() : null;
+        const dbUrl = (cfgFb && cfgFb.databaseURL) ? cfgFb.databaseURL.replace(/\/$/, '') : 'https://kuis-informatika-c8781-default-rtdb.firebaseio.com';
+        const safeKey = `del_${encodeURIComponent(normName).replace(/[^a-zA-Z0-9]/g, '_')}_${encodeURIComponent(normCls).replace(/[^a-zA-Z0-9]/g, '_')}_${encodeURIComponent(curMod).replace(/[^a-zA-Z0-9]/g, '_')}`;
+        const safeKeyAll = `del_${encodeURIComponent(normName).replace(/[^a-zA-Z0-9]/g, '_')}_${encodeURIComponent(normCls).replace(/[^a-zA-Z0-9]/g, '_')}_all`;
+        fetch(`${dbUrl}/quiz_results/${safeKey}.json`, { method: 'DELETE' }).catch(() => {});
+        fetch(`${dbUrl}/quiz_results/${safeKeyAll}.json`, { method: 'DELETE' }).catch(() => {});
     } catch(e) {}
 
     const currentRecords = loadRecords();
@@ -566,6 +591,16 @@ function applyCloudSharedStateToLocal(state) {
                 window.QuizManager.setActiveModuleId(state.activeModuleId);
                 if (typeof initModulesCatalog === 'function') initModulesCatalog();
             }
+        }
+
+        // 5. Sinkronisasi Daftar Penghapusan Siswa (Tombstone Deletions)
+        if (Array.isArray(state.deletedRecords) && state.deletedRecords.length > 0) {
+            try {
+                let localDels = JSON.parse(localStorage.getItem('quizmaster_deleted_records') || '[]');
+                if (!Array.isArray(localDels)) localDels = [];
+                const mergedDels = Array.from(new Set([...localDels, ...state.deletedRecords]));
+                localStorage.setItem('quizmaster_deleted_records', JSON.stringify(mergedDels));
+            } catch(e) {}
         }
     } catch(e) {
         console.warn('Gagal menerapkan Cloud Shared State:', e);
