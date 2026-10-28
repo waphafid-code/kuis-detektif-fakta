@@ -26,7 +26,7 @@ function normalizeModuleId(modId, id, date) {
     if (typeof id === 'string' && (id.startsWith('jki-') || id.includes('jaringan') || id.includes('keamanan'))) return 'modul_jaringan_keamanan';
     if (typeof id === 'string' && id.startsWith('pdf-')) return 'modul_detektif_fakta';
     if (typeof id === 'number' && id >= 670) return 'modul_jaringan_keamanan';
-    if (date === '25/10/2026' || (typeof date === 'string' && date.includes('25/10/2026'))) return 'modul_jaringan_keamanan';
+    if (typeof date === 'string' && (date.includes('/10/2026') || date.includes('-10-') || date.includes('/10/') || date.includes('25/10') || date.includes('26/10') || date.includes('27/10') || date.includes('28/10'))) return 'modul_jaringan_keamanan';
     return 'modul_detektif_fakta';
 }
 window.normalizeModuleId = normalizeModuleId;
@@ -87,8 +87,8 @@ function purgeFakeJkiRecords(list) {
     if (!Array.isArray(list)) return [];
     return list.filter(r => {
         if (!r) return false;
-        // Bersihkan data fiktif jki-rec yang pernah digenerate secara dummy
-        if (typeof r.id === 'string' && r.id.startsWith('jki-')) return false;
+        // Hanya bersihkan ID fiktif murni (jki-rec lama tanpa student match), pertahankan jki-official-
+        if (typeof r.id === 'string' && r.id.startsWith('jki-rec-')) return false;
         // Bersihkan tanggal fiktif bulan Agustus 2026 untuk modul Keamanan Jaringan karena kuis baru dibuat Oktober 2026
         if (r.moduleId === 'modul_jaringan_keamanan') {
             const dt = String(r.date || r.quiz_date || '');
@@ -127,7 +127,7 @@ function filterDeletedRecords(list) {
 window.filterDeletedRecords = filterDeletedRecords;
 
 const OFFICIAL_DATA_SYNC_KEY = 'quizmaster_official_pdf_sync_ver';
-const CURRENT_OFFICIAL_VERSION = '20261026_clean_official_v4';
+const CURRENT_OFFICIAL_VERSION = '20261028_official_jki_v5';
 
 function getCleanOfficialBaseline() {
     const raw = (typeof OFFICIAL_EXAM_RESULTS !== 'undefined' && Array.isArray(OFFICIAL_EXAM_RESULTS))
@@ -183,13 +183,20 @@ function restoreOfficialPdfRecords() {
     sfxClick();
     const clean = getCleanOfficialBaseline();
     if (clean.length > 0) {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(clean));
+        // Pertahankan seluruh pengerjaan modul lain yang ada di penyimpanan lokal
+        let currentSaved = [];
+        try {
+            currentSaved = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+        } catch(e) {}
+        const merged = mergeRecordsList(clean, currentSaved);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
         localStorage.removeItem('detektif_fakta_records');
-        localStorage.setItem('quizmaster_emergency_backup_records', '[]');
         localStorage.removeItem('quizmaster_deleted_records'); // Reset daftar hapus saat guru ingin memulihkan penuh
         localStorage.setItem(OFFICIAL_DATA_SYNC_KEY, CURRENT_OFFICIAL_VERSION);
         if (typeof renderDashboard === 'function') renderDashboard();
-        showToast(`✅ Basis data disinkronkan: ${clean.length} nilai resmi Modul Detektif Fakta. Modul Keamanan Jaringan bersih (0 pengerjaan)!`, '📥');
+        // Tarik kembali pembaruan terbaru dari Supabase Cloud
+        if (typeof syncWithBackend === 'function') syncWithBackend(true);
+        showToast(`✅ Basis data disinkronkan: ${merged.length} nilai kuis resmi telah dimuat!`, '📥');
     }
 }
 window.restoreOfficialPdfRecords = restoreOfficialPdfRecords;
@@ -389,7 +396,8 @@ async function saveMiniGamesTimerSetting() {
 window.saveMiniGamesTimerSetting = saveMiniGamesTimerSetting;
 
 async function fetchSupabaseRecords(cfg) {
-    const targetUrl = `${cfg.url.replace(/\/$/, '')}/rest/v1/${cfg.table || 'quiz_results'}?select=*&order=score.desc`;
+    // Ambil data siswa & modul custom, abaikan __SYSTEM_CONFIG__ agar tidak memenuhi kuota 1000 baris PostgREST
+    const targetUrl = `${cfg.url.replace(/\/$/, '')}/rest/v1/${cfg.table || 'quiz_results'}?student_class=neq.__SYSTEM_CONFIG__&select=*&order=id.desc&limit=5000`;
     const res = await fetch(targetUrl, {
         headers: {
             'apikey': cfg.key,
@@ -585,10 +593,21 @@ async function syncWithBackend(showFeedback = false) {
                 const { data, error } = await supabaseClient
                     .from(tableName)
                     .select('*')
-                    .order('score', { ascending: false });
+                    .neq('student_class', '__SYSTEM_CONFIG__')
+                    .order('id', { ascending: false })
+                    .limit(5000);
                 if (!error && Array.isArray(data)) rawData = data;
             } catch (sdkErr) {}
         }
+    }
+
+    // Ambil status shared state cloud di latar belakang secara terpisah agar tidak mempengaruhi kuota data siswa
+    if (typeof fetchCloudSharedState === 'function') {
+        fetchCloudSharedState().then(cloudState => {
+            if (cloudState && typeof applyCloudSharedStateToLocal === 'function') {
+                applyCloudSharedStateToLocal(cloudState);
+            }
+        }).catch(() => {});
     }
 
     if (Array.isArray(rawData)) {
@@ -599,13 +618,7 @@ async function syncWithBackend(showFeedback = false) {
             return !sName.startsWith('__') && sClass !== '__SYSTEM_CONFIG__' && sClass !== '__MODULE_DATA__';
         });
 
-        // B. Ekstraksi Shared System State jika ada (Sync setting guru ke seluruh HP & Laptop)
-        const systemStateRow = rawData.find(r => r.student_name === '__QUIZMASTER_SHARED_STATE__');
-        if (systemStateRow && systemStateRow.wrong_questions && typeof systemStateRow.wrong_questions === 'object') {
-            applyCloudSharedStateToLocal(systemStateRow.wrong_questions);
-        }
-
-        // C. Ekstraksi Modul Kuis yang dibuat guru jika ada
+        // B. Ekstraksi Modul Kuis yang dibuat guru jika ada
         const moduleRows = rawData.filter(r => r.student_class === '__MODULE_DATA__');
         if (moduleRows.length > 0 && window.QuizManager && typeof window.QuizManager.syncCloudModulesList === 'function') {
             window.QuizManager.syncCloudModulesList(moduleRows);
@@ -693,6 +706,7 @@ async function syncWithBackend(showFeedback = false) {
 
     return false;
 }
+window.syncWithBackend = syncWithBackend;
 
 // ☁️ SUPABASE MODAL ACTIONS & CONTROLLERS
 function openSupabaseModal() {
