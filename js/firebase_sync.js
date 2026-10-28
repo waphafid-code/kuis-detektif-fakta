@@ -173,26 +173,28 @@ async function saveRecordToFirebase(record, proofCode) {
 
     // 1. Simpan ke Firebase Realtime Database via REST API (Ultra-cepat, sub-millisecond)
     try {
+        const controller = new AbortController();
+        const tId = setTimeout(() => controller.abort(), 2500);
         const res = await fetch(`${dbUrl}/quiz_results/${encodeURIComponent(key)}.json`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
+            body: JSON.stringify(payload),
+            signal: controller.signal
         });
+        clearTimeout(tId);
         if (res.ok) {
             rtdbSuccess = true;
             console.log('🔥 [Firebase RTDB] Nilai siswa berhasil disimpan:', record.name, 'Key:', key);
         }
     } catch (e) {
-        console.warn('Firebase RTDB save error:', e.message);
+        console.warn('Firebase RTDB save warning:', e.message);
     }
 
-    // 2. Simpan juga ke Cloud Firestore jika aktif
+    // 2. Simpan juga ke Cloud Firestore jika aktif (non-blocking)
     const db = window.firestoreDb;
     if (db) {
         try {
-            await db.collection(FIRESTORE_COLLECTION).doc(key).set(payload, { merge: true });
-            console.log('🔥 [Firestore] Nilai siswa tersimpan di Firestore:', record.name);
-            rtdbSuccess = true;
+            db.collection(FIRESTORE_COLLECTION).doc(key).set(payload, { merge: true }).catch(() => {});
         } catch(err) {}
     }
 

@@ -1787,13 +1787,20 @@ function checkAnswer(isAutoTimeout = false) {
 
 function nextQuestion() {
     const isFinalQ = (currentQ >= quizData.length - 1);
-    const nextBtn = document.getElementById('btn-next');
-    if (nextBtn) {
-        nextBtn.disabled = true;
-        if (isFinalQ) {
-            nextBtn.innerHTML = '⏳ Menyiapkan & Mengirim Nilai...';
+    if (isFinalQ) {
+        // ⚡ INSTANT FINISH: Langsung panggil finishQuiz() seketika tanpa penundaan setTimeout!
+        const nextBtn = document.getElementById('btn-next');
+        if (nextBtn) {
+            nextBtn.disabled = true;
+            nextBtn.innerHTML = '⚡ Menampilkan Hasil...';
         }
+        sfxClick();
+        finishQuiz();
+        return;
     }
+
+    const nextBtn = document.getElementById('btn-next');
+    if (nextBtn) nextBtn.disabled = true;
     sfxClick();
     const qContent = document.getElementById('q-content');
     if (qContent) {
@@ -1805,7 +1812,7 @@ function nextQuestion() {
         currentQ++;
         if (currentQ < quizData.length) loadQuestion(currentQ);
         else finishQuiz();
-    }, 300);
+    }, 200);
 }
 
 async function finishQuiz() {
