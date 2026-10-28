@@ -1901,57 +1901,73 @@ async function finishQuiz() {
         hintsUsedCount: sessionHintsUsedCount || 0
     };
 
-    // 🛡️ REKAM KE BASIS DATA & EMERGENCY BACKUP SEGERA SEBELUM RESUME DIHAPUS
-    let saveResult = null;
-    try {
-        saveResult = await saveRecord(record);
-    } catch(errSave) {
-        console.error('CRITICAL: saveRecord gagal, memicu cadangan darurat lokal:', errSave);
-        try {
-            const emergencyList = JSON.parse(localStorage.getItem('quizmaster_emergency_backup_records') || '[]');
-            emergencyList.push({ ...record, savedAt: Date.now() });
-            localStorage.setItem('quizmaster_emergency_backup_records', JSON.stringify(emergencyList));
-        } catch(e) {}
-    }
+    // 🛡️ BUKTI OTENTIKASI & VERIFIKASI RESMI DIHASILKAN SEGERA
+    const safeCls = (studentClass || 'XE').replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+    const proofCode = `SMAN4-${safeCls}-${displayScore}-${Date.now().toString(36).toUpperCase()}`;
+    record.submissionProofId = proofCode;
+    window.lastSubmittedProofId = proofCode;
 
-    // Hapus sesi aktif HANYA setelah rekam nilai tersimpan aman
+    // Hapus sesi aktif lokal kuis
     try {
         sessionStorage.removeItem(SESSION_QUIZ_ACTIVE_KEY);
     } catch(e) {}
 
+    // 🚀 LANGSUNG PINDAHKAN LAYAR KE HASIL KUIS!
+    // Siswa TIDAK BOLEH digantung/mentok pada tombol "⏳ Menyiapkan & Mengirim Nilai..."
     switchScreen('result');
 
-    // 🛡️ TAMPILKAN BUKTI RESMI HASIL SUBMIT TERVERIFIKASI
-    try {
-        const proofCodeEl = document.getElementById('proof-id-code');
-        const proofPill = document.getElementById('proof-status-pill');
-        const proofTime = document.getElementById('proof-timestamp-badge');
-        const proofDetail = document.getElementById('proof-details-text');
-        const safeCls = (studentClass || 'XE').replace(/[^A-Za-z0-9]/g, '').toUpperCase();
-        const fallbackCode = `SMAN4-${safeCls}-${displayScore}-${Date.now().toString(36).toUpperCase()}`;
-        const proofCode = (saveResult && saveResult.proofId) ? saveResult.proofId : (record.submissionProofId || fallbackCode);
-        const isCloudSaved = !!(saveResult && (saveResult.savedToSupabase || saveResult.savedToFirebase));
-        const cloudDestName = (saveResult && saveResult.savedToFirebase && saveResult.savedToSupabase) 
-            ? 'Firebase & Supabase' 
-            : ((saveResult && saveResult.savedToFirebase) ? 'Google Firebase' : 'Cloud Supabase');
+    // 🛡️ TAMPILKAN BUKTI RESMI AWAL PADA LAYAR HASIL
+    const proofCodeEl = document.getElementById('proof-id-code');
+    const proofPill = document.getElementById('proof-status-pill');
+    const proofTime = document.getElementById('proof-timestamp-badge');
+    const proofDetail = document.getElementById('proof-details-text');
 
-        if (proofCodeEl) proofCodeEl.textContent = proofCode;
-        if (proofTime) proofTime.textContent = `Waktu: ${clockStr} • ${record.date}`;
-        if (proofPill) {
-            if (isCloudSaved) {
-                proofPill.innerHTML = '🟢 100% TERKIRIM KE CLOUD';
-                proofPill.style.background = '#10b981';
-            } else {
-                proofPill.innerHTML = '💾 TERSIMPAN DI BROWSER & ANTREAN SYNC';
+    if (proofCodeEl) proofCodeEl.textContent = proofCode;
+    if (proofTime) proofTime.textContent = `Waktu: ${clockStr} • ${record.date}`;
+    if (proofPill) {
+        proofPill.innerHTML = '⏳ MENYIMPAN KE CLOUD...';
+        proofPill.style.background = '#3b82f6';
+    }
+    if (proofDetail) {
+        proofDetail.innerHTML = `Jawaban berhasil dikumpulkan • No. Bukti: <strong style="color:var(--accent); font-family:monospace;">${proofCode}</strong>`;
+    }
+
+    // 🛡️ SIMPAN KE BASIS DATA (FIREBASE & CLOUD) SECARA ASINKRON TANPA MEMBEKUKAN UI SISWA
+    (async () => {
+        try {
+            const saveResult = await saveRecord(record);
+            const isCloudSaved = !!(saveResult && (saveResult.savedToSupabase || saveResult.savedToFirebase));
+            const cloudDestName = (saveResult && saveResult.savedToFirebase && saveResult.savedToSupabase) 
+                ? 'Firebase & Supabase' 
+                : ((saveResult && saveResult.savedToFirebase) ? 'Google Firebase' : 'Cloud Supabase');
+
+            if (proofPill) {
+                if (isCloudSaved) {
+                    proofPill.innerHTML = '🟢 100% TERKIRIM KE CLOUD';
+                    proofPill.style.background = '#10b981';
+                } else {
+                    proofPill.innerHTML = '💾 TERSIMPAN DI BROWSER & ANTREAN SYNC';
+                    proofPill.style.background = '#f59e0b';
+                }
+            }
+            if (proofDetail) {
+                proofDetail.innerHTML = isCloudSaved
+                    ? `Tersimpan di Cloud Database (${cloudDestName}) & Dasbor Guru (Rini Syafitri) • No. Bukti: <strong style="color:var(--accent); font-family:monospace;">${proofCode}</strong>`
+                    : `Tersimpan aman di Memori Lokal & Segera Masuk ke Dasbor Guru saat Online • No. Bukti: <strong style="color:var(--accent); font-family:monospace;">${proofCode}</strong>`;
+            }
+        } catch(errSave) {
+            console.error('CRITICAL: saveRecord gagal, memicu cadangan darurat lokal:', errSave);
+            try {
+                const emergencyList = JSON.parse(localStorage.getItem('quizmaster_emergency_backup_records') || '[]');
+                emergencyList.push({ ...record, savedAt: Date.now() });
+                localStorage.setItem('quizmaster_emergency_backup_records', JSON.stringify(emergencyList));
+            } catch(e) {}
+            if (proofPill) {
+                proofPill.innerHTML = '💾 TERSIMPAN DI MEMORI LOKAL';
                 proofPill.style.background = '#f59e0b';
             }
         }
-        if (proofDetail) {
-            proofDetail.innerHTML = isCloudSaved
-                ? `Tersimpan di Cloud Database (${cloudDestName}) & Dasbor Guru (Rini Syafitri) • No. Bukti: <strong style="color:var(--accent); font-family:monospace;">${proofCode}</strong>`
-                : `Tersimpan aman di Memori Lokal & Segera Masuk ke Dasbor Guru saat Online • No. Bukti: <strong style="color:var(--accent); font-family:monospace;">${proofCode}</strong>`;
-        }
-    } catch(e) {}
+    })();
 
     const card = document.querySelector('#screen-quiz .glass-card');
     if (card) card.classList.remove('streak-on-fire');

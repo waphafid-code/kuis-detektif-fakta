@@ -260,7 +260,24 @@ async function saveRecord(record) {
         window.dispatchEvent(new CustomEvent('quizmaster_new_record', { detail: record }));
     } catch(e) {}
 
+    let savedToFirebase = false;
     let savedToSupabase = false;
+
+    // 1. Simpan ke Google Firebase Realtime Database (Utama, Teruji 100% Aktif & Cepat)
+    if (typeof saveRecordToFirebase === 'function') {
+        try {
+            const fbPromise = saveRecordToFirebase(record, proofCode);
+            const fbTimeout = new Promise((_, reject) => setTimeout(() => reject(new Error('Firebase timeout')), 3500));
+            savedToFirebase = await Promise.race([fbPromise, fbTimeout]);
+            if (savedToFirebase) {
+                console.log('🔥 Nilai siswa berhasil disimpan ke Google Firebase Realtime Database! ID Bukti:', proofCode);
+            }
+        } catch (fbErr) {
+            console.warn('Firebase save warning:', fbErr.message);
+        }
+    }
+
+    // 2. Simpan ke Cloud Supabase dengan batas waktu ketat (2 detik) agar tidak membekukan browser seluler
     const cfg = (typeof getSupabaseConfig === 'function') ? getSupabaseConfig() : { url: DEFAULT_SUPABASE_URL, key: DEFAULT_SUPABASE_ANON_KEY, table: 'quiz_results' };
     
     // Simpan moduleId, moduleTitle, dan proofId di dalam wrong_questions JSON payload (kompatibel penuh dengan Supabase jsonb)
@@ -281,54 +298,17 @@ async function saveRecord(record) {
         quiz_date: record.date
     };
 
-    // 1. Simpan ke Cloud Supabase Real-Time Database via SDK
     if (supabaseClient) {
         try {
-            const { error } = await supabaseClient.from(cfg.table || 'quiz_results').insert([rowPayload]);
+            const spPromise = supabaseClient.from(cfg.table || 'quiz_results').insert([rowPayload]);
+            const spTimeout = new Promise((_, reject) => setTimeout(() => reject(new Error('Supabase timeout')), 2000));
+            const { error } = await Promise.race([spPromise, spTimeout]);
             if (!error) {
                 savedToSupabase = true;
                 console.log('✅ Nilai siswa berhasil disimpan ke Cloud Supabase via SDK! ID Bukti:', proofCode);
-            } else {
-                console.warn('Supabase SDK insert warning:', error.message);
             }
         } catch (err) {
-            console.warn('Supabase SDK sync error:', err);
-        }
-    }
-
-    // 2. Jalur Fallback Langsung via REST API (Penyelamat jika koneksi seluler mobile lambat / CDN terkendala)
-    if (!savedToSupabase) {
-        try {
-            const targetUrl = `${cfg.url.replace(/\/$/, '')}/rest/v1/${cfg.table || 'quiz_results'}`;
-            const res = await fetch(targetUrl, {
-                method: 'POST',
-                headers: {
-                    'apikey': cfg.key,
-                    'Authorization': 'Bearer ' + cfg.key,
-                    'Content-Type': 'application/json',
-                    'Prefer': 'return=minimal'
-                },
-                body: JSON.stringify(rowPayload)
-            });
-            if (res.ok) {
-                savedToSupabase = true;
-                console.log('✅ Nilai siswa berhasil disimpan ke Cloud Supabase via direct REST API! ID Bukti:', proofCode);
-            }
-        } catch (restErr) {
-            console.warn('Direct REST insert warning:', restErr.message);
-        }
-    }
-
-    // 2b. Simpan ke Google Firebase Cloud Firestore (Berjalan 24 Jam Non-Stop)
-    let savedToFirebase = false;
-    if (typeof saveRecordToFirebase === 'function') {
-        try {
-            savedToFirebase = await saveRecordToFirebase(record, proofCode);
-            if (savedToFirebase) {
-                console.log('🔥 Nilai siswa berhasil disimpan ke Google Firebase Cloud Firestore! ID Bukti:', proofCode);
-            }
-        } catch (fbErr) {
-            console.warn('Firebase save warning:', fbErr.message);
+            console.warn('Supabase SDK sync skipped/timeout:', err.message);
         }
     }
 
@@ -339,14 +319,16 @@ async function saveRecord(record) {
         }
     }
 
-    // 4. Cadangan ke server Node.js lokal (jika dijalankan)
-    try {
-        await fetch('/api/scores', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(record)
-        });
-    } catch (err) {}
+    // 4. Cadangan ke server Node.js lokal (hanya jika dev server lokal berjalan)
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+        try {
+            fetch('/api/scores', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(record)
+            }).catch(() => {});
+        } catch (err) {}
+    }
 
     return {
         success: true,
