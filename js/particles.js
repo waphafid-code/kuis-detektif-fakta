@@ -167,38 +167,20 @@ function triggerStreakVibration(streakCount) {
         } catch (e) {}
     }
 
-    // 2. Visual Screen Micro-Rumble (Halus & Nyaman di Mata)
+    // Di HP kentang / mobile, hindari visual screen rumble & radial blur agar 60 FPS mentok
+    const isPotato = (typeof window !== 'undefined') && (
+        window.innerWidth < 768 ||
+        (typeof document !== 'undefined' && document.documentElement && document.documentElement.classList.contains('hp-kentang'))
+    );
+    if (isPotato) return;
+
+    // 2. Visual Screen Micro-Rumble (Desktop only, tanpa forced reflow offsetWidth)
     const app = document.getElementById('main-app');
     if (app) {
-        app.classList.remove('vibrate-lvl-1', 'vibrate-lvl-2', 'vibrate-lvl-3', 'vibrate-lvl-4', 'vibrate-lvl-mega', 'shake-it');
-        void app.offsetWidth; // Force reflow agar animasi re-trigger dengan mulus
-
-        if (streakCount === 1) {
-            app.classList.add('vibrate-lvl-1');
-        } else if (streakCount === 2) {
-            app.classList.add('vibrate-lvl-2');
-        } else if (streakCount === 3) {
-            app.classList.add('vibrate-lvl-3');
-        } else if (streakCount === 4) {
-            app.classList.add('vibrate-lvl-4');
-        } else {
-            app.classList.add('vibrate-lvl-mega');
-        }
-    }
-
-    // 3. ✨ Smooth Radial Light Flare (Ringan 60 FPS di HP)
-    const blurOverlay = document.getElementById('radial-blur-overlay');
-    if (blurOverlay) {
-        blurOverlay.classList.remove('radial-blur-lvl-1', 'radial-blur-lvl-2', 'radial-blur-lvl-mega');
-        void blurOverlay.offsetWidth; // Force reflow
-
-        if (streakCount <= 2) {
-            blurOverlay.classList.add('radial-blur-lvl-1');
-        } else if (streakCount <= 4) {
-            blurOverlay.classList.add('radial-blur-lvl-2');
-        } else {
-            blurOverlay.classList.add('radial-blur-lvl-mega');
-        }
+        app.classList.remove('shake-it');
+        requestAnimationFrame(() => {
+            app.classList.add('shake-it');
+        });
     }
 }
 
@@ -246,7 +228,12 @@ function showMegaComboHero(streakVal) {
 }
 
 function spawnRandomEmojis(emoji, count) {
-    for (let i = 0; i < count; i++) {
+    const isPotato = (typeof window !== 'undefined') && (
+        window.innerWidth < 768 ||
+        (typeof document !== 'undefined' && document.documentElement && document.documentElement.classList.contains('hp-kentang'))
+    );
+    const actualCount = isPotato ? Math.min(count, 1) : count;
+    for (let i = 0; i < actualCount; i++) {
         setTimeout(() => {
             const x = Math.random() * window.innerWidth * 0.8 + window.innerWidth * 0.1;
             const y = Math.random() * window.innerHeight * 0.6 + window.innerHeight * 0.2;

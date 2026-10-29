@@ -7,6 +7,13 @@ const fs = require('fs');
 const path = require('path');
 const assert = require('assert');
 
+// Normalize line endings for cross-platform deterministic test matching
+const originalReadFileSync = fs.readFileSync;
+fs.readFileSync = function(...args) {
+    const res = originalReadFileSync.apply(this, args);
+    return typeof res === 'string' ? res.replace(/\r\n/g, '\n') : res;
+};
+
 let passedTests = 0;
 let totalTests = 0;
 

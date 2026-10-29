@@ -1180,11 +1180,21 @@ function autoSubmitTimeout() {
         nextBtn.innerHTML = isFinalQ ? '🏁 Kirim Nilai ke Dasbor Guru ➔' : 'Lanjut Soal ➡️';
     }
 
+    const isPotato = (typeof window !== 'undefined') && (
+        window.innerWidth < 768 ||
+        (typeof document !== 'undefined' && document.documentElement && document.documentElement.classList.contains('hp-kentang'))
+    );
     const app = document.getElementById('main-app');
-    app.classList.remove('shake-it'); void app.offsetWidth; app.classList.add('shake-it');
-    document.body.classList.remove('flash-wrong'); void document.body.offsetWidth; document.body.classList.add('flash-wrong');
+    if (app && !isPotato) {
+        app.classList.remove('shake-it');
+        requestAnimationFrame(() => app.classList.add('shake-it'));
+    }
+    if (!isPotato) {
+        document.body.classList.remove('flash-wrong');
+        requestAnimationFrame(() => document.body.classList.add('flash-wrong'));
+    }
     if (typeof spawnRandomEmojis === 'function') {
-        spawnRandomEmojis('⏰', 3);
+        spawnRandomEmojis('⏰', isPotato ? 1 : 3);
     }
 }
 
@@ -1421,9 +1431,10 @@ function loadQuestion(index) {
     app.classList.remove('shake-it');
 
     const qContent = document.getElementById('q-content');
-    qContent.classList.remove('slide-out', 'slide-in');
-    void qContent.offsetWidth;
-    qContent.classList.add('slide-in');
+    if (qContent) {
+        qContent.classList.remove('slide-out', 'slide-in');
+        requestAnimationFrame(() => qContent.classList.add('slide-in'));
+    }
 
     const fb = document.getElementById('feedback-box');
     fb.style.display = 'none';

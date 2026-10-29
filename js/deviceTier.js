@@ -165,6 +165,14 @@
             this.currentTier = budget.tier;
             this.currentBudget = budget;
 
+            if (typeof document !== 'undefined' && document.documentElement) {
+                if (this.currentTier === 'low') {
+                    document.documentElement.classList.add('hp-kentang');
+                } else {
+                    document.documentElement.classList.remove('hp-kentang');
+                }
+            }
+
             if (persist) {
                 localStorage.setItem(STORAGE_KEY_TIER_OVERRIDE, budget.tier);
             }
@@ -191,4 +199,8 @@
     };
 
     window.DeviceTier = DeviceTier;
+    // Auto-init immediately in browser
+    if (typeof window !== 'undefined') {
+        DeviceTier.init();
+    }
 })();

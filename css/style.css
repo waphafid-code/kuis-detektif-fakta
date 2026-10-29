@@ -1685,7 +1685,13 @@ body.dark-theme .form-control:focus {
 }
 
 /* 🚀 HP KENTANG / LOW-SPEC SMARTPHONE OPTIMIZATIONS (Antutu ~100.000) */
-@media (max-width: 768px) {
+@media (max-width: 768px), (prefers-reduced-motion: reduce) {
+    /* 1. Nonaktifkan backdrop-filter blur di HP agar GPU tidak drop ke 15 FPS */
+    *, *::before, *::after {
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+    }
+
     #particle-canvas {
         display: none !important; /* Nonaktifkan partikel canvas di HP untuk hemat baterai & anti-lag */
     }
@@ -1695,6 +1701,23 @@ body.dark-theme .form-control:focus {
     .glass-card {
         padding: 22px 18px !important;
         border-radius: 18px !important;
+        background: var(--bg-card) !important;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08) !important;
+    }
+    [data-theme="dark"] .glass-card {
+        background: #151D30 !important;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4) !important;
+    }
+    .mobile-top-bar {
+        background: #FFFFFF !important;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05) !important;
+    }
+    [data-theme="dark"] .mobile-top-bar {
+        background: #0B0F19 !important;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.5) !important;
+    }
+    .modal-overlay {
+        background: rgba(15, 23, 42, 0.85) !important;
     }
     .summary-cards {
         grid-template-columns: repeat(2, 1fr) !important;
@@ -1706,9 +1729,67 @@ body.dark-theme .form-control:focus {
     .sc-value {
         font-size: 1.5rem !important;
     }
-    .btn, button, input, select {
-        transform: translateZ(0); /* Hardware accelerated */
+
+    /* 2. Responsivitas sentuhan instan 0ms (hilangkan delay double-tap 300ms di mobile) */
+    button, .btn, input, select, textarea, a, .opt-label, .quiz-nav-btn, .screen-tab-btn, .setting-btn, .mobile-menu-btn, .sidebar-close-btn {
+        touch-action: manipulation !important;
+        -webkit-tap-highlight-color: transparent !important;
     }
+
+    /* 3. Matikan animasi looping berat di HP */
+    .wb-icon, .pulse-glow, .pulse-dot, .floating {
+        animation: none !important;
+    }
+}
+
+/* ⚡ TIER LOW / HP KENTANG SYSTEM CLASS (Aktif otomatis saat RAM <= 3GB / Core <= 4) */
+.hp-kentang,
+.hp-kentang * {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+}
+
+.hp-kentang {
+    text-rendering: optimizeSpeed;
+}
+
+.hp-kentang #particle-canvas {
+    display: none !important;
+}
+
+.hp-kentang body::before {
+    display: none !important;
+}
+
+.hp-kentang .glass-card,
+.hp-kentang .modal-box,
+.hp-kentang .feedback-box,
+.hp-kentang .settings-panel {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12) !important;
+    transition: none !important;
+}
+
+.hp-kentang button,
+.hp-kentang .btn,
+.hp-kentang input,
+.hp-kentang select,
+.hp-kentang textarea,
+.hp-kentang a,
+.hp-kentang .opt-label {
+    touch-action: manipulation !important;
+    -webkit-tap-highlight-color: transparent !important;
+    transition: background-color 0.1s ease, color 0.1s ease !important;
+}
+
+.hp-kentang .wb-icon,
+.hp-kentang .live-pulse-dot,
+.hp-kentang .mascot-svg,
+.hp-kentang .trophy-icon,
+.hp-kentang .pulse-glow,
+.hp-kentang .floating,
+.hp-kentang .shake-it {
+    animation: none !important;
+    transform: none !important;
 }
 
 /* ============================================================ */

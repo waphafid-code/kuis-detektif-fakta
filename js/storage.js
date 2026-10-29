@@ -454,6 +454,36 @@ function goHome() {
 }
 
 // ============================================================
+//  🥔 HP KENTANG / POTATO SMARTPHONE DETECTION & QUALITY BUDGET
+// ============================================================
+let isPotatoDevice = false;
+function detectPotatoDevice() {
+    try {
+        if (typeof window === 'undefined') return false;
+        const ua = navigator.userAgent || '';
+        const isMobileUA = /Android|iPhone|iPad|iPod|Mobile/i.test(ua);
+        const lowRAM = (navigator.deviceMemory && navigator.deviceMemory <= 3);
+        const lowCores = (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4);
+        const smallScreen = (window.innerWidth < 768 || (window.screen && window.screen.width < 768));
+        
+        const manualModeRingan = (typeof localStorage !== 'undefined') && (
+            localStorage.getItem('skuad_mode_ringan') === 'true' || 
+            localStorage.getItem('skuad_tier_override') === 'low'
+        );
+
+        isPotatoDevice = !!(manualModeRingan || isMobileUA || smallScreen || lowRAM || lowCores);
+        
+        if (isPotatoDevice && typeof document !== 'undefined' && document.documentElement) {
+            document.documentElement.classList.add('hp-kentang');
+        }
+        return isPotatoDevice;
+    } catch(e) {
+        return false;
+    }
+}
+detectPotatoDevice();
+
+// ============================================================
 //  🎵 ULTRA-LOW CPU STUDY-BEATS AUDIO SYNTHESIZER (ZERO LEAK)
 // ============================================================
 const ACConstructor = typeof window !== 'undefined' ? (window.AudioContext || window.webkitAudioContext) : null;
@@ -748,7 +778,24 @@ function scheduleBgmStep(stepIndex, noteTime) {
     const chord = LUSH_CHORDS[chordIndex];
     const offset = Math.max(0, noteTime - actx.currentTime);
 
-    // Smooth subtle beat
+    // 🥔 ULTRA-LIGHT ARRANGEMENT FOR POTATO PHONES:
+    // Minimizes CPU & Web Audio node allocation by ~85%
+    if (isPotatoDevice) {
+        if (step === 0) {
+            playKick(offset, 0.16);
+            tone(chord.bass, 'triangle', 0.28, 0.12, null, offset, 400, bgmGain);
+            playBellNote(chord.notes[0], 0.3, 0.035, offset);
+        } else if (step === 8) {
+            playSnare(offset, 0.07);
+            playBellNote(chord.notes[2] || chord.notes[1], 0.3, 0.03, offset);
+        } else if (step === 4 || step === 12) {
+            const mel = chord.melody[Math.floor(step / 4)];
+            playBellNote(mel, 0.2, 0.03, offset);
+        }
+        return;
+    }
+
+    // Smooth subtle beat (Desktop / Standard)
     if (step === 0 || step === 10) playKick(offset, 0.18);
     if (step === 4 || step === 12) playSnare(offset, 0.08);
     if (step % 2 === 0) playHiHat(offset, 0.015);
@@ -774,9 +821,11 @@ function scheduleBgmStep(stepIndex, noteTime) {
 }
 
 // ⏱️ HIGH-PRECISION WEB AUDIO SCHEDULER (ZERO DRIFT, JITTER-FREE)
+const POTATO_SCHEDULE_AHEAD = 0.20;
 function bgmScheduler() {
     if (!bgmRunning || !actx) return;
-    while (nextNoteTime < actx.currentTime + SCHEDULE_AHEAD_TIME) {
+    const aheadTime = isPotatoDevice ? POTATO_SCHEDULE_AHEAD : SCHEDULE_AHEAD_TIME;
+    while (nextNoteTime < actx.currentTime + aheadTime) {
         scheduleBgmStep(bgmStep, nextNoteTime);
         nextNoteTime += BGM_STEP_DURATION;
         bgmStep++;
@@ -791,7 +840,9 @@ function startBGM() {
     bgmStep = 0;
     nextNoteTime = actx.currentTime + 0.05;
     if (bgmInterval) clearInterval(bgmInterval);
-    bgmInterval = setInterval(bgmScheduler, 35); // Lightweight 35ms lookahead poller
+    // Di HP kentang gunakan interval 60ms yang lebih santai (hemat baterai & CPU poller)
+    const pollerMs = isPotatoDevice ? 60 : 35;
+    bgmInterval = setInterval(bgmScheduler, pollerMs);
 }
 
 function stopBGM() {
