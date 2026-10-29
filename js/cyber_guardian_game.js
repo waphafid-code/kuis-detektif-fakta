@@ -22,12 +22,15 @@
     // 🔊 1. WEB AUDIO SYNTHESIZER UNTUK GAME
     let sfxAudioCtx = null;
     function getSfxAudio() {
+        if (window.actx && window.actx.state !== 'closed') {
+            return window.actx;
+        }
         if (!sfxAudioCtx) {
             const AC = window.AudioContext || window.webkitAudioContext;
             if (AC) sfxAudioCtx = new AC();
         }
         if (sfxAudioCtx && sfxAudioCtx.state === 'suspended') {
-            sfxAudioCtx.resume();
+            sfxAudioCtx.resume().catch(() => {});
         }
         return sfxAudioCtx;
     }
@@ -49,6 +52,12 @@
             gain.gain.exponentialRampToValueAtTime(0.0001, now + dur);
             osc.connect(gain);
             gain.connect(ctx.destination);
+            osc.onended = () => {
+                try {
+                    osc.disconnect();
+                    gain.disconnect();
+                } catch(e) {}
+            };
             osc.start(now);
             osc.stop(now + dur);
         } catch (e) {}

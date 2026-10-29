@@ -15,6 +15,9 @@
     let audioCtx = null;
 
     function getAudioContext() {
+        if (window.actx && window.actx.state !== 'closed') {
+            return window.actx;
+        }
         if (!audioCtx) {
             const AudioContext = window.AudioContext || window.webkitAudioContext;
             if (AudioContext) {
@@ -22,7 +25,7 @@
             }
         }
         if (audioCtx && audioCtx.state === 'suspended') {
-            audioCtx.resume();
+            audioCtx.resume().catch(() => {});
         }
         return audioCtx;
     }
@@ -42,6 +45,13 @@
 
             osc.connect(gain);
             gain.connect(ctx.destination);
+
+            osc.onended = () => {
+                try {
+                    osc.disconnect();
+                    gain.disconnect();
+                } catch(e) {}
+            };
 
             if (type === 'tap') {
                 osc.type = 'triangle';

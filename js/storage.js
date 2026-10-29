@@ -454,7 +454,7 @@ function goHome() {
 }
 
 // ============================================================
-//  🎵 MODERN CHILL & UPLIFTING STUDY-BEATS AUDIO SYNTHESIZER
+//  🎵 ULTRA-LOW CPU STUDY-BEATS AUDIO SYNTHESIZER (ZERO LEAK)
 // ============================================================
 const ACConstructor = typeof window !== 'undefined' ? (window.AudioContext || window.webkitAudioContext) : null;
 let actx = null;
@@ -462,37 +462,68 @@ let isMuted = false;
 let bgmInterval = null;
 let bgmRunning = false;
 let bgmStep = 0;
+let nextNoteTime = 0.0;
+const BGM_STEP_DURATION = 0.15; // 100 BPM tempo (150ms per 16th step)
+const SCHEDULE_AHEAD_TIME = 0.12; // 120ms Lookahead buffer (prevents main thread stutter)
+
+let masterGain = null;
+let bgmGain = null;
+let sharedNoiseBuffer = null;
 
 function initAudio() {
     try {
         if (!actx && ACConstructor) {
             actx = new ACConstructor();
+            window.actx = actx;
         }
-        if (actx && actx.state === 'suspended') {
-            actx.resume().catch(() => {});
+        if (actx) {
+            window.actx = actx;
+            if (!masterGain) {
+                masterGain = actx.createGain();
+                masterGain.gain.setValueAtTime(isMuted ? 0 : 1.0, actx.currentTime);
+                masterGain.connect(actx.destination);
+            }
+            if (!bgmGain) {
+                bgmGain = actx.createGain();
+                bgmGain.gain.setValueAtTime(0.85, actx.currentTime);
+                bgmGain.connect(masterGain);
+            }
+            if (!sharedNoiseBuffer) {
+                // Pre-generate 1 second white noise ONCE — zero runtime heap allocation
+                const len = Math.floor(actx.sampleRate * 1.0);
+                sharedNoiseBuffer = actx.createBuffer(1, len, actx.sampleRate);
+                const d = sharedNoiseBuffer.getChannelData(0);
+                for (let i = 0; i < len; i++) {
+                    d[i] = Math.random() * 2 - 1;
+                }
+            }
+            if (actx.state === 'suspended') {
+                actx.resume().catch(() => {});
+            }
         }
     } catch (e) {
         console.warn('initAudio unavailable:', e);
     }
 }
 
-function tone(freq, type, dur, vol, slide = null, delay = 0, filterFreq = null) {
+function tone(freq, type, dur, vol, slide = null, delay = 0, filterFreq = null, targetDest = null) {
     if (isMuted || !actx) return;
     const t = actx.currentTime + delay;
     const osc = actx.createOscillator();
     const g = actx.createGain();
+    let filter = null;
     
     osc.type = type;
     osc.frequency.setValueAtTime(freq, t);
     if (slide) osc.frequency.exponentialRampToValueAtTime(Math.max(10, slide), t + dur);
     
     g.gain.setValueAtTime(0, t);
-    g.gain.linearRampToValueAtTime(vol, t + 0.03);
+    g.gain.linearRampToValueAtTime(vol, t + 0.02);
     g.gain.setValueAtTime(vol * 0.8, t + dur * 0.5);
     g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
     
     if (filterFreq) {
-        const filter = actx.createBiquadFilter();
+        filter = actx.createBiquadFilter();
         filter.type = 'lowpass';
         filter.frequency.setValueAtTime(filterFreq, t);
         osc.connect(filter);
@@ -501,77 +532,109 @@ function tone(freq, type, dur, vol, slide = null, delay = 0, filterFreq = null) 
         osc.connect(g);
     }
     
-    g.connect(actx.destination);
+    const destinationNode = targetDest || masterGain || actx.destination;
+    g.connect(destinationNode);
+    
     osc.start(t);
-    osc.stop(t + dur + 0.05);
+    const stopTime = t + dur + 0.05;
+    osc.stop(stopTime);
+    
+    // 🛡️ CRITICAL GC CLEANUP: Disconnect all nodes immediately after playback
+    osc.onended = () => {
+        try {
+            osc.disconnect();
+            g.disconnect();
+            if (filter) filter.disconnect();
+        } catch (e) {}
+    };
 }
 
-// Warm Rhodes / Marimba bell tone
-function playBellNote(freq, dur = 0.4, vol = 0.08, delay = 0) {
+// Warm Rhodes bell tone (Single lightweight oscillator with soft filter)
+function playBellNote(freq, dur = 0.35, vol = 0.07, delay = 0) {
     if (isMuted || !actx) return;
-    tone(freq, 'sine', dur, vol, null, delay, 2200);
-    tone(freq * 2, 'triangle', dur * 0.6, vol * 0.25, null, delay, 1800);
+    tone(freq, 'sine', dur, vol, null, delay, 2200, bgmGain);
 }
 
-// Gentle Lo-Fi Kick
-function playKick(t = 0, vol = 0.2) {
+// Gentle Lo-Fi Kick (with automatic disconnect)
+function playKick(delay = 0, vol = 0.18) {
     if (isMuted || !actx) return;
-    const now = actx.currentTime + t;
+    const now = actx.currentTime + delay;
     const osc = actx.createOscillator();
     const gain = actx.createGain();
+    osc.type = 'sine';
     osc.frequency.setValueAtTime(110, now);
     osc.frequency.exponentialRampToValueAtTime(38, now + 0.12);
     gain.gain.setValueAtTime(vol, now);
     gain.gain.exponentialRampToValueAtTime(0.001, now + 0.14);
     osc.connect(gain);
-    gain.connect(actx.destination);
+    gain.connect(bgmGain || masterGain || actx.destination);
     osc.start(now);
     osc.stop(now + 0.15);
+    osc.onended = () => {
+        try {
+            osc.disconnect();
+            gain.disconnect();
+        } catch(e) {}
+    };
 }
 
-// Soft Brushed Snare
-function playSnare(t = 0, vol = 0.09) {
+// Soft Brushed Snare (Zero-allocation using shared static noise buffer)
+function playSnare(delay = 0, vol = 0.08) {
     if (isMuted || !actx) return;
-    const now = actx.currentTime + t;
-    const bufferSize = Math.floor(actx.sampleRate * 0.08);
-    const buffer = actx.createBuffer(1, bufferSize, actx.sampleRate);
-    const data = buffer.getChannelData(0);
-    for (let i = 0; i < bufferSize; i++) data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (bufferSize * 0.3));
-    const noise = actx.createBufferSource();
-    noise.buffer = buffer;
-    const filter = actx.createBiquadFilter();
-    filter.type = 'bandpass';
-    filter.frequency.value = 1800;
-    const gain = actx.createGain();
-    gain.gain.setValueAtTime(vol, now);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.09);
-    noise.connect(filter);
-    filter.connect(gain);
-    gain.connect(actx.destination);
-    noise.start(now);
-    tone(180, 'triangle', 0.06, vol * 0.6, 90, t);
+    const now = actx.currentTime + delay;
+    if (!sharedNoiseBuffer && actx) initAudio();
+    if (sharedNoiseBuffer) {
+        const noise = actx.createBufferSource();
+        noise.buffer = sharedNoiseBuffer;
+        const filter = actx.createBiquadFilter();
+        filter.type = 'bandpass';
+        filter.frequency.value = 1800;
+        const gain = actx.createGain();
+        gain.gain.setValueAtTime(vol, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.09);
+        noise.connect(filter);
+        filter.connect(gain);
+        gain.connect(bgmGain || masterGain || actx.destination);
+        noise.start(now);
+        noise.stop(now + 0.1);
+        noise.onended = () => {
+            try {
+                noise.disconnect();
+                filter.disconnect();
+                gain.disconnect();
+            } catch(e) {}
+        };
+    }
+    tone(180, 'triangle', 0.06, vol * 0.5, 90, delay, null, bgmGain);
 }
 
-// Airy Hat
-function playHiHat(t = 0, vol = 0.02) {
+// Airy Hat (Zero-allocation using shared static noise buffer)
+function playHiHat(delay = 0, vol = 0.015) {
     if (isMuted || !actx) return;
-    const now = actx.currentTime + t;
-    const bufferSize = Math.floor(actx.sampleRate * 0.025);
-    const buffer = actx.createBuffer(1, bufferSize, actx.sampleRate);
-    const data = buffer.getChannelData(0);
-    for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
-    const noise = actx.createBufferSource();
-    noise.buffer = buffer;
-    const filter = actx.createBiquadFilter();
-    filter.type = 'highpass';
-    filter.frequency.value = 8500;
-    const gain = actx.createGain();
-    gain.gain.setValueAtTime(vol, now);
-    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.025);
-    noise.connect(filter);
-    filter.connect(gain);
-    gain.connect(actx.destination);
-    noise.start(now);
+    const now = actx.currentTime + delay;
+    if (!sharedNoiseBuffer && actx) initAudio();
+    if (sharedNoiseBuffer) {
+        const noise = actx.createBufferSource();
+        noise.buffer = sharedNoiseBuffer;
+        const filter = actx.createBiquadFilter();
+        filter.type = 'highpass';
+        filter.frequency.value = 8500;
+        const gain = actx.createGain();
+        gain.gain.setValueAtTime(vol, now);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.025);
+        noise.connect(filter);
+        filter.connect(gain);
+        gain.connect(bgmGain || masterGain || actx.destination);
+        noise.start(now);
+        noise.stop(now + 0.03);
+        noise.onended = () => {
+            try {
+                noise.disconnect();
+                filter.disconnect();
+                gain.disconnect();
+            } catch(e) {}
+        };
+    }
 }
 
 // ✨ Sophisticated, Pleasant Sound Effects
@@ -583,46 +646,46 @@ function sfxCorrect() {
     // Harmonious major chord chime arpeggio
     const chord = [523.25, 659.25, 783.99, 1046.5, 1318.51];
     chord.forEach((n, i) => {
-        playBellNote(n, 0.35, 0.16, i * 0.045);
+        playBellNote(n, 0.35, 0.14, i * 0.045);
     });
 }
 
 function sfxWrong() {
     // Gentle mellow pluck (friendly, not harsh)
-    playBellNote(329.63, 0.18, 0.14, 0);
-    playBellNote(277.18, 0.22, 0.12, 0.08);
+    playBellNote(329.63, 0.18, 0.12, 0);
+    playBellNote(277.18, 0.22, 0.10, 0.08);
 }
 
 function sfxCountdown() { 
-    playBellNote(440, 0.15, 0.18); 
+    playBellNote(440, 0.15, 0.16); 
 }
 
 function sfxGo() {
     const notes = [523.25, 659.25, 783.99, 1046.5];
-    notes.forEach((n, i) => playBellNote(n, 0.4, 0.2, i * 0.05));
+    notes.forEach((n, i) => playBellNote(n, 0.4, 0.18, i * 0.05));
 }
 
 function sfxVictory() {
     const notes = [523.25, 659.25, 783.99, 987.77, 1046.5, 1318.51, 1567.98];
     notes.forEach((n, i) => {
-        playBellNote(n, 0.5, 0.18, i * 0.07);
+        playBellNote(n, 0.5, 0.16, i * 0.07);
     });
 }
 
 function sfxTimerWarn() { 
-    playBellNote(880, 0.09, 0.22);
-    playBellNote(1174.66, 0.08, 0.16, 0.06);
+    playBellNote(880, 0.09, 0.20);
+    playBellNote(1174.66, 0.08, 0.15, 0.06);
 }
 
 function sfxNewData() { 
-    playBellNote(523.25, 0.18, 0.14, 0);
-    playBellNote(783.99, 0.25, 0.16, 0.08);
+    playBellNote(523.25, 0.18, 0.12, 0);
+    playBellNote(783.99, 0.25, 0.14, 0.08);
 }
 
 function sfxStreakCombo(lvl) {
     const chords = [523.25, 659.25, 783.99, 1046.5, 1318.51];
     chords.slice(0, Math.min(chords.length, lvl + 2)).forEach((f, idx) => {
-        playBellNote(f, 0.4, 0.18, idx * 0.04);
+        playBellNote(f, 0.4, 0.16, idx * 0.04);
     });
 }
 
@@ -678,44 +741,57 @@ const LUSH_CHORDS = [
     { bass: 98.00,  notes: [196.00, 246.94, 293.66, 349.23], melody: [392.00, 493.88, 587.33, 659.25] }  // G7
 ];
 
-function bgmTick() {
+function scheduleBgmStep(stepIndex, noteTime) {
     if (!bgmRunning || isMuted || !actx) return;
-    const step = bgmStep % 16;
-    const chordIndex = Math.floor((bgmStep % 64) / 16);
+    const step = stepIndex % 16;
+    const chordIndex = Math.floor((stepIndex % 64) / 16);
     const chord = LUSH_CHORDS[chordIndex];
+    const offset = Math.max(0, noteTime - actx.currentTime);
 
     // Smooth subtle beat
-    if (step === 0 || step === 10) playKick(0, 0.18);
-    if (step === 4 || step === 12) playSnare(0, 0.08);
-    if (step % 2 === 0) playHiHat(0, 0.015);
-    else if (step % 4 === 3) playHiHat(0, 0.01);
+    if (step === 0 || step === 10) playKick(offset, 0.18);
+    if (step === 4 || step === 12) playSnare(offset, 0.08);
+    if (step % 2 === 0) playHiHat(offset, 0.015);
+    else if (step % 4 === 3) playHiHat(offset, 0.01);
 
     // Warm deep sub-bass (rounded triangle)
     if (step === 0 || step === 6 || step === 10) {
-        tone(chord.bass, 'triangle', 0.35, 0.16, null, 0, 400);
+        tone(chord.bass, 'triangle', 0.35, 0.14, null, offset, 400, bgmGain);
     }
 
     // Gentle Electric Piano chord stabs
     if (step === 0 || step === 6) {
         chord.notes.forEach(f => {
-            playBellNote(f, 0.35, 0.045);
+            playBellNote(f, 0.35, 0.035, offset);
         });
     }
 
     // Melodic rhodes bell arpeggio on off-beats
     if (step % 4 === 2) {
         const melNote = chord.melody[Math.floor(step / 4)];
-        playBellNote(melNote, 0.3, 0.06);
+        playBellNote(melNote, 0.3, 0.05, offset);
     }
+}
 
-    bgmStep++;
+// ⏱️ HIGH-PRECISION WEB AUDIO SCHEDULER (ZERO DRIFT, JITTER-FREE)
+function bgmScheduler() {
+    if (!bgmRunning || !actx) return;
+    while (nextNoteTime < actx.currentTime + SCHEDULE_AHEAD_TIME) {
+        scheduleBgmStep(bgmStep, nextNoteTime);
+        nextNoteTime += BGM_STEP_DURATION;
+        bgmStep++;
+    }
 }
 
 function startBGM() {
     if (bgmRunning) return;
+    initAudio();
+    if (!actx) return;
     bgmRunning = true;
     bgmStep = 0;
-    bgmInterval = setInterval(bgmTick, 150); // Chill 100 BPM tempo
+    nextNoteTime = actx.currentTime + 0.05;
+    if (bgmInterval) clearInterval(bgmInterval);
+    bgmInterval = setInterval(bgmScheduler, 35); // Lightweight 35ms lookahead poller
 }
 
 function stopBGM() {
@@ -732,9 +808,15 @@ function toggleSound() {
     if (isMuted) {
         btn.textContent = '🔇'; btn.classList.add('muted');
         stopBGM();
+        if (masterGain && actx) {
+            masterGain.gain.setValueAtTime(0, actx.currentTime);
+        }
     } else {
         btn.textContent = '🔊'; btn.classList.remove('muted');
         initAudio();
+        if (masterGain && actx) {
+            masterGain.gain.setValueAtTime(1.0, actx.currentTime);
+        }
         if (screens.quiz && screens.quiz.classList.contains('active')) startBGM();
     }
 }

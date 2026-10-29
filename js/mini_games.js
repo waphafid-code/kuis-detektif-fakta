@@ -23,12 +23,15 @@
     // 🔊 AUDIO SYNTHESIZER (WEB AUDIO API)
     let audioCtx = null;
     function getAudioContext() {
+        if (window.actx && window.actx.state !== 'closed') {
+            return window.actx;
+        }
         if (!audioCtx) {
             const AudioContext = window.AudioContext || window.webkitAudioContext;
             if (AudioContext) audioCtx = new AudioContext();
         }
         if (audioCtx && audioCtx.state === 'suspended') {
-            audioCtx.resume();
+            audioCtx.resume().catch(() => {});
         }
         return audioCtx;
     }
@@ -42,7 +45,7 @@
             const ctx = getAudioContext();
             if (!ctx) return;
             if (ctx.state === 'suspended') {
-                ctx.resume();
+                ctx.resume().catch(() => {});
             }
             const osc = ctx.createOscillator();
             const gain = ctx.createGain();
@@ -52,6 +55,12 @@
             gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + duration);
             osc.connect(gain);
             gain.connect(ctx.destination);
+            osc.onended = () => {
+                try {
+                    osc.disconnect();
+                    gain.disconnect();
+                } catch(e) {}
+            };
             osc.start();
             osc.stop(ctx.currentTime + duration);
         } catch (e) {

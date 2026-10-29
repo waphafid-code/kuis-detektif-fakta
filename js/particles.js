@@ -50,41 +50,57 @@ function initParticles() {
     if (!ensureCanvas()) return;
     resizeCanvas();
     const isMobile = window.innerWidth < 768;
-    // Ringan & hemat baterai: 12 di mobile, 24 di desktop
-    const count = isMobile ? 12 : 24;
+    // 0 di mobile (hemat baterai & CPU), 14 di desktop (ringan & mulus)
+    const count = isMobile ? 0 : 14;
     particles = [];
     for (let i = 0; i < count; i++) particles.push(new Particle());
 }
 
 let particleAnimFrameId = null;
+let lastParticleFrameTime = 0;
+const PARTICLE_TARGET_FPS_MS = 1000 / 30; // 30 FPS cap menghemat 60% beban GPU & compositing
 
-function drawParticles() {
+function drawParticles(timestamp) {
     if (!isTabVisible || !ensureCanvas()) {
         particleAnimFrameId = null;
         return;
     }
+
+    // 🛑 Matikan rendering di HP (< 768px) karena canvas disembunyikan CSS display:none !important
+    if (window.innerWidth < 768) {
+        particleAnimFrameId = null;
+        return;
+    }
+
+    // Throttle ke ~30 FPS agar CPU & audio mixer thread tidak tertekan
+    if (timestamp && lastParticleFrameTime && (timestamp - lastParticleFrameTime < PARTICLE_TARGET_FPS_MS)) {
+        particleAnimFrameId = requestAnimationFrame(drawParticles);
+        return;
+    }
+    lastParticleFrameTime = timestamp || (typeof performance !== 'undefined' ? performance.now() : Date.now());
+
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    const isMobile = window.innerWidth < 768;
     particles.forEach(p => { p.update(); p.draw(); });
 
-    // Garis koneksi halus hanya di Desktop
-    if (!isMobile) {
-        for (let i = 0; i < particles.length; i++) {
-            for (let j = i + 1; j < particles.length; j++) {
-                const dx = particles[i].x - particles[j].x;
-                const dy = particles[i].y - particles[j].y;
-                const dist = Math.sqrt(dx * dx + dy * dy);
-                if (dist < 90) {
-                    ctx.beginPath();
-                    ctx.moveTo(particles[i].x, particles[i].y);
-                    ctx.lineTo(particles[j].x, particles[j].y);
-                    ctx.strokeStyle = `rgba(139, 92, 246, ${0.04 * (1 - dist / 90)})`;
-                    ctx.lineWidth = 0.5;
-                    ctx.stroke();
-                }
+    // Garis koneksi halus hanya di Desktop dengan fast squared distance (menghindari Math.sqrt berulang)
+    const len = particles.length;
+    for (let i = 0; i < len; i++) {
+        for (let j = i + 1; j < len; j++) {
+            const dx = particles[i].x - particles[j].x;
+            const dy = particles[i].y - particles[j].y;
+            const distSq = dx * dx + dy * dy;
+            if (distSq < 7225) { // 85 * 85
+                const dist = Math.sqrt(distSq);
+                ctx.beginPath();
+                ctx.moveTo(particles[i].x, particles[i].y);
+                ctx.lineTo(particles[j].x, particles[j].y);
+                ctx.strokeStyle = `rgba(139, 92, 246, ${0.04 * (1 - dist / 85)})`;
+                ctx.lineWidth = 0.5;
+                ctx.stroke();
             }
         }
     }
+
     if (particleAnimFrameId) {
         cancelAnimationFrame(particleAnimFrameId);
     }
@@ -93,7 +109,7 @@ function drawParticles() {
 
 document.addEventListener('visibilitychange', () => {
     isTabVisible = !document.hidden;
-    if (isTabVisible) {
+    if (isTabVisible && window.innerWidth >= 768) {
         if (particleAnimFrameId) {
             cancelAnimationFrame(particleAnimFrameId);
             particleAnimFrameId = null;
