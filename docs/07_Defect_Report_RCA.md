@@ -172,3 +172,4 @@ flowchart LR
 | **DEFECT-03** | Chatbot NLP Fallback pada Typo/E1 | High | Open | **CLOSED** | DEFECT01_Chatbot_NLP_Query_Fixed.png |
 
 > **Kesimpulan Triage:** Seluruh 3 cacat (*100% defects resolved*) telah diperbaiki dan diverifikasi di lingkungan produksi. Sistem dinyatakan bersih dari *blocking defects*.
+

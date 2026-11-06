@@ -86,3 +86,4 @@ pie title Distribusi Beban Kerja Tim QA QuizMaster
 
 ---
 *Matriks kontribusi ini disusun secara jujur dan transparan sebagai bukti komitmen kerja sama tim dalam menghasilkan produk perangkat lunak pendidikan yang bermutu tinggi.*
+

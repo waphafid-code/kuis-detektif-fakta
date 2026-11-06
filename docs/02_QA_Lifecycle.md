@@ -86,3 +86,4 @@ Untuk memastikan rilis yang stabil dan bebas regresi, setiap fase diwajibkan mem
 | **Testing (QC)** | Seluruh 12 skenario Black-Box Testing (EP, BVA, DT, ST) tereksekusi dengan status PASS dan bukti screenshot autentik. | Eksekusi Manual & DevTools | **PASS** |
 | **Defect Triage** | Nol defect berkategori *Critical* atau *High* yang belum terselesaikan (*Zero Open Blocker Defects*). | Defect Log Dokumen P07 | **PASS** |
 | **Production Ready** | Aplikasi dapat dimuat < 1.5 detik pada koneksi 3G lambat dan kompatibel di layar mobile 360px. | Chrome DevTools Lighthouse | **PASS** |
+

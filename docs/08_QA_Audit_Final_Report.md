@@ -80,3 +80,4 @@ Laporan audit ini telah diperiksa, diverifikasi, dan disetujui secara mufakat ol
 
 ---
 *Dokumen ini diterbitkan secara resmi sebagai pemenuhan Tugas Praktikum Mata Kuliah Quality Assurance, Program Studi S1 Pendidikan Teknik Informatika.*
+

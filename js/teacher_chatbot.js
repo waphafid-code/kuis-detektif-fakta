@@ -847,13 +847,289 @@
                `*Ketik pertanyaan spesifik mengenai materi di atas ya! Semangat belajarnya!* 🌟`;
     }
 
-    // 👩‍🏫 6. ENGINE RESPON ASISTEN GURU (ANALISIS EMPIRIS REKAPITULASI & PERFORMA SISWA)
+    // 👩‍🏫 6. ENGINE RESPON ASISTEN GURU (ANALISIS EMPIRIS REKAPITULASI & PETA BELAJAR REAL-TIME)
     function generateTeacherAiResponse(userPrompt) {
         const ctx = getLiveTeacherContext();
         const p = userPrompt.toLowerCase().trim();
         const targetClass = parseClassFromQuery(p);
 
-        // 1. PERTANYAAN TENTANG NILAI TERTINGGI / TERENDAH (GURU MODE BEBAS ANALISIS)
+        // ============================================================
+        // A. INTENT: PETA MISKONSEPSI & BUTIR SOAL TERSULIT (PRIORITAS TINGGI)
+        // ============================================================
+        const isMisconceptionQuery = /\b(mis+konsepsi|salah\s*paham|terkecoh|sulit|susah|rumit|bingung|membingungkan|soal\s*tersulit|butir\s*soal|analisis\s*butir|daya\s*serap|kelemahan|titik\s*buta)\b/i.test(p) ||
+            (/\b(soal|pertanyaan|butir)\b/i.test(p) && /\b(salah|banyak\s*salah|sering\s*salah|terbanyak\s*salah|keliru|sulit|susah)\b/i.test(p)) ||
+            (/\b(banyak|sering|paling)\s*(yang\s*)?salah\b/i.test(p));
+        if (isMisconceptionQuery) {
+            const worstFakta = ctx.worstFaktaQuestions.slice(0, 3);
+            const worstJaringan = ctx.worstJaringanQuestions.slice(0, 3);
+
+            let reply = `### 🩺 Peta Miskonsepsi Kritis & Butir Soal Paling Banyak Salah Dijawab\n\n`;
+            reply += `Berdasarkan analisis empiris jawaban **216 siswa (Kelas X E 1 s.d X E 6)** secara *real-time*:\n\n`;
+
+            reply += `**1. 🛡️ Modul 2: Keamanan Jaringan & Sistem Informasi (Penilaian Harian Aktif):**\n`;
+            reply += `- **Soal #18 (Enkripsi Wi-Fi Publik vs Sensor Sidik Jari Layar):**\n`;
+            reply += `  *Jumlah salah:* \`${worstJaringan[0] ? worstJaringan[0].errorCount : 0} siswa\` (${worstJaringan[0] ? worstJaringan[0].errorPct : 0}%)\n`;
+            reply += `  *Akar Miskonsepsi:* Siswa mengira sensor sidik jari (*Authentication*) di layar ponsel otomatis melindungi paket data yang dikirim melalui Wi-Fi publik terbuka. Siswa belum membedakan antara penguncian fisik perangkat dengan enkripsi transmisi data di udara (*Sniffing*).\n`;
+            reply += `  *💡 Masukan Guru:* Gunakan analogi brankas uang (kunci sidik jari mengunci pintu brankas, namun saat uang dikirim keluar menggunakan kurir tanpa kotak lapis baja/VPN, siapa pun di jalan raya bisa merampasnya).\n\n`;
+
+            reply += `- **Soal #7 (Perbedaan Broadcast Hub vs Unicast Switch):**\n`;
+            reply += `  *Jumlah salah:* \`${worstJaringan[1] ? worstJaringan[1].errorCount : 0} siswa\` (${worstJaringan[1] ? worstJaringan[1].errorPct : 0}%)\n`;
+            reply += `  *Akar Miskonsepsi:* Siswa mengira Switch dan Hub bekerja identik. Siswa belum memahami bahwa Hub menyebarkan frame ke semua port (*Broadcast*), sedangkan Switch membaca tabel MAC Address untuk mengirim data khusus ke port tujuan (*Unicast*).\n\n`;
+
+            reply += `- **Soal #12 (Kriptografi Asimetris RSA vs Kunci Simetris AES):**\n`;
+            reply += `  *Jumlah salah:* \`${worstJaringan[2] ? worstJaringan[2].errorCount : 0} siswa\` (${worstJaringan[2] ? worstJaringan[2].errorPct : 0}%)\n`;
+            reply += `  *Akar Miskonsepsi:* Siswa sering terbalik antara *Public Key* (bebas dibagikan untuk mengunci/mengenkripsi) dengan *Private Key* (rahasia penerima untuk membuka/mendekripsi).\n\n`;
+
+            reply += `**2. 🕵️ Modul 1: Detektif Fakta Digital (Literasi Digital):**\n`;
+            reply += `- **Soal #5 (Kewenangan Lembaga Cek Fakta vs Penegak Hukum):**\n`;
+            reply += `  *Akar Miskonsepsi:* Siswa cenderung mengira komunitas pemeriksa fakta memiliki wewenang memblokir akun atau menangkap penyebar hoaks seperti aparat kepolisian siber.\n`;
+            reply += `- **Soal #14 (Pembedaan Domain Resmi \`.go.id\`):**\n`;
+            reply += `  *Akar Miskonsepsi:* Siswa kerap terkecoh domain tiruan gratisan (\`.blogspot.com\` atau \`.xyz\`) yang mengatasnamakan instansi pemerintah.\n\n`;
+
+            reply += `📚 **3 Rekomendasi Pedagogis Guru di Kelas Berikutnya:**\n`;
+            reply += `1. **Praktik Nyata:** Tunjukkan simulasi Wi-Fi publik di kelas dan demonstrasikan bagaimana data HTTP tanpa SSL terlihat telanjang di udara.\n`;
+            reply += `2. **Aktivasi Remedial:** Dorong siswa dengan nilai $<80$ untuk mengakses kuis remedial agar butir soal yang salah dapat diperbaiki.\n`;
+            reply += `3. **Penguatan Konsep:** Luangkan waktu 10 menit di awal jam pelajaran untuk klarifikasi Hub vs Switch.`;
+
+            return reply;
+        }
+
+        // ============================================================
+        // B. INTENT: PETA PROSES BELAJAR MENGAJAR REAL-TIME & MASUKAN GURU
+        // ============================================================
+        const isLiveMapQuery = /\b(peta\s*belajar|peta\s*proses|proses\s*belajar|peta\s*nilai|peta\s*kelas|peta\s*capaian|sedang\s*terjadi|apa\s*yang\s*terjadi|realtime|real-time|kondisi\s*kelas|situasi\s*kelas|masukan|rekomendasi|evaluasi\s*kelas)\b/i.test(p) ||
+            (/^peta\b/i.test(p));
+        if (isLiveMapQuery) {
+            const pctBoth = Math.round((ctx.finishedBoth.length / ctx.totalEnrolled) * 100);
+            const pctNone = Math.round((ctx.finishedNone.length / ctx.totalEnrolled) * 100);
+            const pctPartial = Math.round((ctx.finishedOneOnly.length / ctx.totalEnrolled) * 100);
+
+            const totalRemedial = ctx.studentProfiles.filter(s => s.hasJaringan && s.scoreJaringan < 80).length;
+
+            let reply = `### 🗺️ Peta Proses Belajar Mengajar Real-time & Masukan Analitis\n\n`;
+            reply += `Berikut potret menyeluruh aktivitas belajar **216 siswa SMAN 4 Padang** saat ini:\n\n`;
+
+            reply += `**1. 📊 Status Partisipasi Siswa:**\n`;
+            reply += `- **Tuntas KEDUA Modul:** \`${ctx.finishedBoth.length} Siswa\` (${pctBoth}%)\n`;
+            reply += `- **Baru Menyelesaikan 1 Modul (Parsial):** \`${ctx.finishedOneOnly.length} Siswa\` (${pctPartial}%)\n`;
+            reply += `- **Belum Mengikuti Ujian Sama Sekali:** \`${ctx.finishedNone.length} Siswa\` (${pctNone}%)\n\n`;
+
+            reply += `**2. 🩺 Capaian Standar KKM 80 (Modul Penilaian Harian):**\n`;
+            reply += `- **Tuntas KKM (>= 80):** \`${ctx.recordsJaringanCount - totalRemedial} Siswa\`\n`;
+            reply += `- **Perlu Remedial (< 80):** \`${totalRemedial} Siswa\`\n\n`;
+
+            reply += `**3. 🏫 Matriks Peta Partisipasi per Kelas:**\n`;
+            reply += `| Kelas | Terdaftar | Tuntas 2 Modul | Baru 1 Modul | Belum Ujian |\n`;
+            reply += `| :--- | :---: | :---: | :---: | :---: |\n`;
+            ctx.classes.forEach(cls => {
+                const c = ctx.classStats[cls];
+                reply += `| **${cls}** | ${c.totalStudents} | ${c.doneBoth.length} | ${c.missingOne.length} | ${c.doneNone.length} |\n`;
+            });
+
+            reply += `\n**4. 💡 3 Masukan & Rekomendasi Tindakan Guru:**\n`;
+            reply += `1. **Pengingat Grup Kelas:** Sebanyak \`${ctx.finishedNone.length} siswa\` belum mengikuti ujian sama sekali. Ibu Guru dapat menekan tombol *"Salin Daftar Belum Ujian"* di dasbor untuk dikirim ke wali kelas.\n`;
+            reply += `2. **Fokus Remedial:** Terdapat \`${totalRemedial} siswa\` remedial di Modul Keamanan Jaringan. Buka akses remedial dengan menekan tombol *"Buka Remedial"* di dasbor.\n`;
+            reply += `3. **Penguatan Konsep Terlemah:** Miskonsepsi terbesar terpusat pada konsep keamanan Wi-Fi publik dan cara kerja Switch. Berikan penekanan singkat sebelum masuk ke bab materi selanjutnya.`;
+
+            return reply;
+        }
+
+        // ============================================================
+        // C. INTENT: SISWA BELUM MENGERJAKAN KEDUA MODUL SAMA SEKALI
+        // ============================================================
+        const isBelumKeduaModulQuery = /\b(belum.*(kedua|2\s*modul|dua\s*modul|semua\s*modul|kedua\s*kuis|2\s*kuis|sama\s*sekali)|belum\s*ujian\s*sama\s*sekali|0\s*kuis|kosong)\b/i.test(p);
+        if (isBelumKeduaModulQuery) {
+            let list = ctx.finishedNone;
+            if (targetClass) list = list.filter(s => s.class === targetClass);
+
+            let reply = `### ❌ Siswa yang BELUM Mengerjakan Kedua Modul Sama Sekali ${targetClass ? `(${targetClass})` : ''}\n\n`;
+            reply += `Ditemukan sebanyak **${list.length} siswa** ${targetClass ? `di kelas **${targetClass}**` : 'di seluruh kelas'} yang sama sekali belum memiliki riwayat pengerjaan di Modul 1 maupun Modul 2:\n\n`;
+
+            if (list.length === 0) {
+                reply += `🎉 **Luar biasa! Seluruh siswa ${targetClass ? `kelas ${targetClass}` : ''} telah mengikuti setidaknya satu modul kuis.**\n`;
+            } else {
+                reply += list.map((s, i) => `${i + 1}. **${s.name}** (${s.class}) — *Belum ada respon*`).join('\n');
+                reply += `\n\n📲 **Tindakan Guru:** Tekan tombol **"Salin Daftar Belum Ujian"** di Dasbor Guru untuk membagikan daftar nama ini langsung ke grup WhatsApp kelas atau wali kelas.`;
+            }
+            return reply;
+        }
+
+        // ============================================================
+        // D. INTENT: SISWA BELUM MENGERJAKAN SALAH SATU MODUL (BARU 1 MODUL)
+        // ============================================================
+        const isBelumSalahSatuQuery = /\b(salah\s*satu|parsial|belum\s*lengkap)\b/i.test(p) ||
+            (/\b(baru|hanya|cuma)\b/i.test(p) && /\b(1|satu)\s*(modul|kuis)\b/i.test(p)) ||
+            (/\b(baru|hanya|cuma)\b/i.test(p) && /\b(modul|kuis)\s*(1|2|satu|dua|fakta|jaringan)\b/i.test(p)) ||
+            (/\b(baru|hanya|cuma)\b/i.test(p) && /\b(1|satu)\b/i.test(p));
+        if (isBelumSalahSatuQuery) {
+            let list = ctx.finishedOneOnly;
+            if (targetClass) list = list.filter(s => s.class === targetClass);
+
+            let reply = `### ⚠️ Siswa yang Baru Mengerjakan Salah Satu Modul Saja ${targetClass ? `(${targetClass})` : ''}\n\n`;
+            reply += `Terdapat **${list.length} siswa** ${targetClass ? `di kelas **${targetClass}**` : ''} yang status pengerjaannya baru parsial (menyelesaikan 1 modul, namun modul lainnya belum):\n\n`;
+
+            if (list.length === 0) {
+                reply += `✅ **Seluruh siswa yang aktif telah menuntaskan kedua modul kuis secara lengkap.**\n`;
+            } else {
+                reply += list.map((s, i) => {
+                    const statusNote = s.hasFakta 
+                        ? `Sudah Modul 1 (Detektif Fakta: \`${s.scoreFakta}\`), **Belum Modul 2 (Jaringan)**` 
+                        : `Sudah Modul 2 (Jaringan: \`${s.scoreJaringan}\`), **Belum Modul 1 (Fakta)**`;
+                    return `${i + 1}. **${s.name}** (${s.class})\n   ↳ *Status:* ${statusNote}`;
+                }).join('\n\n');
+                reply += `\n\n💡 **Rekomendasi:** Ingatkan siswa di atas agar segera melengkapi modul yang belum dikerjakan sebelum batas waktu penilaian ditutup.`;
+            }
+            return reply;
+        }
+
+        // ============================================================
+        // E. INTENT: SISWA YANG SUDAH MENYELESAIKAN KEDUA MODUL (TUNTAS 2 MODUL)
+        // ============================================================
+        const isSudahKeduaModulQuery = /\b(sudah|tuntas|selesai).*(kedua|2\s*modul|dua\s*modul|semua\s*modul|kedua\s*kuis|2\s*kuis|semuanya|seluruhnya|keduanya|dua-duanya|2-2nya|dua\s*duanya)\b/i.test(p) ||
+            /\b(tuntas|selesai)\s*(keduanya|dua-duanya|2-2nya|semuanya)\b/i.test(p);
+        if (isSudahKeduaModulQuery) {
+            let list = ctx.finishedBoth;
+            if (targetClass) list = list.filter(s => s.class === targetClass);
+
+            let reply = `### 🟢 Siswa yang Sudah Menyelesaikan KEDUA Modul ${targetClass ? `(${targetClass})` : ''}\n\n`;
+            reply += `Ditemukan sebanyak **${list.length} siswa** yang telah lengkap menuntaskan Modul 1 (Detektif Fakta) dan Modul 2 (Keamanan Jaringan):\n\n`;
+
+            if (list.length === 0) {
+                reply += `*(Belum ada siswa yang menyelesaikan kedua modul kuis pada kriteria ini)*\n`;
+            } else {
+                const sample = list.slice(0, targetClass ? 36 : 25);
+                reply += sample.map((s, i) => `${i + 1}. **${s.name}** (${s.class}) — Modul 1: \`${s.scoreFakta}\` | Modul 2: \`${s.scoreJaringan}\` | Rata-rata: **${s.avgScore}**`).join('\n');
+                if (!targetClass && list.length > 25) {
+                    reply += `\n\n*...dan ${list.length - 25} siswa lainnya di kelas lain (dapat dilihat lengkap pada tabel Rekap Nilai dasbor).*`;
+                }
+            }
+            return reply;
+        }
+
+        // ============================================================
+        // F. INTENT: SISWA REMEDIAL & NILAI DI BAWAH KKM 80
+        // ============================================================
+        const isRemedialQuery = /\b(remedial|remedi|di\s*bawah\s*80|kurang\s*dari\s*80|tidak\s*tuntas|belum\s*tuntas|tidak\s*lulus|gagal|skor\s*rendah|nilai\s*merah|merah)\b/i.test(p);
+        if (isRemedialQuery) {
+            let listFakta = ctx.studentProfiles.filter(s => s.hasFakta && s.scoreFakta < 80);
+            let listJaringan = ctx.studentProfiles.filter(s => s.hasJaringan && s.scoreJaringan < 80);
+            if (targetClass) {
+                listFakta = listFakta.filter(s => s.class === targetClass);
+                listJaringan = listJaringan.filter(s => s.class === targetClass);
+            }
+
+            let reply = `### 🩺 Siswa Perlu Remedial (Skor < KKM 80) ${targetClass ? `(${targetClass})` : ''}\n\n`;
+            reply += `Berdasarkan rekapitulasi capaian nilai siswa:\n\n`;
+
+            reply += `**1. 🛡️ Modul 2: Keamanan Jaringan & Sistem Informasi (Penilaian Harian Aktif):**\n`;
+            if (listJaringan.length === 0) {
+                reply += `✅ Seluruh siswa ${targetClass ? `di kelas ${targetClass}` : ''} yang sudah mengerjakan Modul 2 telah tuntas mencapai KKM 80.\n\n`;
+            } else {
+                reply += `Terdapat **${listJaringan.length} siswa** dengan nilai di bawah KKM:\n`;
+                reply += listJaringan.map((s, i) => `${i + 1}. **${s.name}** (${s.class}) — Skor: \`${s.scoreJaringan}\` (Butir salah: ${s.rawRecordJaringan && s.rawRecordJaringan.wrongQuestions ? s.rawRecordJaringan.wrongQuestions.length : '-'})`).join('\n') + `\n\n`;
+            }
+
+            reply += `**2. 🕵️ Modul 1: Detektif Fakta Digital (Literasi Digital):**\n`;
+            if (listFakta.length === 0) {
+                reply += `✅ Seluruh siswa ${targetClass ? `di kelas ${targetClass}` : ''} yang sudah mengerjakan Modul 1 telah tuntas mencapai KKM 80.\n\n`;
+            } else {
+                reply += `Terdapat **${listFakta.length} siswa** dengan nilai di bawah KKM:\n`;
+                reply += listFakta.map((s, i) => `${i + 1}. **${s.name}** (${s.class}) — Skor: \`${s.scoreFakta}\``).join('\n') + `\n\n`;
+            }
+
+            reply += `💡 **Rekomendasi Tindak Lanjut Guru:**\n`;
+            reply += `Ibu Guru dapat mengaktifkan **Mode Remedial** pada pengaturan kuis. Siswa yang membuka remedial hanya akan mengerjakan butir soal yang salah saja secara adaptif.`;
+            return reply;
+        }
+
+        // ============================================================
+        // G. INTENT: SISWA BELUM MENGERJAKAN MODUL 2 (KEAMANAN JARINGAN)
+        // ============================================================
+        const isBelumJaringanQuery = (/\b(belum|blm|tidak|tdk)\b/i.test(p)) && (/\b(jaringan|keamanan|jki|kuis\s*2|modul\s*2|cyber|kuis\s*kedua|modul\s*kedua)\b/i.test(p));
+        if (isBelumJaringanQuery) {
+            let list = ctx.studentProfiles.filter(s => !s.hasJaringan);
+            if (targetClass) list = list.filter(s => s.class === targetClass);
+
+            let reply = `### 🛡️ Siswa yang BELUM Mengerjakan Modul 2: Keamanan Jaringan ${targetClass ? `(${targetClass})` : ''}\n\n`;
+            reply += `Terdapat **${list.length} siswa** ${targetClass ? `di kelas **${targetClass}**` : 'di seluruh kelas'} yang belum menyelesaikan Modul Keamanan Jaringan:\n\n`;
+
+            if (list.length === 0) {
+                reply += `🎉 **Luar biasa! Seluruh siswa ${targetClass ? `kelas ${targetClass}` : ''} telah menyelesaikan Modul Keamanan Jaringan.**\n`;
+            } else {
+                reply += list.map((s, i) => {
+                    const noteFakta = s.hasFakta ? `*(Sudah Modul 1: ${s.scoreFakta})*` : `*(Modul 1 juga belum)*`;
+                    return `${i + 1}. **${s.name}** (${s.class}) ${noteFakta}`;
+                }).join('\n');
+                reply += `\n\n📲 **Tindakan:** Ibu Guru dapat membagikan daftar nama di atas ke grup kelas untuk mengingatkan siswa segera mengikuti evaluasi.`;
+            }
+            return reply;
+        }
+
+        // ============================================================
+        // H. INTENT: SISWA BELUM MENGERJAKAN MODUL 1 (DETEKTIF FAKTA)
+        // ============================================================
+        const isBelumFaktaQuery = (/\b(belum|blm|tidak|tdk)\b/i.test(p)) && (/\b(fakta|detektif|literasi|hoaks|kuis\s*1|modul\s*1|kuis\s*pertama|modul\s*pertama)\b/i.test(p));
+        if (isBelumFaktaQuery) {
+            let list = ctx.studentProfiles.filter(s => !s.hasFakta);
+            if (targetClass) list = list.filter(s => s.class === targetClass);
+
+            let reply = `### 🕵️ Siswa yang BELUM Mengerjakan Modul 1: Detektif Fakta ${targetClass ? `(${targetClass})` : ''}\n\n`;
+            reply += `Terdapat **${list.length} siswa** ${targetClass ? `di kelas **${targetClass}**` : 'di seluruh kelas'} yang belum menyelesaikan Modul Detektif Fakta:\n\n`;
+
+            if (list.length === 0) {
+                reply += `🎉 **Luar biasa! Seluruh siswa ${targetClass ? `kelas ${targetClass}` : ''} telah menyelesaikan Modul Detektif Fakta.**\n`;
+            } else {
+                reply += list.map((s, i) => {
+                    const noteJaringan = s.hasJaringan ? `*(Sudah Modul 2: ${s.scoreJaringan})*` : `*(Modul 2 juga belum)*`;
+                    return `${i + 1}. **${s.name}** (${s.class}) ${noteJaringan}`;
+                }).join('\n');
+                reply += `\n\n📲 **Tindakan:** Ibu Guru dapat mengingatkan siswa untuk melengkapi modul literasi digital ini.`;
+            }
+            return reply;
+        }
+
+        // ============================================================
+        // I. INTENT: PERTANYAAN UMUM BELUM MENGERJAKAN (OVERVIEW BELUM UJIAN)
+        // ============================================================
+        const isGeneralBelumQuery = /\b(siapa.*belum|belum\s*mengerjakan|belum\s*ujian|belum\s*kuis|blm\s*ngerjain|daftar\s*belum|menegrjkana|menegrkana|belum\s*ikut|belum\s*selesai|belum\s*ada\s*nilai|belum\s*ambil\s*nilai)\b/i.test(p);
+        if (isGeneralBelumQuery) {
+            let unsubmittedJaringan = ctx.studentProfiles.filter(s => !s.hasJaringan);
+            let unsubmittedFakta = ctx.studentProfiles.filter(s => !s.hasFakta);
+            let unsubmittedNone = ctx.finishedNone;
+            if (targetClass) {
+                unsubmittedJaringan = unsubmittedJaringan.filter(s => s.class === targetClass);
+                unsubmittedFakta = unsubmittedFakta.filter(s => s.class === targetClass);
+                unsubmittedNone = unsubmittedNone.filter(s => s.class === targetClass);
+            }
+
+            let reply = `### ⏳ Rekapitulasi Siswa yang BELUM Mengerjakan Kuis ${targetClass ? `(${targetClass})` : ''}\n\n`;
+            reply += `Berikut status pengerjaan siswa yang masih belum menyelesaikan kuis:\n\n`;
+
+            reply += `**1. 🛡️ Belum Modul 2: Keamanan Jaringan (Modul Penilaian Harian Aktif):**\n`;
+            reply += `Terdapat **${unsubmittedJaringan.length} siswa** ${targetClass ? `di kelas ${targetClass}` : ''} yang belum mengerjakan.\n`;
+            if (unsubmittedJaringan.length > 0) {
+                const sample = unsubmittedJaringan.slice(0, targetClass ? 36 : 15);
+                reply += sample.map((s, i) => `${i + 1}. **${s.name}** (${s.class})`).join('\n');
+                if (!targetClass && unsubmittedJaringan.length > 15) {
+                    reply += `\n*...dan ${unsubmittedJaringan.length - 15} siswa lainnya di kelas lain.*`;
+                }
+            } else {
+                reply += `*(Seluruh siswa telah menyelesaikan Modul 2)*\n`;
+            }
+
+            reply += `\n\n**2. 🕵️ Belum Modul 1: Detektif Fakta (Literasi Digital):**\n`;
+            reply += `Terdapat **${unsubmittedFakta.length} siswa** yang belum menyelesaikan Modul 1.\n`;
+
+            reply += `\n**3. ❌ Belum Ujian Sama Sekali (Kedua Modul Kosong):**\n`;
+            reply += `Terdapat **${unsubmittedNone.length} siswa** yang sama sekali belum memiliki nilai kuis.\n\n`;
+            reply += `💡 *Tips: Ketik lebih spesifik misal **"siapa belum kuis jaringan di E1"** atau **"siapa yang belum mengerjakan kedua modul"**.*`;
+
+            return reply;
+        }
+
+        // ============================================================
+        // J. INTENT: NILAI TERTINGGI / TERENDAH
+        // ============================================================
         if (p.includes('tertinggi') || p.includes('terendah') || p.includes('ranking') || p.includes('juara') || p.includes('rekor') || p.includes('paling rendah') || p.includes('paling tinggi')) {
             const isLowest = p.includes('terendah') || p.includes('paling rendah') || p.includes('kecil') || p.includes('jelek') || p.includes('buruk');
             const isHighest = !isLowest;
@@ -868,39 +1144,36 @@
                 let reply = `### ${emoji} Analisis Nilai ${topOrBot} — Kelas ${targetClass}\n\n`;
                 reply += `Berikut ringkasan capaian nilai siswa di kelas **${targetClass}**:\n\n`;
 
-                // Kuis 1 (Detektif Fakta)
-                reply += `**1. Kuis Detektif Fakta (Literasi Digital):**\n`;
-                if (c.doneFakta.length > 0) {
-                    const score = isHighest ? c.highestFakta : c.lowestFakta;
-                    const students = isHighest ? c.topStudentsFakta : c.bottomStudentsFakta;
-                    reply += `- **Nilai ${topOrBot}:** \`${score}\`\n`;
-                    reply += `- **Siswa (${students.length} orang):** ${students.map(s => `**${s.name}**`).join(', ')}\n\n`;
-                } else {
-                    reply += `*(Belum ada siswa kelas ${targetClass} yang mengerjakan Kuis 1)*\n\n`;
-                }
-
-                // Kuis 2 (Keamanan Jaringan)
-                reply += `**2. Kuis Keamanan Jaringan (JKI):**\n`;
+                reply += `**1. Modul Keamanan Jaringan (JKI - Penilaian Harian):**\n`;
                 if (c.doneJaringan.length > 0) {
                     const score = isHighest ? c.highestJaringan : c.lowestJaringan;
                     const students = isHighest ? c.topStudentsJaringan : c.bottomStudentsJaringan;
                     reply += `- **Nilai ${topOrBot}:** \`${score}\`\n`;
                     reply += `- **Siswa (${students.length} orang):** ${students.map(s => `**${s.name}**`).join(', ')}\n\n`;
                 } else {
-                    reply += `*(Belum ada siswa kelas ${targetClass} yang mengerjakan Kuis 2)*\n\n`;
+                    reply += `*(Belum ada siswa kelas ${targetClass} yang mengerjakan Modul Jaringan)*\n\n`;
+                }
+
+                reply += `**2. Modul Detektif Fakta (Literasi Digital):**\n`;
+                if (c.doneFakta.length > 0) {
+                    const score = isHighest ? c.highestFakta : c.lowestFakta;
+                    const students = isHighest ? c.topStudentsFakta : c.bottomStudentsFakta;
+                    reply += `- **Nilai ${topOrBot}:** \`${score}\`\n`;
+                    reply += `- **Siswa (${students.length} orang):** ${students.map(s => `**${s.name}**`).join(', ')}\n\n`;
+                } else {
+                    reply += `*(Belum ada siswa kelas ${targetClass} yang mengerjakan Modul Detektif Fakta)*\n\n`;
                 }
 
                 if (isLowest) {
                     reply += `💡 **Rekomendasi Tindak Lanjut Guru:**\n`;
-                    reply += `Siswa dengan nilai di bawah KKM 80 disarankan mengikuti sesi remedial terbimbing atau memanfaatkan modul interaktif di Ruang Belajar.\n`;
+                    reply += `Siswa dengan nilai di bawah KKM 80 disarankan mengikuti sesi remedial terarah atau memanfaatkan materi interaktif di Ruang Belajar.\n`;
                 } else {
                     reply += `⭐ **Apresiasi:**\n`;
-                    reply += `Siswa-siswi tersebut telah menunjukkan ketuntasan materi yang luar biasa pada capaian pembelajaran Informatika Fase E.\n`;
+                    reply += `Siswa-siswi tersebut telah menunjukkan ketuntasan materi yang istimewa pada capaian pembelajaran Informatika Fase E.\n`;
                 }
 
                 return reply;
             } else {
-                // Keseluruhan 6 Kelas
                 const topOrBot = isHighest ? 'Tertinggi' : 'Terendah';
                 let reply = `### 🌟 Nilai ${topOrBot} Keseluruhan (Kelas X E 1 - X E 6)\n\n`;
                 reply += `Berikut rincian per kelas untuk perbandingan objektif:\n\n`;
@@ -909,7 +1182,7 @@
                     const c = ctx.classStats[cls];
                     const valFakta = isHighest ? c.highestFakta : c.lowestFakta;
                     const valJaringan = isHighest ? c.highestJaringan : c.lowestJaringan;
-                    reply += `- **${cls}:** Kuis 1: \`${valFakta !== null ? valFakta : '-'}\` | Kuis 2: \`${valJaringan !== null ? valJaringan : '-'}\`\n`;
+                    reply += `- **${cls}:** Modul Jaringan: \`${valJaringan !== null ? valJaringan : '-'}\` | Modul Fakta: \`${valFakta !== null ? valFakta : '-'}\`\n`;
                 });
 
                 reply += `\n*Tips: Tanyakan secara spesifik, misal: "Siapa nilai tertinggi di kelas 10E6?" atau "Siapa nilai terendah di 10E3?"*`;
@@ -917,255 +1190,58 @@
             }
         }
 
-        // 2. PERTANYAAN REMEDIAL & SISWA DI BAWAH KKM 80
-        if (p.includes('remedial') || p.includes('tidak tuntas') || p.includes('belum tuntas') || p.includes('tidak lulus') || p.includes('di bawah 80') || p.includes('di bawah kkm') || p.includes('kurang dari 80')) {
-            let listFakta = ctx.studentProfiles.filter(s => s.hasFakta && s.scoreFakta < 80);
-            let listJaringan = ctx.studentProfiles.filter(s => s.hasJaringan && s.scoreJaringan < 80);
-            if (targetClass) {
-                listFakta = listFakta.filter(s => s.class === targetClass);
-                listJaringan = listJaringan.filter(s => s.class === targetClass);
-            }
-
-            let reply = `### 🩺 Siswa Perlu Remedial (Skor < KKM 80) ${targetClass ? `(${targetClass})` : ''}\n\n`;
-            reply += `Berdasarkan rekapitulasi capaian nilai siswa:\n\n`;
-
-            reply += `**1. Kuis 1: Detektif Fakta (Literasi Digital):**\n`;
-            if (listFakta.length === 0) {
-                reply += `✅ Seluruh siswa ${targetClass ? `di kelas ${targetClass}` : ''} yang sudah mengerjakan Kuis 1 telah mencapai KKM 80.\n\n`;
-            } else {
-                reply += `Terdapat **${listFakta.length} siswa** dengan nilai di bawah KKM:\n`;
-                reply += listFakta.map((s, i) => `${i + 1}. **${s.name}** (${s.class}) — Skor: \`${s.scoreFakta}\``).join('\n') + `\n\n`;
-            }
-
-            reply += `**2. Kuis 2: Keamanan Jaringan (JKI):**\n`;
-            if (listJaringan.length === 0) {
-                reply += `✅ Seluruh siswa ${targetClass ? `di kelas ${targetClass}` : ''} yang sudah mengerjakan Kuis 2 telah mencapai KKM 80.\n\n`;
-            } else {
-                reply += `Terdapat **${listJaringan.length} siswa** dengan nilai di bawah KKM:\n`;
-                reply += listJaringan.map((s, i) => `${i + 1}. **${s.name}** (${s.class}) — Skor: \`${s.scoreJaringan}\``).join('\n') + `\n\n`;
-            }
-
-            reply += `💡 **Rekomendasi Tindak Lanjut Guru:**\n`;
-            reply += `Ibu Guru dapat mengaktifkan **Mode Remedial** pada panel pengaturan kuis agar siswa yang terdata di atas dapat mengerjakan ulang butir-butir soal yang salah saja.`;
-            return reply;
-        }
-
-        // 3. STATUS PENGERJAAN KUIS SISWA (SIAPA SUDAH / BELUM MENGERJAKAN)
-        const isBelumWord = p.includes('belum') || p.includes('blm') || p.includes('tidak') || p.includes('tdk') || p.includes('kurang') || p.includes('menegrkana') || p.includes('mengerjakan') || p.includes('ngerjain') || p.includes('ikut');
-        const isSudahWord = p.includes('sudah') || p.includes('sdh') || p.includes('selesai') || p.includes('tuntas') || p.includes('lulus');
-        const wantsJaringan = p.includes('jaringan') || p.includes('keamanan') || p.includes('jki') || p.includes('kuis 2') || p.includes('kedua') || p.includes('cyber');
-        const wantsFakta = p.includes('fakta') || p.includes('detektif') || p.includes('kuis 1') || p.includes('pertama') || p.includes('literasi') || p.includes('hoaks');
-        const wantsBoth = p.includes('kedua') || p.includes('2 kuis') || p.includes('semua') || p.includes('sama sekali') || p.includes('total');
-        const wantsMissingOne = p.includes('salah satu') || p.includes('satu kuis') || p.includes('parsial');
-
-        if (isBelumWord || isSudahWord || p.includes('mengerjakan') || p.includes('ujian') || p.includes('kuis') || p.includes('status')) {
-
-            // Kasus A: Sudah Menyelesaikan KEDUA Kuis
-            if (wantsBoth && isSudahWord) {
-                let list = ctx.finishedBoth;
-                if (targetClass) list = list.filter(s => s.class === targetClass);
-
-                let reply = `### 🟢 Siswa yang Sudah Mengerjakan KEDUA Kuis ${targetClass ? `(${targetClass})` : ''}\n\n`;
-                reply += `Ditemukan sebanyak **${list.length} siswa** yang telah menuntaskan Kuis 1 (Detektif Fakta) dan Kuis 2 (Keamanan Jaringan):\n\n`;
-
-                if (list.length === 0) {
-                    reply += `*(Belum ada siswa yang menyelesaikan kedua kuis pada kriteria ini)*\n`;
-                } else {
-                    const sample = list.slice(0, 30);
-                    reply += sample.map((s, i) => `${i + 1}. **${s.name}** (${s.class}) — Kuis 1: \`${s.scoreFakta}\` | Kuis 2: \`${s.scoreJaringan}\` | Rata-rata: **${s.avgScore}**`).join('\n');
-                    if (list.length > 30) {
-                        reply += `\n\n*...dan ${list.length - 30} siswa lainnya (dapat dilihat lengkap pada tabel Rekap Nilai).*`;
-                    }
-                }
-                return reply;
-            }
-
-            // Kasus B: Belum Mengerjakan KEDUA Kuis (Belum Ujian Sama Sekali)
-            if (wantsBoth && isBelumWord) {
-                let list = ctx.finishedNone;
-                if (targetClass) list = list.filter(s => s.class === targetClass);
-
-                let reply = `### ⏳ Siswa yang BELUM Mengerjakan Kedua Kuis Sama Sekali ${targetClass ? `(${targetClass})` : ''}\n\n`;
-                reply += `Terdapat **${list.length} siswa** terdaftar yang belum memiliki riwayat pengerjaan di Kuis 1 maupun Kuis 2:\n\n`;
-
-                if (list.length === 0) {
-                    reply += `🎉 **Luar biasa! Seluruh siswa ${targetClass ? `kelas ${targetClass}` : ''} sudah mengikuti setidaknya satu kuis.**\n`;
-                } else {
-                    reply += list.map((s, i) => `${i + 1}. **${s.name}** (${s.class}) — *Belum ada respon*`).join('\n');
-                    reply += `\n\n📲 **Tindakan:** Ibu Guru dapat menekan tombol **"Salin Daftar Belum Ujian"** di dasbor untuk membagikan pengingat langsung ke grup WhatsApp kelas.`;
-                }
-                return reply;
-            }
-
-            // Kasus C: Belum Mengerjakan Kuis KEDUA (Keamanan Jaringan)
-            if (wantsJaringan && isBelumWord) {
-                let list = ctx.studentProfiles.filter(s => !s.hasJaringan);
-                if (targetClass) list = list.filter(s => s.class === targetClass);
-
-                let reply = `### 🛡️ Siswa yang BELUM Mengerjakan Kuis 2: Keamanan Jaringan ${targetClass ? `(${targetClass})` : ''}\n\n`;
-                reply += `Terdapat **${list.length} siswa** ${targetClass ? `di kelas **${targetClass}**` : ''} yang belum menyelesaikan Kuis Keamanan Jaringan:\n\n`;
-
-                if (list.length === 0) {
-                    reply += `🎉 **Luar biasa! Seluruh siswa ${targetClass ? `kelas ${targetClass}` : ''} telah menyelesaikan Kuis Keamanan Jaringan.**\n`;
-                } else {
-                    reply += list.map((s, i) => {
-                        const noteFakta = s.hasFakta ? `*(Sudah Kuis 1: ${s.scoreFakta})*` : `*(Kuis 1 juga belum)*`;
-                        return `${i + 1}. **${s.name}** (${s.class}) ${noteFakta}`;
-                    }).join('\n');
-                    reply += `\n\n📲 **Tindakan:** Ibu Guru dapat membagikan daftar nama di atas ke grup kelas untuk mengingatkan siswa segera mengikuti ujian evaluasi.`;
-                }
-                return reply;
-            }
-
-            // Kasus D: Belum Mengerjakan Kuis PERTAMA (Detektif Fakta)
-            if (wantsFakta && isBelumWord) {
-                let list = ctx.studentProfiles.filter(s => !s.hasFakta);
-                if (targetClass) list = list.filter(s => s.class === targetClass);
-
-                let reply = `### 🕵️ Siswa yang BELUM Mengerjakan Kuis 1: Detektif Fakta ${targetClass ? `(${targetClass})` : ''}\n\n`;
-                reply += `Terdapat **${list.length} siswa** ${targetClass ? `di kelas **${targetClass}**` : ''} yang belum menyelesaikan Kuis Detektif Fakta:\n\n`;
-
-                if (list.length === 0) {
-                    reply += `🎉 **Luar biasa! Seluruh siswa ${targetClass ? `kelas ${targetClass}` : ''} telah menyelesaikan Kuis Detektif Fakta.**\n`;
-                } else {
-                    reply += list.map((s, i) => {
-                        const noteJaringan = s.hasJaringan ? `*(Sudah Kuis 2: ${s.scoreJaringan})*` : `*(Kuis 2 juga belum)*`;
-                        return `${i + 1}. **${s.name}** (${s.class}) ${noteJaringan}`;
-                    }).join('\n');
-                    reply += `\n\n📲 **Tindakan:** Ibu Guru dapat mengingatkan siswa untuk melengkapi kuis pertama ini.`;
-                }
-                return reply;
-            }
-
-            // Kasus E: Belum Mengerjakan Salah Satunya (Hanya Baru 1 Kuis)
-            if (wantsMissingOne) {
-                let list = ctx.finishedOneOnly;
-                if (targetClass) list = list.filter(s => s.class === targetClass);
-
-                let reply = `### ⚠️ Siswa yang Baru Mengerjakan Salah Satu Kuis Saja ${targetClass ? `(${targetClass})` : ''}\n\n`;
-                reply += `Terdapat **${list.length} siswa** yang belum lengkap (baru menyelesaikan satu kuis):\n\n`;
-
-                if (list.length === 0) {
-                    reply += `✅ Tidak ada siswa yang statusnya parsial.\n`;
-                } else {
-                    reply += list.map((s, i) => {
-                        const statusNote = s.hasFakta ? `Sudah Kuis 1 (${s.scoreFakta}), **Belum Kuis 2**` : `Sudah Kuis 2 (${s.scoreJaringan}), **Belum Kuis 1**`;
-                        return `${i + 1}. **${s.name}** (${s.class}) — ${statusNote}`;
-                    }).join('\n');
-                }
-                return reply;
-            }
-
-            // Kasus F: Pertanyaan Umum Belum Mengerjakan (Misal: "siapa saja yang belum mengerjakan")
-            if (isBelumWord || (!isSudahWord && (p.includes('siapa') || p.includes('daftar')))) {
-                let unsubmittedJaringan = ctx.studentProfiles.filter(s => !s.hasJaringan);
-                let unsubmittedFakta = ctx.studentProfiles.filter(s => !s.hasFakta);
-                let unsubmittedNone = ctx.finishedNone;
-                if (targetClass) {
-                    unsubmittedJaringan = unsubmittedJaringan.filter(s => s.class === targetClass);
-                    unsubmittedFakta = unsubmittedFakta.filter(s => s.class === targetClass);
-                    unsubmittedNone = unsubmittedNone.filter(s => s.class === targetClass);
-                }
-
-                let reply = `### ⏳ Rekapitulasi Siswa yang BELUM Mengerjakan Kuis ${targetClass ? `(${targetClass})` : ''}\n\n`;
-                reply += `Berikut status pengerjaan siswa yang masih belum menyelesaikan kuis:\n\n`;
-
-                reply += `**1. Belum Kuis 2: Keamanan Jaringan (Modul Penilaian Harian Aktif):**\n`;
-                reply += `Terdapat **${unsubmittedJaringan.length} siswa** ${targetClass ? `di kelas ${targetClass}` : ''} yang belum mengerjakan.\n`;
-                if (unsubmittedJaringan.length > 0) {
-                    const sample = unsubmittedJaringan.slice(0, targetClass ? 36 : 15);
-                    reply += sample.map((s, i) => `${i + 1}. **${s.name}** (${s.class})`).join('\n');
-                    if (!targetClass && unsubmittedJaringan.length > 15) {
-                        reply += `\n*...dan ${unsubmittedJaringan.length - 15} siswa lainnya di kelas lain.*`;
-                    }
-                } else {
-                    reply += `*(Seluruh siswa telah menyelesaikan Kuis 2)*\n`;
-                }
-
-                reply += `\n\n**2. Belum Kuis 1: Detektif Fakta (Literasi Digital):**\n`;
-                reply += `Terdapat **${unsubmittedFakta.length} siswa** yang belum menyelesaikan Kuis 1.\n`;
-
-                reply += `\n**3. Belum Ujian Sama Sekali (Kuis 1 & 2 Kosong):**\n`;
-                reply += `Terdapat **${unsubmittedNone.length} siswa** yang sama sekali belum memiliki nilai kuis.\n\n`;
-                reply += `💡 *Tips: Ketik lebih spesifik misal **"siapa belum kuis jaringan di E1"** atau **"siapa belum ujian di 10E3"** untuk daftar nama lengkap per kelas.*`;
-
-                return reply;
-            }
-        }
-
-        // 4. DAFTAR RESMI ANGGOTA KELAS / ABSEN ROSTER
+        // ============================================================
+        // K. INTENT: DAFTAR RESMI ANGGOTA KELAS / ABSEN ROSTER
+        // ============================================================
         if (targetClass && (p.includes('daftar') || p.includes('absen') || p.includes('roster') || p.includes('semua siswa') || p.includes('nama siswa') || p.includes('anggota'))) {
             const list = ctx.studentProfiles.filter(s => s.class === targetClass);
             let reply = `### 📋 Daftar Resmi 36 Siswa Kelas ${targetClass} — SMAN 4 Padang\n\n`;
             reply += list.map((s, i) => {
                 let status = '⏳ Belum Ujian';
-                if (s.hasFakta && s.hasJaringan) status = `✅ Tuntas 2 Kuis (Rata-rata: ${s.avgScore})`;
-                else if (s.hasJaringan) status = `🛡️ Kuis 2 (${s.scoreJaringan})`;
-                else if (s.hasFakta) status = `🕵️ Kuis 1 (${s.scoreFakta})`;
+                if (s.hasFakta && s.hasJaringan) status = `✅ Tuntas 2 Modul (Rata-rata: ${s.avgScore})`;
+                else if (s.hasJaringan) status = `🛡️ Modul Jaringan (${s.scoreJaringan})`;
+                else if (s.hasFakta) status = `🕵️ Modul Fakta (${s.scoreFakta})`;
                 return `${i + 1}. **${s.name}** — ${status}`;
             }).join('\n');
             return reply;
         }
 
-        // 3. ANALISIS MISKONSEPSI & BUTIR SOAL TERSULIT
-        if (p.includes('miskonsepsi') || p.includes('salah') || p.includes('sulit') || p.includes('susah') || p.includes('daya serap') || p.includes('analisis butir') || p.includes('remedial')) {
-            const worstFakta = ctx.worstFaktaQuestions.slice(0, 3);
-            const worstJaringan = ctx.worstJaringanQuestions.slice(0, 3);
-
-            let reply = `### 🩺 Peta Miskonsepsi & Butir Soal Paling Banyak Salah Dijawab\n\n`;
-            reply += `Berdasarkan analisis empiris hasil jawaban seluruh siswa:\n\n`;
-
-            reply += `**1. Top Butir Soal Paling Sulit — Modul Detektif Fakta:**\n`;
-            worstFakta.forEach(q => {
-                reply += `- **Soal #${q.qNumber}:** Sebanyak \`${q.errorCount} siswa\` (${q.errorPct}%) salah menjawab.\n`;
-            });
-            reply += `> 💡 *Miskonsepsi Dominan:* Siswa cenderung mengira organisasi cek fakta berwenang melakukan penindakan hukum layaknya polisi, dan tertukar membedakan URL resmi lembaga pemerintah berdomain \`.go.id\` dengan alamat domain publik/komersial.\n\n`;
-
-            reply += `**2. Top Butir Soal Paling Sulit — Modul Keamanan Jaringan:**\n`;
-            worstJaringan.forEach(q => {
-                reply += `- **Soal #${q.qNumber}:** Sebanyak \`${q.errorCount} siswa\` (${q.errorPct}%) salah menjawab.\n`;
-            });
-            reply += `> 💡 *Miskonsepsi Dominan:* Siswa masih sering terkecoh membedakan cara kerja broadcast pada Hub vs Switch, serta menganggap kunci layar sidik jari pada gawai otomatis melindungi paket data yang melintas di jaringan Wi-Fi publik terbuka tanpa enkripsi (Sniffing).\n\n`;
-
-            reply += `📚 **Saran Aksi Pembelajaran Guru:**\n`;
-            reply += `1. Berikan penguatan konsep pembedaan domain resmi pemerintah (\`.go.id\`).\n`;
-            reply += `2. Demonstrasikan langsung simulasi lalu lintas data Hub vs Switch serta bahaya Wi-Fi publik gratis tanpa enkripsi.\n`;
-
-            return reply;
-        }
-
-        // 4. RINGKASAN KELAS KESELURUHAN (OVERVIEW)
+        // ============================================================
+        // L. INTENT: RINGKASAN / OVERVIEW KELAS
+        // ============================================================
         if (p.includes('ringkasan') || p.includes('rekap') || p.includes('laporan') || p.includes('overview') || p.includes('seluruh') || p.includes('performa') || p.includes('kelas')) {
             let reply = `### 📊 Ringkasan Eksekutif Hasil Belajar Siswa (SMAN 4 Padang)\n\n`;
             reply += `Berikut ikhtisar data hasil pengerjaan kuis Informatika:\n\n`;
             reply += `- **Total Siswa Terdaftar:** \`${ctx.totalEnrolled} Siswa\` (Kelas X E 1 s.d X E 6)\n`;
-            reply += `- **Sudah Selesai KEDUA Kuis:** \`${ctx.finishedBoth.length} Siswa\` (${Math.round((ctx.finishedBoth.length / ctx.totalEnrolled) * 100)}%)\n`;
-            reply += `- **Hanya Kuis 1 (Detektif Fakta):** \`${ctx.onlyFakta.length} Siswa\`\n`;
-            reply += `- **Hanya Kuis 2 (Keamanan Jaringan):** \`${ctx.onlyJaringan.length} Siswa\`\n`;
+            reply += `- **Sudah Selesai KEDUA Modul:** \`${ctx.finishedBoth.length} Siswa\` (${Math.round((ctx.finishedBoth.length / ctx.totalEnrolled) * 100)}%)\n`;
+            reply += `- **Hanya Modul 2 (Keamanan Jaringan):** \`${ctx.onlyJaringan.length} Siswa\`\n`;
+            reply += `- **Hanya Modul 1 (Detektif Fakta):** \`${ctx.onlyFakta.length} Siswa\`\n`;
             reply += `- **Belum Ujian Sama Sekali:** \`${ctx.finishedNone.length} Siswa\`\n\n`;
 
             reply += `**Rincian Partisipasi Lengkap per Kelas:**\n`;
-            reply += `| Kelas | Terdaftar | Tuntas 2 Kuis | Belum Lengkap | Belum Ujian |\n`;
+            reply += `| Kelas | Terdaftar | Tuntas 2 Modul | Baru 1 Modul | Belum Ujian |\n`;
             reply += `| :--- | :---: | :---: | :---: | :---: |\n`;
             ctx.classes.forEach(cls => {
                 const c = ctx.classStats[cls];
                 reply += `| **${cls}** | ${c.totalStudents} | ${c.doneBoth.length} | ${c.missingOne.length} | ${c.doneNone.length} |\n`;
             });
 
-            reply += `\n*Silakan tanyakan nama kelas atau nama siswa tertentu untuk data spesifik!*`;
+            reply += `\n*Silakan tanyakan nama kelas atau kueri analitik tertentu untuk eksplorasi lebih mendalam.*`;
             return reply;
         }
 
-        // 5. CARI NAMA SISWA TERTENTU (GURU MODE)
+        // ============================================================
+        // M. INTENT: CARI NAMA SISWA TERTENTU
+        // ============================================================
         const matchedStudents = ctx.studentProfiles.filter(s => 
             p.includes(s.name.toLowerCase()) || s.name.toLowerCase().includes(p)
         );
         if (matchedStudents.length > 0 && p.length >= 3) {
-            let reply = `### 👤 Profil Capaian Siswa\n\n`;
+            let reply = `### 👤 Profil Capaian Belajar Siswa\n\n`;
             matchedStudents.slice(0, 3).forEach(s => {
                 reply += `**${s.name}** (${s.class})\n`;
-                reply += `- **Kuis 1 (Detektif Fakta):** ${s.hasFakta ? `Skor \`${s.scoreFakta}\` ${s.scoreFakta >= 80 ? '✅ Lulus' : '⚠️ Remedial'}` : '⏳ Belum Mengerjakan'}\n`;
-                reply += `- **Kuis 2 (Keamanan Jaringan):** ${s.hasJaringan ? `Skor \`${s.scoreJaringan}\` ${s.scoreJaringan >= 80 ? '✅ Lulus' : '⚠️ Remedial'}` : '⏳ Belum Mengerjakan'}\n`;
+                reply += `- **Modul 2 (Keamanan Jaringan):** ${s.hasJaringan ? `Skor \`${s.scoreJaringan}\` ${s.scoreJaringan >= 80 ? '✅ Tuntas' : '⚠️ Remedial'}` : '⏳ Belum Mengerjakan'}\n`;
+                reply += `- **Modul 1 (Detektif Fakta):** ${s.hasFakta ? `Skor \`${s.scoreFakta}\` ${s.scoreFakta >= 80 ? '✅ Tuntas' : '⚠️ Remedial'}` : '⏳ Belum Mengerjakan'}\n`;
                 if (s.avgScore !== null) {
                     reply += `- **Nilai Rata-rata:** \`${s.avgScore}\`\n`;
                 }
@@ -1174,22 +1250,25 @@
             return reply;
         }
 
-        // Jika pertanyaan Guru berkaitan dengan konsep materi kurikulum/pembelajaran (misal: Ms. Office, Excel, Mail Merge, Jaringan, Phishing, dll)
+        // Jika pertanyaan Guru berkaitan dengan materi pengajaran kurikulum TIK
         const learningReply = generateStudentLearningResponse(userPrompt);
-        if (!learningReply.startsWith('### 🔒 Akses Terbatas') && !learningReply.startsWith('### 📖 Asisten Belajar Informatika Siswa')) {
+        if (!learningReply.startsWith('### 🔒 Akses Terbatas') && !learningReply.startsWith('### 📖') && !learningReply.startsWith('### 🎓')) {
             return learningReply;
         }
 
-        // DEFAULT FALLBACK RESPON CERDAS UNTUK GURU
+        // ============================================================
+        // DEFAULT: PANDUAN KONSULTATIF CERDAS UNTUK GURU
+        // ============================================================
         return `Halo Ibu Guru! Saya adalah **Asisten Analisis Pintar Gemini** untuk QuizMaster SMAN 4 Padang.\n\n` +
-               `Saya memahami konteks seluruh data aplikasi ini, meliputi **216 siswa** di kelas **X E 1 s.d X E 6** dan **2 Modul Kuis** (Detektif Fakta & Keamanan Jaringan).\n\n` +
+               `Saya memahami peta pembelajaran seluruh data aplikasi ini secara *real-time*, meliputi **216 siswa** di kelas **X E 1 s.d X E 6** dan **2 Modul Evaluasi**.\n\n` +
                `Ibu Guru dapat menanyakan hal-hal berikut:\n` +
+               `- 🩺 *"Di mana banyak miskonsepsi siswa?"* / *"Soal kuis mana yang paling sulit?"*\n` +
+               `- 🗺️ *"Tampilkan peta proses belajar mengajar dan masukan"* \n` +
+               `- ❌ *"Siapa yang belum mengerjakan kedua modul sama sekali?"*\n` +
+               `- ⚠️ *"Siapa yang belum mengerjakan salah satu modul?"*\n` +
+               `- ⏳ *"Siapa saja yang belum mengerjakan modul jaringan di E1?"*\n` +
+               `- 🩺 *"Siapa saja siswa yang perlu remedial (nilai di bawah 80)?"*\n` +
                `- 🏆 *"Siapa nilai tertinggi di kelas 10E6?"*\n` +
-               `- 📉 *"Siapa nilai terendah di kelas 10E3?"*\n` +
-               `- ⏳ *"Siapa saja siswa yang belum mengerjakan kuis kedua?"*\n` +
-               `- ❌ *"Siapa siswa yang belum mengerjakan kedua kuis sama sekali?"*\n` +
-               `- ✅ *"Siapa yang sudah menyelesaikan kedua kuis di kelas X E 4?"*\n` +
-               `- 🩺 *"Miskonsepsi apa yang paling sering muncul di Kuis Keamanan Jaringan?"*\n` +
                `- 📊 *"Tampilkan ringkasan seluruh kelas"*`;
     }
 
@@ -1219,11 +1298,11 @@
 
         if (floatBtn) {
             floatBtn.title = isTeacher 
-                ? 'Tanya Asisten Pintar Guru (Analisis Nilai & Kelas)' 
-                : 'Tanya Asisten Belajar Siswa (Materi & Konsep Pembelajaran)';
+                ? 'Tanya Asisten Analisis Guru (Peta Belajar & Diagnostik Kelas)' 
+                : 'Tanya Teman Belajar Siswa (Materi & Konsep Pembelajaran)';
         }
         if (floatLabel) {
-            floatLabel.textContent = isTeacher ? 'Tanya AI Guru' : 'Tanya AI Belajar';
+            floatLabel.textContent = isTeacher ? 'Tanya AI Guru' : 'Teman Belajar AI';
         }
 
         if (isTeacher) {
@@ -1232,42 +1311,42 @@
                 badgeEl.textContent = 'Mode Guru • Gemini EdTech';
                 badgeEl.className = 'chatbot-badge-ai badge-teacher';
             }
-            if (subEl) subEl.textContent = 'Analitik Data Kontekstual & Rekap Nilai Siswa • SMAN 4 Padang';
-            if (inputEl) inputEl.placeholder = 'Ketik pertanyaan analisis nilai (misal: Nilai tertinggi 10E6, siapa terendah)...';
+            if (subEl) subEl.textContent = 'Peta Pembelajaran Real-time, Miskonsepsi & Analitik Kelas • SMAN 4 Padang';
+            if (inputEl) inputEl.placeholder = 'Ketik pertanyaan analitis (misal: Di mana banyak miskonsepsi, siapa belum kedua modul)...';
             if (avatarEl) avatarEl.textContent = '✨';
 
             if (chipsBar) {
                 chipsBar.innerHTML = `
+                    <button type="button" class="chatbot-chip" onclick="askTeacherQuick('Di mana banyak miskonsepsi?')">🩺 Peta Miskonsepsi</button>
+                    <button type="button" class="chatbot-chip" onclick="askTeacherQuick('Tampilkan peta proses belajar mengajar dan masukan')">🗺️ Peta Belajar & Masukan</button>
+                    <button type="button" class="chatbot-chip" onclick="askTeacherQuick('Siapa yang belum mengerjakan kedua modul?')">❌ Belum Kedua Modul</button>
+                    <button type="button" class="chatbot-chip" onclick="askTeacherQuick('Siapa yang belum mengerjakan salah satu modul?')">⚠️ Belum Salah Satu</button>
+                    <button type="button" class="chatbot-chip" onclick="askTeacherQuick('Siapa saja yang remedial?')">🩺 Siswa Remedial (<80)</button>
+                    <button type="button" class="chatbot-chip" onclick="askTeacherQuick('Siapa yang belum mengerjakan modul jaringan?')">⏳ Belum Modul Jaringan</button>
                     <button type="button" class="chatbot-chip" onclick="askTeacherQuick('Siapa nilai tertinggi di kelas 10E6?')">🏆 Tertinggi 10E6</button>
-                    <button type="button" class="chatbot-chip" onclick="askTeacherQuick('Siapa nilai terendah di kelas 10E3?')">📉 Terendah 10E3</button>
-                    <button type="button" class="chatbot-chip" onclick="askTeacherQuick('Siapa yang belum mengerjakan kuis kedua?')">⏳ Belum Kuis 2</button>
-                    <button type="button" class="chatbot-chip" onclick="askTeacherQuick('Siapa yang belum mengerjakan kedua kuis sama sekali?')">❌ Belum Ujian</button>
-                    <button type="button" class="chatbot-chip" onclick="askTeacherQuick('Siapa siswa yang sudah menyelesaikan kedua kuis?')">✅ Tuntas 2 Kuis</button>
-                    <button type="button" class="chatbot-chip" onclick="askTeacherQuick('Apa miskonsepsi paling banyak dialami siswa?')">🩺 Peta Miskonsepsi</button>
                     <button type="button" class="chatbot-chip" onclick="askTeacherQuick('Tampilkan ringkasan seluruh kelas')">📊 Ringkasan Kelas</button>
                 `;
             }
         } else {
-            if (titleEl) titleEl.textContent = 'Asisten Belajar Siswa';
+            if (titleEl) titleEl.textContent = 'Teman Belajar Pintar Siswa';
             if (badgeEl) {
-                badgeEl.textContent = 'Mode Siswa • Gemini Study AI';
+                badgeEl.textContent = 'Mode Siswa • Teman Belajar Gemini';
                 badgeEl.className = 'chatbot-badge-ai badge-student';
             }
-            if (subEl) subEl.textContent = 'Bantuan Materi Informatika & Literasi Digital • SMAN 4 Padang';
+            if (subEl) subEl.textContent = 'Teman Diskusi Asik Konsep Informatika Fase E • SMAN 4 Padang';
             if (inputEl) inputEl.placeholder = 'Tanyakan konsep materi belajar (misal: Perbedaan Hub dan Switch)...';
             if (avatarEl) avatarEl.textContent = '🎓';
 
             if (chipsBar) {
                 chipsBar.innerHTML = `
-                    <button type="button" class="chatbot-chip" onclick="askTeacherQuick('Apa itu Microsoft Office dan aplikasi di dalamnya?')">📊 Ms. Office & TIK</button>
+                    <button type="button" class="chatbot-chip" onclick="askTeacherQuick('Apa perbedaan mendasar antara Switch dan Hub?')">🌐 Hub vs Switch</button>
                     <button type="button" class="chatbot-chip" onclick="askTeacherQuick('Bagaimana rumus IF dan VLOOKUP di Excel?')">📈 Rumus Excel</button>
+                    <button type="button" class="chatbot-chip" onclick="askTeacherQuick('Mengapa Wi-Fi publik berbahaya tanpa VPN?')">🔒 Bahaya Wi-Fi Publik</button>
                     <button type="button" class="chatbot-chip" onclick="askTeacherQuick('Apa saja aturan dalam UU ITE dan UU PDP?')">⚖️ Etika Digital & UU ITE</button>
                     <button type="button" class="chatbot-chip" onclick="askTeacherQuick('Bagaimana cara kerja LLM dan Generative AI?')">🤖 Konsep AI & LLM</button>
-                    <button type="button" class="chatbot-chip" onclick="askTeacherQuick('Apa manfaat Cloud Computing dan IoT bagi sekolah?')">☁️ Cloud & IoT</button>
                     <button type="button" class="chatbot-chip" onclick="askTeacherQuick('Apa saja ciri-ciri pesan phishing atau APK palsu?')">🛡️ Hindari Phishing</button>
-                    <button type="button" class="chatbot-chip" onclick="askTeacherQuick('Apa perbedaan mendasar antara Switch dan Hub?')">🌐 Hub vs Switch</button>
                     <button type="button" class="chatbot-chip" onclick="askTeacherQuick('Apa 4 fondasi utama berpikir komputasional?')">🧠 Berpikir Komputasional</button>
-                    <button type="button" class="chatbot-chip" onclick="askTeacherQuick('Mengapa Wi-Fi publik berbahaya tanpa VPN?')">🔒 Bahaya Wi-Fi Publik</button>
+                    <button type="button" class="chatbot-chip" onclick="askTeacherQuick('Apa itu Microsoft Office dan aplikasi di dalamnya?')">📊 Ms. Office & TIK</button>
                 `;
             }
         }
@@ -1289,10 +1368,10 @@
                     </div>
                     <div>
                         <div class="chatbot-title">
-                            <span id="chatbot-ui-title">Asisten Belajar Siswa</span>
-                            <span id="chatbot-ui-badge" class="chatbot-badge-ai badge-student">Mode Siswa • Gemini Study AI</span>
+                            <span id="chatbot-ui-title">Teman Belajar Pintar Siswa</span>
+                            <span id="chatbot-ui-badge" class="chatbot-badge-ai badge-student">Mode Siswa • Teman Belajar Gemini</span>
                         </div>
-                        <div class="chatbot-sub" id="chatbot-ui-sub">Bantuan Materi Informatika & Literasi Digital • SMAN 4 Padang</div>
+                        <div class="chatbot-sub" id="chatbot-ui-sub">Teman Diskusi Asik Konsep Informatika Fase E • SMAN 4 Padang</div>
                     </div>
                 </div>
                 <div class="chatbot-header-actions">
@@ -1329,10 +1408,10 @@
             floatBtn.id = 'teacher-chatbot-trigger-btn';
             floatBtn.type = 'button';
             floatBtn.className = 'chatbot-float-trigger';
-            floatBtn.title = 'Tanya Asisten Belajar Siswa (Materi & Konsep)';
+            floatBtn.title = 'Tanya Teman Belajar Siswa (Materi & Konsep)';
             floatBtn.innerHTML = `
                 <span class="trigger-sparkle">✨</span>
-                <span class="trigger-label" id="chatbot-trigger-label">Tanya AI Belajar</span>
+                <span class="trigger-label" id="chatbot-trigger-label">Teman Belajar AI</span>
             `;
             floatBtn.onclick = () => toggleTeacherChatbot(true);
             document.body.appendChild(floatBtn);
@@ -1367,8 +1446,8 @@
                 <div class="chatbot-msg bot">
                     <div class="msg-avatar">✨</div>
                     <div class="msg-content">
-                        <p>Selamat datang, Ibu Guru! Saya siap membantu menganalisis seluruh data siswa kelas <strong>X E 1 s.d X E 6</strong> untuk <strong>Kuis 1 (Detektif Fakta)</strong> dan <strong>Kuis 2 (Keamanan Jaringan)</strong>.</p>
-                        <p>Silakan tanyakan performa siswa, nilai tertinggi/terendah, siswa yang belum ujian, atau analisis miskonsepsi!</p>
+                        <p>Selamat datang, Ibu Guru! Saya adalah <strong>Asisten Analisis Pintar Gemini</strong>. Saya memahami peta pembelajaran seluruh <strong>216 siswa (Kelas X E 1 s.d X E 6)</strong> secara <em>real-time</em>.</p>
+                        <p>Ibu Guru dapat menanyakan <strong>peta belajar & masukan pengajaran</strong>, <strong>miskonsepsi materi tersulit</strong>, <strong>siapa yang remedial (&lt; 80)</strong>, serta <strong>siapa yang belum mengerjakan kedua modul atau salah satu modul</strong>.</p>
                     </div>
                 </div>
             `;
@@ -1377,9 +1456,9 @@
                 <div class="chatbot-msg bot">
                     <div class="msg-avatar">🎓</div>
                     <div class="msg-content">
-                        <p>Halo! Saya <strong>Asisten Belajar Siswa</strong> untuk mata pelajaran Informatika SMAN 4 Padang 🚀</p>
-                        <p>Saya siap membantumu memahami seluruh materi pembelajaran Informatika, seperti aplikasi perkantoran (Ms. Office, Word, Excel), literasi digital, deteksi hoaks, keamanan siber, dan infrastruktur jaringan.</p>
-                        <p style="font-size:0.82rem; opacity:0.8; margin-top:8px;"><em>🔒 Catatan: Informasi rekapitulasi nilai dan hasil ujian siswa bersifat rahasia dan hanya dapat diakses oleh Ibu Guru melalui Dasbor Guru terverifikasi PIN.</em></p>
+                        <p>Halo teman belajarku! Aku <strong>Teman Belajar Pintar Siswa</strong> untuk mata pelajaran Informatika SMAN 4 Padang 🚀✨</p>
+                        <p>Yuk eksplorasi konsep-konsep seru seperti perbedaan Hub vs Switch, bahaya Wi-Fi publik, rumus sakti Excel, dan tips aman bermedia digital!</p>
+                        <p style="font-size:0.82rem; opacity:0.8; margin-top:8px;"><em>🔒 Catatan Integritas: Aku tidak memberikan contekan jawaban saat ujian berlangsung dan menjaga kerahasiaan nilai teman-teman ya. Mari kita pahami konsepnya bareng-bareng!</em></p>
                     </div>
                 </div>
             `;

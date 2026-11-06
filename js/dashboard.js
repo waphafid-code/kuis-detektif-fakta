@@ -107,7 +107,7 @@ function isTeacherAuthValid() {
 window.isTeacherAuthValid = isTeacherAuthValid;
 
 // ============================================================
-// 👆 WEBAUTHN BIOMETRIC CONTROLLER (SIDIK JARI / FACE ID M-BANKING)
+// 👆 WEBAUTHN BIOMETRIC CONTROLLER (HARDWARE FINGERPRINT SCANNER)
 // ============================================================
 function bufferToBase64(buffer) {
     const bytes = new Uint8Array(buffer);
@@ -129,6 +129,10 @@ function base64ToBuffer(base64) {
 
 async function isBiometricAvailable() {
     if (typeof window === 'undefined') return false;
+    if (!window.isSecureContext) {
+        console.warn('WebAuthn requires a Secure Context (HTTPS or localhost).');
+        return false;
+    }
     if (!window.PublicKeyCredential) return false;
     if (typeof PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable !== 'function') return false;
     try {
@@ -139,31 +143,141 @@ async function isBiometricAvailable() {
 }
 window.isBiometricAvailable = isBiometricAvailable;
 
+window.pendingBiometricEnrollment = false;
+
 async function initBiometricUI() {
     const btn = document.getElementById('btn-biometric-login');
     const label = document.getElementById('biometric-login-label');
     const hint = document.getElementById('biometric-hint');
-    const section = document.getElementById('biometric-auth-section');
+    const reEnrollWrap = document.getElementById('biometric-re-enroll-wrap');
     if (!btn || !label || !hint) return;
 
     const available = await isBiometricAvailable();
     if (!available) {
-        if (hint) hint.textContent = 'Sensor biometrik tidak aktif / didukung pada browser ini. Gunakan PIN.';
-        btn.style.opacity = '0.6';
+        if (hint) {
+            hint.textContent = (!window.isSecureContext) 
+                ? 'Sensor sidik jari membutuhkan HTTPS aman. Silakan gunakan 4 digit PIN Guru.' 
+                : 'Sensor biometrik tidak aktif / didukung pada perangkat ini. Gunakan PIN.';
+        }
+        btn.style.opacity = '0.7';
+        if (reEnrollWrap) reEnrollWrap.style.display = 'none';
         return;
     }
 
     btn.style.opacity = '1';
     const savedCredId = localStorage.getItem('quizmaster_biometric_cred_id');
     if (savedCredId) {
-        label.textContent = 'Sentuh Sensor Fingerprint / Face ID';
-        hint.textContent = 'Sentuh sensor sidik jari HP / Windows Hello laptop (seperti m-Banking)';
+        label.textContent = 'Sentuh Sensor Sidik Jari';
+        hint.textContent = '1 Sidik Jari Guru aktif pada HP ini. Sentuh tombol untuk verifikasi instan.';
+        if (reEnrollWrap) reEnrollWrap.style.display = 'block';
     } else {
-        label.textContent = 'Daftarkan Sidik Jari (m-Banking)';
-        hint.textContent = 'Sentuh tombol ini untuk mengaktifkan sidik jari pada perangkat Anda';
+        label.textContent = 'Daftarkan Sidik Jari';
+        hint.textContent = 'Sentuh tombol ini untuk mendaftarkan 1 sensor sidik jari HP Anda untuk akses cepat.';
+        if (reEnrollWrap) reEnrollWrap.style.display = 'none';
     }
 }
 window.initBiometricUI = initBiometricUI;
+
+function startBiometricReEnrollment() {
+    sfxClick();
+    window.pendingBiometricEnrollment = true;
+    const errBox = document.getElementById('pin-error-msg');
+    const input = document.getElementById('pin-input');
+    if (errBox) {
+        errBox.innerHTML = `<span>🔑</span><span id="pin-error-text">Masukkan 4 digit PIN Guru untuk mengganti 1 sidik jari yang terdaftar:</span>`;
+        errBox.style.display = 'flex';
+        errBox.style.borderColor = 'rgba(56,189,248,0.5)';
+        errBox.style.color = '#38bdf8';
+    }
+    if (input) {
+        input.value = '';
+        updatePinDots('');
+        input.focus();
+    }
+}
+window.startBiometricReEnrollment = startBiometricReEnrollment;
+
+async function enrollSingleBiometricCredential() {
+    const errBox = document.getElementById('pin-error-msg');
+    const label = document.getElementById('biometric-login-label');
+    const hint = document.getElementById('biometric-hint');
+
+    try {
+        if (label) label.textContent = '⏳ Sentuh Sensor Sidik Jari HP...';
+        if (hint) hint.textContent = 'Tempelkan sidik jari pada sensor fisik ponsel Anda sekarang...';
+        if (errBox) errBox.style.display = 'none';
+
+        const challenge = new Uint8Array(32);
+        window.crypto.getRandomValues(challenge);
+
+        const userId = new Uint8Array(16);
+        window.crypto.getRandomValues(userId);
+
+        // RP ID must not be an IP address or include a port
+        let rpId = undefined;
+        if (window.location.hostname && !window.location.hostname.match(/^(?:\d{1,3}\.){3}\d{1,3}$/)) {
+            rpId = window.location.hostname;
+        }
+
+        const credential = await navigator.credentials.create({
+            publicKey: {
+                challenge: challenge,
+                rp: {
+                    name: "QuizMaster SMAN 4 Padang",
+                    id: rpId
+                },
+                user: {
+                    id: userId,
+                    name: "guru.dra.nurul@sman4padang.sch.id",
+                    displayName: "Dra. Nurul H. (Guru Pengampu)"
+                },
+                pubKeyCredParams: [
+                    { alg: -7, type: "public-key" },   // ES256
+                    { alg: -257, type: "public-key" }, // RS256
+                    { alg: -8, type: "public-key" },   // Ed25519
+                    { alg: -37, type: "public-key" }   // PS256
+                ],
+                authenticatorSelection: {
+                    authenticatorAttachment: "platform",
+                    userVerification: "preferred",
+                    residentKey: "preferred"
+                },
+                timeout: 60000,
+                attestation: "none"
+            }
+        });
+
+        if (credential && credential.rawId) {
+            const credIdBase64 = bufferToBase64(credential.rawId);
+            // 🛡️ STRICT RULE: HANYA SATU SIDIK JARI YANG TERSIMPAN (SINGLE MASTER CREDENTIAL)
+            localStorage.setItem('quizmaster_biometric_cred_id', credIdBase64);
+            localStorage.setItem('quizmaster_biometric_owner', 'Dra. Nurul H. (Guru Pengampu)');
+            localStorage.setItem('quizmaster_biometric_registered_at', new Date().toISOString());
+            localStorage.setItem('quizmaster_biometric_device', navigator.userAgent.slice(0, 50));
+
+            const sessionToken = await generateSignedTeacherToken();
+            sessionStorage.setItem('quizmaster_teacher_auth_token', sessionToken);
+            
+            initBiometricUI();
+            grantTeacherAccess('Biometric');
+            showToast('🎉 1 Sidik Jari Guru Berhasil Didaftarkan!', '👆');
+        }
+    } catch (err) {
+        console.warn('Biometric registration error:', err);
+        initBiometricUI();
+        if (errBox) {
+            errBox.style.color = '';
+            errBox.style.borderColor = '';
+            if (err.name === 'NotAllowedError') {
+                errBox.innerHTML = `<span>⚠️</span><span id="pin-error-text">Pemindaian sidik jari dibatalkan atau waktu habis. Sentuh tombol lagi atau gunakan PIN.</span>`;
+            } else {
+                errBox.innerHTML = `<span>⚠️</span><span id="pin-error-text">Gagal mendaftarkan sidik jari: ${err.message || 'Sensor tidak merespons'}</span>`;
+            }
+            errBox.style.display = 'flex';
+        }
+    }
+}
+window.enrollSingleBiometricCredential = enrollSingleBiometricCredential;
 
 async function authenticateWithBiometrics() {
     sfxClick();
@@ -174,7 +288,7 @@ async function authenticateWithBiometrics() {
     const available = await isBiometricAvailable();
     if (!available) {
         if (errBox) {
-            errBox.textContent = 'ℹ️ Sensor biometrik tidak tersedia pada browser/perangkat ini. Silakan gunakan 4 digit PIN.';
+            errBox.innerHTML = `<span>ℹ️</span><span id="pin-error-text">${!window.isSecureContext ? 'Sensor sidik jari membutuhkan HTTPS aman. Gunakan 4 digit PIN Guru.' : 'Sensor biometrik tidak tersedia pada browser ini. Silakan gunakan 4 digit PIN.'}</span>`;
             errBox.style.display = 'flex';
         }
         return;
@@ -183,92 +297,55 @@ async function authenticateWithBiometrics() {
     const savedCredId = localStorage.getItem('quizmaster_biometric_cred_id');
 
     if (!savedCredId) {
-        // PERTAMA KALI: Pendaftaran Sidik Jari (Enrollment)
+        // PERTAMA KALI: Pendaftaran 1 Sidik Jari (Enrollment)
         const pinInput = document.getElementById('pin-input');
         const pin = pinInput ? pinInput.value.trim() : '';
         const pinH = await hashPin(pin);
 
-        if (pinH !== TEACHER_PIN_HASH) {
-            if (errBox) {
-                errBox.textContent = '👉 Masukkan 4 digit PIN Guru di bawah terlebih dahulu, lalu sentuh tombol Fingerprint untuk mendaftarkan sensor perangkat ini.';
-                errBox.style.display = 'flex';
-            }
-            if (pinInput) pinInput.focus();
+        // Jika PIN yang dimasukkan sudah benar, langsung jalankan pendaftaran sidik jari
+        if (pinH === TEACHER_PIN_HASH) {
+            await enrollSingleBiometricCredential();
             return;
         }
 
-        try {
-            if (label) label.textContent = '⏳ Memindai Sensor Biometrik...';
-            const challenge = new Uint8Array(32);
-            window.crypto.getRandomValues(challenge);
-
-            const userId = new Uint8Array(16);
-            window.crypto.getRandomValues(userId);
-
-            const credential = await navigator.credentials.create({
-                publicKey: {
-                    challenge: challenge,
-                    rp: {
-                        name: "Kuis Informatika SMAN 4",
-                        id: (window.location.hostname && window.location.hostname.includes('.')) ? window.location.hostname : undefined
-                    },
-                    user: {
-                        id: userId,
-                        name: "guru.informatika@sman4.sch.id",
-                        displayName: "Guru Mata Pelajaran Informatika"
-                    },
-                    pubKeyCredParams: [
-                        { alg: -7, type: "public-key" },
-                        { alg: -257, type: "public-key" }
-                    ],
-                    authenticatorSelection: {
-                        authenticatorAttachment: "platform",
-                        userVerification: "required",
-                        residentKey: "preferred"
-                    },
-                    timeout: 60000,
-                    attestation: "none"
-                }
-            });
-
-            if (credential && credential.rawId) {
-                const credIdBase64 = bufferToBase64(credential.rawId);
-                localStorage.setItem('quizmaster_biometric_cred_id', credIdBase64);
-                localStorage.setItem('quizmaster_biometric_registered_at', new Date().toISOString());
-
-                const sessionToken = await generateSignedTeacherToken();
-                sessionStorage.setItem('quizmaster_teacher_auth_token', sessionToken);
-                grantTeacherAccess('Biometric');
-                showToast('🎉 Sidik Jari Perangkat Berhasil Didaftarkan! Mulai sekarang Anda bisa login langsung via sensor.', '👆');
-            }
-        } catch (err) {
-            console.warn('Biometric registration error:', err);
-            if (label) label.textContent = 'Daftarkan Sidik Jari (m-Banking)';
-            if (errBox) {
-                if (err.name === 'NotAllowedError') {
-                    errBox.textContent = '⚠️ Pemindaian dibatalkan atau waktu habis. Coba lagi atau gunakan PIN.';
-                } else {
-                    errBox.textContent = `⚠️ Gagal mendaftarkan sidik jari: ${err.message || 'Error platform'}`;
-                }
-                errBox.style.display = 'flex';
-            }
+        // Jika PIN belum diisi, set mode pendaftaran dan arahkan guru mengisi PIN sekali ini
+        window.pendingBiometricEnrollment = true;
+        if (errBox) {
+            errBox.innerHTML = `<span>🔑</span><span id="pin-error-text">Ketik 4 digit PIN Guru (2543) di bawah untuk memverifikasi pendaftaran 1 sidik jari perangkat ini:</span>`;
+            errBox.style.display = 'flex';
+            errBox.style.borderColor = 'rgba(56,189,248,0.5)';
+            errBox.style.color = '#38bdf8';
+        }
+        if (pinInput) {
+            pinInput.value = '';
+            updatePinDots('');
+            pinInput.focus();
         }
     } else {
-        // LOGIN DENGAN SIDIK JARI TERDAFTAR (VERIFIKASI PERSIS SEPERTI MBANKING)
+        // LOGIN DENGAN 1 SIDIK JARI TERDAFTAR (VERIFIKASI HARDWARE HP)
         try {
             if (label) label.textContent = '⏳ Memverifikasi Sidik Jari...';
+            if (hint) hint.textContent = 'Sentuh sensor sidik jari pada HP Anda...';
+            if (errBox) errBox.style.display = 'none';
+
             const challenge = new Uint8Array(32);
             window.crypto.getRandomValues(challenge);
+
+            let rpId = undefined;
+            if (window.location.hostname && !window.location.hostname.match(/^(?:\d{1,3}\.){3}\d{1,3}$/)) {
+                rpId = window.location.hostname;
+            }
 
             const assertion = await navigator.credentials.get({
                 publicKey: {
                     challenge: challenge,
+                    rpId: rpId,
                     allowCredentials: [{
                         id: base64ToBuffer(savedCredId),
                         type: 'public-key',
                         transports: ['internal']
                     }],
-                    userVerification: 'required',
+                    userVerification: 'preferred',
                     timeout: 60000
                 }
             });
@@ -280,12 +357,14 @@ async function authenticateWithBiometrics() {
             }
         } catch (err) {
             console.warn('Biometric assertion error:', err);
-            if (label) label.textContent = 'Sentuh Sensor Fingerprint / Face ID';
+            initBiometricUI();
             if (errBox) {
+                errBox.style.color = '';
+                errBox.style.borderColor = '';
                 if (err.name === 'NotAllowedError') {
-                    errBox.textContent = '⚠️ Pemindaian sidik jari dibatalkan. Silakan sentuh tombol lagi atau ketik PIN.';
+                    errBox.innerHTML = `<span>⚠️</span><span id="pin-error-text">Pemindaian sidik jari dibatalkan. Sentuh tombol lagi atau ketik PIN Guru.</span>`;
                 } else {
-                    errBox.textContent = '⚠️ Verifikasi sidik jari tidak cocok. Silakan masukkan 4 digit PIN Guru.';
+                    errBox.innerHTML = `<span>⚠️</span><span id="pin-error-text">Verifikasi sidik jari tidak cocok. Silakan sentuh tombol lagi atau masukkan 4 digit PIN Guru.</span>`;
                 }
                 errBox.style.display = 'flex';
             }
@@ -332,8 +411,28 @@ function onPinInputChanged() {
     input.value = val;
     updatePinDots(val);
     const errBox = document.getElementById('pin-error-msg');
-    if (errBox) errBox.style.display = 'none';
+    if (errBox && !window.pendingBiometricEnrollment) errBox.style.display = 'none';
+
     if (val.length === 4) {
+        if (window.pendingBiometricEnrollment) {
+            hashPin(val).then(async (pinH) => {
+                if (pinH === TEACHER_PIN_HASH) {
+                    window.pendingBiometricEnrollment = false;
+                    if (errBox) errBox.style.display = 'none';
+                    await enrollSingleBiometricCredential();
+                } else {
+                    if (errBox) {
+                        errBox.style.color = '';
+                        errBox.style.borderColor = '';
+                        errBox.innerHTML = `<span>❌</span><span id="pin-error-text">PIN salah! Gagal mengotorisasi pendaftaran sidik jari.</span>`;
+                        errBox.style.display = 'flex';
+                    }
+                    input.value = '';
+                    updatePinDots('');
+                }
+            });
+            return;
+        }
         setTimeout(() => submitPin(), 160);
     }
 }
@@ -380,11 +479,18 @@ window.openPinModal = openPinModal;
 
 function closeModal() {
     sfxClick();
+    window.pendingBiometricEnrollment = false;
     const modal = document.getElementById('pin-modal');
     if (modal) modal.classList.remove('active');
     const input = document.getElementById('pin-input');
     if (input) input.value = '';
     updatePinDots('');
+    const errBox = document.getElementById('pin-error-msg');
+    if (errBox) {
+        errBox.style.display = 'none';
+        errBox.style.color = '';
+        errBox.style.borderColor = '';
+    }
 }
 window.closeModal = closeModal;
 

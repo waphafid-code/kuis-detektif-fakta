@@ -126,3 +126,4 @@ classDiagram
 | 5 | Triage Defect, 5-Why RCA, & Re-testing | 2 Hari | Harie Fadhil | Dokumen P07 (Defects CLOSED) |
 | 6 | Penyusunan RTM & Laporan Akhir Audit | 1 Hari | Seluruh Anggota Tim | Dokumen P08 & Word Report |
 | **TOTAL** | **Siklus Lengkap Mini QA Audit** | **9 Hari** | **4 Anggota Tim** | **Produk Siap Rilis** |
+

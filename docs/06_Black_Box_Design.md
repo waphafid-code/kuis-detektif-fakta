@@ -176,3 +176,4 @@ stateDiagram-v2
 | **TC-12** | ST | Transisi Ilegal: Mencegah Skip ke Layar Hasil | **PASS** | `TC12_ST_Forbidden_Transition.png` |
 
 > **Tingkat Keberhasilan Black-Box:** **12 dari 12 Test Case Lulus (100% Pass Rate)**.
+

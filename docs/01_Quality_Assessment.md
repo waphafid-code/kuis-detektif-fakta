@@ -113,3 +113,4 @@ Penerapan Cost of Quality (CoQ) membagi biaya kualitas menjadi **Cost of Conform
 | **TOTAL CoQ** | **Investasi Kualitas QuizMaster** | **74 Jam** | **Rp 7.400.000** |
 
 > **Kesimpulan CoQ:** Dengan mengalokasikan investasi pada *Prevention* dan *Appraisal* (Shift-Left), QuizMaster berhasil menekan *External Failure Costs* menjadi **Rp 0**, memastikan ujian daring 216 siswa berjalan mulus tanpa insiden kegagalan di hari pelaksanaan.
+
