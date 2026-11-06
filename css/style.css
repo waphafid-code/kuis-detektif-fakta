@@ -56,6 +56,14 @@
     --radius-pill: 9999px;
     
     --header-height: 68px;
+    
+    /* 🌟 COMPATIBILITY VARIABLE TOKENS FOR ZERO BREAKAGE */
+    --bg-body: #F8FAFC;
+    --glass-bg: rgba(255, 255, 255, 0.88);
+    --shadow: 0 4px 16px -2px rgba(15, 23, 42, 0.06), 0 2px 4px -1px rgba(15, 23, 42, 0.03);
+    --font-sans: 'Plus Jakarta Sans', 'Poppins', system-ui, sans-serif;
+    --indigo-400: #818CF8;
+    --card-accent-color: #4F46E5;
 }
 
 /* 🌙 Stitch Modern Dark Mode Theme */
@@ -96,6 +104,14 @@
     --shadow-md: 0 4px 16px rgba(0,0,0,0.4);
     --shadow-lg: 0 12px 36px rgba(0,0,0,0.5);
     --shadow-xl: 0 20px 60px rgba(0,0,0,0.6);
+    
+    /* 🌟 DARK THEME COMPATIBILITY VARIABLE TOKENS */
+    --bg-body: #0B0F19;
+    --glass-bg: rgba(21, 29, 48, 0.75);
+    --shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+    --font-sans: 'Plus Jakarta Sans', 'Poppins', system-ui, sans-serif;
+    --indigo-400: #818CF8;
+    --card-accent-color: #6366F1;
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -7962,4 +7978,263 @@ html, body {
     }
 }
 
-
+
+/* ============================================================ */
+/* 📱 UI/UX PRO MAX — MOBILE & TABLET PRECISION HEADER & FORM   */
+/* ============================================================ */
+.mobile-top-bar {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    height: 60px !important;
+    background: var(--bg-card) !important;
+    border-bottom: 1px solid var(--glass-border) !important;
+    display: none;
+    align-items: center !important;
+    justify-content: space-between !important;
+    padding: 0 16px !important;
+    z-index: 9999 !important;
+    box-sizing: border-box !important;
+    box-shadow: var(--shadow-sm) !important;
+    transition: background-color 0.25s ease, border-color 0.25s ease !important;
+}
+
+[data-theme="dark"] .mobile-top-bar {
+    background: #0B0F19 !important;
+    border-bottom-color: rgba(255, 255, 255, 0.08) !important;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.45) !important;
+}
+
+.mobile-menu-btn {
+    width: 40px !important;
+    height: 40px !important;
+    border-radius: 12px !important;
+    border: 1px solid var(--glass-border) !important;
+    background: var(--bg-surface-low) !important;
+    color: var(--text) !important;
+    font-size: 1.25rem !important;
+    cursor: pointer !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    flex-shrink: 0 !important;
+    touch-action: manipulation !important;
+    -webkit-tap-highlight-color: transparent !important;
+    transition: transform 0.15s ease, background-color 0.15s ease !important;
+}
+.mobile-menu-btn:active {
+    transform: scale(0.92) !important;
+    background: var(--bg-surface-container) !important;
+}
+
+.mobile-brand-box {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+    flex: 1 !important;
+    justify-content: flex-start !important;
+    margin-left: 10px !important;
+    cursor: pointer !important;
+    user-select: none !important;
+    -webkit-tap-highlight-color: transparent !important;
+}
+
+.mobile-brand-icon {
+    width: 34px !important;
+    height: 34px !important;
+    border-radius: 10px !important;
+    background: var(--primary-gradient) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 1.15rem !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 12px var(--primary-glow) !important;
+    flex-shrink: 0 !important;
+}
+
+.mobile-top-bar .brand-name {
+    font-size: 1.15rem !important;
+    font-weight: 800 !important;
+    font-family: var(--font-display) !important;
+    background: var(--primary-gradient) !important;
+    -webkit-background-clip: text !important;
+    background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+    letter-spacing: -0.01em !important;
+    line-height: 1 !important;
+    white-space: nowrap !important;
+}
+
+.mobile-ctrl-group {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    flex-shrink: 0 !important;
+    width: auto !important;
+    margin: 0 !important;
+}
+
+.mobile-theme-btn {
+    width: 40px !important;
+    height: 40px !important;
+    border-radius: 12px !important;
+    border: 1px solid var(--glass-border) !important;
+    background: var(--bg-surface-low) !important;
+    color: var(--text) !important;
+    font-size: 1.1rem !important;
+    cursor: pointer !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    flex-shrink: 0 !important;
+    touch-action: manipulation !important;
+    -webkit-tap-highlight-color: transparent !important;
+    transition: transform 0.15s ease, background-color 0.15s ease !important;
+}
+.mobile-theme-btn:active {
+    transform: scale(0.92) !important;
+    background: var(--bg-surface-container) !important;
+}
+
+/* 🏷️ RESPONSIVE FORM LABEL SPLIT & MODULE BADGE */
+.form-label-split {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+    margin-bottom: 6px !important;
+}
+
+.form-label-text {
+    font-weight: 700 !important;
+    color: var(--text) !important;
+}
+
+.module-badge-pill {
+    font-size: 0.72rem !important;
+    padding: 3px 10px !important;
+    border-radius: 9999px !important;
+    background: var(--secondary-light) !important;
+    color: var(--primary) !important;
+    font-weight: 800 !important;
+    border: 1px solid var(--glass-border) !important;
+    white-space: nowrap !important;
+    transition: all 0.25s ease !important;
+}
+
+[data-theme="dark"] .module-badge-pill {
+    background: rgba(99, 102, 241, 0.2) !important;
+    color: #A5B4FC !important;
+    border-color: rgba(99, 102, 241, 0.35) !important;
+}
+
+.home-module-desc-box {
+    font-size: 0.78rem !important;
+    color: var(--text-secondary) !important;
+    margin-top: 6px !important;
+    padding: 10px 14px !important;
+    background: var(--bg-card) !important;
+    border-radius: 10px !important;
+    border: 1px solid var(--glass-border) !important;
+    line-height: 1.45 !important;
+    text-align: left !important;
+    transition: background-color 0.25s ease, border-color 0.25s ease !important;
+}
+
+[data-theme="dark"] .home-module-desc-box {
+    background: rgba(15, 23, 42, 0.6) !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+/* 📱 ADAPTIVE MOBILE BREAKPOINTS (<= 768px & <= 640px) */
+@media (max-width: 991px) {
+    .mobile-top-bar {
+        display: flex !important;
+    }
+}
+
+@media (max-width: 768px) {
+    .app-container,
+    .screen {
+        padding-bottom: 96px !important; /* Safe area so floating chatbot never obscures buttons */
+    }
+}
+
+@media (max-width: 640px) {
+    .home-title {
+        font-size: 1.85rem !important;
+        margin-bottom: 6px !important;
+    }
+    .home-subtitle {
+        font-size: 0.85rem !important;
+        line-height: 1.45 !important;
+        margin-bottom: 12px !important;
+        padding: 0 4px !important;
+    }
+    .live-server-pill {
+        display: inline-flex !important;
+        flex-direction: column !important;
+        gap: 4px !important;
+        padding: 6px 12px !important;
+        border-radius: 12px !important;
+        max-width: 100% !important;
+        text-align: center !important;
+        margin: 0 auto 16px !important;
+        font-size: 0.72rem !important;
+    }
+    .session-config-card {
+        padding: 16px 14px !important;
+        border-radius: 16px !important;
+        margin-bottom: 16px !important;
+    }
+    .config-header {
+        margin-bottom: 12px !important;
+    }
+    .config-title {
+        font-size: 0.82rem !important;
+    }
+    .config-step {
+        font-size: 0.68rem !important;
+    }
+    .form-group {
+        margin-bottom: 12px !important;
+    }
+    .form-label-split {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 4px !important;
+    }
+    .module-badge-pill {
+        margin-top: 2px !important;
+    }
+    .form-select {
+        padding: 10px 12px !important;
+        font-size: 0.86rem !important;
+        border-radius: 10px !important;
+    }
+    .home-module-desc-box {
+        font-size: 0.72rem !important;
+        padding: 8px 10px !important;
+    }
+    .home-actions-grid {
+        grid-template-columns: 1fr !important;
+        gap: 10px !important;
+        margin-bottom: 20px !important;
+    }
+    .btn-pill-primary,
+    .btn-pill-secondary {
+        padding: 14px 20px !important;
+        font-size: 0.95rem !important;
+        min-height: 48px !important;
+    }
+    .quick-tools-bar {
+        gap: 6px !important;
+    }
+    .btn-quick {
+        font-size: 0.72rem !important;
+        padding: 6px 10px !important;
+    }
+}

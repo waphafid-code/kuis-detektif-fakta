@@ -1082,17 +1082,20 @@ body.in-exam .chatbot-float-trigger,
 }
 
 @media (max-width: 640px) {
-    /* 1. Chatbot Floating Trigger Mobile Positioning */
+    /* 1. Chatbot Floating Trigger Mobile Positioning (Anti-Overlap & Zero-Lag) */
     .chatbot-float-trigger {
-        bottom: 16px !important;
+        bottom: 18px !important;
         right: 16px !important;
-        padding: 9px 15px !important;
-        font-size: 0.8rem !important;
+        padding: 10px 16px !important;
+        font-size: 0.82rem !important;
         gap: 6px !important;
-        box-shadow: 0 4px 16px rgba(66, 133, 244, 0.4) !important;
+        border-radius: 9999px !important;
+        box-shadow: 0 4px 18px rgba(66, 133, 244, 0.45) !important;
+        z-index: 9990 !important;
     }
     .trigger-sparkle {
         font-size: 1rem !important;
+        animation: none !important; /* Eliminates continuous GPU layer thrashing on mobile */
     }
 
     /* 2. Chatbot Mobile Bottom Sheet */
@@ -1222,4 +1225,57 @@ body.in-exam .chatbot-float-trigger,
         border-radius: 20px !important;
         margin: 20px 12px !important;
     }
+}
+
+/* ☀️ LIGHT MODE FULL UNIFORMITY FOR TEACHER CHATBOT */
+[data-theme="light"] .teacher-chatbot-wrapper {
+    background: #FFFFFF !important;
+    border: 1.5px solid rgba(99, 102, 241, 0.25) !important;
+    box-shadow: 0 16px 45px rgba(15, 23, 42, 0.12), 0 0 25px rgba(66, 133, 244, 0.1) !important;
+    color: #0F172A !important;
+}
+
+[data-theme="light"] .teacher-chatbot-header {
+    background: #F8FAFC !important;
+    border-bottom: 1px solid rgba(15, 23, 42, 0.08) !important;
+    color: #0F172A !important;
+}
+
+[data-theme="light"] .header-title-text {
+    color: #0F172A !important;
+}
+
+[data-theme="light"] .header-sub-text {
+    color: #64748B !important;
+}
+
+[data-theme="light"] .chatbot-messages-area {
+    background: #FFFFFF !important;
+}
+
+[data-theme="light"] .chatbot-input-bar {
+    background: #FFFFFF !important;
+    border-top: 1px solid rgba(15, 23, 42, 0.08) !important;
+}
+
+[data-theme="light"] .chatbot-input-field {
+    background: #F1F5F9 !important;
+    border: 1.5px solid rgba(15, 23, 42, 0.12) !important;
+    color: #0F172A !important;
+}
+
+[data-theme="light"] .chatbot-input-field::placeholder {
+    color: #64748B !important;
+}
+
+[data-theme="light"] .module-filter-deck {
+    background: #F1F5F9 !important;
+    border-color: rgba(15, 23, 42, 0.08) !important;
+}
+
+[data-theme="light"] .guardian-combat-card,
+[data-theme="light"] .guardian-result-modal {
+    background: #FFFFFF !important;
+    border-color: rgba(15, 23, 42, 0.1) !important;
+    color: #0F172A !important;
 }

@@ -52,14 +52,14 @@
     <button class="mobile-menu-btn" onclick="toggleSidebarMenu()" aria-label="Buka Menu Navigasi">
         <span>☰</span>
     </button>
-    <div class="header-brand" onclick="goHome()" style="cursor: pointer;">
-        <div class="brand-logo-icon" style="width: 32px; height: 32px; font-size: 1rem;">
+    <div class="mobile-brand-box" onclick="goHome()" style="cursor: pointer;" title="Beranda QuizMaster">
+        <div class="mobile-brand-icon">
             <span>🎓</span>
         </div>
-        <span class="brand-name" style="font-size: 1.05rem;">QuizMaster</span>
+        <span class="brand-name">QuizMaster</span>
     </div>
-    <div class="header-ctrl-group">
-        <button class="header-btn" onclick="toggleTheme()" title="Mode Tema">
+    <div class="mobile-ctrl-group">
+        <button class="mobile-theme-btn" onclick="toggleTheme()" title="Mode Tema" aria-label="Ganti Tema">
             <span id="theme-icon-mob">🌙</span>
         </button>
     </div>
@@ -716,14 +716,14 @@
                 </div>
 
                 <div class="form-group">
-                    <label class="form-label" for="input-module" style="display: flex; justify-content: space-between; align-items: center;">
-                        <span>📚 3. Pilih Paket Kuis Evaluasi</span>
-                        <span id="home-module-badge" style="font-size: 0.72rem; padding: 3px 10px; border-radius: 9999px; background: #EEF2FF; color: var(--primary); font-weight: 800;">20 Soal • Maks 100 Poin</span>
+                    <label class="form-label form-label-split" for="input-module">
+                        <span class="form-label-text">📚 3. Pilih Paket Kuis Evaluasi</span>
+                        <span id="home-module-badge" class="module-badge-pill">20 Soal • Maks 100 Poin</span>
                     </label>
                     <select class="form-select" id="input-module" onchange="handleHomeModuleChange(true)">
                         <!-- Dinamis via QuizManager -->
                     </select>
-                    <div id="home-module-desc" style="font-size: 0.78rem; color: var(--text-secondary); margin-top: 6px; padding: 10px 14px; background: var(--bg-card); border-radius: 10px; border: 1px solid var(--glass-border); line-height: 1.4; text-align: left;">
+                    <div id="home-module-desc" class="home-module-desc-box">
                         Investigasi keabsahan data, identifikasi hoaks, dan penalaran lateral untuk siswa kelas X.
                     </div>
                 </div>

@@ -66,8 +66,13 @@ function drawParticles(timestamp) {
         return;
     }
 
-    // 🛑 Matikan rendering di HP (< 768px) karena canvas disembunyikan CSS display:none !important
-    if (window.innerWidth < 768) {
+    // 🛑 Matikan rendering di HP/Tablet (< 992px) atau perangkat kentang agar 60 FPS stabil & hemat baterai
+    const isMobileOrTablet = window.innerWidth < 992;
+    const isPotato = (typeof document !== 'undefined') && (
+        document.documentElement.classList.contains('hp-kentang') ||
+        (typeof DeviceTier !== 'undefined' && DeviceTier.isModeRingan && DeviceTier.isModeRingan())
+    );
+    if (isMobileOrTablet || isPotato) {
         particleAnimFrameId = null;
         return;
     }
