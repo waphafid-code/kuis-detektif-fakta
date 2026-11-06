@@ -219,15 +219,27 @@
         };
     }
 
-    // 🔍 3. NORMALISASI KELAS (Dukungan untuk input "10E6", "10e3", "X E 6", dll)
+    // 🔍 3. NORMALISASI KELAS (Dukungan untuk input "10E6", "10e3", "X E 6", "di E1", "E1", dll)
     function parseClassFromQuery(query) {
-        const q = query.toUpperCase().replace(/\s+/g, '');
-        if (q.includes('10E1') || q.includes('XE1') || q.includes('X-E-1')) return 'X E 1';
-        if (q.includes('10E2') || q.includes('XE2') || q.includes('X-E-2')) return 'X E 2';
-        if (q.includes('10E3') || q.includes('XE3') || q.includes('X-E-3')) return 'X E 3';
-        if (q.includes('10E4') || q.includes('XE4') || q.includes('X-E-4')) return 'X E 4';
-        if (q.includes('10E5') || q.includes('XE5') || q.includes('X-E-5')) return 'X E 5';
-        if (q.includes('10E6') || q.includes('XE6') || q.includes('X-E-6')) return 'X E 6';
+        if (!query) return null;
+        const raw = query.toUpperCase();
+        
+        // 1. Pola dengan awalan X, 10, KELAS, DI, atau berdiri sendiri (misal: "X E 1", "10 E 1", "KELAS E 1", "DI E1", "E1")
+        const match = raw.match(/(?:KELAS|DI|X|10)?\s*E[\s\.\-_]*([1-6])\b/i) ||
+                      raw.match(/\bKELAS\s*([1-6])\b/i) ||
+                      raw.match(/\b10[\s\.\-_]*([1-6])\b/i);
+        if (match && match[1]) {
+            const num = match[1];
+            if (num >= '1' && num <= '6') return `X E ${num}`;
+        }
+
+        // 2. Fallback pencarian substring tanpa spasi
+        const q = raw.replace(/\s+/g, '');
+        for (let i = 1; i <= 6; i++) {
+            if (q.includes(`10E${i}`) || q.includes(`XE${i}`) || q.includes(`X-E-${i}`) || q.includes(`E${i}`) || q.includes(`KELAS${i}`)) {
+                return `X E ${i}`;
+            }
+        }
         return null;
     }
 
@@ -905,16 +917,51 @@
             }
         }
 
-        // 2. STATUS PENGERJAAN KUIS SISWA
-        if (p.includes('belum') || p.includes('sudah') || p.includes('mengerjakan') || p.includes('selesai') || p.includes('tuntas') || p.includes('ikut')) {
-            const wantsBothDone = (p.includes('sudah') || p.includes('selesai') || p.includes('tuntas')) && (p.includes('kedua') || p.includes('2 kuis') || p.includes('semua'));
-            const wantsBothNone = (p.includes('belum') || p.includes('tidak')) && (p.includes('kedua') || p.includes('sama sekali') || p.includes('semua') || p.includes('2 kuis'));
-            const wantsOnlyFirst = p.includes('pertama') || p.includes('kuis 1') || p.includes('detektif fakta');
-            const wantsOnlySecond = p.includes('kedua') || p.includes('kuis 2') || p.includes('keamanan jaringan') || p.includes('jki');
-            const wantsMissingOne = p.includes('salah satu') || p.includes('satu kuis') || p.includes('parsial');
+        // 2. PERTANYAAN REMEDIAL & SISWA DI BAWAH KKM 80
+        if (p.includes('remedial') || p.includes('tidak tuntas') || p.includes('belum tuntas') || p.includes('tidak lulus') || p.includes('di bawah 80') || p.includes('di bawah kkm') || p.includes('kurang dari 80')) {
+            let listFakta = ctx.studentProfiles.filter(s => s.hasFakta && s.scoreFakta < 80);
+            let listJaringan = ctx.studentProfiles.filter(s => s.hasJaringan && s.scoreJaringan < 80);
+            if (targetClass) {
+                listFakta = listFakta.filter(s => s.class === targetClass);
+                listJaringan = listJaringan.filter(s => s.class === targetClass);
+            }
+
+            let reply = `### 🩺 Siswa Perlu Remedial (Skor < KKM 80) ${targetClass ? `(${targetClass})` : ''}\n\n`;
+            reply += `Berdasarkan rekapitulasi capaian nilai siswa:\n\n`;
+
+            reply += `**1. Kuis 1: Detektif Fakta (Literasi Digital):**\n`;
+            if (listFakta.length === 0) {
+                reply += `✅ Seluruh siswa ${targetClass ? `di kelas ${targetClass}` : ''} yang sudah mengerjakan Kuis 1 telah mencapai KKM 80.\n\n`;
+            } else {
+                reply += `Terdapat **${listFakta.length} siswa** dengan nilai di bawah KKM:\n`;
+                reply += listFakta.map((s, i) => `${i + 1}. **${s.name}** (${s.class}) — Skor: \`${s.scoreFakta}\``).join('\n') + `\n\n`;
+            }
+
+            reply += `**2. Kuis 2: Keamanan Jaringan (JKI):**\n`;
+            if (listJaringan.length === 0) {
+                reply += `✅ Seluruh siswa ${targetClass ? `di kelas ${targetClass}` : ''} yang sudah mengerjakan Kuis 2 telah mencapai KKM 80.\n\n`;
+            } else {
+                reply += `Terdapat **${listJaringan.length} siswa** dengan nilai di bawah KKM:\n`;
+                reply += listJaringan.map((s, i) => `${i + 1}. **${s.name}** (${s.class}) — Skor: \`${s.scoreJaringan}\``).join('\n') + `\n\n`;
+            }
+
+            reply += `💡 **Rekomendasi Tindak Lanjut Guru:**\n`;
+            reply += `Ibu Guru dapat mengaktifkan **Mode Remedial** pada panel pengaturan kuis agar siswa yang terdata di atas dapat mengerjakan ulang butir-butir soal yang salah saja.`;
+            return reply;
+        }
+
+        // 3. STATUS PENGERJAAN KUIS SISWA (SIAPA SUDAH / BELUM MENGERJAKAN)
+        const isBelumWord = p.includes('belum') || p.includes('blm') || p.includes('tidak') || p.includes('tdk') || p.includes('kurang') || p.includes('menegrkana') || p.includes('mengerjakan') || p.includes('ngerjain') || p.includes('ikut');
+        const isSudahWord = p.includes('sudah') || p.includes('sdh') || p.includes('selesai') || p.includes('tuntas') || p.includes('lulus');
+        const wantsJaringan = p.includes('jaringan') || p.includes('keamanan') || p.includes('jki') || p.includes('kuis 2') || p.includes('kedua') || p.includes('cyber');
+        const wantsFakta = p.includes('fakta') || p.includes('detektif') || p.includes('kuis 1') || p.includes('pertama') || p.includes('literasi') || p.includes('hoaks');
+        const wantsBoth = p.includes('kedua') || p.includes('2 kuis') || p.includes('semua') || p.includes('sama sekali') || p.includes('total');
+        const wantsMissingOne = p.includes('salah satu') || p.includes('satu kuis') || p.includes('parsial');
+
+        if (isBelumWord || isSudahWord || p.includes('mengerjakan') || p.includes('ujian') || p.includes('kuis') || p.includes('status')) {
 
             // Kasus A: Sudah Menyelesaikan KEDUA Kuis
-            if (wantsBothDone) {
+            if (wantsBoth && isSudahWord) {
                 let list = ctx.finishedBoth;
                 if (targetClass) list = list.filter(s => s.class === targetClass);
 
@@ -934,7 +981,7 @@
             }
 
             // Kasus B: Belum Mengerjakan KEDUA Kuis (Belum Ujian Sama Sekali)
-            if (wantsBothNone) {
+            if (wantsBoth && isBelumWord) {
                 let list = ctx.finishedNone;
                 if (targetClass) list = list.filter(s => s.class === targetClass);
 
@@ -942,7 +989,7 @@
                 reply += `Terdapat **${list.length} siswa** terdaftar yang belum memiliki riwayat pengerjaan di Kuis 1 maupun Kuis 2:\n\n`;
 
                 if (list.length === 0) {
-                    reply += `🎉 **Luar biasa! Seluruh siswa sudah mengikuti setidaknya satu kuis.**\n`;
+                    reply += `🎉 **Luar biasa! Seluruh siswa ${targetClass ? `kelas ${targetClass}` : ''} sudah mengikuti setidaknya satu kuis.**\n`;
                 } else {
                     reply += list.map((s, i) => `${i + 1}. **${s.name}** (${s.class}) — *Belum ada respon*`).join('\n');
                     reply += `\n\n📲 **Tindakan:** Ibu Guru dapat menekan tombol **"Salin Daftar Belum Ujian"** di dasbor untuk membagikan pengingat langsung ke grup WhatsApp kelas.`;
@@ -951,47 +998,41 @@
             }
 
             // Kasus C: Belum Mengerjakan Kuis KEDUA (Keamanan Jaringan)
-            if (wantsOnlySecond && p.includes('belum')) {
+            if (wantsJaringan && isBelumWord) {
                 let list = ctx.studentProfiles.filter(s => !s.hasJaringan);
                 if (targetClass) list = list.filter(s => s.class === targetClass);
 
                 let reply = `### 🛡️ Siswa yang BELUM Mengerjakan Kuis 2: Keamanan Jaringan ${targetClass ? `(${targetClass})` : ''}\n\n`;
-                reply += `Terdapat **${list.length} siswa** yang belum menyelesaikan Kuis Keamanan Jaringan:\n\n`;
+                reply += `Terdapat **${list.length} siswa** ${targetClass ? `di kelas **${targetClass}**` : ''} yang belum menyelesaikan Kuis Keamanan Jaringan:\n\n`;
 
                 if (list.length === 0) {
-                    reply += `✅ **Seluruh siswa telah menyelesaikan Kuis Keamanan Jaringan.**\n`;
+                    reply += `🎉 **Luar biasa! Seluruh siswa ${targetClass ? `kelas ${targetClass}` : ''} telah menyelesaikan Kuis Keamanan Jaringan.**\n`;
                 } else {
-                    const sample = list.slice(0, 35);
-                    reply += sample.map((s, i) => {
+                    reply += list.map((s, i) => {
                         const noteFakta = s.hasFakta ? `*(Sudah Kuis 1: ${s.scoreFakta})*` : `*(Kuis 1 juga belum)*`;
                         return `${i + 1}. **${s.name}** (${s.class}) ${noteFakta}`;
                     }).join('\n');
-                    if (list.length > 35) {
-                        reply += `\n\n*...dan ${list.length - 35} siswa lainnya.*`;
-                    }
+                    reply += `\n\n📲 **Tindakan:** Ibu Guru dapat membagikan daftar nama di atas ke grup kelas untuk mengingatkan siswa segera mengikuti ujian evaluasi.`;
                 }
                 return reply;
             }
 
             // Kasus D: Belum Mengerjakan Kuis PERTAMA (Detektif Fakta)
-            if (wantsOnlyFirst && p.includes('belum')) {
+            if (wantsFakta && isBelumWord) {
                 let list = ctx.studentProfiles.filter(s => !s.hasFakta);
                 if (targetClass) list = list.filter(s => s.class === targetClass);
 
                 let reply = `### 🕵️ Siswa yang BELUM Mengerjakan Kuis 1: Detektif Fakta ${targetClass ? `(${targetClass})` : ''}\n\n`;
-                reply += `Terdapat **${list.length} siswa** yang belum menyelesaikan Kuis Detektif Fakta:\n\n`;
+                reply += `Terdapat **${list.length} siswa** ${targetClass ? `di kelas **${targetClass}**` : ''} yang belum menyelesaikan Kuis Detektif Fakta:\n\n`;
 
                 if (list.length === 0) {
-                    reply += `✅ **Seluruh siswa telah menyelesaikan Kuis Detektif Fakta.**\n`;
+                    reply += `🎉 **Luar biasa! Seluruh siswa ${targetClass ? `kelas ${targetClass}` : ''} telah menyelesaikan Kuis Detektif Fakta.**\n`;
                 } else {
-                    const sample = list.slice(0, 35);
-                    reply += sample.map((s, i) => {
+                    reply += list.map((s, i) => {
                         const noteJaringan = s.hasJaringan ? `*(Sudah Kuis 2: ${s.scoreJaringan})*` : `*(Kuis 2 juga belum)*`;
                         return `${i + 1}. **${s.name}** (${s.class}) ${noteJaringan}`;
                     }).join('\n');
-                    if (list.length > 35) {
-                        reply += `\n\n*...dan ${list.length - 35} siswa lainnya.*`;
-                    }
+                    reply += `\n\n📲 **Tindakan:** Ibu Guru dapat mengingatkan siswa untuk melengkapi kuis pertama ini.`;
                 }
                 return reply;
             }
@@ -1014,6 +1055,56 @@
                 }
                 return reply;
             }
+
+            // Kasus F: Pertanyaan Umum Belum Mengerjakan (Misal: "siapa saja yang belum mengerjakan")
+            if (isBelumWord || (!isSudahWord && (p.includes('siapa') || p.includes('daftar')))) {
+                let unsubmittedJaringan = ctx.studentProfiles.filter(s => !s.hasJaringan);
+                let unsubmittedFakta = ctx.studentProfiles.filter(s => !s.hasFakta);
+                let unsubmittedNone = ctx.finishedNone;
+                if (targetClass) {
+                    unsubmittedJaringan = unsubmittedJaringan.filter(s => s.class === targetClass);
+                    unsubmittedFakta = unsubmittedFakta.filter(s => s.class === targetClass);
+                    unsubmittedNone = unsubmittedNone.filter(s => s.class === targetClass);
+                }
+
+                let reply = `### ⏳ Rekapitulasi Siswa yang BELUM Mengerjakan Kuis ${targetClass ? `(${targetClass})` : ''}\n\n`;
+                reply += `Berikut status pengerjaan siswa yang masih belum menyelesaikan kuis:\n\n`;
+
+                reply += `**1. Belum Kuis 2: Keamanan Jaringan (Modul Penilaian Harian Aktif):**\n`;
+                reply += `Terdapat **${unsubmittedJaringan.length} siswa** ${targetClass ? `di kelas ${targetClass}` : ''} yang belum mengerjakan.\n`;
+                if (unsubmittedJaringan.length > 0) {
+                    const sample = unsubmittedJaringan.slice(0, targetClass ? 36 : 15);
+                    reply += sample.map((s, i) => `${i + 1}. **${s.name}** (${s.class})`).join('\n');
+                    if (!targetClass && unsubmittedJaringan.length > 15) {
+                        reply += `\n*...dan ${unsubmittedJaringan.length - 15} siswa lainnya di kelas lain.*`;
+                    }
+                } else {
+                    reply += `*(Seluruh siswa telah menyelesaikan Kuis 2)*\n`;
+                }
+
+                reply += `\n\n**2. Belum Kuis 1: Detektif Fakta (Literasi Digital):**\n`;
+                reply += `Terdapat **${unsubmittedFakta.length} siswa** yang belum menyelesaikan Kuis 1.\n`;
+
+                reply += `\n**3. Belum Ujian Sama Sekali (Kuis 1 & 2 Kosong):**\n`;
+                reply += `Terdapat **${unsubmittedNone.length} siswa** yang sama sekali belum memiliki nilai kuis.\n\n`;
+                reply += `💡 *Tips: Ketik lebih spesifik misal **"siapa belum kuis jaringan di E1"** atau **"siapa belum ujian di 10E3"** untuk daftar nama lengkap per kelas.*`;
+
+                return reply;
+            }
+        }
+
+        // 4. DAFTAR RESMI ANGGOTA KELAS / ABSEN ROSTER
+        if (targetClass && (p.includes('daftar') || p.includes('absen') || p.includes('roster') || p.includes('semua siswa') || p.includes('nama siswa') || p.includes('anggota'))) {
+            const list = ctx.studentProfiles.filter(s => s.class === targetClass);
+            let reply = `### 📋 Daftar Resmi 36 Siswa Kelas ${targetClass} — SMAN 4 Padang\n\n`;
+            reply += list.map((s, i) => {
+                let status = '⏳ Belum Ujian';
+                if (s.hasFakta && s.hasJaringan) status = `✅ Tuntas 2 Kuis (Rata-rata: ${s.avgScore})`;
+                else if (s.hasJaringan) status = `🛡️ Kuis 2 (${s.scoreJaringan})`;
+                else if (s.hasFakta) status = `🕵️ Kuis 1 (${s.scoreFakta})`;
+                return `${i + 1}. **${s.name}** — ${status}`;
+            }).join('\n');
+            return reply;
         }
 
         // 3. ANALISIS MISKONSEPSI & BUTIR SOAL TERSULIT
