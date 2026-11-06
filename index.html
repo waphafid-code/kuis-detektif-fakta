@@ -34,7 +34,7 @@
         }
     </script>
     <!-- QuizMaster Modern Design System & UI Styling -->
-    <link rel="stylesheet" href="css/style.css?v=20261106-release-v3002">
+    <link rel="stylesheet" href="css/style.css?v=20261106-release-v3005">
     <!-- Cyber Guardian Sentinel Protocol & Gemini Teacher AI Assistant Styling -->
     <link rel="stylesheet" href="css/guardian_and_chatbot.css?v=20261106-release-v3002">
 
@@ -316,25 +316,25 @@
 
 <!-- Class Access Locked Modal (Jadwal RINI SYAFITRI) -->
 <div class="modal-overlay" id="access-locked-modal">
-    <div class="modal-box" style="border-color: rgba(234,179,8,0.4); box-shadow: 0 0 40px rgba(234,179,8,0.25); max-width: 480px;">
+    <div class="modal-box modal-locked-box">
         <div style="font-size: 3rem; margin-bottom: 6px;">🔒🕒</div>
-        <h3 style="color: #facc15; margin-bottom: 8px;">Akses Kuis Belum Dibuka</h3>
-        <p style="color: var(--text-secondary); line-height: 1.5; margin-bottom: 14px; font-size: 0.92rem;">
+        <h3 class="modal-locked-title" id="locked-modal-title">Akses Kuis Belum Dibuka</h3>
+        <p class="modal-locked-sub">
             Kuis ini hanya dapat diakses pada jam mata pelajaran:<br>
-            <strong style="color: var(--text); font-size: 1.05rem;">👩‍🏫 Guru Mata Pelajaran: RINI SYAFITRI</strong>
+            <strong style="font-size: 1.05rem;">👩‍🏫 Guru Mata Pelajaran: RINI SYAFITRI</strong>
         </p>
 
-        <div style="background: rgba(234,179,8,0.08); border: 1px solid rgba(234,179,8,0.3); border-radius: 12px; padding: 14px 16px; margin-bottom: 16px; text-align: left;">
-            <div style="font-weight: 800; color: #facc15; font-size: 0.95rem;" id="locked-class-name">Kelas -</div>
-            <div style="font-size: 0.85rem; color: #fef08a; margin-top: 4px; line-height: 1.4;" id="locked-class-schedule">
+        <div class="modal-locked-banner">
+            <div class="modal-locked-class" id="locked-class-name">Kelas -</div>
+            <div class="modal-locked-detail" id="locked-class-schedule">
                 Jadwal Resmi Mata Pelajaran (Rini Syafitri): -
             </div>
-            <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 8px; border-top: 1px dashed rgba(234,179,8,0.2); padding-top: 6px;" id="locked-current-time">
+            <div class="modal-locked-time" id="locked-current-time">
                 Waktu Saat Ini: -
             </div>
         </div>
 
-        <p style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 20px; line-height: 1.45;">
+        <p class="modal-locked-note">
             💡 <em>Akses pengerjaan kuis akan terbuka secara otomatis tepat pada jam pelajaran guru mata pelajaran dimulai.</em>
         </p>
 
@@ -349,14 +349,14 @@
 <div class="modal-overlay" id="already-submitted-modal">
     <div class="modal-box" style="border-color: rgba(59,130,246,0.4); box-shadow: 0 0 40px rgba(59,130,246,0.25); max-width: 490px;">
         <div style="font-size: 3rem; margin-bottom: 6px;">📋🔒</div>
-        <h3 style="color: #60a5fa; margin-bottom: 8px;">Respon Sudah Tercatat</h3>
+        <h3 class="modal-dup-title" style="margin-bottom: 8px;">Respon Sudah Tercatat</h3>
         <p style="color: var(--text-secondary); line-height: 1.5; margin-bottom: 14px; font-size: 0.92rem;">
             Halo <strong id="dup-student-name" style="color: var(--accent);">-</strong>, Anda sudah pernah menyelesaikan dan mengirimkan jawaban kuis ini sebelumnya:
         </p>
 
         <div style="background: rgba(59,130,246,0.08); border: 1px solid rgba(59,130,246,0.3); border-radius: 12px; padding: 14px 16px; margin-bottom: 16px; text-align: left;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-                <span style="font-weight: 800; color: #93c5fd; font-size: 0.92rem;" id="dup-student-class">Kelas: -</span>
+                <span class="modal-dup-class" id="dup-student-class">Kelas: -</span>
                 <span class="score-pill high" id="dup-student-score" style="font-size: 0.85rem; padding: 3px 10px;">Skor: 0</span>
             </div>
             <div style="font-size: 0.8rem; color: var(--text-muted);" id="dup-student-meta">
@@ -377,16 +377,16 @@
 
 <!-- Anti-Cheat Warning Modal (Toleransi 3-Strike Warning System) -->
 <div class="modal-overlay" id="cheat-warning-modal" style="background: rgba(10, 5, 20, 0.95); z-index: 99998;">
-    <div class="modal-box" style="border-color: var(--warning); box-shadow: 0 0 60px rgba(234,179,8,0.4); max-width: 520px; animation: popIn 0.3s ease;">
+    <div class="modal-box" style="border-color: #ef4444; box-shadow: 0 0 60px rgba(239,68,68,0.3); max-width: 520px; animation: popIn 0.3s ease;">
         <div style="font-size: 3.5rem; margin-bottom: 6px;">⚠️🛡️</div>
-        <h2 style="color: var(--warning); font-size: 1.35rem; margin-bottom: 8px;" id="cheat-warning-title">
+        <h2 style="color: #ef4444; font-size: 1.35rem; margin-bottom: 8px;" id="cheat-warning-title">
             Peringatan Toleransi Anti-Cheat (#1 dari 3)
         </h2>
-        <div style="background: rgba(234,179,8,0.12); border: 1px solid rgba(234,179,8,0.4); border-radius: 12px; padding: 14px 18px; margin-bottom: 14px; text-align: left;">
-            <div style="font-weight: 800; color: #facc15; margin-bottom: 4px; font-size: 0.95rem;" id="cheat-warning-reason">
+        <div class="modal-cheat-banner">
+            <div class="modal-cheat-reason" id="cheat-warning-reason">
                 Penyebab: Berpindah Tab / Layar Terbelah
             </div>
-            <p style="color: #fef08a; font-size: 0.85rem; line-height: 1.5; margin: 0;" id="cheat-warning-desc">
+            <p class="modal-cheat-desc" id="cheat-warning-desc">
                 Kuis dihentikan sementara (PAUSED). Tetaplah berada pada halaman ujian sampai seluruh soal selesai dikerjakan demi menjaga integritas data Anda.
             </p>
         </div>
@@ -1985,26 +1985,26 @@
 <!-- ============================================================ -->
 <!-- 🧩 MODULAR JAVASCRIPT LIBRARIES & ENGINES                   -->
 <!-- ============================================================ -->
-<script src="js/student_roster.js?v=20261106-release-v3004"></script>
-<script src="js/default_records.js?v=20261106-release-v3004"></script>
-<script src="js/default_questions.js?v=20261106-release-v3004"></script>
-<script src="js/doc_parser.js?v=20261106-release-v3004"></script>
-<script src="js/ai_nemotron.js?v=20261106-release-v3004"></script>
-<script src="js/quiz_manager.js?v=20261106-release-v3004"></script>
-<script src="js/question_editor.js?v=20261106-release-v3004"></script>
-<script src="js/firebase_sync.js?v=20261106-release-v3004"></script>
-<script src="js/deviceTier.js?v=20261106-release-v3004"></script>
-<script src="js/storage.js?v=20261106-release-v3004"></script>
-<script src="js/audio.js?v=20261106-release-v3004"></script>
-<script src="js/particles.js?v=20261106-release-v3004"></script>
-<script src="js/quiz_engine.js?v=20261106-release-v3004"></script>
-<script src="js/dashboard.js?v=20261106-release-v3004"></script>
-<script src="js/export_reports.js?v=20261106-release-v3004"></script>
-<script src="js/ai_studio.js?v=20261106-release-v3004"></script>
-<script src="js/diagnostics.js?v=20261106-release-v3004"></script>
-<script src="js/learning_hub.js?v=20261106-release-v3004"></script>
-<script src="js/mini_games.js?v=20261106-release-v3004"></script>
-<script src="js/teacher_chatbot.js?v=20261106-release-v3004"></script>
+<script src="js/student_roster.js?v=20261106-release-v3005"></script>
+<script src="js/default_records.js?v=20261106-release-v3005"></script>
+<script src="js/default_questions.js?v=20261106-release-v3005"></script>
+<script src="js/doc_parser.js?v=20261106-release-v3005"></script>
+<script src="js/ai_nemotron.js?v=20261106-release-v3005"></script>
+<script src="js/quiz_manager.js?v=20261106-release-v3005"></script>
+<script src="js/question_editor.js?v=20261106-release-v3005"></script>
+<script src="js/firebase_sync.js?v=20261106-release-v3005"></script>
+<script src="js/deviceTier.js?v=20261106-release-v3005"></script>
+<script src="js/storage.js?v=20261106-release-v3005"></script>
+<script src="js/audio.js?v=20261106-release-v3005"></script>
+<script src="js/particles.js?v=20261106-release-v3005"></script>
+<script src="js/quiz_engine.js?v=20261106-release-v3005"></script>
+<script src="js/dashboard.js?v=20261106-release-v3005"></script>
+<script src="js/export_reports.js?v=20261106-release-v3005"></script>
+<script src="js/ai_studio.js?v=20261106-release-v3005"></script>
+<script src="js/diagnostics.js?v=20261106-release-v3005"></script>
+<script src="js/learning_hub.js?v=20261106-release-v3005"></script>
+<script src="js/mini_games.js?v=20261106-release-v3005"></script>
+<script src="js/teacher_chatbot.js?v=20261106-release-v3005"></script>
 <script src="js/cyber_guardian_game.js?v=20261106-release-v3002"></script>
 <script src="js/app.js?v=20261106-release-v3002"></script>
 

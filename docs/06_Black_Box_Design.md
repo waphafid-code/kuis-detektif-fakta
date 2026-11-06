@@ -34,14 +34,14 @@ flowchart LR
 #### Pembagian Partisi Ekuivalen:
 | Partisi | Tipe | Rentang Nilai / Karakteristik | Sampel Uji | Perilaku yang Diharapkan |
 |---|:---:|---|:---:|---|
-| **P1** | **Valid** | Tepat 6 digit numerik, hash SHA-256 cocok dengan konfigurasi guru. | `240804` | Modal PIN tertutup, Dasbor Manajemen Guru terbuka penuh. |
-| **P2** | **Invalid** | Tepat 6 digit numerik, namun nilai salah / tidak cocok. | `123456` | Muncul pesan error merah "PIN Salah!", akses dasbor ditolak. |
-| **P3** | **Invalid** | Kurang dari 6 digit atau mengandung karakter alfabet/simbol. | `12ab` | Form menolak submit, border input berkedip merah peringatan. |
+| **P1** | **Valid** | Tepat 4 digit numerik, hash SHA-256 cocok dengan konfigurasi guru. | `2543` | Modal PIN tertutup, Dasbor Manajemen Guru terbuka penuh. |
+| **P2** | **Invalid** | Tepat 4 digit numerik, namun nilai salah / tidak cocok. | `9999` | Muncul pesan error merah "PIN Salah!", akses dasbor ditolak. |
+| **P3** | **Invalid** | Kurang dari 4 digit atau mengandung karakter alfabet/simbol. | `12ab` | Form menolak submit, border input berkedip merah peringatan. |
 
 #### Eksekusi Test Case EP:
-- **TC-01 (EP Valid):** Masukkan PIN `240804` $\rightarrow$ **PASS**  
+- **TC-01 (EP Valid):** Masukkan PIN `2543` $\rightarrow$ **PASS**  
   *Bukti Screenshot:* [TC01_EP_Valid_PIN.png](../evidence/TC01_EP_Valid_PIN.png)
-- **TC-02 (EP Invalid Salah Nilai):** Masukkan PIN `123456` $\rightarrow$ **PASS**  
+- **TC-02 (EP Invalid Salah Nilai):** Masukkan PIN `9999` $\rightarrow$ **PASS**  
   *Bukti Screenshot:* [TC02_EP_Invalid_PIN.png](../evidence/TC02_EP_Invalid_PIN.png)
 - **TC-03 (EP Invalid Format):** Masukkan input `12ab` $\rightarrow$ **PASS**  
   *Bukti Screenshot:* [TC03_EP_Format_PIN.png](../evidence/TC03_EP_Format_PIN.png)
@@ -162,8 +162,8 @@ stateDiagram-v2
 
 | ID Uji | Teknik | Deskripsi Skenario Uji | Status | Bukti Tangkapan Layar |
 |:---:|:---:|---|:---:|---|
-| **TC-01** | EP | Input PIN Guru Valid (`240804`) | **PASS** | `TC01_EP_Valid_PIN.png` |
-| **TC-02** | EP | Input PIN Guru Salah (`123456`) | **PASS** | `TC02_EP_Invalid_PIN.png` |
+| **TC-01** | EP | Input PIN Guru Valid (`2543`) | **PASS** | `TC01_EP_Valid_PIN.png` |
+| **TC-02** | EP | Input PIN Guru Salah (`9999`) | **PASS** | `TC02_EP_Invalid_PIN.png` |
 | **TC-03** | EP | Input PIN Format Non-Numerik (`12ab`) | **PASS** | `TC03_EP_Format_PIN.png` |
 | **TC-04** | BVA | Skor Batas Bawah KKM (Skor 79) $\rightarrow$ Remedial | **PASS** | `TC04_BVA_KKM_79_Remedial.png` |
 | **TC-05** | BVA | Skor Tepat Batas KKM (Skor 80) $\rightarrow$ Tuntas | **PASS** | `TC05_BVA_KKM_80_Tuntas.png` |

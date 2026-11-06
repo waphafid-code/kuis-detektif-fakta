@@ -121,7 +121,7 @@ flowchart LR
 | **Status Akhir** | **CLOSED (RESOLVED & VERIFIED)** |
 
 #### Langkah Reproduksi (Steps to Reproduce):
-1. Buka Portal Dasbor Guru dengan PIN `240804`.
+1. Buka Portal Dasbor Guru dengan PIN `2543`.
 2. Buka widget chat **Asisten Analisis Pintar Gemini**.
 3. Ketik pertanyaan: `"siapa saja yang belum mengerjakan"` atau `"SIAPA SAJA YANG BELUM MENEGRJKANA MODUL JARINGAN DI E1"`.
 4. Tekan tombol Kirim.

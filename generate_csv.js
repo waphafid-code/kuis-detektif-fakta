@@ -8,7 +8,7 @@ const testCases = [
     technique: 'Equivalence Partitioning',
     precondition: 'Pengguna berada di layar utama (Lobby) dan menekan tombol Portal Dasbor Guru.',
     steps: '1. Klik Portal Dasbor Guru; 2. Masukkan PIN pada input modal; 3. Klik Verifikasi PIN Masuk.',
-    data: 'PIN = "2026" (Kelas Valid)',
+    data: 'PIN = "2543" (Kelas Valid)',
     expected: 'Modal tertutup, otentikasi berhasil, dan layar Dasbor Guru (screen-teacher) terbuka penuh.',
     actual: 'Otentikasi berhasil, token tersimpan di sessionStorage, Dasbor Guru terbuka.',
     status: 'PASS',

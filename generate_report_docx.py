@@ -347,7 +347,7 @@ def main():
     doc.add_heading("3.2 Acceptance Criteria (Given-When-Then)", level=2)
     doc.add_paragraph(
         "Kriteria penerimaan diformulasikan menggunakan sintaks Gherkin standar untuk memandu verifikasi:\n\n"
-        "• AC-01 (REQ-01): Given guru membuka modal PIN Dasbor Guru, When guru memasukkan PIN valid '240804', Then sistem membuka layar Dasbor Guru dalam waktu < 500ms.\n\n"
+        "• AC-01 (REQ-01): Given guru membuka modal PIN Dasbor Guru, When guru memasukkan PIN valid '2543', Then sistem membuka layar Dasbor Guru dalam waktu < 500ms.\n\n"
         "• AC-02 (REQ-02): Given siswa menyelesaikan 20 soal kuis, When siswa memperoleh skor tepat 80 (16 benar), Then sistem menampilkan badge hijau 'TUNTAS' dan menonaktifkan kewajiban remedial.\n\n"
         "• AC-03 (REQ-03): Given status kelas X E.1 disetel ke mode 'Always Open', When siswa menekan 'Mulai Kuis' di luar jam sekolah, Then sistem mengizinkan pengerjaan ujian secara normal.\n\n"
         "• AC-04 (REQ-05): Given guru membuka Asisten Pintar Gemini di dasbor, When guru mengetik 'SIAPA SAJA YANG BELUM MENEGRJKANA MODUL JARINGAN DI E1', Then chatbot mengekstraksi kelas X E.1 dan menampilkan daftar 36 siswa yang belum submit."
@@ -449,8 +449,8 @@ def main():
         tc_tbl.cell(0, i).paragraphs[0].text = h
     
     tc_data = [
-        ("TC-01", "EP", "Valid PIN Otorisasi Guru", "PIN '240804'", "Dasbor Guru Terbuka", "PASS"),
-        ("TC-02", "EP", "Invalid PIN (Salah Nilai)", "PIN '123456'", "Error 'PIN Salah!'", "PASS"),
+        ("TC-01", "EP", "Valid PIN Otorisasi Guru", "PIN '2543'", "Dasbor Guru Terbuka", "PASS"),
+        ("TC-02", "EP", "Invalid PIN (Salah Nilai)", "PIN '9999'", "Error 'PIN Salah!'", "PASS"),
         ("TC-03", "EP", "Invalid Format PIN", "Input '12ab'", "Blokir input non-numerik", "PASS"),
         ("TC-04", "BVA", "Batas Bawah KKM (N-1)", "Skor 79 (15 Benar)", "Status 'REMEDIAL'", "PASS"),
         ("TC-05", "BVA", "Tepat Batas KKM (N)", "Skor 80 (16 Benar)", "Status 'TUNTAS'", "PASS"),
@@ -483,9 +483,9 @@ def main():
     doc.add_heading("6.1 Teknik 1: Equivalence Partitioning (EP) — REQ-01 Otorisasi PIN Guru", level=2)
     doc.add_paragraph(
         "Domain input PIN dibagi menjadi 3 partisi:\n"
-        "• Partisi 1 (Valid): Input numerik 6 digit dengan hash SHA-256 yang tepat ('240804').\n"
-        "• Partisi 2 (Invalid Nilai): Input numerik 6 digit tetapi nilai salah ('123456').\n"
-        "• Partisi 3 (Invalid Format): Input panjang kurang dari 6 digit atau karakter non-numerik ('12ab')."
+        "• Partisi 1 (Valid): Input numerik 4 digit dengan hash SHA-256 yang tepat ('2543').\n"
+        "• Partisi 2 (Invalid Nilai): Input numerik 4 digit tetapi nilai salah ('9999').\n"
+        "• Partisi 3 (Invalid Format): Input panjang kurang dari 4 digit atau karakter non-numerik ('12ab')."
     )
     add_image_box(doc, "evidence/TC01_EP_Valid_PIN.png", "TC-01: Verifikasi Input PIN Guru Valid (Akses Diberikan)")
     add_image_box(doc, "evidence/TC02_EP_Invalid_PIN.png", "TC-02: Verifikasi Input PIN Guru Salah (Akses Ditolak)")
@@ -656,9 +656,17 @@ def main():
     format_table_data_cells(contrib_tbl, [1.8, 1.5, 2.3, 0.6])
 
     # Save document
-    output_filename = "Laporan_Mini_QA_Audit_QuizMaster.docx"
-    doc.save(output_filename)
-    print(f"[SUCCESS] Berkas laporan Word berhasil dibuat: {output_filename} ({os.path.getsize(output_filename)} bytes)")
+    primary_filename = "Laporan_Mini_QA_Audit_QuizMaster_REVISI_FINAL.docx"
+    doc.save(primary_filename)
+    print(f"[SUCCESS] Berkas laporan Word berhasil dibuat: {primary_filename} ({os.path.getsize(primary_filename)} bytes)")
+
+    # Also attempt to save to default filename if not locked
+    default_filename = "Laporan_Mini_QA_Audit_QuizMaster.docx"
+    try:
+        doc.save(default_filename)
+        print(f"[SUCCESS] Berkas laporan Word default juga berhasil diperbarui: {default_filename} ({os.path.getsize(default_filename)} bytes)")
+    except PermissionError:
+        print(f"[NOTE] Berkas {default_filename} sedang dibuka di Microsoft Word. Versi final tersimpan di {primary_filename}.")
 
 if __name__ == "__main__":
     main()

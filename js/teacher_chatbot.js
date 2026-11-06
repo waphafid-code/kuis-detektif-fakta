@@ -856,9 +856,7 @@
         // ============================================================
         // A. INTENT: PETA MISKONSEPSI & BUTIR SOAL TERSULIT (PRIORITAS TINGGI)
         // ============================================================
-        const isMisconceptionQuery = /\b(mis+konsepsi|salah\s*paham|terkecoh|sulit|susah|rumit|bingung|membingungkan|soal\s*tersulit|butir\s*soal|analisis\s*butir|daya\s*serap|kelemahan|titik\s*buta)\b/i.test(p) ||
-            (/\b(soal|pertanyaan|butir)\b/i.test(p) && /\b(salah|banyak\s*salah|sering\s*salah|terbanyak\s*salah|keliru|sulit|susah)\b/i.test(p)) ||
-            (/\b(banyak|sering|paling)\s*(yang\s*)?salah\b/i.test(p));
+        const isMisconceptionQuery = /\b(mis+konsepsi|salah\s*paham|terkecoh|sulit|susah|paling\s*banyak\s*salah|soal\s*tersulit|butir\s*soal|analisis\s*butir|daya\s*serap|kelemahan|titik\s*buta)\b/i.test(p);
         if (isMisconceptionQuery) {
             const worstFakta = ctx.worstFaktaQuestions.slice(0, 3);
             const worstJaringan = ctx.worstJaringanQuestions.slice(0, 3);
@@ -897,8 +895,7 @@
         // ============================================================
         // B. INTENT: PETA PROSES BELAJAR MENGAJAR REAL-TIME & MASUKAN GURU
         // ============================================================
-        const isLiveMapQuery = /\b(peta\s*belajar|peta\s*proses|proses\s*belajar|peta\s*nilai|peta\s*kelas|peta\s*capaian|sedang\s*terjadi|apa\s*yang\s*terjadi|realtime|real-time|kondisi\s*kelas|situasi\s*kelas|masukan|rekomendasi|evaluasi\s*kelas)\b/i.test(p) ||
-            (/^peta\b/i.test(p));
+        const isLiveMapQuery = /\b(peta\s*belajar|peta\s*proses|proses\s*belajar|sedang\s*terjadi|apa\s*yang\s*terjadi|realtime|real-time|kondisi\s*kelas|situasi\s*kelas|masukan|rekomendasi|evaluasi\s*kelas)\b/i.test(p);
         if (isLiveMapQuery) {
             const pctBoth = Math.round((ctx.finishedBoth.length / ctx.totalEnrolled) * 100);
             const pctNone = Math.round((ctx.finishedNone.length / ctx.totalEnrolled) * 100);
@@ -957,10 +954,7 @@
         // ============================================================
         // D. INTENT: SISWA BELUM MENGERJAKAN SALAH SATU MODUL (BARU 1 MODUL)
         // ============================================================
-        const isBelumSalahSatuQuery = /\b(salah\s*satu|parsial|belum\s*lengkap)\b/i.test(p) ||
-            (/\b(baru|hanya|cuma)\b/i.test(p) && /\b(1|satu)\s*(modul|kuis)\b/i.test(p)) ||
-            (/\b(baru|hanya|cuma)\b/i.test(p) && /\b(modul|kuis)\s*(1|2|satu|dua|fakta|jaringan)\b/i.test(p)) ||
-            (/\b(baru|hanya|cuma)\b/i.test(p) && /\b(1|satu)\b/i.test(p));
+        const isBelumSalahSatuQuery = /\b(salah\s*satu|baru\s*1|baru\s*satu|hanya\s*1|hanya\s*satu|parsial|belum\s*lengkap|1\s*modul\s*saja|satu\s*modul\s*saja)\b/i.test(p);
         if (isBelumSalahSatuQuery) {
             let list = ctx.finishedOneOnly;
             if (targetClass) list = list.filter(s => s.class === targetClass);
@@ -985,8 +979,7 @@
         // ============================================================
         // E. INTENT: SISWA YANG SUDAH MENYELESAIKAN KEDUA MODUL (TUNTAS 2 MODUL)
         // ============================================================
-        const isSudahKeduaModulQuery = /\b(sudah|tuntas|selesai).*(kedua|2\s*modul|dua\s*modul|semua\s*modul|kedua\s*kuis|2\s*kuis|semuanya|seluruhnya|keduanya|dua-duanya|2-2nya|dua\s*duanya)\b/i.test(p) ||
-            /\b(tuntas|selesai)\s*(keduanya|dua-duanya|2-2nya|semuanya)\b/i.test(p);
+        const isSudahKeduaModulQuery = /\b(sudah|tuntas|selesai).*(kedua|2\s*modul|dua\s*modul|semua\s*modul|kedua\s*kuis|2\s*kuis)\b/i.test(p);
         if (isSudahKeduaModulQuery) {
             let list = ctx.finishedBoth;
             if (targetClass) list = list.filter(s => s.class === targetClass);
@@ -1009,7 +1002,7 @@
         // ============================================================
         // F. INTENT: SISWA REMEDIAL & NILAI DI BAWAH KKM 80
         // ============================================================
-        const isRemedialQuery = /\b(remedial|remedi|di\s*bawah\s*80|kurang\s*dari\s*80|tidak\s*tuntas|belum\s*tuntas|tidak\s*lulus|gagal|skor\s*rendah|nilai\s*merah|merah)\b/i.test(p);
+        const isRemedialQuery = /\b(remedial|remedi|di\s*bawah\s*80|kurang\s*dari\s*80|tidak\s*tuntas|belum\s*tuntas|tidak\s*lulus|gagal|skor\s*rendah)\b/i.test(p);
         if (isRemedialQuery) {
             let listFakta = ctx.studentProfiles.filter(s => s.hasFakta && s.scoreFakta < 80);
             let listJaringan = ctx.studentProfiles.filter(s => s.hasJaringan && s.scoreJaringan < 80);
@@ -1091,7 +1084,7 @@
         // ============================================================
         // I. INTENT: PERTANYAAN UMUM BELUM MENGERJAKAN (OVERVIEW BELUM UJIAN)
         // ============================================================
-        const isGeneralBelumQuery = /\b(siapa.*belum|belum\s*mengerjakan|belum\s*ujian|belum\s*kuis|blm\s*ngerjain|daftar\s*belum|menegrjkana|menegrkana|belum\s*ikut|belum\s*selesai|belum\s*ada\s*nilai|belum\s*ambil\s*nilai)\b/i.test(p);
+        const isGeneralBelumQuery = /\b(siapa.*belum|belum\s*mengerjakan|belum\s*ujian|belum\s*kuis|blm\s*ngerjain|daftar\s*belum|menegrjkana|menegrkana)\b/i.test(p);
         if (isGeneralBelumQuery) {
             let unsubmittedJaringan = ctx.studentProfiles.filter(s => !s.hasJaringan);
             let unsubmittedFakta = ctx.studentProfiles.filter(s => !s.hasFakta);

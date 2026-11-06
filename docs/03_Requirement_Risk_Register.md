@@ -24,12 +24,12 @@ Tim QA merumuskan 5 kebutuhan fungsional inti yang menjadi dasar pengujian siste
 Feature: Otorisasi Keamanan Dasbor Guru
   Scenario: Guru memasukkan PIN yang benar
     Given guru berada di halaman utama dan membuka modal PIN Dasbor Guru
-    When guru memasukkan 6-digit PIN yang valid ("240804")
+    When guru memasukkan 4-digit PIN yang valid ("2543")
     Then sistem memvalidasi hash SHA-256 dan membuka layar Dasbor Manajemen Guru dalam waktu < 500ms
 
   Scenario: Guru memasukkan PIN salah
     Given guru berada di modal PIN Dasbor Guru
-    When guru memasukkan 6-digit PIN yang tidak terdaftar ("123456")
+    When guru memasukkan 4-digit PIN yang tidak terdaftar ("9999")
     Then sistem menolak akses, menampilkan pesan peringatan merah "PIN Salah!", dan mengunci form input
 ```
 

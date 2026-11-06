@@ -8366,3 +8366,195 @@ html, body {
     border-color: rgba(16, 185, 129, 0.4) !important;
     color: #6EE7B7 !important;
 }
+
+/* ============================================================ */
+/* 🔒 HIGH-CONTRAST MODAL & ALERT STYLING (WCAG AAA CERTIFIED)  */
+/* Eliminates yellow-on-white / illegible clashing text colors  */
+/* ============================================================ */
+.modal-locked-box {
+    border: 2px solid #d97706 !important;
+    box-shadow: 0 10px 40px rgba(217, 119, 6, 0.22) !important;
+    max-width: 490px;
+}
+
+.modal-locked-title {
+    color: #9a3412 !important; /* Deep rich amber in light theme: Contrast 7.5:1 */
+    font-size: 1.35rem !important;
+    font-weight: 800 !important;
+    margin-bottom: 8px !important;
+}
+
+.modal-locked-sub {
+    color: #334155 !important;
+    line-height: 1.5 !important;
+    margin-bottom: 14px !important;
+    font-size: 0.92rem !important;
+}
+
+.modal-locked-sub strong {
+    color: #0f172a !important;
+}
+
+.modal-locked-banner {
+    background: #fffbeb !important; /* Warm amber cream background */
+    border: 1.5px solid #f59e0b !important;
+    border-radius: 12px !important;
+    padding: 14px 16px !important;
+    margin-bottom: 16px !important;
+    text-align: left !important;
+}
+
+.modal-locked-class {
+    font-weight: 800 !important;
+    color: #78350f !important; /* Deep bronze brown: Contrast 8.5:1 */
+    font-size: 1rem !important;
+    margin-bottom: 4px !important;
+}
+
+.modal-locked-detail {
+    font-size: 0.88rem !important;
+    color: #78350f !important; /* Crisp, readable dark bronze text */
+    line-height: 1.5 !important;
+    font-weight: 600 !important;
+}
+
+.modal-locked-detail strong {
+    color: #451a03 !important;
+}
+
+.modal-locked-time {
+    font-size: 0.8rem !important;
+    color: #92400e !important;
+    margin-top: 8px !important;
+    border-top: 1px dashed rgba(217, 119, 6, 0.35) !important;
+    padding-top: 6px !important;
+    font-weight: 600 !important;
+}
+
+.modal-locked-note {
+    font-size: 0.84rem !important;
+    color: #475569 !important;
+    margin-bottom: 20px !important;
+    line-height: 1.5 !important;
+    font-weight: 500 !important;
+}
+
+/* Dark Theme Adaptations for Locked Modal */
+[data-theme="dark"] .modal-locked-box,
+body.dark-theme .modal-locked-box {
+    border: 2px solid rgba(251, 191, 36, 0.6) !important;
+    box-shadow: 0 10px 40px rgba(251, 191, 36, 0.25) !important;
+}
+
+[data-theme="dark"] .modal-locked-title,
+body.dark-theme .modal-locked-title {
+    color: #fde047 !important;
+}
+
+[data-theme="dark"] .modal-locked-sub,
+body.dark-theme .modal-locked-sub {
+    color: #e2e8f0 !important;
+}
+
+[data-theme="dark"] .modal-locked-sub strong,
+body.dark-theme .modal-locked-sub strong {
+    color: #ffffff !important;
+}
+
+[data-theme="dark"] .modal-locked-banner,
+body.dark-theme .modal-locked-banner {
+    background: rgba(245, 158, 11, 0.14) !important;
+    border: 1.5px solid rgba(251, 191, 36, 0.45) !important;
+}
+
+[data-theme="dark"] .modal-locked-class,
+body.dark-theme .modal-locked-class {
+    color: #fef08a !important;
+}
+
+[data-theme="dark"] .modal-locked-detail,
+body.dark-theme .modal-locked-detail {
+    color: #fef9c3 !important;
+}
+
+[data-theme="dark"] .modal-locked-detail strong,
+body.dark-theme .modal-locked-detail strong {
+    color: #ffffff !important;
+}
+
+[data-theme="dark"] .modal-locked-time,
+body.dark-theme .modal-locked-time {
+    color: #cbd5e1 !important;
+    border-top-color: rgba(251, 191, 36, 0.3) !important;
+}
+
+[data-theme="dark"] .modal-locked-note,
+body.dark-theme .modal-locked-note {
+    color: #94a3b8 !important;
+}
+
+/* Duplicate Submission Modal High Contrast */
+.modal-dup-title {
+    color: #1d4ed8 !important;
+    font-size: 1.35rem !important;
+    font-weight: 800 !important;
+    margin-bottom: 8px !important;
+}
+
+.modal-dup-class {
+    font-weight: 800 !important;
+    color: #1e40af !important;
+    font-size: 0.95rem !important;
+}
+
+[data-theme="dark"] .modal-dup-title,
+body.dark-theme .modal-dup-title {
+    color: #60a5fa !important;
+}
+
+[data-theme="dark"] .modal-dup-class,
+body.dark-theme .modal-dup-class {
+    color: #93c5fd !important;
+}
+
+/* Anti-Cheat Warning Modal High Contrast */
+.modal-cheat-banner {
+    background: #fef2f2 !important;
+    border: 1.5px solid #ef4444 !important;
+    border-radius: 12px !important;
+    padding: 14px 18px !important;
+    margin-bottom: 14px !important;
+    text-align: left !important;
+}
+
+.modal-cheat-reason {
+    font-weight: 800 !important;
+    color: #991b1b !important;
+    margin-bottom: 4px !important;
+    font-size: 0.95rem !important;
+}
+
+.modal-cheat-desc {
+    color: #7f1d1d !important;
+    font-size: 0.86rem !important;
+    line-height: 1.5 !important;
+    margin: 0 !important;
+    font-weight: 500 !important;
+}
+
+[data-theme="dark"] .modal-cheat-banner,
+body.dark-theme .modal-cheat-banner {
+    background: rgba(239, 68, 68, 0.15) !important;
+    border: 1.5px solid rgba(239, 68, 68, 0.45) !important;
+}
+
+[data-theme="dark"] .modal-cheat-reason,
+body.dark-theme .modal-cheat-reason {
+    color: #fca5a5 !important;
+}
+
+[data-theme="dark"] .modal-cheat-desc,
+body.dark-theme .modal-cheat-desc {
+    color: #fee2e2 !important;
+}
+
