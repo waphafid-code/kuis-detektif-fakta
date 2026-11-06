@@ -34,9 +34,9 @@
         }
     </script>
     <!-- QuizMaster Modern Design System & UI Styling -->
-    <link rel="stylesheet" href="css/style.css?v=20261026-mobile-perfect-v2">
+    <link rel="stylesheet" href="css/style.css?v=20261106-release-v3000">
     <!-- Cyber Guardian Sentinel Protocol & Gemini Teacher AI Assistant Styling -->
-    <link rel="stylesheet" href="css/guardian_and_chatbot.css?v=20261026-mobile-perfect-v2">
+    <link rel="stylesheet" href="css/guardian_and_chatbot.css?v=20261106-release-v3000">
 
 
 </head>
@@ -48,22 +48,31 @@
 <canvas id="particle-canvas"></canvas>
 
 <!-- 📱 MOBILE TOP BAR (TAMPIL HANYA DI LAYAR KECIL) -->
-<div class="mobile-top-bar" id="mobile-top-bar">
-    <button class="mobile-menu-btn" onclick="toggleSidebarMenu()" aria-label="Buka Menu Navigasi">
-        <span>☰</span>
-    </button>
-    <div class="mobile-brand-box" onclick="goHome()" style="cursor: pointer;" title="Beranda QuizMaster">
-        <div class="mobile-brand-icon">
-            <span>🎓</span>
+<header class="mobile-top-bar" id="mobile-top-bar">
+    <div class="mobile-bar-left">
+        <button class="mobile-menu-btn" onclick="toggleSidebarMenu()" aria-label="Buka Menu Navigasi" title="Menu Navigasi">
+            <svg class="menu-icon-svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <line x1="3.5" y1="6" x2="20.5" y2="6"></line>
+                <line x1="3.5" y1="12" x2="20.5" y2="12"></line>
+                <line x1="3.5" y1="18" x2="20.5" y2="18"></line>
+            </svg>
+        </button>
+        <div class="mobile-brand-box" onclick="goHome()" title="Beranda QuizMaster">
+            <div class="mobile-brand-icon">
+                <span class="brand-cap-emoji">🎓</span>
+            </div>
+            <div class="mobile-brand-text">
+                <span class="brand-name">QuizMaster</span>
+                <span class="brand-sub">SMAN 4 Padang</span>
+            </div>
         </div>
-        <span class="brand-name">QuizMaster</span>
     </div>
     <div class="mobile-ctrl-group">
         <button class="mobile-theme-btn" onclick="toggleTheme()" title="Mode Tema" aria-label="Ganti Tema">
             <span id="theme-icon-mob">🌙</span>
         </button>
     </div>
-</div>
+</header>
 <div class="sidebar-backdrop" id="sidebar-backdrop" onclick="toggleSidebarMenu(false)"></div>
 
 <!-- 🏛️ MODERN STRUCTURED SIDEBAR NAVIGATION -->
@@ -1971,28 +1980,28 @@
 <!-- ============================================================ -->
 <!-- 🧩 MODULAR JAVASCRIPT LIBRARIES & ENGINES                   -->
 <!-- ============================================================ -->
-<script src="js/student_roster.js?v=20261026-secfix"></script>
-<script src="js/default_records.js?v=20261026-secfix"></script>
-<script src="js/default_questions.js?v=20261026-secfix"></script>
-<script src="js/doc_parser.js?v=20261026-secfix"></script>
-<script src="js/ai_nemotron.js?v=20261026-secfix"></script>
-<script src="js/quiz_manager.js?v=20261026-secfix"></script>
-<script src="js/question_editor.js?v=20261026-secfix"></script>
-<script src="js/firebase_sync.js?v=20261028-v1"></script>
-<script src="js/deviceTier.js?v=20261029-perf"></script>
-<script src="js/storage.js?v=20261029-perf"></script>
-<script src="js/audio.js?v=20261026-examlock"></script>
-<script src="js/particles.js?v=20261026-examlock"></script>
-<script src="js/quiz_engine.js?v=20261026-examlock"></script>
-<script src="js/dashboard.js?v=20261026-examlock"></script>
-<script src="js/export_reports.js?v=20261026-examlock"></script>
-<script src="js/ai_studio.js?v=20261026-examlock"></script>
-<script src="js/diagnostics.js?v=20261026-examlock"></script>
-<script src="js/learning_hub.js?v=20261026-examlock"></script>
-<script src="js/mini_games.js?v=20261026-examlock"></script>
-<script src="js/teacher_chatbot.js?v=20261026-streamchat"></script>
-<script src="js/cyber_guardian_game.js?v=20261026-examlock"></script>
-<script src="js/app.js?v=20261026-examlock"></script>
+<script src="js/student_roster.js?v=20261106-release-v3000"></script>
+<script src="js/default_records.js?v=20261106-release-v3000"></script>
+<script src="js/default_questions.js?v=20261106-release-v3000"></script>
+<script src="js/doc_parser.js?v=20261106-release-v3000"></script>
+<script src="js/ai_nemotron.js?v=20261106-release-v3000"></script>
+<script src="js/quiz_manager.js?v=20261106-release-v3000"></script>
+<script src="js/question_editor.js?v=20261106-release-v3000"></script>
+<script src="js/firebase_sync.js?v=20261106-release-v3000"></script>
+<script src="js/deviceTier.js?v=20261106-release-v3000"></script>
+<script src="js/storage.js?v=20261106-release-v3000"></script>
+<script src="js/audio.js?v=20261106-release-v3000"></script>
+<script src="js/particles.js?v=20261106-release-v3000"></script>
+<script src="js/quiz_engine.js?v=20261106-release-v3000"></script>
+<script src="js/dashboard.js?v=20261106-release-v3000"></script>
+<script src="js/export_reports.js?v=20261106-release-v3000"></script>
+<script src="js/ai_studio.js?v=20261106-release-v3000"></script>
+<script src="js/diagnostics.js?v=20261106-release-v3000"></script>
+<script src="js/learning_hub.js?v=20261106-release-v3000"></script>
+<script src="js/mini_games.js?v=20261106-release-v3000"></script>
+<script src="js/teacher_chatbot.js?v=20261106-release-v3000"></script>
+<script src="js/cyber_guardian_game.js?v=20261106-release-v3000"></script>
+<script src="js/app.js?v=20261106-release-v3000"></script>
 
 </body>
 </html>
