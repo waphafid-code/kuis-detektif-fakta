@@ -121,13 +121,20 @@ function saveCurrentQuizSession() {
             isRemedialSession
         };
         sessionData._sig = computeSessionChecksum(sessionData);
-        sessionStorage.setItem(SESSION_QUIZ_ACTIVE_KEY, JSON.stringify(sessionData));
+        sessionData.savedAt = Date.now();
+        const jsonStr = JSON.stringify(sessionData);
+        sessionStorage.setItem(SESSION_QUIZ_ACTIVE_KEY, jsonStr);
+        // 🛡️ DUAL STORAGE PERSISTENCE: Lindungi dari RAM eviction Android HP Kentang
+        localStorage.setItem('quizmaster_active_exam_session_backup', jsonStr);
     } catch(e) {}
 }
 
 function checkUnfinishedSession() {
     try {
-        const raw = sessionStorage.getItem(SESSION_QUIZ_ACTIVE_KEY);
+        let raw = sessionStorage.getItem(SESSION_QUIZ_ACTIVE_KEY);
+        if (!raw) {
+            raw = localStorage.getItem('quizmaster_active_exam_session_backup');
+        }
         if (!raw) return;
         const data = JSON.parse(raw);
         if (data && data.studentName && data.shuffledQuizOrder && data.shuffledQuizOrder.length > 0) {
@@ -149,7 +156,10 @@ async function restoreQuizSession() {
     sfxClick();
     document.getElementById('resume-modal').classList.remove('active');
     try {
-        const raw = sessionStorage.getItem(SESSION_QUIZ_ACTIVE_KEY);
+        let raw = sessionStorage.getItem(SESSION_QUIZ_ACTIVE_KEY);
+        if (!raw) {
+            raw = localStorage.getItem('quizmaster_active_exam_session_backup');
+        }
         if (!raw) return;
         const data = JSON.parse(raw);
         if (!data._sig || data._sig !== computeSessionChecksum(data)) {
@@ -218,6 +228,8 @@ function discardQuizSession() {
     isCheatWarningActive = false;
     cheatStrikes = 0;
     sessionStorage.removeItem(SESSION_QUIZ_ACTIVE_KEY);
+    localStorage.removeItem('quizmaster_active_exam_session_backup');
+    releaseExamWakeLock();
     document.getElementById('resume-modal').classList.remove('active');
     goHome();
 }
@@ -506,13 +518,14 @@ document.addEventListener('visibilitychange', () => {
     }
     if (document.hidden) {
         clearBlurGraceTimer();
-        // Berikan waktu toleransi 8.0 detik agar pop-up banner WA/SMS/baterai di HP tidak langsung memicu penalti
+        // Toleransi: 15 detik di ponsel/tablet (notifikasi/panggilan/keyboard), 8 detik di desktop
+        const graceMs = isMobileOrTouchDevice() ? 15000 : 8000;
         blurGraceTimer = setTimeout(() => {
             if (document.hidden && isQuizActive() && !isCheatWarningActive && !isQuizFinishing) {
                 handleAntiCheatEvent('🌐 Berpindah Tab / Meminimalkan Browser');
             }
             blurGraceTimer = null;
-        }, 8000);
+        }, graceMs);
     } else {
         clearBlurGraceTimer();
     }
@@ -1035,6 +1048,8 @@ function startQuizActual() {
     loadQuestion(0);
     saveCurrentQuizSession();
     setTimeout(startBGM, 200);
+    requestExamWakeLock();
+    try { history.pushState({ inQuiz: true }, '', window.location.href); } catch(e) {}
 }
 
 let questionStartTime = 0;
@@ -2053,6 +2068,8 @@ async function finishQuiz() {
     // Hapus sesi aktif lokal kuis
     try {
         sessionStorage.removeItem(SESSION_QUIZ_ACTIVE_KEY);
+        localStorage.removeItem('quizmaster_active_exam_session_backup');
+        releaseExamWakeLock();
     } catch(e) {}
 
     // 🚀 LANGSUNG PINDAHKAN LAYAR KE HASIL KUIS!
@@ -2511,3 +2528,110 @@ window.closeRemedialBriefing = closeRemedialBriefing;
 window.executeRemedialSession = executeRemedialSession;
 
 
+
+// ============================================================
+// 📱 MOBILE EXAM RESILIENCE: WAKE LOCK, POPSTATE TRAP & OFFLINE QUEUE
+// ============================================================
+let examWakeLockSentinel = null;
+
+async function requestExamWakeLock() {
+    try {
+        if ('wakeLock' in navigator && !examWakeLockSentinel) {
+            examWakeLockSentinel = await navigator.wakeLock.request('screen');
+            examWakeLockSentinel.addEventListener('release', () => {
+                examWakeLockSentinel = null;
+            });
+        }
+    } catch(e) {}
+}
+window.requestExamWakeLock = requestExamWakeLock;
+
+function releaseExamWakeLock() {
+    try {
+        if (examWakeLockSentinel) {
+            examWakeLockSentinel.release();
+            examWakeLockSentinel = null;
+        }
+    } catch(e) {}
+}
+window.releaseExamWakeLock = releaseExamWakeLock;
+
+// 🛡️ TRAP ANDROID BACK GESTURE / BACK BUTTON (ANTI-TIBA-TIBA KELUAR)
+window.addEventListener('popstate', (e) => {
+    if (screens.quiz && screens.quiz.classList.contains('active') && !isQuizFinishing && !isCheatingTriggered) {
+        try { history.pushState({ inQuiz: true }, '', window.location.href); } catch(err) {}
+        if (typeof showToast === 'function') {
+            showToast('⚠️ Anda sedang mengerjakan ujian! Kuis tetap berlanjut di halaman ini.', '🛡️');
+        }
+    }
+});
+
+// 🛡️ AUTO-SAVE ON PAGE HIDE OR ACCIDENTAL UNLOAD
+window.addEventListener('pagehide', () => {
+    if (screens.quiz && screens.quiz.classList.contains('active') && !isQuizFinishing && !isCheatingTriggered) {
+        saveCurrentQuizSession();
+    }
+});
+window.addEventListener('beforeunload', (e) => {
+    if (screens.quiz && screens.quiz.classList.contains('active') && !isQuizFinishing && !isCheatingTriggered) {
+        saveCurrentQuizSession();
+        e.preventDefault();
+        e.returnValue = 'Sesi ujian Anda sedang berlangsung! Yakin ingin meninggalkan halaman?';
+        return e.returnValue;
+    }
+});
+
+// 📡 OFFLINE / ONLINE RESILIENCE SYSTEM
+function updateNetworkStatusDisplay(isOnline) {
+    const banner = document.getElementById('quiz-network-status-banner');
+    const icon = document.getElementById('network-banner-icon');
+    const text = document.getElementById('network-banner-text');
+    if (!banner) return;
+
+    if (!isOnline) {
+        banner.className = 'network-status-banner offline';
+        if (icon) icon.textContent = '📡';
+        if (text) text.textContent = 'Sinyal terputus: Tenang! Jawaban tersimpan aman di HP. Kuis tetap bisa Anda kerjakan hingga tuntas.';
+        banner.style.display = 'flex';
+    } else {
+        banner.className = 'network-status-banner online';
+        if (icon) icon.textContent = '🟢';
+        if (text) text.textContent = 'Terhubung kembali! Jawaban Anda akan otomatis tersinkronkan ke Dasbor Guru.';
+        banner.style.display = 'flex';
+        setTimeout(() => {
+            if (navigator.onLine && banner) banner.style.display = 'none';
+        }, 4000);
+        syncPendingOfflineRecords();
+    }
+}
+
+window.addEventListener('offline', () => updateNetworkStatusDisplay(false));
+window.addEventListener('online', () => updateNetworkStatusDisplay(true));
+
+// Background Sync Queue for Offline Submissions
+async function syncPendingOfflineRecords() {
+    try {
+        const raw = localStorage.getItem('quizmaster_offline_pending_sync');
+        if (!raw) return;
+        const pending = JSON.parse(raw);
+        if (Array.isArray(pending) && pending.length > 0) {
+            const remaining = [];
+            for (const item of pending) {
+                try {
+                    if (typeof saveRecord === 'function') {
+                        await saveRecord(item);
+                        console.log('🔄 Offline record synced successfully for:', item.name);
+                    }
+                } catch(e) {
+                    remaining.push(item);
+                }
+            }
+            if (remaining.length === 0) {
+                localStorage.removeItem('quizmaster_offline_pending_sync');
+            } else {
+                localStorage.setItem('quizmaster_offline_pending_sync', JSON.stringify(remaining));
+            }
+        }
+    } catch(e) {}
+}
+window.syncPendingOfflineRecords = syncPendingOfflineRecords;

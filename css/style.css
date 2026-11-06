@@ -8238,3 +8238,51 @@ html, body {
         padding: 6px 10px !important;
     }
 }
+
+/* ============================================================ */
+/* 📡 OFFLINE RESILIENCE & NETWORK STATUS BANNER                */
+/* ============================================================ */
+.network-status-banner {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 16px;
+    border-radius: 12px;
+    background: #FEF3C7;
+    border: 1.5px solid #F59E0B;
+    color: #92400E;
+    font-size: 0.82rem;
+    font-weight: 700;
+    margin-bottom: 14px;
+    animation: fadeIn 0.3s ease;
+    text-align: center;
+    line-height: 1.4;
+    box-sizing: border-box;
+}
+
+.network-status-banner.offline {
+    display: flex !important;
+    background: #FEF3C7 !important;
+    border-color: #F59E0B !important;
+    color: #92400E !important;
+}
+
+[data-theme="dark"] .network-status-banner.offline {
+    background: rgba(245, 158, 11, 0.15) !important;
+    border-color: rgba(245, 158, 11, 0.4) !important;
+    color: #FCD34D !important;
+}
+
+.network-status-banner.online {
+    display: flex !important;
+    background: #ECFDF5 !important;
+    border-color: #10B981 !important;
+    color: #065F46 !important;
+}
+
+[data-theme="dark"] .network-status-banner.online {
+    background: rgba(16, 185, 129, 0.15) !important;
+    border-color: rgba(16, 185, 129, 0.4) !important;
+    color: #6EE7B7 !important;
+}
