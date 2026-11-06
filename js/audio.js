@@ -596,7 +596,24 @@ function applyCloudSharedStateToLocal(state) {
 
         // 3. Sinkronisasi Pengaturan Akses Kuis
         if (state.accessSettings && typeof state.accessSettings === 'object') {
-            localStorage.setItem('detektif_fakta_access_control', JSON.stringify(state.accessSettings));
+            const cleanAccess = { ...state.accessSettings };
+            // 🛡️ ANTI-LOCKOUT GUARD: Jika cloud masih membawa mode schedule/auto warisan, normalkan ke always_open
+            if (!cleanAccess.mode || cleanAccess.mode === 'schedule' || cleanAccess.mode === 'auto') {
+                cleanAccess.mode = 'always_open';
+            }
+            if (!cleanAccess.classOverrides) cleanAccess.classOverrides = {};
+            if (!cleanAccess.manualOpenedClasses) cleanAccess.manualOpenedClasses = {};
+            if (cleanAccess.mode === 'always_open') {
+                ['X E 1', 'X E 2', 'X E 3', 'X E 4', 'X E 5', 'X E 6'].forEach(c => {
+                    if (cleanAccess.classOverrides[c] === undefined) {
+                        cleanAccess.classOverrides[c] = true;
+                    }
+                    if (cleanAccess.manualOpenedClasses[c] === undefined) {
+                        cleanAccess.manualOpenedClasses[c] = true;
+                    }
+                });
+            }
+            localStorage.setItem('detektif_fakta_access_control', JSON.stringify(cleanAccess));
             if (typeof initAccessSettingsUi === 'function') initAccessSettingsUi();
         }
 

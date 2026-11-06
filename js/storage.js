@@ -144,6 +144,13 @@ async function saveCloudSharedState(partialState) {
         mergedState.activeModuleId = lockedExamMode;
     }
 
+    // 🛡️ ANTI-LOCKOUT SERVER GUARD: Jangan biarkan mode schedule/auto mengunci siswa di cloud
+    if (mergedState.accessSettings && typeof mergedState.accessSettings === 'object') {
+        if (!mergedState.accessSettings.mode || mergedState.accessSettings.mode === 'schedule' || mergedState.accessSettings.mode === 'auto') {
+            mergedState.accessSettings.mode = 'always_open';
+        }
+    }
+
     try {
         // 1. Coba PATCH pada baris yang sudah ada
         const patchRes = await fetch(`${baseUrl}?student_name=eq.${encodeURIComponent(CLOUD_STATE_ROW_NAME)}`, {

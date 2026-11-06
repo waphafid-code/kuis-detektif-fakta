@@ -1084,18 +1084,26 @@ body.in-exam .chatbot-float-trigger,
 @media (max-width: 640px) {
     /* 1. Chatbot Floating Trigger Mobile Positioning (Anti-Overlap & Zero-Lag) */
     .chatbot-float-trigger {
-        bottom: 16px !important;
+        bottom: 18px !important;
         right: 14px !important;
-        padding: 8px 14px !important;
-        font-size: 0.8rem !important;
-        gap: 6px !important;
-        border-radius: 9999px !important;
-        box-shadow: 0 4px 16px rgba(66, 133, 244, 0.4) !important;
+        width: 44px !important;
+        height: 44px !important;
+        min-width: 44px !important;
+        max-width: 44px !important;
+        padding: 0 !important;
+        border-radius: 50% !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        box-shadow: 0 4px 16px rgba(66, 133, 244, 0.45) !important;
         z-index: 9990 !important;
-        max-width: fit-content !important;
+    }
+    .chatbot-float-trigger .trigger-label {
+        display: none !important;
     }
     .trigger-sparkle {
-        font-size: 1rem !important;
+        font-size: 1.25rem !important;
+        margin: 0 !important;
         animation: none !important; /* Eliminates continuous GPU layer thrashing on mobile */
     }
 
@@ -1279,4 +1287,37 @@ body.in-exam .chatbot-float-trigger,
     background: #FFFFFF !important;
     border-color: rgba(15, 23, 42, 0.1) !important;
     color: #0F172A !important;
+}
+
+[data-theme="light"] .chatbot-chips-bar {
+    background: #F1F5F9 !important;
+    border-bottom: 1px solid rgba(15, 23, 42, 0.08) !important;
+}
+
+[data-theme="light"] .chatbot-chip {
+    background: #FFFFFF !important;
+    color: #475569 !important;
+    border-color: #CBD5E1 !important;
+}
+
+[data-theme="light"] .chatbot-chip:hover {
+    background: #EEF2FF !important;
+    color: #4F46E5 !important;
+    border-color: #A5B4FC !important;
+}
+
+[data-theme="light"] .ai-code {
+    background: #F1F5F9 !important;
+    color: #B45309 !important;
+    border: 1px solid #E2E8F0 !important;
+}
+
+[data-theme="light"] .ai-heading {
+    color: #0284C7 !important;
+}
+
+[data-theme="light"] .ai-quote {
+    background: #F8FAFC !important;
+    border-left-color: #6366F1 !important;
+    color: #334155 !important;
 }

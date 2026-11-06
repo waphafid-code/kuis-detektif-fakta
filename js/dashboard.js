@@ -1034,14 +1034,30 @@ function loadAccessSettings() {
             if (!saved.classOverrides) saved.classOverrides = {};
             if (!saved.manualOpenedClasses) saved.manualOpenedClasses = {};
             if (saved.lockAnswersDuringExam === undefined) saved.lockAnswersDuringExam = true;
+            // 🛡️ ANTI-LOCKOUT MIGRATION: Migrasikan mode schedule/auto warisan ke 'always_open'
+            if (!saved.mode || saved.mode === 'auto' || saved.mode === 'schedule') {
+                saved.mode = 'always_open';
+                const classes = ['X E 1', 'X E 2', 'X E 3', 'X E 4', 'X E 5', 'X E 6'];
+                classes.forEach(c => {
+                    if (saved.classOverrides[c] === undefined) saved.classOverrides[c] = true;
+                    if (saved.manualOpenedClasses[c] === undefined) saved.manualOpenedClasses[c] = true;
+                });
+            }
             return saved;
         }
     } catch(e) {}
+    const defaultClasses = ['X E 1', 'X E 2', 'X E 3', 'X E 4', 'X E 5', 'X E 6'];
+    const initialOverrides = {};
+    const initialManualOpen = {};
+    defaultClasses.forEach(c => {
+        initialOverrides[c] = true;
+        initialManualOpen[c] = true;
+    });
     return {
-        mode: 'auto', // Default: 'auto' (Sesuai Jadwal RINI SYAFITRI), 'always_open', 'manual', 'deadline'
+        mode: 'always_open', // Default Resmi SMAN 4 Padang: 'always_open' (Terbuka untuk Semua Kelas X E 1 - X E 6)
         deadlineTimestamp: null,
-        classOverrides: {},
-        manualOpenedClasses: {},
+        classOverrides: initialOverrides,
+        manualOpenedClasses: initialManualOpen,
         lockAnswersDuringExam: true
     };
 }
@@ -1078,7 +1094,16 @@ function getClassSchedule(cls) {
 }
 
 function checkClassAccess(cls, moduleId) {
-    // 1. Modul Detektif Fakta (Kuis 1) bebas diakses untuk latihan & pengulangan mandiri
+    // 🛡️ 1. PERLINDUNGAN SESI UJIAN BERJALAN: Siswa yang sedang aktif ujian tidak boleh pernah ditendang!
+    if ((typeof quizInProgress !== 'undefined' && quizInProgress) || (typeof window !== 'undefined' && window.quizInProgress)) {
+        return { allowed: true, reason: 'Sesi kuis sedang berjalan aktif' };
+    }
+    const quizScreenEl = document.getElementById('screen-quiz');
+    if (quizScreenEl && quizScreenEl.classList.contains('active')) {
+        return { allowed: true, reason: 'Sesi kuis sedang berada di layar aktif' };
+    }
+
+    // 2. Modul Detektif Fakta (Kuis 1) bebas diakses untuk latihan & pengulangan mandiri
     if (moduleId === 'modul_detektif_fakta') {
         return { allowed: true, reason: 'Modul Latihan Mandiri / Riwayat Bebas Akses' };
     }
@@ -1101,50 +1126,28 @@ function checkClassAccess(cls, moduleId) {
         return undefined;
     };
 
-    // 1. ATURAN MUTLAK GURU: Jika kelas dibuka manual oleh Guru, TIDAK BISA DITUTUP OTOMATIS OLEH JADWAL APAPUN!
-    // Harus Guru sendiri yang menutupnya secara manual (classOverrides[cls] === false).
-    const manualOpen = findDictVal(accessSettings.manualOpenedClasses);
+    // 🛡️ 3. ATURAN MUTLAK GURU: Hanya kunci jika Guru secara eksplisit mengunci kelas (classOverride === false)
     const classOverride = findDictVal(accessSettings.classOverrides);
+    const manualOpen = findDictVal(accessSettings.manualOpenedClasses);
 
-    if (manualOpen === true) {
-        if (classOverride === false) {
-            return {
-                allowed: false,
-                schedule: schedule,
-                currentInfo: nowFullStr,
-                reason: 'Kelas ini telah dikunci manual oleh Guru'
-            };
-        }
+    if (classOverride === false) {
         return {
-            allowed: true,
-            isManualOpen: true,
-            reason: 'Kelas ini dibuka manual oleh Guru (Terbuka sampai ditutup Guru)'
+            allowed: false,
+            schedule: schedule,
+            currentInfo: nowFullStr,
+            reason: 'Kelas ini sedang dikunci manual oleh Guru'
         };
     }
 
-    if (classOverride !== undefined) {
-        if (classOverride === true) {
-            return {
-                allowed: true,
-                isManualOpen: true,
-                reason: 'Kelas ini dibuka manual oleh Guru (Terbuka sampai ditutup Guru)'
-            };
-        } else if (classOverride === false) {
-            return {
-                allowed: false,
-                schedule: schedule,
-                currentInfo: nowFullStr,
-                reason: 'Kelas ini sedang dikunci oleh Guru'
-            };
-        }
+    if (classOverride === true || manualOpen === true) {
+        return {
+            allowed: true,
+            isManualOpen: true,
+            reason: 'Kelas ini dibuka oleh Guru (Terbuka untuk evaluasi)'
+        };
     }
 
-    // 2. Mode Always Open (Seluruh Kelas Dibuka Bebas oleh Guru)
-    if (accessSettings.mode === 'always_open') {
-        return { allowed: true, isManualOpen: true, reason: 'Kuis dibuka untuk semua kelas oleh Guru' };
-    }
-
-    // 3. Mode Deadline (Tenggat Waktu Kustom)
+    // 4. Mode Deadline (Tenggat Waktu Kustom)
     if (accessSettings.mode === 'deadline') {
         if (accessSettings.deadlineTimestamp && Date.now() < accessSettings.deadlineTimestamp) {
             return { allowed: true, reason: 'Kuis dalam rentang waktu aktif' };
@@ -1158,8 +1161,11 @@ function checkClassAccess(cls, moduleId) {
         }
     }
 
-    // 4. Mode Manual Per Kelas (Terkunci kecuali dibuka manual oleh Guru)
+    // 5. Mode Manual Per Kelas
     if (accessSettings.mode === 'manual') {
+        if (classOverride === true || manualOpen === true) {
+            return { allowed: true, isManualOpen: true, reason: 'Kelas ini dibuka manual oleh Guru' };
+        }
         return { 
             allowed: false, 
             schedule: schedule, 
@@ -1168,18 +1174,13 @@ function checkClassAccess(cls, moduleId) {
         };
     }
 
-    // 5. Default / Auto Mode: Mengikuti Jadwal Resmi RINI SYAFITRI
-    if (!schedule || schedule.day === undefined) return { allowed: true, reason: 'Bebas akses' };
-
-    if (currentDay === schedule.day && currentTimeStr >= schedule.start && currentTimeStr <= schedule.end) {
-        return { allowed: true, reason: 'Sedang jam pelajaran Rini Syafitri' };
-    }
-
+    // 6. Mode Always Open & Default SMAN 4 Padang:
+    // Seluruh 6 kelas resmi (X E 1 - X E 6) bebas mengerjakan kapanpun guru memberikan ujian,
+    // TIDAK PERNAH terblokir otomatis di tengah jalan kecuali guru secara sengaja menekan 'Kunci'.
     return { 
-        allowed: false, 
-        schedule: schedule, 
-        currentInfo: nowFullStr,
-        reason: 'Bukan jam pelajaran guru mata pelajaran' 
+        allowed: true, 
+        isManualOpen: true, 
+        reason: 'Kuis dibuka untuk kelas resmi SMAN 4 Padang oleh Guru' 
     };
 }
 window.checkClassAccess = checkClassAccess;
@@ -1191,7 +1192,11 @@ function setAccessMode(mode) {
     if (mode === 'always_open') {
         const classes = ['X E 1', 'X E 2', 'X E 3', 'X E 4', 'X E 5', 'X E 6'];
         if (!settings.manualOpenedClasses) settings.manualOpenedClasses = {};
-        classes.forEach(c => { settings.manualOpenedClasses[c] = true; });
+        if (!settings.classOverrides) settings.classOverrides = {};
+        classes.forEach(c => { 
+            settings.manualOpenedClasses[c] = true; 
+            settings.classOverrides[c] = true;
+        });
     }
     saveAccessSettings(settings);
     updateAccessControlUI();
