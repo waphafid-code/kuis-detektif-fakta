@@ -601,15 +601,24 @@ function applyCloudSharedStateToLocal(state) {
         }
 
         // 4. Sinkronisasi Modul Ujian Aktif & Visibilitas Modul
+        const lockedMode = state.activeExamModuleMode || localStorage.getItem('quizmaster_active_exam_module_mode') || 'modul_jaringan_keamanan';
         if (state.activeExamModuleMode !== undefined) {
             localStorage.setItem('quizmaster_active_exam_module_mode', state.activeExamModuleMode);
             const examModSel = document.getElementById('setting-active-exam-module');
             if (examModSel) examModSel.value = state.activeExamModuleMode;
         }
-        if (state.activeModuleId && window.QuizManager) {
+
+        let targetActiveId = state.activeModuleId;
+        if (lockedMode && lockedMode !== 'all') {
+            targetActiveId = lockedMode;
+        } else if (!targetActiveId) {
+            targetActiveId = 'modul_jaringan_keamanan';
+        }
+
+        if (window.QuizManager) {
             const curActive = window.QuizManager.getActiveModuleId();
-            if (curActive !== state.activeModuleId) {
-                window.QuizManager.setActiveModuleId(state.activeModuleId, false);
+            if (curActive !== targetActiveId) {
+                window.QuizManager.setActiveModuleId(targetActiveId, false);
             }
         }
         if (typeof initModulesCatalog === 'function') initModulesCatalog();

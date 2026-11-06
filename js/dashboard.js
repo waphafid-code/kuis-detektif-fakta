@@ -1865,7 +1865,7 @@ let currentSortOrder = 'desc';
 let currentRosterStatusFilter = 'all'; // 'all', 'submitted', 'waiting'
 window.currentRenderedRecords = [];
 
-function selectModuleSegment(moduleId) {
+function selectModuleSegment(moduleId, syncToStudents = true) {
     if (typeof sfxClick === 'function') sfxClick();
     window.currentDashboardModuleFilter = moduleId;
     try {
@@ -1896,7 +1896,13 @@ function selectModuleSegment(moduleId) {
             indText.innerHTML = 'Menampilkan: 📊 <strong>Komparasi 2 Modul (Lengkap)</strong>';
         }
     }
-    if (typeof updateApplyButtonState === 'function') updateApplyButtonState();
+
+    // 🔒 Otomatis sinkronkan modul ujian aktif ke siswa agar tidak perlu 2x klik
+    if (syncToStudents && typeof setActiveExamModuleSetting === 'function') {
+        setActiveExamModuleSetting(moduleId, true);
+    }
+
+    if (typeof updateApplyButtonState === 'function') updateApplyButtonState(moduleId);
     renderDashboard();
 }
 window.selectModuleSegment = selectModuleSegment;
@@ -2788,7 +2794,10 @@ function exportExcel() {
         // ──── MODE MODUL TUNGGAL (KEAMANAN JARINGAN ATAU DETEKTIF FAKTA) ────
         const isJaringan = (filterModule === modJaringanId);
         const modTitle = isJaringan ? 'INFRASTRUKTUR JARINGAN & KEAMANAN DIGITAL' : 'MISI DETEKTIF FAKTA & LITERASI DIGITAL';
-        const filteredRecords = allRecords.filter(r => (isJaringan ? r.moduleId === modJaringanId : (r.moduleId || modFaktaId) === modFaktaId));
+        const filteredRecords = allRecords.filter(r => {
+            const mod = (typeof normalizeModuleId === 'function') ? normalizeModuleId(r.moduleId, r.id, r.date) : (r.moduleId || modFaktaId);
+            return isJaringan ? mod === modJaringanId : mod === modFaktaId;
+        });
 
         const generateSingleModSheet = (clsTitle, classRecords) => {
             const sorted = [...classRecords].sort((a, b) => b.score - a.score || (a.name || '').localeCompare(b.name || ''));
@@ -3064,7 +3073,10 @@ function exportTeacherPDF() {
             // ══════════════════════════════════════════════════════
             const isJaringan = (filterModule === modJaringanId);
             const modTitle = isJaringan ? 'PENILAIAN HARIAN: INFRASTRUKTUR JARINGAN & KEAMANAN DIGITAL' : 'EVALUASI PEMBELAJARAN: MISI DETEKTIF FAKTA & LITERASI DIGITAL';
-            const filteredRecords = allRecords.filter(r => (isJaringan ? r.moduleId === modJaringanId : (r.moduleId || modFaktaId) === modFaktaId));
+            const filteredRecords = allRecords.filter(r => {
+                const mod = (typeof normalizeModuleId === 'function') ? normalizeModuleId(r.moduleId, r.id, r.date) : (r.moduleId || modFaktaId);
+                return isJaringan ? mod === modJaringanId : mod === modFaktaId;
+            });
 
             const printSingleSection = (clsTitle, classRecords, isFirstPage = false) => {
                 if (!isFirstPage) doc.addPage();
@@ -3557,26 +3569,40 @@ function exportCSV() {
     const records = loadRecords();
     const filterClassEl = document.getElementById('filter-class');
     const filterClass = filterClassEl ? filterClassEl.value : 'all';
-    const filtered = filterClass === 'all' ? records : records.filter(r => r.class === filterClass);
+    const filterModule = window.currentDashboardModuleFilter || (document.getElementById('filter-module') ? document.getElementById('filter-module').value : 'all');
+    const modJaringanId = 'modul_jaringan_keamanan';
+    const modFaktaId = 'modul_detektif_fakta';
+
+    let filtered = filterClass === 'all' ? records : records.filter(r => r.class === filterClass);
+    if (filterModule !== 'all') {
+        filtered = filtered.filter(r => {
+            const mod = (typeof normalizeModuleId === 'function') ? normalizeModuleId(r.moduleId, r.id, r.date) : (r.moduleId || modFaktaId);
+            return mod === filterModule;
+        });
+    }
+
     if (filtered.length === 0) {
         showToast('Tidak ada data siswa untuk diekspor!', '⚠️');
         return;
     }
 
-    let csv = 'No,Nama Siswa,Kelas,Skor,Benar,Total Soal,Ketuntasan,Durasi,Waktu,Tanggal\n';
+    let csv = 'No,Nama Siswa,Kelas,Modul,Skor,Benar,Total Soal,Ketuntasan,Durasi,Waktu,Tanggal\n';
     filtered.sort((a, b) => b.score - a.score).forEach((r, i) => {
         const tuntas = r.score >= 80 ? 'LULUS' : 'REMEDIAL';
         const cleanName = sanitizeSpreadsheetValue(r.name || '').replace(/"/g, '""');
         const cleanClass = sanitizeSpreadsheetValue(r.class || '-').replace(/"/g, '""');
+        const rMod = (typeof normalizeModuleId === 'function') ? normalizeModuleId(r.moduleId, r.id, r.date) : (r.moduleId || modFaktaId);
+        const modTitle = rMod === modJaringanId ? 'Keamanan Jaringan' : 'Detektif Fakta';
         const totalSoal = r.total || (typeof getActiveQuizData === 'function' ? getActiveQuizData().length : 20);
-        csv += `${i + 1},"${cleanName}","${cleanClass}",${r.score},${r.correct !== undefined ? r.correct : '-'},${totalSoal},"${tuntas}","${r.duration || '-'}","${r.time || '-'}","${r.date || '-'}"\n`;
+        csv += `${i + 1},"${cleanName}","${cleanClass}","${modTitle}",${r.score},${r.correct !== undefined ? r.correct : '-'},${totalSoal},"${tuntas}","${r.duration || '-'}","${r.time || '-'}","${r.date || '-'}"\n`;
     });
 
+    const modSlug = filterModule === 'all' ? 'semua_modul' : (filterModule === modJaringanId ? 'keamanan_jaringan' : 'detektif_fakta');
     const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `rekap_detektif_fakta_${filterClass === 'all' ? 'semua_kelas' : filterClass.replace(/ /g, '_')}_${new Date().toISOString().slice(0,10)}.csv`;
+    a.download = `rekap_nilai_${modSlug}_${filterClass === 'all' ? 'semua_kelas' : filterClass.replace(/ /g, '_')}_${new Date().toISOString().slice(0,10)}.csv`;
     a.click();
     URL.revokeObjectURL(url);
     showToast('File CSV berhasil diunduh!', '📥');

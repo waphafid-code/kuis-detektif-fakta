@@ -16,7 +16,7 @@ if %errorlevel% equ 0 (
 )
 
 echo [INFO] Membuka QuizMaster di browser default...
-start http://localhost:5500/kuis_interaktif_dasbor_guru.html
+start http://localhost:5500/index.html
 
 echo.
 echo ========================================================

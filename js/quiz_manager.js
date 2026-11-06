@@ -413,7 +413,8 @@ const QuizManager = {
         return localStorage.getItem(this.ACTIVE_MODULE_KEY) || this.NETWORK_SECURITY_MODULE.id;
     },
 
-    setActiveModuleId(id, broadcast = true) {
+    setActiveModuleId(id, broadcast = false) {
+        if (!id) return;
         localStorage.setItem(this.ACTIVE_MODULE_KEY, id);
         if (broadcast && typeof saveCloudSharedState === 'function') {
             saveCloudSharedState({ activeModuleId: id });

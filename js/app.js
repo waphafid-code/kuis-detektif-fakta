@@ -8,6 +8,11 @@ function initTheme() {
 
 function setTheme(theme, withSound = true) {
     document.documentElement.setAttribute('data-theme', theme);
+    if (document.body) {
+        document.body.setAttribute('data-theme', theme);
+        document.body.classList.toggle('dark-theme', theme === 'dark');
+        document.body.classList.toggle('light-theme', theme === 'light');
+    }
     localStorage.setItem('quizmaster_theme', theme);
     
     const themeIcon = document.getElementById('theme-icon');

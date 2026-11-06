@@ -3463,8 +3463,9 @@ body.dark-theme .form-control:focus {
 }
 
 .modal-dialog-diag {
-    background: #0f172a;
-    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: var(--bg-card);
+    border: 1px solid var(--glass-border);
+    color: var(--text);
     border-radius: 18px;
     width: 100%;
     max-width: 720px;
@@ -4327,8 +4328,9 @@ body.dark-theme .form-control:focus {
 
 /* SIMULATOR EXCEL */
 .excel-mock-card {
-    background: #0f172a;
-    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: var(--bg-surface-low);
+    border: 1px solid var(--glass-border);
+    color: var(--text);
     border-radius: 12px;
     padding: 14px;
 }
@@ -8009,11 +8011,13 @@ html, body {
 .mobile-menu-btn {
     width: 40px !important;
     height: 40px !important;
+    min-width: 40px !important;
     border-radius: 12px !important;
     border: 1px solid var(--glass-border) !important;
     background: var(--bg-surface-low) !important;
     color: var(--text) !important;
     font-size: 1.25rem !important;
+    line-height: 1 !important;
     cursor: pointer !important;
     display: inline-flex !important;
     align-items: center !important;
@@ -8030,11 +8034,14 @@ html, body {
 
 .mobile-brand-box {
     display: inline-flex !important;
+    flex-direction: row !important;
     align-items: center !important;
-    gap: 10px !important;
-    flex: 1 !important;
+    gap: 8px !important;
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+    overflow: hidden !important;
     justify-content: flex-start !important;
-    margin-left: 10px !important;
+    margin: 0 !important;
     cursor: pointer !important;
     user-select: none !important;
     -webkit-tap-highlight-color: transparent !important;
@@ -8043,12 +8050,14 @@ html, body {
 .mobile-brand-icon {
     width: 34px !important;
     height: 34px !important;
+    min-width: 34px !important;
     border-radius: 10px !important;
     background: var(--primary-gradient) !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
     font-size: 1.15rem !important;
+    line-height: 1 !important;
     color: #ffffff !important;
     box-shadow: 0 4px 12px var(--primary-glow) !important;
     flex-shrink: 0 !important;
@@ -8065,10 +8074,13 @@ html, body {
     letter-spacing: -0.01em !important;
     line-height: 1 !important;
     white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
 }
 
 .mobile-ctrl-group {
     display: inline-flex !important;
+    flex-direction: row !important;
     align-items: center !important;
     gap: 8px !important;
     flex-shrink: 0 !important;
@@ -8079,11 +8091,13 @@ html, body {
 .mobile-theme-btn {
     width: 40px !important;
     height: 40px !important;
+    min-width: 40px !important;
     border-radius: 12px !important;
     border: 1px solid var(--glass-border) !important;
     background: var(--bg-surface-low) !important;
     color: var(--text) !important;
     font-size: 1.1rem !important;
+    line-height: 1 !important;
     cursor: pointer !important;
     display: inline-flex !important;
     align-items: center !important;
@@ -8158,12 +8172,27 @@ html, body {
 
 @media (max-width: 768px) {
     .app-container,
-    .screen {
-        padding-bottom: 96px !important; /* Safe area so floating chatbot never obscures buttons */
+    .screen,
+    .home-screen,
+    .glass-card {
+        padding-bottom: 120px !important; /* Safe area so floating chatbot never obscures buttons */
     }
 }
 
 @media (max-width: 640px) {
+    .mobile-top-bar {
+        padding: 0 12px !important;
+        gap: 6px !important;
+    }
+    .mobile-top-bar .brand-name {
+        font-size: 1.05rem !important;
+    }
+    .mobile-menu-btn,
+    .mobile-theme-btn {
+        width: 38px !important;
+        height: 38px !important;
+        min-width: 38px !important;
+    }
     .home-title {
         font-size: 1.85rem !important;
         margin-bottom: 6px !important;
@@ -8221,8 +8250,8 @@ html, body {
     }
     .home-actions-grid {
         grid-template-columns: 1fr !important;
-        gap: 10px !important;
-        margin-bottom: 20px !important;
+        gap: 12px !important;
+        margin-bottom: 16px !important;
     }
     .btn-pill-primary,
     .btn-pill-secondary {
@@ -8232,6 +8261,7 @@ html, body {
     }
     .quick-tools-bar {
         gap: 6px !important;
+        margin-bottom: 36px !important;
     }
     .btn-quick {
         font-size: 0.72rem !important;

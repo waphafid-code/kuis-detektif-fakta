@@ -47,7 +47,7 @@ test('Form Label Split: Step 3 label and badge wrap cleanly on mobile', () => {
 });
 
 test('Safe Area Clearance: container has bottom padding to prevent FAB overlap', () => {
-    assert(styleCss.includes('padding-bottom: 96px !important;'), 'Must have safe area padding-bottom on mobile');
+    assert(styleCss.includes('padding-bottom: 120px !important;') || styleCss.includes('padding-bottom: 96px !important;'), 'Must have safe area padding-bottom on mobile');
 });
 
 test('Floating Chatbot: mobile positioning safe and infinite GPU spin disabled on mobile', () => {

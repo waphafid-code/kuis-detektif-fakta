@@ -18,6 +18,8 @@ function setActiveExamModuleSetting(mode, broadcast = true) {
     try {
         localStorage.setItem(ACTIVE_EXAM_MODULE_SETTING_KEY, mode);
         if (mode !== 'all') {
+            localStorage.setItem('quizmaster_dashboard_module_filter', mode);
+            window.currentDashboardModuleFilter = mode;
             if (window.QuizManager) {
                 QuizManager.setActiveModuleId(mode, false);
             }
@@ -84,7 +86,7 @@ async function initModulesCatalog() {
             opts += `<option value="${m.id}">${m.icon || '📚'} ${m.title}</option>`;
         });
         filterSelect.innerHTML = opts;
-        const currentDashFilter = localStorage.getItem('quizmaster_dashboard_module_filter') || 'all';
+        const currentDashFilter = localStorage.getItem('quizmaster_dashboard_module_filter') || 'modul_jaringan_keamanan';
         filterSelect.value = currentDashFilter;
     }
 
@@ -99,12 +101,13 @@ async function handleHomeModuleChange(isUserAction = false) {
     const sel = document.getElementById('input-module');
     if (!sel || !window.QuizManager) return;
     const moduleId = sel.value;
+    if (!moduleId) return;
     if (isUserAction) {
         try {
             sessionStorage.setItem('user_chosen_module_id', moduleId);
         } catch (e) {}
     }
-    QuizManager.setActiveModuleId(moduleId);
+    QuizManager.setActiveModuleId(moduleId, false); // Jangan broadcast perubahan lokal siswa ke cloud!
 
     const modules = await QuizManager.getAllModules();
     const current = modules.find(m => m.id === moduleId) || QuizManager.DEFAULT_MODULE;

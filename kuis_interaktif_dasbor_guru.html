@@ -52,14 +52,14 @@
     <button class="mobile-menu-btn" onclick="toggleSidebarMenu()" aria-label="Buka Menu Navigasi">
         <span>☰</span>
     </button>
-    <div class="header-brand" onclick="goHome()" style="cursor: pointer;">
-        <div class="brand-logo-icon" style="width: 32px; height: 32px; font-size: 1rem;">
+    <div class="mobile-brand-box" onclick="goHome()" style="cursor: pointer;" title="Beranda QuizMaster">
+        <div class="mobile-brand-icon">
             <span>🎓</span>
         </div>
-        <span class="brand-name" style="font-size: 1.05rem;">QuizMaster</span>
+        <span class="brand-name">QuizMaster</span>
     </div>
-    <div class="header-ctrl-group">
-        <button class="header-btn" onclick="toggleTheme()" title="Mode Tema">
+    <div class="mobile-ctrl-group">
+        <button class="mobile-theme-btn" onclick="toggleTheme()" title="Mode Tema" aria-label="Ganti Tema">
             <span id="theme-icon-mob">🌙</span>
         </button>
     </div>
@@ -295,75 +295,6 @@
             </button>
             <button class="btn btn-secondary" onclick="uploadAllLocalRecordsToSupabase()" style="padding: 10px; font-size: 0.82rem; display: flex; align-items: center; justify-content: center; gap: 8px;">
                 ⬆️ Unggah Semua Data Siswa (Termasuk 155 Nilai PDF) ke Supabase
-            </button>
-        </div>
-    </div>
-</div>
-
-<!-- ============================================================ -->
-<!-- 🔥 GOOGLE FIREBASE CLOUD FIRESTORE CONFIGURATION & SYNC MODAL -->
-<!-- ============================================================ -->
-<div class="modal-overlay" id="firebase-modal">
-    <div class="modal-box" style="max-width: 540px; width: 92%;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
-            <h3 style="margin: 0; color: #f59e0b; font-size: 1.15rem; display: flex; align-items: center; gap: 8px;">
-                <span>🔥 Google Firebase Realtime Database (24 Jam Nonstop)</span>
-            </h3>
-            <button class="modal-close" onclick="closeFirebaseModal()" style="background: none; border: none; font-size: 1.3rem; cursor: pointer; color: var(--text-muted);">✕</button>
-        </div>
-
-        <div id="fb-status-box" style="font-size: 0.82rem; padding: 10px 14px; border-radius: 10px; background: rgba(245,158,11,0.06); border: 1px solid rgba(245,158,11,0.25); margin-bottom: 16px; line-height: 1.45;">
-            <!-- Status rendered by JS -->
-        </div>
-
-        <!-- Quick Paste Area for firebaseConfig snippet -->
-        <div style="background: rgba(255,255,255,0.03); border: 1px dashed rgba(245,158,11,0.3); border-radius: 10px; padding: 12px; margin-bottom: 16px;">
-            <label for="fb-paste-snippet" style="font-size: 0.8rem; font-weight: 700; color: #f59e0b; display: block; margin-bottom: 6px;">
-                📋 Tempel Cepat Kode <code>firebaseConfig</code> dari Firebase Console:
-            </label>
-            <textarea id="fb-paste-snippet" placeholder="Tempel blok const firebaseConfig = { ... } di sini..." rows="2" style="width: 100%; box-sizing: border-box; background: rgba(0,0,0,0.25); color: var(--text); border: 1px solid var(--glass-border); border-radius: 8px; padding: 8px 10px; font-family: monospace; font-size: 0.78rem; resize: vertical;"></textarea>
-            <button type="button" class="btn btn-secondary" onclick="handlePasteFirebaseSnippet()" style="margin-top: 6px; padding: 6px 14px; font-size: 0.76rem; font-weight: 700; width: 100%; justify-content: center; display: flex; gap: 6px;">
-                ⚡ Ekstrak &amp; Isi Otomatis Kolom di Bawah
-            </button>
-        </div>
-
-        <div class="supabase-field-group" style="margin-bottom: 12px;">
-            <label for="fb-input-rtdb" style="font-size: 0.78rem;">🌐 Database URL (Realtime DB):</label>
-            <input type="url" id="fb-input-rtdb" value="https://kuis-informatika-c8781-default-rtdb.firebaseio.com" placeholder="https://kuis-informatika-c8781-default-rtdb.firebaseio.com" autocomplete="off" spellcheck="false" style="font-size: 0.85rem; padding: 8px 12px;">
-        </div>
-
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px;">
-            <div class="supabase-field-group">
-                <label for="fb-input-project" style="font-size: 0.78rem;">Project ID:</label>
-                <input type="text" id="fb-input-project" value="kuis-informatika-c8781" placeholder="kuis-xxxxx" autocomplete="off" spellcheck="false" style="font-size: 0.85rem; padding: 8px 12px;">
-            </div>
-            <div class="supabase-field-group">
-                <label for="fb-input-key" style="font-size: 0.78rem;">API Key:</label>
-                <input type="password" id="fb-input-key" value="AIzaSyDF1bsT8NFwu5qc33UrHcFiECxH63-J9P0" placeholder="AIzaSy..." autocomplete="off" spellcheck="false" style="font-size: 0.85rem; padding: 8px 12px;">
-            </div>
-        </div>
-
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px;">
-            <div class="supabase-field-group">
-                <label for="fb-input-auth" style="font-size: 0.78rem;">Auth Domain:</label>
-                <input type="text" id="fb-input-auth" value="kuis-informatika-c8781.firebaseapp.com" placeholder="kuis-xxxxx.firebaseapp.com" autocomplete="off" spellcheck="false" style="font-size: 0.85rem; padding: 8px 12px;">
-            </div>
-            <div class="supabase-field-group">
-                <label for="fb-input-app" style="font-size: 0.78rem;">App ID:</label>
-                <input type="text" id="fb-input-app" value="1:707112824956:web:01c89af0c315927c3719f9" placeholder="1:12345:web:67890" autocomplete="off" spellcheck="false" style="font-size: 0.85rem; padding: 8px 12px;">
-            </div>
-        </div>
-
-        <div style="background: rgba(245,158,11,0.06); border: 1px solid rgba(245,158,11,0.25); border-radius: 10px; padding: 10px 12px; margin-bottom: 16px; font-size: 0.76rem; color: var(--text-secondary); line-height: 1.45;">
-            💡 <strong>Keunggulan Firebase Realtime Database:</strong> Berjalan 24 jam nonstop di Google Cloud tanpa pernah mengalami sleep/paused. Mendukung sinkronisasi live stream otomatis saat siswa mengirim nilai kuis.
-        </div>
-
-        <div style="display: flex; flex-direction: column; gap: 10px;">
-            <button class="btn btn-primary" id="btn-fb-test" onclick="saveAndTestFirebase()" style="padding: 11px; font-weight: 700; background: linear-gradient(135deg, #f59e0b, #d97706); display: flex; align-items: center; justify-content: center; gap: 8px;">
-                🔥 Simpan &amp; Tes Koneksi Firebase
-            </button>
-            <button class="btn btn-secondary" onclick="uploadAllLocalRecordsToFirebaseAction()" style="padding: 10px; font-size: 0.82rem; display: flex; align-items: center; justify-content: center; gap: 8px;">
-                ⬆️ Unggah / Sinkronkan Semua 221 Data Siswa ke Firebase
             </button>
         </div>
     </div>
@@ -785,15 +716,15 @@
                 </div>
 
                 <div class="form-group">
-                    <label class="form-label" for="input-module" style="display: flex; justify-content: space-between; align-items: center;">
-                        <span>📚 3. Pilih Paket Kuis Evaluasi</span>
-                        <span id="home-module-badge" style="font-size: 0.72rem; padding: 3px 10px; border-radius: 9999px; background: #EEF2FF; color: var(--primary); font-weight: 800;">20 Soal • Maks 100 Poin</span>
+                    <label class="form-label form-label-split" for="input-module">
+                        <span class="form-label-text">📚 3. Pilih Paket Kuis Evaluasi</span>
+                        <span id="home-module-badge" class="module-badge-pill">20 Soal • Maks 100 Poin</span>
                     </label>
                     <select class="form-select" id="input-module" onchange="handleHomeModuleChange(true)">
                         <!-- Dinamis via QuizManager -->
                     </select>
-                    <div id="home-module-desc" style="font-size: 0.78rem; color: var(--text-secondary); margin-top: 6px; padding: 10px 14px; background: var(--bg-card); border-radius: 10px; border: 1px solid var(--glass-border); line-height: 1.4; text-align: left;">
-                        Investigasi keabsahan data, identifikasi hoaks, dan penalaran lateral untuk siswa kelas X.
+                    <div id="home-module-desc" class="home-module-desc-box">
+                        Evaluasi 20 butir soal Infrastruktur Jaringan Komputer, Topologi, Media Transmisi, DNS, dan Keamanan Siber (CIA-A) Kelas X.
                     </div>
                 </div>
             </div>
@@ -1025,6 +956,11 @@
     <!-- QUIZ -->
     <div id="screen-quiz" class="screen exam-anti-copy">
         <div class="glass-card">
+            <!-- 📡 OFFLINE RESILIENCE BANNER -->
+            <div id="quiz-network-status-banner" class="network-status-banner" style="display: none;">
+                <span id="network-banner-icon">📡</span>
+                <span id="network-banner-text">Sinyal terputus: Tenang! Jawaban tersimpan aman di HP. Kuis tetap bisa Anda kerjakan hingga tuntas.</span>
+            </div>
             <div class="quiz-header">
                 <div class="agent-info">
                     <div class="avatar">📝</div>
@@ -1218,9 +1154,6 @@
                         <button type="button" class="btn btn-secondary" onclick="openSupabaseModal()" style="padding: 5px 14px; font-size: 0.76rem; font-weight: 700; border-radius: 20px; display: inline-flex; align-items: center; gap: 6px;" title="Kelola Koneksi &amp; Sinkronisasi Cloud Supabase Database">
                             ☁️ Sinkronkan Supabase
                         </button>
-                        <button type="button" class="btn btn-secondary" onclick="openFirebaseModal()" style="padding: 5px 14px; font-size: 0.76rem; font-weight: 700; border-radius: 20px; display: inline-flex; align-items: center; gap: 6px; background: rgba(245,158,11,0.12); border-color: rgba(245,158,11,0.35); color: #f59e0b;" title="Kelola Koneksi &amp; Sinkronisasi Google Firebase Cloud Firestore 24 Jam">
-                            🔥 Firebase Database
-                        </button>
                     </div>
                 </div>
                 <div class="dashboard-header-right">
@@ -1294,6 +1227,16 @@
                             <option value="0">♾️ Bebas (Tanpa Batas Waktu)</option>
                         </select>
                         <span class="setting-saved" id="minigames-timer-saved-msg" style="display:none; color:var(--success); font-weight:700; font-size:0.8rem;">✅ Tersimpan!</span>
+                    </div>
+
+                    <div class="setting-row">
+                        <label for="setting-active-exam-module" style="font-weight: 700; font-size: 0.88rem; color: var(--text);">📚 Modul Ujian Ditampilkan:</label>
+                        <select id="setting-active-exam-module" onchange="saveActiveExamModuleSetting()" class="form-select-modern" style="font-size: 0.85rem;">
+                            <option value="modul_jaringan_keamanan" selected>🛡️ Hanya Modul Keamanan Jaringan (Ujian Aktif)</option>
+                            <option value="all">🌐 Tampilkan Semua Modul (Siswa Bebas Memilih)</option>
+                            <option value="modul_detektif_fakta">🕵️ Hanya Modul Detektif Fakta (Literasi Digital)</option>
+                        </select>
+                        <span class="setting-saved" id="active-module-saved-msg" style="display:none; color:var(--success); font-weight:700; font-size:0.8rem;">✅ Tersimpan!</span>
                     </div>
 
                     <div class="setting-row">
@@ -1443,8 +1386,13 @@
                         <div class="module-deck-title">🎯 Filter &amp; Pilihan Modul Kuis</div>
                         <div class="module-deck-sub">Pilih modul kuis tunggal atau mode komparasi lintas 2 modul evaluasi</div>
                     </div>
-                    <div class="active-module-indicator-text" id="active-module-indicator-text">
-                        Menampilkan: 📊 <strong>Komparasi 2 Modul (Lengkap)</strong>
+                    <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                        <button type="button" class="btn btn-primary" id="btn-apply-student-module" onclick="applyCurrentSegmentToStudents()" style="padding: 6px 14px; font-size: 0.76rem; font-weight: 700; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.2);" title="Terapkan modul yang dipilih agar hanya modul ini yang muncul di halaman siswa">
+                            🔒 Terapkan Hanya Modul Ini untuk Siswa
+                        </button>
+                        <div class="active-module-indicator-text" id="active-module-indicator-text">
+                            Menampilkan: 📊 <strong>Komparasi 2 Modul (Lengkap)</strong>
+                        </div>
                     </div>
                 </div>
                 <div class="module-filter-buttons">
@@ -1713,9 +1661,6 @@
                             </p>
                         </div>
                         <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
-                            <button class="btn btn-primary" onclick="ExamDocImporterUI.triggerFileInput()" style="padding: 8px 14px; font-size: 0.82rem; display: inline-flex; align-items: center; gap: 6px; background: linear-gradient(135deg, #0ea5e9, #6366f1); font-weight: 700;">
-                                📥 Impor Word / PDF
-                            </button>
                             <button class="btn btn-secondary" onclick="addNewQuestion()" style="padding: 8px 14px; font-size: 0.82rem;">
                                 ➕ Tambah Soal
                             </button>
@@ -1989,74 +1934,6 @@
                     </button>
                 </div>
 
-                <!-- 🚀 WIDGET IMPOR DOKUMEN NASKAH SOAL (WORD / PDF / TXT) -->
-                <div class="exam-importer-container" style="margin-bottom: 24px;">
-                    <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 12px; margin-bottom: 14px;">
-                        <div>
-                            <div style="display: flex; align-items: center; gap: 8px;">
-                                <span style="font-size: 1.4rem;">📥</span>
-                                <h4 style="margin: 0; font-size: 1.05rem; font-weight: 800; color: #fff;">
-                                    Impor Otomatis Bank Soal dari Dokumen Word (.docx) &amp; PDF
-                                </h4>
-                                <span class="badge-locked-pill" style="font-size: 0.68rem; padding: 2px 8px;">
-                                    AI &amp; Smart Parser
-                                </span>
-                            </div>
-                            <p style="font-size: 0.8rem; color: var(--text-secondary); margin: 4px 0 0 0; line-height: 1.45;">
-                                Cukup tarik dan lepas (drag &amp; drop) berkas Word atau PDF naskah soal Anda. Sistem secara otomatis membedah <strong>Stimulus/Instruksi Kasus</strong>, <strong>Butir Pertanyaan</strong>, <strong>Pilihan Ganda/Kompleks/Benar-Salah</strong>, dan <strong>MENGUNCI KUNCI JAWABAN</strong> secara presisi!
-                            </p>
-                        </div>
-                        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                            <button type="button" class="btn btn-secondary" onclick="ExamDocImporterUI.openManualTextPrompt()" style="font-size: 0.8rem; padding: 7px 13px; display: inline-flex; align-items: center; gap: 6px;">
-                                📋 Tempel Teks Manual
-                            </button>
-                            <button type="button" class="btn btn-primary" onclick="ExamDocImporterUI.triggerFileInput()" style="font-size: 0.8rem; padding: 7px 15px; display: inline-flex; align-items: center; gap: 6px; background: linear-gradient(135deg, #0ea5e9, #6366f1); font-weight: 700;">
-                                📁 Unggah File Dokumen
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Hidden File Input for .docx, .pdf, .txt -->
-                    <input type="file" id="exam-doc-file-input" accept=".docx,.pdf,.txt" style="display: none;">
-
-                    <!-- Drag and Drop Zone -->
-                    <div id="exam-doc-dropzone" class="exam-doc-dropzone" onclick="ExamDocImporterUI.triggerFileInput()">
-                        <div style="font-size: 2.8rem; margin-bottom: 10px;">
-                            📄 ➔ 🎯
-                        </div>
-                        <div style="font-weight: 800; font-size: 1rem; color: var(--text); margin-bottom: 4px;">
-                            Tarik &amp; Lepas Berkas Dokumen ke Sini
-                        </div>
-                        <div style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 12px;">
-                            Mendukung berkas Microsoft Word (<strong style="color: #60a5fa;">.docx</strong>), Adobe Acrobat (<strong style="color: #f87171;">.pdf</strong>), atau Teks Polos (<strong style="color: #34d399;">.txt</strong>)
-                        </div>
-                        <div style="display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;">
-                            <span class="q-badge" style="font-size: 0.72rem; background: rgba(59,130,246,0.12); color: #93c5fd; border-color: rgba(59,130,246,0.3);">
-                                📝 Word (.docx)
-                            </span>
-                            <span class="q-badge" style="font-size: 0.72rem; background: rgba(239,68,68,0.12); color: #fca5a5; border-color: rgba(239,68,68,0.3);">
-                                📕 PDF (.pdf)
-                            </span>
-                            <span class="q-badge" style="font-size: 0.72rem; background: rgba(16,185,129,0.12); color: #6ee7b7; border-color: rgba(16,185,129,0.3);">
-                                🎯 Auto-Kunci Jawaban
-                            </span>
-                            <span class="q-badge" style="font-size: 0.72rem; background: rgba(168,85,247,0.12); color: #d8b4fe; border-color: rgba(168,85,247,0.3);">
-                                ⚖️ Normalisasi 100 Poin
-                            </span>
-                        </div>
-                    </div>
-
-                    <!-- Live Progress State -->
-                    <div id="exam-importer-status" style="display: none; margin-top: 14px; background: rgba(0,0,0,0.3); padding: 12px 16px; border-radius: 12px; border: 1px solid var(--glass-border);">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; font-size: 0.8rem;">
-                            <span id="exam-importer-status-text" style="color: var(--text); font-weight: 600;">Sedang membaca dokumen...</span>
-                        </div>
-                        <div style="width: 100%; height: 8px; background: rgba(255,255,255,0.08); border-radius: 999px; overflow: hidden;">
-                            <div id="exam-importer-progress" style="width: 0%; height: 100%; background: linear-gradient(90deg, #0ea5e9, #10b981); transition: width 0.3s ease;"></div>
-                        </div>
-                    </div>
-                </div>
-
                 <div id="bank-modules-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px;">
                     <!-- Rendered by JS -->
                 </div>
@@ -2091,167 +1968,6 @@
     </div>
 </div>
 
-<!-- ════════════════════════════════════════════════════════════════ -->
-<!-- 🎯 MODAL PRATINJAU & EDIT HASIL IMPOR DOKUMEN SOAL           -->
-<!-- ════════════════════════════════════════════════════════════════ -->
-<div id="modal-exam-doc-preview" class="modal-overlay-exam" style="display: none;" onclick="if(event.target===this)ExamDocImporterUI.closeReviewModal()">
-    <div class="modal-dialog-exam">
-        <!-- Header Modal -->
-        <div style="display: flex; justify-content: space-between; align-items: flex-start; padding: 18px 24px; border-bottom: 1px solid var(--glass-border); background: rgba(255,255,255,0.02); flex-wrap: wrap; gap: 12px;">
-            <div>
-                <div style="display: flex; align-items: center; gap: 10px;">
-                    <span style="font-size: 1.5rem;">🎯</span>
-                    <h3 style="margin: 0; font-size: 1.15rem; font-weight: 800; color: #fff;">
-                        Pratinjau Hasil Ekstraksi &amp; Kunci Jawaban Otomatis
-                    </h3>
-                </div>
-                <div id="exam-prev-badge-count" style="font-size: 0.82rem; color: var(--text-secondary); margin-top: 4px;">
-                    <!-- Populated by JS -->
-                </div>
-            </div>
-            <button type="button" class="btn btn-secondary" onclick="ExamDocImporterUI.closeReviewModal()" style="padding: 6px 14px; font-size: 0.82rem; border-radius: 8px;">
-                ✕ Tutup
-            </button>
-        </div>
-
-        <!-- Meta Input Modul -->
-        <div style="padding: 18px 24px; background: rgba(15, 23, 42, 0.6); border-bottom: 1px solid rgba(255, 255, 255, 0.08);">
-            <div style="display: grid; grid-template-columns: 2fr 1.2fr 0.8fr; gap: 14px;">
-                <div>
-                    <label style="font-size: 0.78rem; font-weight: 700; color: #94a3b8; display: block; margin-bottom: 4px;">
-                        🏷️ Judul Paket Modul Soal:
-                    </label>
-                    <input type="text" id="exam-prev-title" class="form-control" style="font-size: 0.88rem; font-weight: 700; width: 100%;" placeholder="Contoh: Kuis Asesmen Diagnostik Informatika">
-                </div>
-                <div>
-                    <label style="font-size: 0.78rem; font-weight: 700; color: #94a3b8; display: block; margin-bottom: 4px;">
-                        📂 Kategori / Mata Pelajaran:
-                    </label>
-                    <input type="text" id="exam-prev-cat" class="form-control" style="font-size: 0.88rem; width: 100%;" value="Jaringan Komputer & Internet (JKI)">
-                </div>
-                <div>
-                    <label style="font-size: 0.78rem; font-weight: 700; color: #94a3b8; display: block; margin-bottom: 4px;">
-                        🎯 KKM Kelulusan:
-                    </label>
-                    <input type="number" id="exam-prev-kkm" class="form-control" style="font-size: 0.88rem; font-weight: 700; width: 100%;" value="80" min="50" max="100">
-                </div>
-            </div>
-            <div style="margin-top: 12px;">
-                <label style="font-size: 0.76rem; font-weight: 700; color: #94a3b8; display: block; margin-bottom: 4px;">
-                    📝 Deskripsi Singkat Modul:
-                </label>
-                <input type="text" id="exam-prev-desc" class="form-control" style="font-size: 0.84rem; width: 100%;" placeholder="Deskripsi materi ujian...">
-            </div>
-        </div>
-
-        <!-- Scrollable Questions List -->
-        <div style="padding: 20px 24px; max-height: 58vh; overflow-y: auto;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 8px;">
-                <div style="font-size: 0.85rem; font-weight: 700; color: var(--text-secondary);">
-                    Daftar Butir Soal Terdeteksi (Setiap elemen bisa dibuka-tutup &bull; Kunci otomatis terdeteksi):
-                </div>
-                <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
-                    <button type="button" class="quick-toolbar-btn" onclick="ExamDocImporterUI.toggleAllSections(true)">
-                        📂 Buka Semua Tab
-                    </button>
-                    <button type="button" class="quick-toolbar-btn" onclick="ExamDocImporterUI.toggleAllSections(false)">
-                        📁 Ciutkan Semua Tab
-                    </button>
-                    <button type="button" class="btn btn-secondary" onclick="ExamDocImporterUI.addNewQuestion()" style="font-size: 0.78rem; padding: 6px 12px;">
-                        ➕ Tambah Butir Soal Baru
-                    </button>
-                </div>
-            </div>
-            <div id="exam-prev-questions-list" style="display: flex; flex-direction: column; gap: 14px;">
-                <!-- Populated by JS -->
-            </div>
-        </div>
-
-        <!-- Footer Actions -->
-        <div style="padding: 16px 24px; border-top: 1px solid var(--glass-border); background: rgba(255,255,255,0.02); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
-            <div style="display: flex; gap: 8px;">
-                <button type="button" class="btn btn-secondary" onclick="ExamDocImporterUI.downloadJson()" style="font-size: 0.82rem; padding: 8px 14px;" title="Unduh file JSON untuk backup lokal">
-                    💾 Unduh JSON
-                </button>
-                <button type="button" class="btn btn-secondary" onclick="ExamDocImporterUI.saveAndOpenInEditor()" style="font-size: 0.82rem; padding: 8px 14px; border-color: rgba(139,92,246,0.4); color: #c4b5fd;">
-                    ✏️ Simpan &amp; Buka di G-Form Editor
-                </button>
-            </div>
-            <div style="display: flex; gap: 10px;">
-                <button type="button" class="btn btn-secondary" onclick="ExamDocImporterUI.closeReviewModal()" style="font-size: 0.85rem; padding: 8px 16px;">
-                    Batal
-                </button>
-                <button type="button" class="btn btn-secondary" onclick="ExamDocImporterUI.saveToBankSoal(false)" style="font-size: 0.85rem; padding: 8px 18px; font-weight: 700;">
-                    💾 Simpan ke Bank Soal
-                </button>
-                <button type="button" class="btn btn-success" onclick="ExamDocImporterUI.saveToBankSoal(true)" style="font-size: 0.85rem; padding: 8px 22px; font-weight: 800; background: linear-gradient(135deg, #10b981, #059669); box-shadow: 0 4px 15px rgba(16,185,129,0.35);">
-                    🚀 Simpan &amp; Jadikan Kuis Aktif Siswa
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- ════════════════════════════════════════════════════════════════ -->
-<!-- 📋 MODAL TEMPEL TEKS SOAL MANUAL                             -->
-<!-- ════════════════════════════════════════════════════════════════ -->
-<div id="modal-exam-manual-text" class="modal-overlay-exam" style="display: none;" onclick="if(event.target===this)ExamDocImporterUI.closeManualTextModal()">
-    <div class="modal-dialog-exam" style="max-width: 720px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; padding: 18px 24px; border-bottom: 1px solid var(--glass-border);">
-            <div style="display: flex; align-items: center; gap: 10px;">
-                <span style="font-size: 1.4rem;">📋</span>
-                <h3 style="margin: 0; font-size: 1.1rem; font-weight: 800; color: #fff;">
-                    Tempel Teks Naskah Soal &amp; Kunci Jawaban
-                </h3>
-            </div>
-            <button type="button" class="btn btn-secondary" onclick="ExamDocImporterUI.closeManualTextModal()" style="padding: 6px 12px; font-size: 0.8rem;">✕ Tutup</button>
-        </div>
-
-        <div style="padding: 20px 24px;">
-            <div style="margin-bottom: 14px;">
-                <label style="font-size: 0.78rem; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 4px;">
-                    Judul Modul Soal:
-                </label>
-                <input type="text" id="exam-manual-title-input" class="form-control" placeholder="Contoh: Ulangan Harian Bab 2 Keamanan Jaringan" style="font-size: 0.88rem; width: 100%;">
-            </div>
-            <div style="margin-bottom: 12px;">
-                <label style="font-size: 0.78rem; font-weight: 700; color: var(--text-muted); display: flex; justify-content: space-between; margin-bottom: 4px;">
-                    <span>Teks Naskah Soal:</span>
-                    <span style="font-size: 0.72rem; color: var(--accent);">Mendukung format Soal, Opsi (A-E), Kunci Jawaban, Stimulus, &amp; Pembahasan</span>
-                </label>
-                <textarea id="exam-manual-text-area" class="form-control" rows="12" style="font-size: 0.83rem; line-height: 1.5; font-family: monospace; width: 100%; resize: vertical;" placeholder="Contoh format:
-1. Manakah protokol yang mengenkripsi data saat browsing web?
-A. HTTP
-B. FTP
-C. HTTPS
-D. Telnet
-Kunci Jawaban: C
-Pembahasan: HTTPS menggunakan enkripsi SSL/TLS untuk mengamankan transmisi data.
-
-2. Stimulus: Seorang teknisi menemukan perangkat asing terhubung ke switch.
-Pertanyaan: Apa tindakan pertama yang harus dilakukan?
-A. Mematikan seluruh server
-B. Mengisolasi port switch perangkat asing tersebut
-C. Menghapus konfigurasi router
-D. Mengabaikan notifikasi
-Kunci Jawaban: B"></textarea>
-            </div>
-            <div style="font-size: 0.75rem; color: var(--text-muted); background: rgba(255,255,255,0.03); padding: 8px 12px; border-radius: 8px; border: 1px solid var(--glass-border);">
-                💡 <strong>Tips Cerdas:</strong> Kunci jawaban bisa diletakkan di bawah soal (<em>Kunci: B</em>) atau di akhir naskah soal sebagai tabel kunci (<em>1. C, 2. B, 3. A</em>). Sistem akan membaca dan menguncinya secara otomatis!
-            </div>
-        </div>
-
-        <div style="padding: 14px 24px; border-top: 1px solid var(--glass-border); display: flex; justify-content: flex-end; gap: 10px; background: rgba(255,255,255,0.02);">
-            <button type="button" class="btn btn-secondary" onclick="ExamDocImporterUI.closeManualTextModal()" style="font-size: 0.85rem; padding: 8px 16px;">
-                Batal
-            </button>
-            <button type="button" class="btn btn-primary" onclick="ExamDocImporterUI.processManualText()" style="font-size: 0.85rem; padding: 8px 20px; font-weight: 700; background: linear-gradient(135deg, #0ea5e9, #6366f1);">
-                ⚡ Proses &amp; Kunci Jawaban
-            </button>
-        </div>
-    </div>
-</div>
-
 <!-- ============================================================ -->
 <!-- 🧩 MODULAR JAVASCRIPT LIBRARIES & ENGINES                   -->
 <!-- ============================================================ -->
@@ -2262,9 +1978,9 @@ Kunci Jawaban: B"></textarea>
 <script src="js/ai_nemotron.js?v=20261026-secfix"></script>
 <script src="js/quiz_manager.js?v=20261026-secfix"></script>
 <script src="js/question_editor.js?v=20261026-secfix"></script>
-<script src="js/exam_doc_importer.js?v=20261026-ai-rolefix"></script>
 <script src="js/firebase_sync.js?v=20261028-v1"></script>
-<script src="js/storage.js?v=20261026-examlock"></script>
+<script src="js/deviceTier.js?v=20261029-perf"></script>
+<script src="js/storage.js?v=20261029-perf"></script>
 <script src="js/audio.js?v=20261026-examlock"></script>
 <script src="js/particles.js?v=20261026-examlock"></script>
 <script src="js/quiz_engine.js?v=20261026-examlock"></script>

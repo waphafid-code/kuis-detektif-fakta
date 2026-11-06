@@ -137,6 +137,13 @@ async function saveCloudSharedState(partialState) {
         updatedAt: Date.now()
     };
 
+    // 🛡️ ANTI-REVERSION SERVER GUARD: Jangan biarkan state tersimpan di cloud kembali ke detektif fakta jika mode ujian terkunci
+    const lockedExamMode = partialState.activeExamModuleMode || currentState.activeExamModuleMode || localStorage.getItem('quizmaster_active_exam_module_mode') || 'modul_jaringan_keamanan';
+    if (lockedExamMode && lockedExamMode !== 'all') {
+        mergedState.activeExamModuleMode = lockedExamMode;
+        mergedState.activeModuleId = lockedExamMode;
+    }
+
     try {
         // 1. Coba PATCH pada baris yang sudah ada
         const patchRes = await fetch(`${baseUrl}?student_name=eq.${encodeURIComponent(CLOUD_STATE_ROW_NAME)}`, {
@@ -427,6 +434,12 @@ function switchScreen(key) {
     // 🤖 Synchronize AI Chatbot Role (Mode Guru vs Mode Siswa)
     if (typeof updateTeacherChatbotModeUi === 'function') {
         updateTeacherChatbotModeUi();
+    }
+
+    // 🎨 Pulihkan tema pilihan pengguna (cegah tema gelap tertinggal dari mini games)
+    if (key !== 'games' && typeof setTheme === 'function') {
+        const savedTheme = localStorage.getItem('quizmaster_theme') || 'light';
+        setTheme(savedTheme, false);
     }
 }
 window.switchScreen = switchScreen;
