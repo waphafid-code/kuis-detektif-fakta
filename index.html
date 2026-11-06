@@ -724,7 +724,7 @@
                         <!-- Dinamis via QuizManager -->
                     </select>
                     <div id="home-module-desc" class="home-module-desc-box">
-                        Investigasi keabsahan data, identifikasi hoaks, dan penalaran lateral untuk siswa kelas X.
+                        Evaluasi 20 butir soal Infrastruktur Jaringan Komputer, Topologi, Media Transmisi, DNS, dan Keamanan Siber (CIA-A) Kelas X.
                     </div>
                 </div>
             </div>
@@ -1230,6 +1230,16 @@
                     </div>
 
                     <div class="setting-row">
+                        <label for="setting-active-exam-module" style="font-weight: 700; font-size: 0.88rem; color: var(--text);">📚 Modul Ujian Ditampilkan:</label>
+                        <select id="setting-active-exam-module" onchange="saveActiveExamModuleSetting()" class="form-select-modern" style="font-size: 0.85rem;">
+                            <option value="modul_jaringan_keamanan" selected>🛡️ Hanya Modul Keamanan Jaringan (Ujian Aktif)</option>
+                            <option value="all">🌐 Tampilkan Semua Modul (Siswa Bebas Memilih)</option>
+                            <option value="modul_detektif_fakta">🕵️ Hanya Modul Detektif Fakta (Literasi Digital)</option>
+                        </select>
+                        <span class="setting-saved" id="active-module-saved-msg" style="display:none; color:var(--success); font-weight:700; font-size:0.8rem;">✅ Tersimpan!</span>
+                    </div>
+
+                    <div class="setting-row">
                         <label for="setting-submission-policy" style="font-weight: 700; font-size: 0.88rem; color: var(--text);">🔄 Batas Respon Siswa:</label>
                         <select id="setting-submission-policy" onchange="saveSubmissionPolicySetting()" class="form-select-modern" style="font-size: 0.85rem;">
                             <option value="single_only" selected>1️⃣ Hanya 1 Kali (Tolak Pengiriman Ganda)</option>
@@ -1376,8 +1386,13 @@
                         <div class="module-deck-title">🎯 Filter &amp; Pilihan Modul Kuis</div>
                         <div class="module-deck-sub">Pilih modul kuis tunggal atau mode komparasi lintas 2 modul evaluasi</div>
                     </div>
-                    <div class="active-module-indicator-text" id="active-module-indicator-text">
-                        Menampilkan: 📊 <strong>Komparasi 2 Modul (Lengkap)</strong>
+                    <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                        <button type="button" class="btn btn-primary" id="btn-apply-student-module" onclick="applyCurrentSegmentToStudents()" style="padding: 6px 14px; font-size: 0.76rem; font-weight: 700; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.2);" title="Terapkan modul yang dipilih agar hanya modul ini yang muncul di halaman siswa">
+                            🔒 Terapkan Hanya Modul Ini untuk Siswa
+                        </button>
+                        <div class="active-module-indicator-text" id="active-module-indicator-text">
+                            Menampilkan: 📊 <strong>Komparasi 2 Modul (Lengkap)</strong>
+                        </div>
                     </div>
                 </div>
                 <div class="module-filter-buttons">

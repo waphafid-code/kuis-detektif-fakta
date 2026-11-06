@@ -942,6 +942,91 @@ function initFullscreenSettingUi() {
 }
 window.initFullscreenSettingUi = initFullscreenSettingUi;
 
+// 📚 KONTROL PENGATURAN MODUL UJIAN DITAMPILKAN KE SISWA
+function loadActiveExamModuleSetting() {
+    try {
+        const v = localStorage.getItem('quizmaster_active_exam_module_mode');
+        if (v) return v;
+    } catch(e) {}
+    return 'modul_jaringan_keamanan'; // Default rilis Penilaian Harian Resmi
+}
+window.loadActiveExamModuleSetting = loadActiveExamModuleSetting;
+window.getActiveExamModuleSetting = loadActiveExamModuleSetting;
+
+function saveActiveExamModuleSetting(val) {
+    const sel = document.getElementById('setting-active-exam-module');
+    const mode = val || (sel ? sel.value : 'modul_jaringan_keamanan');
+    try {
+        localStorage.setItem('quizmaster_active_exam_module_mode', mode);
+        if (mode !== 'all') {
+            if (window.QuizManager) {
+                QuizManager.setActiveModuleId(mode, false);
+            }
+            try { sessionStorage.removeItem('user_chosen_module_id'); } catch(e) {}
+        }
+    } catch(e) {}
+
+    const msg = document.getElementById('active-module-saved-msg');
+    if (msg) {
+        msg.style.display = 'inline';
+        setTimeout(() => { if (msg) msg.style.display = 'none'; }, 2500);
+    }
+    if (typeof sfxCorrect === 'function') sfxCorrect();
+
+    const label = mode === 'modul_jaringan_keamanan' 
+        ? '🛡️ Hanya Modul Keamanan Jaringan (Kuis lain disembunyikan)' 
+        : (mode === 'modul_detektif_fakta' ? '🕵️ Hanya Modul Detektif Fakta (Kuis lain disembunyikan)' : '🌐 Semua Modul (Siswa Bebas Memilih)');
+
+    showToast(`Tampilan Siswa Diperbarui: ${label}!`, '🎯');
+
+    // ☁️ Sinkronkan ke Cloud Supabase agar berlaku serempak di HP semua siswa
+    if (typeof saveCloudSharedState === 'function') {
+        saveCloudSharedState({ 
+            activeExamModuleMode: mode,
+            activeModuleId: (mode === 'all' ? (window.QuizManager ? QuizManager.getActiveModuleId() : 'modul_jaringan_keamanan') : mode)
+        });
+    }
+
+    if (typeof initModulesCatalog === 'function') initModulesCatalog();
+    if (typeof renderBankSoalModules === 'function') renderBankSoalModules();
+    updateApplyButtonState(mode);
+}
+window.saveActiveExamModuleSetting = saveActiveExamModuleSetting;
+
+function initActiveExamModuleUi() {
+    const sel = document.getElementById('setting-active-exam-module');
+    if (sel) {
+        sel.value = loadActiveExamModuleSetting();
+    }
+}
+window.initActiveExamModuleUi = initActiveExamModuleUi;
+
+function applyCurrentSegmentToStudents() {
+    const currentFilter = window.currentDashboardModuleFilter || localStorage.getItem('quizmaster_dashboard_module_filter') || 'modul_jaringan_keamanan';
+    saveActiveExamModuleSetting(currentFilter);
+}
+window.applyCurrentSegmentToStudents = applyCurrentSegmentToStudents;
+
+function updateApplyButtonState(currentMode) {
+    const btn = document.getElementById('btn-apply-student-module');
+    if (!btn) return;
+    const mode = currentMode || loadActiveExamModuleSetting();
+    const filter = window.currentDashboardModuleFilter || localStorage.getItem('quizmaster_dashboard_module_filter') || 'all';
+    
+    if (mode === filter && mode !== 'all') {
+        btn.innerHTML = `✅ Siswa Terkunci di Modul Ini`;
+        btn.style.background = 'linear-gradient(135deg, #059669, #10b981)';
+    } else if (filter === 'all') {
+        btn.innerHTML = `🌐 Buka Semua Modul untuk Siswa`;
+        btn.style.background = '';
+    } else {
+        const modTitle = filter === 'modul_jaringan_keamanan' ? 'Modul Jaringan' : 'Modul Fakta';
+        btn.innerHTML = `🔒 Terapkan Hanya ${modTitle} untuk Siswa`;
+        btn.style.background = '';
+    }
+}
+window.updateApplyButtonState = updateApplyButtonState;
+
 function loadAccessSettings() {
     try {
         const saved = JSON.parse(localStorage.getItem(ACCESS_SETTINGS_KEY));
@@ -1782,6 +1867,11 @@ window.currentRenderedRecords = [];
 
 function selectModuleSegment(moduleId) {
     if (typeof sfxClick === 'function') sfxClick();
+    window.currentDashboardModuleFilter = moduleId;
+    try {
+        localStorage.setItem('quizmaster_dashboard_module_filter', moduleId);
+    } catch(e) {}
+
     const filterModuleEl = document.getElementById('filter-module');
     if (filterModuleEl) {
         filterModuleEl.value = moduleId;
@@ -1806,6 +1896,7 @@ function selectModuleSegment(moduleId) {
             indText.innerHTML = 'Menampilkan: 📊 <strong>Komparasi 2 Modul (Lengkap)</strong>';
         }
     }
+    if (typeof updateApplyButtonState === 'function') updateApplyButtonState();
     renderDashboard();
 }
 window.selectModuleSegment = selectModuleSegment;
@@ -1956,26 +2047,38 @@ function renderDashboard() {
     const allRecords = loadRecords();
     const filterClass = document.getElementById('filter-class') ? document.getElementById('filter-class').value : 'all';
     const filterModuleEl = document.getElementById('filter-module');
-    const filterModule = filterModuleEl ? filterModuleEl.value : 'all';
+
+    // Pulihkan filter modul dasbor yang tersimpan agar tidak ter-reset
+    if (!window._dashFilterInitDone && filterModuleEl) {
+        const savedDashFilter = localStorage.getItem('quizmaster_dashboard_module_filter') || 'modul_jaringan_keamanan';
+        filterModuleEl.value = savedDashFilter;
+        window.currentDashboardModuleFilter = savedDashFilter;
+        window._dashFilterInitDone = true;
+    }
+
+    const filterModule = filterModuleEl ? filterModuleEl.value : (window.currentDashboardModuleFilter || 'all');
+    window.currentDashboardModuleFilter = filterModule;
     const searchNameEl = document.getElementById('filter-search-name');
     const searchName = searchNameEl ? searchNameEl.value.toLowerCase().trim() : '';
     const sortByEl = document.getElementById('sort-by');
     const sortBy = sortByEl ? sortByEl.value : `${currentSortColumn}_${currentSortOrder}`;
 
-    // Sinkronkan Pengaturan Batas Respon, Mode Remedial, & Kunci Layar
+    // Sinkronkan Pengaturan Batas Respon, Mode Remedial, Kunci Layar, & Modul Ditampilkan
     const policySel = document.getElementById('setting-submission-policy');
     if (policySel) {
         policySel.value = loadSubmissionPolicy();
     }
     initRemedialSettingUi();
     initFullscreenSettingUi();
+    initActiveExamModuleUi();
+    if (typeof updateApplyButtonState === 'function') updateApplyButtonState();
 
     // Sinkronkan pilihan dropdown filter-module jika ada materi baru
     if (filterModuleEl && window.QuizManager) {
         QuizManager.getAllModules().then(mods => {
             const curVal = filterModuleEl.value || 'all';
             const extraMods = mods.filter(m => m.id !== 'modul_jaringan_keamanan' && m.id !== 'modul_detektif_fakta');
-            if (filterModuleEl.options.length !== 3 + extraMods.length) {
+            if (filterModuleEl.options && filterModuleEl.options.length !== 3 + extraMods.length) {
                 let opts = `
                     <option value="all" ${curVal === 'all' ? 'selected' : ''}>📊 Komparasi 2 Modul (Lengkap)</option>
                     <option value="modul_jaringan_keamanan" ${curVal === 'modul_jaringan_keamanan' ? 'selected' : ''}>🛡️ Modul Keamanan Jaringan Saja</option>

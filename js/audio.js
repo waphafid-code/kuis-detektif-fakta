@@ -600,14 +600,19 @@ function applyCloudSharedStateToLocal(state) {
             if (typeof initAccessSettingsUi === 'function') initAccessSettingsUi();
         }
 
-        // 4. Sinkronisasi Modul Ujian Aktif
+        // 4. Sinkronisasi Modul Ujian Aktif & Visibilitas Modul
+        if (state.activeExamModuleMode !== undefined) {
+            localStorage.setItem('quizmaster_active_exam_module_mode', state.activeExamModuleMode);
+            const examModSel = document.getElementById('setting-active-exam-module');
+            if (examModSel) examModSel.value = state.activeExamModuleMode;
+        }
         if (state.activeModuleId && window.QuizManager) {
             const curActive = window.QuizManager.getActiveModuleId();
             if (curActive !== state.activeModuleId) {
-                window.QuizManager.setActiveModuleId(state.activeModuleId);
-                if (typeof initModulesCatalog === 'function') initModulesCatalog();
+                window.QuizManager.setActiveModuleId(state.activeModuleId, false);
             }
         }
+        if (typeof initModulesCatalog === 'function') initModulesCatalog();
 
         // 5. Sinkronisasi Daftar Penghapusan Siswa (Tombstone Deletions)
         if (Array.isArray(state.deletedRecords) && state.deletedRecords.length > 0) {

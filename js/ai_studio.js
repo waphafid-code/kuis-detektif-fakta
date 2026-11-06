@@ -2,36 +2,96 @@
 //  🤖 STUDIO KUIS AI (NVIDIA NEMOTRON), BANK MODUL & MISSION HUB
 // ============================================================
 
+const ACTIVE_EXAM_MODULE_SETTING_KEY = 'quizmaster_active_exam_module_mode';
+
+function loadActiveExamModuleSetting() {
+    try {
+        const v = localStorage.getItem(ACTIVE_EXAM_MODULE_SETTING_KEY);
+        if (v) return v;
+    } catch(e) {}
+    return 'modul_jaringan_keamanan'; // Default rilis Penilaian Harian Resmi
+}
+window.loadActiveExamModuleSetting = loadActiveExamModuleSetting;
+window.getActiveExamModuleSetting = loadActiveExamModuleSetting;
+
+function setActiveExamModuleSetting(mode, broadcast = true) {
+    try {
+        localStorage.setItem(ACTIVE_EXAM_MODULE_SETTING_KEY, mode);
+        if (mode !== 'all') {
+            if (window.QuizManager) {
+                QuizManager.setActiveModuleId(mode, false);
+            }
+            try { sessionStorage.removeItem('user_chosen_module_id'); } catch(e) {}
+        }
+    } catch(e) {}
+
+    if (broadcast && typeof saveCloudSharedState === 'function') {
+        saveCloudSharedState({ 
+            activeExamModuleMode: mode,
+            activeModuleId: (mode === 'all' ? (window.QuizManager ? QuizManager.getActiveModuleId() : 'modul_jaringan_keamanan') : mode)
+        });
+    }
+}
+window.setActiveExamModuleSetting = setActiveExamModuleSetting;
+
 async function initModulesCatalog() {
     if (!window.QuizManager) return;
     const modules = await QuizManager.getAllModules();
     const homeSelect = document.getElementById('input-module');
     const filterSelect = document.getElementById('filter-module');
 
+    const activeExamMode = loadActiveExamModuleSetting(); // 'modul_jaringan_keamanan', 'all', 'modul_detektif_fakta'
+    
+    let activeId;
+    if (activeExamMode && activeExamMode !== 'all') {
+        activeId = activeExamMode;
+        QuizManager.setActiveModuleId(activeId, false);
+        try { sessionStorage.removeItem('user_chosen_module_id'); } catch(e) {}
+    } else {
+        const sessionChosenId = sessionStorage.getItem('user_chosen_module_id');
+        activeId = sessionChosenId || QuizManager.getActiveModuleId() || 'modul_jaringan_keamanan';
+        QuizManager.setActiveModuleId(activeId, false);
+    }
+
+    // Filter modul yang tampil ke siswa jika guru memilih mengunci satu modul
+    const visibleModules = (activeExamMode && activeExamMode !== 'all')
+        ? modules.filter(m => m.id === activeExamMode)
+        : modules;
+
+    const listToRender = (visibleModules && visibleModules.length > 0) ? visibleModules : modules;
+
     if (homeSelect) {
         homeSelect.innerHTML = '';
-        // Modul 1 (Misi Detektif Fakta) harus selalu menjadi pilihan utama & default bagi siswa,
-        // kecuali siswa secara eksplisit memilih modul lain pada dropdown di sesi aktif.
-        const sessionChosenId = sessionStorage.getItem('user_chosen_module_id');
-        const activeId = sessionChosenId || QuizManager.DEFAULT_MODULE.id;
-        QuizManager.setActiveModuleId(activeId, false);
-
-        modules.forEach(m => {
+        listToRender.forEach(m => {
             const opt = document.createElement('option');
             opt.value = m.id;
             opt.textContent = `${m.icon || '📚'} ${m.title} (${m.questionCount || 0} Soal)`;
-            if (m.id === activeId) opt.selected = true;
+            if (m.id === activeId || listToRender.length === 1) opt.selected = true;
             homeSelect.appendChild(opt);
         });
+
+        // Jika hanya 1 modul yang diizinkan tampil, pastikan activeId sesuai modul tersebut
+        if (listToRender.length === 1) {
+            QuizManager.setActiveModuleId(listToRender[0].id, false);
+        }
+
         handleHomeModuleChange(false);
     }
 
     if (filterSelect) {
-        let opts = '<option value="all">📚 Semua Materi / Modul</option>';
+        let opts = '<option value="all">📊 Komparasi 2 Modul (Lengkap)</option>';
         modules.forEach(m => {
             opts += `<option value="${m.id}">${m.icon || '📚'} ${m.title}</option>`;
         });
         filterSelect.innerHTML = opts;
+        const currentDashFilter = localStorage.getItem('quizmaster_dashboard_module_filter') || 'all';
+        filterSelect.value = currentDashFilter;
+    }
+
+    // Sinkronkan elemen dropdown di Settings Panel Dasbor Guru
+    const settingExamModSel = document.getElementById('setting-active-exam-module');
+    if (settingExamModSel) {
+        settingExamModSel.value = activeExamMode;
     }
 }
 
@@ -88,6 +148,8 @@ async function handleHomeModuleChange(isUserAction = false) {
         descEl.textContent = current.description || 'Materi evaluasi pembelajaran kuis interaktif.';
     }
 }
+window.initModulesCatalog = initModulesCatalog;
+window.handleHomeModuleChange = handleHomeModuleChange;
 
 function switchTeacherTab(tabKey) {
     if (typeof sfxClick === 'function') sfxClick();
@@ -1260,19 +1322,23 @@ async function renderBankSoalModules() {
     if (!grid || !window.QuizManager) return;
 
     const modules = await QuizManager.getAllModules();
+    const activeExamMode = (typeof loadActiveExamModuleSetting === 'function')
+        ? loadActiveExamModuleSetting()
+        : (localStorage.getItem('quizmaster_active_exam_module_mode') || 'all');
     const activeId = QuizManager.getActiveModuleId();
 
     grid.innerHTML = '';
     modules.forEach(m => {
         const card = document.createElement('div');
-        const isActive = m.id === activeId;
+        const isExclusive = activeExamMode === m.id;
+        const isActive = isExclusive || (activeExamMode === 'all' && m.id === activeId);
         card.className = `module-grid-card ${isActive ? 'active-module' : ''}`;
 
         card.innerHTML = `
             <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
                 <div style="font-size: 2rem;">${m.icon || '📚'}</div>
-                <span class="q-badge" style="font-size: 0.72rem; padding: 2px 8px; background: rgba(34,211,238,0.15); color: var(--accent); border-color: rgba(34,211,238,0.3);">
-                    ${m.badge || (m.isDefault ? 'Bawaan' : 'Modul AI')}
+                <span class="q-badge" style="font-size: 0.72rem; padding: 2px 8px; ${isExclusive ? 'background: rgba(16,185,129,0.2); color: #34d399; border-color: rgba(16,185,129,0.5); font-weight:800;' : 'background: rgba(34,211,238,0.15); color: var(--accent); border-color: rgba(34,211,238,0.3);'}">
+                    ${isExclusive ? '🔒 HANYA MODUL INI AKTIF' : (m.badge || (m.isDefault ? 'Bawaan' : 'Modul AI'))}
                 </span>
             </div>
             <h4 style="margin: 0 0 6px 0; font-size: 1rem; color: var(--text);">${m.title}</h4>
@@ -1293,8 +1359,8 @@ async function renderBankSoalModules() {
                 <button class="btn btn-secondary" style="flex: 1; padding: 6px 10px; font-size: 0.75rem; border-color: rgba(139,92,246,0.4); color: #c4b5fd;" onclick="openQuestionEditorForModule('${m.id}')" title="Buka di Editor G-Form">
                     ✏️ Edit Soal
                 </button>
-                <button class="btn ${isActive ? 'btn-primary' : 'btn-secondary'}" style="flex: 1; padding: 6px 10px; font-size: 0.75rem;" onclick="setModuleAsActive('${m.id}')">
-                    ${isActive ? '✅ Aktif' : 'Pilih Modul'}
+                <button class="btn ${isExclusive ? 'btn-success' : (isActive ? 'btn-primary' : 'btn-secondary')}" style="flex: 1.2; padding: 6px 10px; font-size: 0.75rem; font-weight: 700;" onclick="setModuleAsActive('${isExclusive ? 'all' : m.id}')" title="${isExclusive ? 'Klik untuk membatalkan penguncian dan membuka semua modul' : 'Kunci kuis siswa agar HANYA modul ini yang muncul'}">
+                    ${isExclusive ? '✅ Hanya Ini Aktif (Buka Semua)' : '🔒 Terapkan Hanya Modul Ini'}
                 </button>
                 ${!m.isDefault ? `<button class="btn btn-danger" style="padding: 6px 10px; font-size: 0.75rem;" onclick="deleteModuleFromBank('${m.id}')" title="Hapus Modul">🗑️</button>` : ''}
             </div>
@@ -1305,11 +1371,23 @@ async function renderBankSoalModules() {
 
 async function setModuleAsActive(moduleId) {
     if (!window.QuizManager) return;
-    QuizManager.setActiveModuleId(moduleId);
-    showToast('Modul kuis aktif diperbarui! 🎯', '✅');
+    if (typeof setActiveExamModuleSetting === 'function') {
+        setActiveExamModuleSetting(moduleId, true);
+    } else {
+        QuizManager.setActiveModuleId(moduleId);
+    }
+    const modTitle = moduleId === 'all' 
+        ? 'Semua Modul Diaktifkan (Siswa Bebas Memilih)' 
+        : (moduleId === 'modul_jaringan_keamanan' 
+            ? 'Hanya Modul Keamanan Jaringan yang Ditampilkan' 
+            : (moduleId === 'modul_detektif_fakta' ? 'Hanya Modul Detektif Fakta yang Ditampilkan' : 'Modul Kuis Aktif Diperbarui'));
+    showToast(`🎯 Berhasil! ${modTitle}!`, '✅');
     await initModulesCatalog();
     renderBankSoalModules();
+    if (typeof renderDashboard === 'function') renderDashboard();
 }
+window.renderBankSoalModules = renderBankSoalModules;
+window.setModuleAsActive = setModuleAsActive;
 
 async function deleteModuleFromBank(moduleId) {
     if (!confirm('Apakah Anda yakin ingin menghapus modul materi kuis ini dari bank soal?')) return;

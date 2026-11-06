@@ -382,16 +382,16 @@ const QuizManager = {
         }
 
         // Pastikan urutan kanonikal:
-        // Index 0: Modul 1 (Misi Detektif Fakta)
-        // Index 1: Modul 2 (Penilaian Harian: Jaringan & Keamanan)
+        // Index 0: Modul 1 (Penilaian Harian: Jaringan & Keamanan) - Modul Utama Ujian
+        // Index 1: Modul 2 (Misi Detektif Fakta)
         // Index 2+: Modul tambahan buatan guru
         const customModules = (Array.isArray(list) ? list : []).filter(
             m => m && m.id !== this.DEFAULT_MODULE.id && m.id !== this.NETWORK_SECURITY_MODULE.id
         );
 
         const orderedList = [
-            this.DEFAULT_MODULE,
             this.NETWORK_SECURITY_MODULE,
+            this.DEFAULT_MODULE,
             ...customModules
         ];
 
@@ -404,7 +404,13 @@ const QuizManager = {
     },
 
     getActiveModuleId() {
-        return localStorage.getItem(this.ACTIVE_MODULE_KEY) || this.DEFAULT_MODULE.id;
+        try {
+            const examMode = localStorage.getItem('quizmaster_active_exam_module_mode');
+            if (examMode && examMode !== 'all') {
+                return examMode;
+            }
+        } catch(e) {}
+        return localStorage.getItem(this.ACTIVE_MODULE_KEY) || this.NETWORK_SECURITY_MODULE.id;
     },
 
     setActiveModuleId(id, broadcast = true) {
