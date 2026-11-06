@@ -655,18 +655,21 @@ def main():
     style_table_header(contrib_tbl.rows[0], [1.8, 1.5, 2.3, 0.6])
     format_table_data_cells(contrib_tbl, [1.8, 1.5, 2.3, 0.6])
 
-    # Save document
-    primary_filename = "Laporan_Mini_QA_Audit_QuizMaster_REVISI_FINAL.docx"
-    doc.save(primary_filename)
-    print(f"[SUCCESS] Berkas laporan Word berhasil dibuat: {primary_filename} ({os.path.getsize(primary_filename)} bytes)")
+    # Save document with multi-target fallback if files are locked by Microsoft Word
+    filenames = [
+        "Laporan_Mini_QA_Audit_QuizMaster_REVISI_FINAL_V2.docx",
+        "Laporan_Mini_QA_Audit_QuizMaster_REVISI_FINAL.docx",
+        "Laporan_Mini_QA_Audit_QuizMaster.docx"
+    ]
+    saved = []
+    for fn in filenames:
+        try:
+            doc.save(fn)
+            saved.append(fn)
+            print(f"[SUCCESS] Berkas laporan Word berhasil dibuat: {fn} ({os.path.getsize(fn)} bytes)")
+        except PermissionError:
+            print(f"[NOTE] Berkas {fn} sedang dibuka di Microsoft Word (locked).")
 
-    # Also attempt to save to default filename if not locked
-    default_filename = "Laporan_Mini_QA_Audit_QuizMaster.docx"
-    try:
-        doc.save(default_filename)
-        print(f"[SUCCESS] Berkas laporan Word default juga berhasil diperbarui: {default_filename} ({os.path.getsize(default_filename)} bytes)")
-    except PermissionError:
-        print(f"[NOTE] Berkas {default_filename} sedang dibuka di Microsoft Word. Versi final tersimpan di {primary_filename}.")
 
 if __name__ == "__main__":
     main()
