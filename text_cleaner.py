@@ -87,8 +87,9 @@ def parse_markdown_runs(text):
     return runs
 
 if __name__ == '__main__':
-    sample = "• Sumber Evidence: Telemetri Riwayat ($< 1$ menit). Skor batas $\ge 80$ dan formula $(Jumlah Benar / 20) \times 100$. Ini adalah *Requirement Ambiguity Review & Alignment* dan **Hasil Pengujian**."
+    sample = r"• Sumber Evidence: Telemetri Riwayat ($< 1$ menit). Skor batas $\ge 80$ dan formula $(Jumlah Benar / 20) \times 100$. Ini adalah *Requirement Ambiguity Review & Alignment* dan **Hasil Pengujian**."
     runs = parse_markdown_runs(sample)
     print("Parsed runs:")
     for r in runs:
         print("  ", r)
+

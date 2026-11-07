@@ -5,3 +5,7 @@ Thumbs.db
 *.log
 ~$*
 scratch/
+
+__pycache__/
+*.pyc
+test_formatting.py

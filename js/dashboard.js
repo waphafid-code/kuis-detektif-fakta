@@ -546,6 +546,25 @@ async function submitPin() {
     }
 
     const pin = input.value.trim();
+    if (pin.length !== 4) {
+        if (typeof sfxWrong === 'function') sfxWrong();
+        const errBox = document.getElementById('pin-error-msg');
+        if (errBox) {
+            errBox.innerHTML = '<span>⚠️</span><span id="pin-error-text">Format Tidak Lengkap: PIN Guru harus tepat 4 digit angka!</span>';
+            errBox.style.display = 'flex';
+        }
+        for (let i = 0; i < 4; i++) {
+            const dot = document.getElementById(`pdot-${i}`);
+            if (dot) dot.classList.add('error-slot');
+        }
+        setTimeout(() => {
+            for (let i = 0; i < 4; i++) {
+                const dot = document.getElementById(`pdot-${i}`);
+                if (dot) dot.classList.remove('error-slot');
+            }
+        }, 1200);
+        return;
+    }
     const pinH = await hashPin(pin);
     const isValid = (pinH === TEACHER_PIN_HASH);
 

@@ -37,3 +37,4 @@ if os.path.exists('export_pdf.ps1'):
 pdf_file = 'LAPORAN_QA_AUDIT_OPTIMIZED.pdf'
 if os.path.exists(pdf_file):
     print(f"Generated {pdf_file} (Size: {os.path.getsize(pdf_file):,} bytes)")
+

@@ -156,3 +156,4 @@
 ## 7. Kesimpulan Akhir Checklist
 
 Laporan praktikum dan seluruh artefak pendukung **Platform QuizMaster v3.0.02** dinyatakan **TELAH MEMENUHI 100% PERSYARATAN RUBRIK PENILAIAN PRAKTIKUM QA TAHUN AJARAN 2026/2027**. Dokumen siap dikompilasi ke dalam format laporan Microsoft Word (`.docx`) dan PDF (`.pdf`) standar akademik untuk diserahkan ke sistem Moodle universitas.
+
