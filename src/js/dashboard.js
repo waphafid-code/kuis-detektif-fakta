@@ -43,7 +43,7 @@ window.sanitizeSpreadsheetValue = sanitizeSpreadsheetValue;
 // ============================================================
 //  🔐 PIN & DELETE MODALS (MODERN TEACHER AUTHENTICATION)
 // ============================================================
-// 🛡️ SECURITY: SHA-256 Hash PIN Guru resmi (2543) — Mencegah pembacaan PIN dari source/console
+// 🛡️ SECURITY: SHA-256 Hash PIN Guru resmi — Mencegah pembacaan PIN dari source/console
 const TEACHER_PIN_HASH = '887846b0aa6af194c7e153372b41453af317c9407cb72cd75b9f633eb8ebf3a4';
 let _isTeacherAuthenticated = false;
 let _cachedValidToken = null;
@@ -194,7 +194,7 @@ function startBiometricReEnrollment() {
     const errBox = document.getElementById('pin-error-msg');
     const input = document.getElementById('pin-input');
     if (errBox) {
-        errBox.innerHTML = `<span>🔑</span><span id="pin-error-text">Ketik 4 digit PIN Guru (2543) untuk mengganti 1 sidik jari yang terdaftar:</span>`;
+        errBox.innerHTML = `<span>🔑</span><span id="pin-error-text">Ketik 4 digit PIN Guru resmi untuk mengganti 1 sidik jari yang terdaftar:</span>`;
         errBox.style.display = 'flex';
         errBox.style.borderColor = 'rgba(56,189,248,0.5)';
         errBox.style.color = '#38bdf8';
@@ -448,7 +448,7 @@ async function authenticateWithBiometrics() {
     // Arahkan guru mengisi 4 digit PIN terlebih dahulu
     window.pendingBiometricEnrollment = true;
     if (errBox) {
-        errBox.innerHTML = `<span>🔑</span><span id="pin-error-text">Langkah 1/2: Ketik 4 digit PIN Guru (2543) di bawah untuk mengotorisasi pendaftaran 1 sidik jari:</span>`;
+        errBox.innerHTML = `<span>🔑</span><span id="pin-error-text">Langkah 1/2: Ketik 4 digit PIN Guru resmi di bawah untuk mengotorisasi pendaftaran 1 sidik jari:</span>`;
         errBox.style.display = 'flex';
         errBox.style.borderColor = 'rgba(56,189,248,0.5)';
         errBox.style.color = '#38bdf8';

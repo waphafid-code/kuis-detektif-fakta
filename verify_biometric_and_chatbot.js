@@ -31,6 +31,7 @@ assert(indexHtml.includes('biometric-re-enroll-wrap'), 'index.html contains biom
 const dashboardJs = fs.readFileSync(path.join(__dirname, 'js/dashboard.js'), 'utf8');
 
 assert(!dashboardJs.includes('(m-Banking)'), 'dashboard.js has zero occurrences of "(m-Banking)"');
+assert(!dashboardJs.includes('2543'), 'dashboard.js never leaks plaintext PIN in UI messages or comments');
 assert(dashboardJs.includes('window.pendingBiometricEnrollment'), 'dashboard.js tracks pendingBiometricEnrollment');
 assert(dashboardJs.includes('enrollSingleBiometricCredential'), 'dashboard.js defines enrollSingleBiometricCredential');
 assert(dashboardJs.includes('startBiometricReEnrollment'), 'dashboard.js defines startBiometricReEnrollment');
