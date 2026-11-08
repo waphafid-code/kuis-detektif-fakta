@@ -32,7 +32,7 @@ flowchart LR
 
 #### Langkah Reproduksi (Steps to Reproduce):
 1. Buka aplikasi pada pukul 18.00 WIB (di luar jam pelajaran sekolah).
-2. Pilih kelas `X E.1`, pilih siswa `Aditya Pratama`, dan pilih paket kuis `Detektif Fakta`.
+2. Pilih kelas `X E.1`, pilih siswa terdaftar (`Muhammad Hafidh - Akun Demo`), dan pilih paket kuis `Detektif Fakta`.
 3. Klik tombol `Mulai Kuis`.
 
 #### Hasil Aktual vs Hasil yang Diharapkan:

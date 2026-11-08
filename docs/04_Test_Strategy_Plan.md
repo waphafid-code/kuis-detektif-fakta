@@ -6,7 +6,7 @@
 ### 1. Ruang Lingkup Pengujian (Scope of Testing)
 
 #### A. In-Scope (Fitur yang Diuji Secara Komprehensif):
-1. **Otorisasi & Keamanan Guru:** Form validasi 6-digit PIN Guru, hashing SHA-256, session lockout.
+1. **Otorisasi & Keamanan Guru:** Form validasi 4-digit PIN Guru ("2543"), hashing SHA-256, session lockout, dan integrasi Biometrik WebAuthn.
 2. **Mesin Penilaian & KKM:** Kalkulasi nilai 20 butir soal, penentuan predikat kelulusan (KKM 80), logika remedial.
 3. **Kontrol Akses Kelas:** Mode pengerjaan *Always Open*, *Schedule Time Window*, dan *Manual Override Lock*.
 4. **Siklus Hidup Ujian Siswa (State Machine):** Alur transisi layar `Lobby -> Active Exam -> Results Screen` dan pencegahan *illegal skip*.

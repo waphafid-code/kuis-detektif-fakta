@@ -16,7 +16,7 @@ const NemotronAI = {
     ENDPOINT: "https://integrate.api.nvidia.com/v1/chat/completions",
     STORAGE_KEY: "nvidia_nemotron_api_key",
     MODEL_STORAGE_KEY: "nvidia_nemotron_model_choice",
-    DEFAULT_API_KEY: "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",
+    DEFAULT_API_KEY: "",
 
     getApiKey() {
         return localStorage.getItem(this.STORAGE_KEY) || this.DEFAULT_API_KEY;

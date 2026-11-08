@@ -9,7 +9,7 @@ Tim QA merumuskan 5 kebutuhan fungsional inti yang menjadi dasar pengujian siste
 
 | ID Kebutuhan | Nama Kebutuhan | Deskripsi Fungsional |
 |---|---|---|
-| **REQ-01** | **Otorisasi Keamanan Portal Guru** | Sistem harus memvalidasi input PIN guru sepanjang tepat 6-digit numerik dengan mencocokkan nilai hash SHA-256. Akses hanya diberikan jika PIN cocok, dan menolak tegas PIN salah atau format non-numerik. |
+| **REQ-01** | **Otorisasi Keamanan Portal Guru** | Sistem harus memvalidasi input PIN guru sepanjang tepat 4-digit numerik ("2543") dengan mencocokkan nilai hash SHA-256. Akses hanya diberikan jika PIN cocok, dan menolak tegas PIN salah atau format kurang dari 4 digit. |
 | **REQ-02** | **Kalkulasi Nilai & Klasifikasi KKM 80** | Sistem harus menghitung skor akhir secara proporsional ($(\text{Benar} / 20) \times 100$) dan mengklasifikasikan siswa dengan skor $\ge 80$ sebagai **TUNTAS**, dan skor $< 80$ sebagai **REMEDIAL** beserta aktivasi sesi perbaikan. |
 | **REQ-03** | **Tata Kelola Akses & Penjadwalan Ujian** | Sistem harus mengizinkan pengerjaan ujian jika status kelas *Always Open* atau berada di dalam rentang jadwal aktif, dan memblokir pengerjaan jika status kelas *Locked Override* atau melewati batas waktu tenggat (*Deadline Expired*). |
 | **REQ-04** | **Transisi Siklus Hidup Ujian Siswa** | Sistem harus mengontrol perpindahan layar (*State Transition*) hanya melalui alur resmi: `Lobby (Home) -> Active Exam -> Results Screen`, serta melarang transisi langsung secara ilegal (misal langsung ke Results tanpa mengerjakan ujian). |

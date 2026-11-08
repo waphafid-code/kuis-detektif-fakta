@@ -64,6 +64,9 @@ Setelah implementasi perbaikan pada ketiga cacat sistem, evaluasi sisa risiko ku
 > ### 🚀 KEPUTUSAN FINAL: **GO FOR PRODUCTION RELEASE**
 > 
 > Aplikasi **QuizMaster SMAN 4 Padang versi v3.0.02** dinyatakan **LAYAK DAN SIAP DIGUNAKAN SECARA PENUH** untuk pelaksanaan kuis interaktif, remedial, dan evaluasi pembelajaran 216 siswa Kelas X E.1 s.d X E.6 serta manajemen analitik guru. Tidak ditemukan kendala yang menghalangi kelancaran ujian.
+>
+> - **URL Produksi Live:** [https://waphafid-code.github.io/kuis-detektif-fakta/](https://waphafid-code.github.io/kuis-detektif-fakta/)
+> - **Video Presentasi & Demonstrasi QA (YouTube):** [https://youtu.be/SQYn-bsqfPw](https://youtu.be/SQYn-bsqfPw)
 
 ---
 

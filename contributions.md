@@ -28,7 +28,7 @@ pie title Distribusi Beban Kerja Tim QA QuizMaster
   - **Tahap 1 (P01):** Menyusun konsep kualitas ISO/IEC 25010, menganalisis profil pengguna sekolah, memetakan perbedaan QA vs QC, dan menghitung estimasi *Cost of Quality (CoQ)* sebesar Rp 7.400.000.
   - **Tahap 4 (P04):** Merancang strategi pengujian menyeluruh (*Test Strategy & Test Plan*), menentukan *in-scope* dan *out-of-scope*, serta menetapkan *Quality Gate Criteria*.
   - **Tahap 8 (P08):** Memimpin evaluasi kriteria keluar (*exit criteria*), menganalisis sisa risiko kualitas (*residual risk*), dan menandatangani keputusan akhir rilis (*Go/No-Go Recommendation: GO*).
-  - **Kompilasi Laporan Word:** Mengorkestrasi penggabungan seluruh isi bab dan tabel ke dalam dokumen format Microsoft Word (`Laporan_Mini_QA_Audit_QuizMaster.docx`).
+  - **Kompilasi Dokumentasi & Sign-Off:** Mengorkestrasi penggabungan seluruh dokumentasi tahapan QA Audit (`docs/01` s.d `08`) serta verifikasi struktur repository GitHub.
 - **Persentase Kontribusi:** **25%**
 
 ---
@@ -82,7 +82,7 @@ pie title Distribusi Beban Kerja Tim QA QuizMaster
 | **Tahap 6 (P06)** | Black-Box Design & Execution (20%) | `docs/06_Black_Box_Design.md` & `evidence/*.png` | Pipit Khofifah | Andre Geovani |
 | **Tahap 7 (P07)** | Defect Report & 5-Why RCA | `docs/07_Defect_Report_RCA.md` | Harie Fadhil | Andre Geovani |
 | **Tahap 8 (P08)** | QA Audit Final Report & Sign-Off | `docs/08_QA_Audit_Final_Report.md` | Muhammad Hafidh P. R. | Seluruh Anggota |
-| **Kompilasi** | Laporan Word Resmi untuk Moodle | `Laporan_Mini_QA_Audit_QuizMaster.docx` | Muhammad Hafidh P. R. | Seluruh Anggota |
+| **Presentasi** | Video Presentasi & Demonstrasi Pengujian | [https://youtu.be/SQYn-bsqfPw](https://youtu.be/SQYn-bsqfPw) | Seluruh Anggota | Seluruh Anggota |
 
 ---
 *Matriks kontribusi ini disusun secara jujur dan transparan sebagai bukti komitmen kerja sama tim dalam menghasilkan produk perangkat lunak pendidikan yang bermutu tinggi.*

@@ -23,18 +23,19 @@
 
 ---
 
-## 🌐 Akses Produksi & Dokumentasi Laporan
+## 🌐 Akses Produksi & Video Presentasi QA Audit
 
 - 🚀 **Live Production Application:** [https://waphafid-code.github.io/kuis-detektif-fakta/](https://waphafid-code.github.io/kuis-detektif-fakta/)
-- 📑 **Dokumen Laporan Word Resmi (.docx):** [`Laporan_Mini_QA_Audit_QuizMaster.docx`](Laporan_Mini_QA_Audit_QuizMaster.docx) *(Siap unggah ke Moodle)*
-- 🎬 **Video Presentasi & Demonstrasi Uji:** *[Tautan YouTube Video Presentasi Kelompok]*
+- 🎬 **Video Presentasi & Demonstrasi Pengujian (YouTube):** [https://youtu.be/SQYn-bsqfPw](https://youtu.be/SQYn-bsqfPw)
+- 📊 **Laporan Final QA Audit (Markdown):** [`docs/08_QA_Audit_Final_Report.md`](docs/08_QA_Audit_Final_Report.md)
 
 ---
 
-## 📚 Struktur Berkas Dokumentasi QA Audit
+## 📚 Struktur Repository GitHub (Sesuai Standar Praktikum QA)
 
 ```
-e:\KUIS\
+kuis-detektif-fakta/
+├── README.md                              # Berkas Panduan Utama & Ringkasan Proyek QA
 ├── docs/                                  # Dokumentasi Lengkap 8 Tahap Audit Mutu
 │   ├── 01_Quality_Assessment.md           # P01: ISO 25010, Masalah Kualitas, QA vs QC, CoQ
 │   ├── 02_QA_Lifecycle.md                 # P02: Siklus QA, Shift-Left & Shift-Right, Quality Gates
@@ -48,15 +49,14 @@ e:\KUIS\
 │   └── 05_RTM.csv                         # Requirements Traceability Matrix (REQ -> TC -> Bug)
 ├── evidence/                              # 15 Bukti Tangkapan Layar Autentik (PNG)
 │   ├── home_screen.png                    # Tangkapan Layar Beranda
-│   ├── TC01_EP_Valid_PIN.png s.d TC03     # Bukti Equivalence Partitioning
-│   ├── TC04_BVA_KKM_79 s.d TC06           # Bukti Boundary Value Analysis (79, 80, 81)
-│   ├── TC07_DT_AlwaysOpen s.d TC09        # Bukti Decision Table Testing
-│   ├── TC10_ST_Lobby s.d TC12             # Bukti State Transition Testing
-│   ├── DEFECT01_Chatbot_NLP_Fixed.png     # Bukti Perbaikan Chatbot Gemini
+│   ├── TC01_EP_Valid_PIN.png s.d TC03     # Bukti Equivalence Partitioning (PIN 2543, 9999, 12)
+│   ├── TC04_BVA_KKM_79 s.d TC06           # Bukti Boundary Value Analysis (Skor 79, 80, 81)
+│   ├── TC07_DT_AlwaysOpen s.d TC09        # Bukti Decision Table Testing (Rule 1, 2, 3)
+│   ├── TC10_ST_Lobby s.d TC12             # Bukti State Transition Testing (S1 -> S2 -> S3)
+│   ├── DEFECT01_Chatbot_NLP_Query_Fixed.png # Bukti Perbaikan Chatbot Gemini
 │   └── DEFECT02_Mobile_FAB_Fixed.png      # Bukti Perbaikan Mobile UI Safe Area
-├── contributions.md                       # Matriks Pembagian Tugas Anggota Tim
-├── Laporan_Mini_QA_Audit_QuizMaster.docx  # Dokumen Kompilasi Moodle (Word)
-└── README.md                              # Berkas Panduan Utama Repositori
+├── src/                                   # Kode Sumber Aplikasi (HTML, CSS, JS, Bank Soal)
+└── contributions.md                       # Matriks Pembagian Tugas Anggota Tim
 ```
 
 ---
@@ -103,7 +103,7 @@ node verify_mobile_uiux.js
 
 | Teknik Black-Box | Skenario Uji | Jumlah Test Case | Hasil Eksekusi |
 |---|---|:---:|:---:|
-| **Equivalence Partitioning (EP)** | Otorisasi PIN Guru (Valid `240804`, Salah `123456`, Non-numerik `12ab`) | 3 | **100% PASS** |
+| **Equivalence Partitioning (EP)** | Otorisasi PIN Guru (Valid `2543`, Salah `9999`, Format `<4 digit` `12`) | 3 | **100% PASS** |
 | **Boundary Value Analysis (BVA)** | Batas KKM 80 (Skor 79: Remedial, Skor 80: Tuntas, Skor 81: Tuntas) | 3 | **100% PASS** |
 | **Decision Table (DT)** | Tata Kelola Akses (Always Open, Override Locked, Deadline Expired) | 3 | **100% PASS** |
 | **State Transition (ST)** | Siklus Mesin Ujian (`Lobby -> Active Exam -> Results Screen` & Blokir Ilegal) | 3 | **100% PASS** |

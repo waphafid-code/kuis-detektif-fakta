@@ -26,9 +26,9 @@ flowchart LR
     Input --> IV1["Partisi Invalid 1 (Salah Nilai)"]
     Input --> IV2["Partisi Invalid 2 (Panjang & Format)"]
     
-    V --> V_Out["PIN Cocok Hash: Akses Diberikan"]
-    IV1 --> IV1_Out["PIN 6-digit Salah: Akses Ditolak"]
-    IV2 --> IV2_Out["Karakter Non-Numerik / < 6: Ditolak"]
+    V --> V_Out["PIN Cocok Hash (2543): Akses Diberikan"]
+    IV1 --> IV1_Out["PIN 4-digit Salah (9999): Akses Ditolak"]
+    IV2 --> IV2_Out["Panjang < 4 Digit (12): Ditolak"]
 ```
 
 #### Pembagian Partisi Ekuivalen:
@@ -36,14 +36,14 @@ flowchart LR
 |---|:---:|---|:---:|---|
 | **P1** | **Valid** | Tepat 4 digit numerik, hash SHA-256 cocok dengan konfigurasi guru. | `2543` | Modal PIN tertutup, Dasbor Manajemen Guru terbuka penuh. |
 | **P2** | **Invalid** | Tepat 4 digit numerik, namun nilai salah / tidak cocok. | `9999` | Muncul pesan error merah "PIN Salah!", akses dasbor ditolak. |
-| **P3** | **Invalid** | Kurang dari 4 digit atau mengandung karakter alfabet/simbol. | `12ab` | Form menolak submit, border input berkedip merah peringatan. |
+| **P3** | **Invalid** | Kurang dari 4 digit atau format tidak lengkap. | `12` | Form menolak submit, border input berkedip merah peringatan. |
 
 #### Eksekusi Test Case EP:
 - **TC-01 (EP Valid):** Masukkan PIN `2543` $\rightarrow$ **PASS**  
   *Bukti Screenshot:* [TC01_EP_Valid_PIN.png](../evidence/TC01_EP_Valid_PIN.png)
 - **TC-02 (EP Invalid Salah Nilai):** Masukkan PIN `9999` $\rightarrow$ **PASS**  
   *Bukti Screenshot:* [TC02_EP_Invalid_PIN.png](../evidence/TC02_EP_Invalid_PIN.png)
-- **TC-03 (EP Invalid Format):** Masukkan input `12ab` $\rightarrow$ **PASS**  
+- **TC-03 (EP Invalid Format):** Masukkan input `12` $\rightarrow$ **PASS**  
   *Bukti Screenshot:* [TC03_EP_Format_PIN.png](../evidence/TC03_EP_Format_PIN.png)
 
 ---
@@ -164,7 +164,7 @@ stateDiagram-v2
 |:---:|:---:|---|:---:|---|
 | **TC-01** | EP | Input PIN Guru Valid (`2543`) | **PASS** | `TC01_EP_Valid_PIN.png` |
 | **TC-02** | EP | Input PIN Guru Salah (`9999`) | **PASS** | `TC02_EP_Invalid_PIN.png` |
-| **TC-03** | EP | Input PIN Format Non-Numerik (`12ab`) | **PASS** | `TC03_EP_Format_PIN.png` |
+| **TC-03** | EP | Input PIN Format Kurang dari 4 Digit (`12`) | **PASS** | `TC03_EP_Format_PIN.png` |
 | **TC-04** | BVA | Skor Batas Bawah KKM (Skor 79) $\rightarrow$ Remedial | **PASS** | `TC04_BVA_KKM_79_Remedial.png` |
 | **TC-05** | BVA | Skor Tepat Batas KKM (Skor 80) $\rightarrow$ Tuntas | **PASS** | `TC05_BVA_KKM_80_Tuntas.png` |
 | **TC-06** | BVA | Skor Batas Atas KKM (Skor 81) $\rightarrow$ Tuntas | **PASS** | `TC06_BVA_KKM_81_Tuntas.png` |

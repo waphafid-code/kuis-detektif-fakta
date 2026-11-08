@@ -1,0 +1,300 @@
+/**
+ * 📋 DAFTAR RESMI PESERTA DIDIK KELAS X (E.1 - E.6)
+ * SMAN 4 PADANG — TAHUN AJARAN 2026/2027
+ * Digunakan agar siswa cukup memilih nama sesuai kelasnya tanpa mengetik manual.
+ */
+
+const STUDENT_ROSTER = {
+    'X E 1': [
+        "ADITYA PUTRA PRATAMA",
+        "AISAH PUTRI KARLINA YENTI",
+        "ALEESYA NADIRAH",
+        "AREL PRATAMA",
+        "ATHAYA HUMAIROH",
+        "CLARISSA PERMATA ALIKA",
+        "DAFFA RAMADHAN",
+        "DANICA AQILA ZAFEERA",
+        "DIVA DWI PUTRI",
+        "EGGRA PUTRA SYAH REZA",
+        "FAHMI ARRAHMAN",
+        "FAIZ FUJIANTO",
+        "FAREL ALVEDRO",
+        "FARSHA KHAIRANI",
+        "FELLYDZA PUTRI DESFFENDI",
+        "KESYA VARIZKA",
+        "KHALIFAH CAHAYA RAMADHAN",
+        "MUHAMMAD FADLI IRVANDI",
+        "MUHAMMAD IBNU ZAKA",
+        "MUHAMMAD RESTU CORNELLA",
+        "MUHAMMAD VABYAN WELFI",
+        "NADINKA MAKAILA ZETA",
+        "NADIRA APRI YULIANDRA",
+        "NAJLA PUTRI ARUNI",
+        "NAZILLA PUTRI",
+        "RAHIMA NAURA ALFARISI",
+        "RAHMA LUTFIA PUTRI",
+        "RATU ZULAIKA",
+        "RIDHO AHMAD TSAQIF",
+        "RIVANO PRATAMA",
+        "RIZKI FURQAN",
+        "SHIREEN PUTRI ASHYLA",
+        "SYAFA SALSABILA HUNAYAH",
+        "VIONI DWI SEPTIA",
+        "WIDIYA VIRGINA SASDI",
+        "ZIFANA LETISYA DORIS"
+    ],
+    'X E 2': [
+        "AISYAH ALIFAH DHANIEL",
+        "AISYAH PADILLAH",
+        "EFRILNA AULIA PUTRI",
+        "FABIO SHERIDAN FATHIN",
+        "FAKHIRA MAISA RISANI",
+        "FARHAN PUTRA ALGHONY",
+        "FATHAN KHALIF IZZADIN",
+        "FATHURRAHMAN ARRIZQ",
+        "GIBRAN SAVERIO",
+        "HARLAN RADO KURNIAWAN",
+        "HAVIT ISRA AL ASHARI",
+        "HULWANA MARINI",
+        "IKSHAN ELFANDO",
+        "JENNIFER SEPTHIA PUTRI",
+        "KARINA AHMAD",
+        "KEYSA PUTRI MEVI",
+        "KHANSA HUMAIRA NASYHWA",
+        "KHANSAA ALEXANDRA FALKA TRI-JATA",
+        "LABIB ALFARABI LUBIS",
+        "LATHIFAH JUMANAH REZKI",
+        "MELISA SYAHRUNI",
+        "MUGNI ABDUL ROHIM",
+        "MUHAMMAD REYVAN",
+        "NADINE PUTERI DONITA",
+        "NADYA FITRICYA",
+        "NAFLA APRILLIA NENGSIH",
+        "NAQEEB PARVEZ PUTRA PAHLEPI",
+        "NAYLA PUTRI ADISA",
+        "NURUL NAJMI NADIRAH",
+        "PUTRI NAJLA ANDRIKA",
+        "RAHMAT FAREL ERIKA",
+        "SALWA AFIFAH PUTRI",
+        "SERUNI PUTRI",
+        "VANESA AURA SYIFA",
+        "YOGA PAMUNGKAS",
+        "ZAHRANI SAKINAH"
+    ],
+    'X E 3': [
+        "ABDUL KARIM AR RASYAD",
+        "ADARA PREMADI",
+        "AISYAH ZAHRA ATHIRAH",
+        "ALQI DWI NABILNU",
+        "ARBBI AVRIEL",
+        "ARJUNA KHAIRIL TAUFIK",
+        "BENING KHAIRUNNISA HARDIYANTO",
+        "BERLIAN IBERTA",
+        "BUNGA TASKIA",
+        "DIVA AMANDA",
+        "GEVIN ARTHA ALIMO",
+        "GLADYS ANANTA PAULA",
+        "HAZIM GHAILAN MALAZI",
+        "HUSNA MAIZA MAJID",
+        "JIBRAN RAMADHAN GANI",
+        "KEYSHA AFRA MAZAYA",
+        "KIRANA YULIA ZARNI",
+        "MAHACHIKA MARTADANI",
+        "MEISYA FITRI USMY",
+        "MUHAMAD RIFKY",
+        "MUHAMMAD FADHIL JASRIADI",
+        "MUHAMMAD RIZKI",
+        "NAILA FATHIYYA PUTRI",
+        "NAISYILA HERMELA",
+        "NATASYA PUTRI",
+        "NURUL AZDKYAH",
+        "PAVEL ABERCIO PERSANDES",
+        "RACHEL FATHIYA KURNIAWAN",
+        "RAHMAD JAUHAR JAMIL SAPUTRA",
+        "REYA NAJWA",
+        "RYDHO PUTRA NOVIANDA",
+        "SALSA RESTHY AYU",
+        "SHATARA ISTIRIANI",
+        "VIOLA SAFITRI",
+        "YASMIN MAKHFIRAH",
+        "ZHAFIRAH PUTRI FAISAL"
+    ],
+    'X E 4': [
+        "AJENG WIDYA LESTARI",
+        "ANGGI AULIA",
+        "AURELIA GHASANI FATRI",
+        "AURORA PUTRI ISLAMI",
+        "BIANSAVA",
+        "DAVIN ADELIO WAHID",
+        "FAIZ AL PUTRA",
+        "FATHAN MAULANA",
+        "GRECYLIA AIBOY",
+        "HABIBI RIDHO PUTRA",
+        "HANIFA ZAHFALETA ROLIA",
+        "KAYLA ZAHIRA YUSEP",
+        "KEIZYA ANGELICA",
+        "KHANSA ALETA",
+        "KHARISMA RATU KIRANA",
+        "MESY ROSADY SAPUTRI",
+        "MUHAMMAD AKHTAR FAIZ",
+        "MUHAMMAD KEVIN RIADI",
+        "MUHAMMAD LUCKY PUJANGGA",
+        "MUHAMMAD NUR IKHSAN",
+        "MUHAMMAD RAFIF",
+        "MUTIARA HAKIM",
+        "NABILA PUTRI ALFINA",
+        "NADA SYIFA",
+        "NAFEEZA AQILAH",
+        "NAILAH ADITHA HAYA PRATISTHA",
+        "NAJLA ALYA REFANDRA",
+        "NASYA SORAYA EFENDI",
+        "NAURA SALSABILA",
+        "OLIVIA DARMA",
+        "RAFIIF FAIRUZ",
+        "REZKY DWI PUTRA",
+        "ROFI PUTRA REDIFRA",
+        "ROMA PUTRA WIJAYA",
+        "SITI KHAIRANI PERMANA",
+        "ZIVIA HUTRI DEWI"
+    ],
+    'X E 5': [
+        "ABDIEL BELVA",
+        "AINI SAFWANA MEWI",
+        "AISAR RAFIE",
+        "ANNISA SALSABILA",
+        "DELA APRILLIZA",
+        "DINDA MAHARANI",
+        "FADHIL FADLURAHMAN",
+        "FAREL OKTALINDA",
+        "FATHIYA AMIRA KHANSA",
+        "FIKRA MUDRIKAH PURNAMA",
+        "GEVIRA NAFISHA ELKHAIRA",
+        "HILMIYA HAZIMAH",
+        "KAMILA RAISYA FATHONA",
+        "KEVIN PUTRA ADIDTYA",
+        "KHALILA NAUMI HIJRI",
+        "LOUISA JINGGA GRESSYELA",
+        "MARTINUS WARUWU",
+        "MIRANDA PUTRI",
+        "MUHAMMAD DAFFAA",
+        "MUHAMMAD DZIKRI",
+        "MUHAMMAD RAFIF YODISTA",
+        "NADIRA PUTRI",
+        "NOFIANI GUSTI ZHAHARA",
+        "NUR ALYA NABILAH",
+        "PUTRISIA AKSA",
+        "QAISYARA HASANAH",
+        "RADIATHUL FADILAH",
+        "RAVI TRIO SAPUTRA",
+        "RAZAQ PERMATA DESIL",
+        "REIVAN SYAHPUTRA",
+        "RINDU KHALIFA ISLAMY",
+        "SAPTA TEGUH KUMBARA",
+        "SASKIA AYUDIA PUTRI",
+        "UFAIRAH QUEEN MAULANA",
+        "VAZRIEL ALFARIZI",
+        "VIONA PUTRI"
+    ],
+    'X E 6': [
+        "AIMEE ISHANA",
+        "AIRA PUTRI ANANDA",
+        "AUDIVA CANIA",
+        "BIMA ARIBI",
+        "CIARA WIYAL PUTRI",
+        "DEFFID FATHAHILAH SEVLI",
+        "DIEGO ROSSEL",
+        "DINDA CLAUDIA",
+        "DIVA APRILIA PUTRI",
+        "FADHLAN ASSIRRI",
+        "FATHAN SONDIRO",
+        "FATHIA ZALIA",
+        "FAZA ABDILLAH",
+        "FRICHILLIA PUTRI IFRA",
+        "HAFIZA DURRATUL HIKMAH",
+        "HANNY MARCHA PRICHILLA",
+        "LATIFFAH ARYANA ARDANINGGAR",
+        "MARVITA PUTRI",
+        "MONIK ASSYIFA FAUZI",
+        "MUHAMMAD ARIF IRWAN",
+        "MUHAMMAD HAIKAL",
+        "MUHAMMAD IKHWAN LATIF",
+        "MUHAMMAD KHAIRUL AZZAM",
+        "MUHAMMAD RIZKY AS-SHIDIQ",
+        "MUHAMMAD SHIDIQ AL RASYID",
+        "NADZUA DWI ATIRA",
+        "NANDA AFIFAH",
+        "NURUL PUTRI",
+        "QAISYA PUTRI ARIFA",
+        "QHAIRATUL HILMI",
+        "RAUDAH PERMATA SONARA",
+        "RAYHAN",
+        "REVI WIRMAN SYAFITRI",
+        "REYSHA OLIVIA MAHENDRA",
+        "RONALDI SAPUTRA",
+        "SHADRINA KAMILA"
+    ],
+    'KELAS DEMO': [
+        "MUHAMMAD HAFIDH (AKUN DEMO)",
+        "DOSEN PENGUJI (AUDITOR QA)",
+        "ANDRE GEOVANI (AKUN DEMO)",
+        "HARIE FADHIL (AKUN DEMO)",
+        "PIPIT KHOFIFAH (AKUN DEMO)",
+        "DEMO SISWA TUNTAS (SKOR 85)",
+        "DEMO SISWA REMEDIAL (SKOR 65)",
+        "DEMO SISWA SEMPURNA (SKOR 100)",
+        "DEMO SISWA BARU (BELUM MENGERJAKAN)"
+    ]
+};
+
+// Aliases support (misal "X E.1" atau "X E 1" atau "X E1")
+const normalizeClassName = (cls) => {
+    if (!cls) return '';
+    const cleaned = String(cls).toUpperCase().replace(/[^A-Z0-9]/g, '');
+    const match = cleaned.match(/^XE([1-6])$/);
+    if (match) return `X E ${match[1]}`;
+    if (cleaned.includes('DEMO')) return 'KELAS DEMO';
+    return cls.replace(/\./g, ' ').replace(/\s+/g, ' ').trim();
+};
+
+const isClassEquivalent = (c1, c2) => {
+    if (!c1 || !c2) return false;
+    const n1 = String(c1).toUpperCase().replace(/[^A-Z0-9]/g, '');
+    const n2 = String(c2).toUpperCase().replace(/[^A-Z0-9]/g, '');
+    if (n1 === n2) return true;
+    if (n1.includes('DEMO') && n2.includes('DEMO')) return true;
+    return false;
+};
+
+const isNameEquivalent = (name1, name2) => {
+    if (!name1 || !name2) return false;
+    const clean1 = String(name1).trim().toLowerCase().replace(/[^a-z0-9\s]/g, '');
+    const clean2 = String(name2).trim().toLowerCase().replace(/[^a-z0-9\s]/g, '');
+    if (clean1 === clean2) return true;
+    if (clean1.length >= 3 && clean2.length >= 3 && (clean1.includes(clean2) || clean2.includes(clean1))) return true;
+    
+    const words1 = clean1.split(/\s+/).filter(w => w.length > 0);
+    const words2 = clean2.split(/\s+/).filter(w => w.length > 0);
+    if (words1.length === 0 || words2.length === 0) return false;
+
+    if (words1[0] === words2[0] && (words1.length === 1 || words2.length === 1)) return true;
+
+    const all1In2 = words1.every(w => words2.includes(w));
+    if (all1In2) return true;
+    const all2In1 = words2.every(w => words1.includes(w));
+    if (all2In1) return true;
+
+    return false;
+};
+
+const getStudentsByClass = (cls) => {
+    for (const [key, list] of Object.entries(STUDENT_ROSTER)) {
+        if (isClassEquivalent(key, cls)) return list;
+    }
+    return [];
+};
+
+window.normalizeClassName = normalizeClassName;
+window.isClassEquivalent = isClassEquivalent;
+window.isNameEquivalent = isNameEquivalent;
+window.getStudentsByClass = getStudentsByClass;
+window.STUDENT_ROSTER = STUDENT_ROSTER;
