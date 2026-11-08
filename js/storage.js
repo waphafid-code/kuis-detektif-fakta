@@ -514,8 +514,9 @@ let bgmInterval = null;
 let bgmRunning = false;
 let bgmStep = 0;
 let nextNoteTime = 0.0;
-const BGM_STEP_DURATION = 0.15; // 100 BPM tempo (150ms per 16th step)
-const SCHEDULE_AHEAD_TIME = 0.12; // 120ms Lookahead buffer (prevents main thread stutter)
+// 🧘 71 BPM Calming Alpha-Wave Study Tempo (210ms per 16th step)
+const BGM_STEP_DURATION = 0.21; 
+const SCHEDULE_AHEAD_TIME = 0.15; // 150ms Lookahead buffer (prevents main thread stutter)
 
 let masterGain = null;
 let bgmGain = null;
@@ -536,7 +537,8 @@ function initAudio() {
             }
             if (!bgmGain) {
                 bgmGain = actx.createGain();
-                bgmGain.gain.setValueAtTime(0.85, actx.currentTime);
+                // 🎧 0.22 Master Volume: Peaceful, unobtrusive background study level
+                bgmGain.gain.setValueAtTime(0.22, actx.currentTime);
                 bgmGain.connect(masterGain);
             }
             if (!sharedNoiseBuffer) {
@@ -600,10 +602,166 @@ function tone(freq, type, dur, vol, slide = null, delay = 0, filterFreq = null, 
     };
 }
 
-// Warm Rhodes bell tone (Single lightweight oscillator with soft filter)
-function playBellNote(freq, dur = 0.35, vol = 0.07, delay = 0) {
+// Warm Rhodes bell tone (Single lightweight oscillator with soft filter for SFX)
+function playBellNote(freq, dur = 0.35, vol = 0.08, delay = 0, targetDest = null) {
     if (isMuted || !actx) return;
-    tone(freq, 'sine', dur, vol, null, delay, 2200, bgmGain);
+    tone(freq, 'sine', dur, vol, null, delay, 2200, targetDest || masterGain || actx.destination);
+}
+
+// 🎹 Soft Warm Electric Piano / Ambient Pad (Lo-Fi Study Aesthetic)
+function playWarmPadChord(notes, bassFreq, dur = 3.2, delay = 0, vol = 0.035) {
+    if (isMuted || !actx || !bgmGain) return;
+    const t = actx.currentTime + delay;
+
+    // Pad Voice (warm notes filtered softly with gentle detune for analog warmth)
+    notes.forEach((freq, idx) => {
+        try {
+            const osc = actx.createOscillator();
+            const gain = actx.createGain();
+            const filter = actx.createBiquadFilter();
+
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(freq, t);
+
+            // Subtle tape wow/flutter pitch movement (< 0.2 Hz)
+            const detuneCents = ((idx % 2 === 0 ? 1 : -1) * 2.5);
+            osc.detune.setValueAtTime(detuneCents, t);
+
+            filter.type = 'lowpass';
+            filter.frequency.setValueAtTime(800, t);
+            filter.Q.value = 0.7;
+
+            // Silky smooth swell envelope (Zero click, zero harsh attack)
+            gain.gain.setValueAtTime(0, t);
+            gain.gain.linearRampToValueAtTime(vol, t + 0.35);
+            gain.gain.setValueAtTime(vol * 0.8, t + dur * 0.6);
+            gain.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+
+            osc.connect(filter);
+            filter.connect(gain);
+            gain.connect(bgmGain);
+
+            osc.start(t);
+            osc.stop(t + dur + 0.05);
+
+            osc.onended = () => {
+                try {
+                    osc.disconnect();
+                    filter.disconnect();
+                    gain.disconnect();
+                } catch(e) {}
+            };
+        } catch(e) {}
+    });
+
+    // Warm deep sub-bass (grounding, calm, non-boomy)
+    if (bassFreq) {
+        try {
+            const bOsc = actx.createOscillator();
+            const bGain = actx.createGain();
+            const bFilter = actx.createBiquadFilter();
+
+            bOsc.type = 'sine';
+            bOsc.frequency.setValueAtTime(bassFreq, t);
+
+            bFilter.type = 'lowpass';
+            bFilter.frequency.setValueAtTime(180, t);
+
+            const bVol = vol * 1.35;
+            bGain.gain.setValueAtTime(0, t);
+            bGain.gain.linearRampToValueAtTime(bVol, t + 0.22);
+            bGain.gain.setValueAtTime(bVol * 0.75, t + dur * 0.5);
+            bGain.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+
+            bOsc.connect(bFilter);
+            bFilter.connect(bGain);
+            bGain.connect(bgmGain);
+
+            bOsc.start(t);
+            bOsc.stop(t + dur + 0.05);
+
+            bOsc.onended = () => {
+                try {
+                    bOsc.disconnect();
+                    bFilter.disconnect();
+                    bGain.disconnect();
+                } catch(e) {}
+            };
+        } catch(e) {}
+    }
+}
+
+// 🔔 Delicate Kalimba / Raindrop Chime (Sparse, Peaceful, Ambient)
+function playCalmChime(freq, dur = 0.6, vol = 0.022, delay = 0) {
+    if (isMuted || !actx || !bgmGain) return;
+    const t = actx.currentTime + delay;
+    try {
+        const osc = actx.createOscillator();
+        const gain = actx.createGain();
+        const filter = actx.createBiquadFilter();
+
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, t);
+
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(2400, t);
+
+        gain.gain.setValueAtTime(0, t);
+        gain.gain.linearRampToValueAtTime(vol, t + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+
+        osc.connect(filter);
+        filter.connect(gain);
+        gain.connect(bgmGain);
+
+        osc.start(t);
+        osc.stop(t + dur + 0.05);
+
+        osc.onended = () => {
+            try {
+                osc.disconnect();
+                filter.disconnect();
+                gain.disconnect();
+            } catch(e) {}
+        };
+    } catch(e) {}
+}
+
+// 💓 Velvet Heartbeat Pulse (Ultra-soft resting human rhythm ~68 BPM)
+function playGentlePulse(delay = 0, vol = 0.035) {
+    if (isMuted || !actx || !bgmGain) return;
+    const t = actx.currentTime + delay;
+    try {
+        const osc = actx.createOscillator();
+        const gain = actx.createGain();
+        const filter = actx.createBiquadFilter();
+
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(52, t);
+        osc.frequency.exponentialRampToValueAtTime(36, t + 0.16);
+
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(100, t);
+
+        gain.gain.setValueAtTime(0, t);
+        gain.gain.linearRampToValueAtTime(vol, t + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.16);
+
+        osc.connect(filter);
+        filter.connect(gain);
+        gain.connect(bgmGain);
+
+        osc.start(t);
+        osc.stop(t + 0.18);
+
+        osc.onended = () => {
+            try {
+                osc.disconnect();
+                filter.disconnect();
+                gain.disconnect();
+            } catch(e) {}
+        };
+    } catch(e) {}
 }
 
 // Gentle Lo-Fi Kick (with automatic disconnect)
@@ -784,65 +942,78 @@ function startCheatVibration(durationSec = 20) {
     }
 }
 
-// 🎼 Lush Chill-Pop / Lo-Fi Study Chords (Cmaj7 -> Am7 -> Dm7 -> G7)
-const LUSH_CHORDS = [
-    { bass: 130.81, notes: [261.63, 329.63, 392.00, 493.88], melody: [523.25, 659.25, 587.33, 493.88] }, // Cmaj7
-    { bass: 110.00, notes: [220.00, 261.63, 329.63, 392.00], melody: [440.00, 523.25, 659.25, 523.25] }, // Am7
-    { bass: 146.83, notes: [293.66, 349.23, 440.00, 523.25], melody: [587.33, 523.25, 440.00, 392.00] }, // Dm7
-    { bass: 98.00,  notes: [196.00, 246.94, 293.66, 349.23], melody: [392.00, 493.88, 587.33, 659.25] }  // G7
+// 🎼 Deep-Focus Study Chords (Serene, Inspiring, Non-Intrusive Alpha-Wave Ambient)
+// Progression: Fmaj9 -> G6 -> Em7 -> Am9 (Calming Loop)
+const LOFI_STUDY_CHORDS = [
+    // 1. Fmaj9 — Dreamy, tranquil, open (F - A - C - E - G)
+    {
+        name: 'Fmaj9',
+        bass: 87.31, // F2 (Warm Sub-Bass)
+        pad: [174.61, 261.63, 329.63, 392.00], // F3, C4, E4, G4
+        chimes: [659.25, 783.99] // E5, G5 (Delicate Kalimba)
+    },
+    // 2. G6 — Gentle progression, reflective (G - B - D - E - A)
+    {
+        name: 'G6',
+        bass: 98.00, // G2
+        pad: [196.00, 293.66, 392.00, 440.00], // G3, D4, G4, A4
+        chimes: [587.33, 880.00] // D5, A5
+    },
+    // 3. Em7 — Deep calm, cognitive focus (E - G - B - D)
+    {
+        name: 'Em7',
+        bass: 82.41, // E2
+        pad: [164.81, 246.94, 293.66, 392.00], // E3, B3, D4, G4
+        chimes: [659.25, 783.99] // E5, G5
+    },
+    // 4. Am9 — Cozy, reassuring resolution (A - C - E - G - B)
+    {
+        name: 'Am9',
+        bass: 110.00, // A2
+        pad: [220.00, 261.63, 329.63, 493.88], // A3, C4, E4, B4
+        chimes: [523.25, 659.25] // C5, E5
+    }
 ];
 
 function scheduleBgmStep(stepIndex, noteTime) {
     if (!bgmRunning || isMuted || !actx) return;
     const step = stepIndex % 16;
     const chordIndex = Math.floor((stepIndex % 64) / 16);
-    const chord = LUSH_CHORDS[chordIndex];
+    const chord = LOFI_STUDY_CHORDS[chordIndex];
     const offset = Math.max(0, noteTime - actx.currentTime);
 
     // 🥔 ULTRA-LIGHT ARRANGEMENT FOR POTATO PHONES:
-    // Minimizes CPU & Web Audio node allocation by ~85%
+    // Schedules 85% lighter audio nodes (single warm 2-note pad voice, zero chimes, zero pulse)
     if (isPotatoDevice) {
         if (step === 0) {
-            playKick(offset, 0.16);
-            tone(chord.bass, 'triangle', 0.28, 0.12, null, offset, 400, bgmGain);
-            playBellNote(chord.notes[0], 0.3, 0.035, offset);
-        } else if (step === 8) {
-            playSnare(offset, 0.07);
-            playBellNote(chord.notes[2] || chord.notes[1], 0.3, 0.03, offset);
-        } else if (step === 4 || step === 12) {
-            const mel = chord.melody[Math.floor(step / 4)];
-            playBellNote(mel, 0.2, 0.03, offset);
+            playWarmPadChord(chord.pad.slice(0, 2), chord.bass, BGM_STEP_DURATION * 15.5, offset, 0.025);
         }
         return;
     }
 
-    // Smooth subtle beat (Desktop / Standard)
-    if (step === 0 || step === 10) playKick(offset, 0.18);
-    if (step === 4 || step === 12) playSnare(offset, 0.08);
-    if (step % 2 === 0) playHiHat(offset, 0.015);
-    else if (step % 4 === 3) playHiHat(offset, 0.01);
-
-    // Warm deep sub-bass (rounded triangle)
-    if (step === 0 || step === 6 || step === 10) {
-        tone(chord.bass, 'triangle', 0.35, 0.14, null, offset, 400, bgmGain);
+    // 🌊 STEP 0: Warm Ambient Chord Swell & Grounding Sub-Bass
+    if (step === 0) {
+        // Pad breathes over 15.5 steps (~3.2 detik)
+        playWarmPadChord(chord.pad, chord.bass, BGM_STEP_DURATION * 15.5, offset, 0.035);
+        // Faint, velvety heartbeat pulse (ultra-soft resting tempo)
+        playGentlePulse(offset, 0.032);
     }
 
-    // Gentle Electric Piano chord stabs
-    if (step === 0 || step === 6) {
-        chord.notes.forEach(f => {
-            playBellNote(f, 0.35, 0.035, offset);
-        });
+    // 💓 STEP 8: Faint Second Heartbeat Pulse (Very subtle rhythmic anchor)
+    if (step === 8) {
+        playGentlePulse(offset, 0.022);
     }
 
-    // Melodic rhodes bell arpeggio on off-beats
-    if (step % 4 === 2) {
-        const melNote = chord.melody[Math.floor(step / 4)];
-        playBellNote(melNote, 0.3, 0.05, offset);
+    // 💧 STEP 6 & 12: Sparse, Delicate Raindrop Chimes (Float softly in the background)
+    if (step === 6 && chord.chimes && chord.chimes[0]) {
+        playCalmChime(chord.chimes[0], 0.7, 0.022, offset);
+    } else if (step === 12 && chord.chimes && chord.chimes[1]) {
+        playCalmChime(chord.chimes[1], 0.7, 0.020, offset);
     }
 }
 
 // ⏱️ HIGH-PRECISION WEB AUDIO SCHEDULER (ZERO DRIFT, JITTER-FREE)
-const POTATO_SCHEDULE_AHEAD = 0.20;
+const POTATO_SCHEDULE_AHEAD = 0.22;
 function bgmScheduler() {
     if (!bgmRunning || !actx) return;
     const aheadTime = isPotatoDevice ? POTATO_SCHEDULE_AHEAD : SCHEDULE_AHEAD_TIME;
@@ -860,36 +1031,60 @@ function startBGM() {
     bgmRunning = true;
     bgmStep = 0;
     nextNoteTime = actx.currentTime + 0.05;
+
+    // 🌸 Smooth Peaceful Fade-In (1.2 detik, zero shocking audio burst)
+    if (bgmGain) {
+        try {
+            bgmGain.gain.cancelScheduledValues(actx.currentTime);
+            bgmGain.gain.setValueAtTime(0.0001, actx.currentTime);
+            bgmGain.gain.linearRampToValueAtTime(0.22, actx.currentTime + 1.2);
+        } catch(e) {}
+    }
+
     if (bgmInterval) clearInterval(bgmInterval);
     // Di HP kentang gunakan interval 60ms yang lebih santai (hemat baterai & CPU poller)
-    const pollerMs = isPotatoDevice ? 60 : 35;
+    const pollerMs = isPotatoDevice ? 65 : 40;
     bgmInterval = setInterval(bgmScheduler, pollerMs);
 }
 
 function stopBGM() {
-    bgmRunning = false;
-    if (bgmInterval) {
-        clearInterval(bgmInterval);
-        bgmInterval = null;
+    if (!bgmRunning) return;
+    // 🍃 Smooth Peaceful Fade-Out (0.35 detik sebelum cutoff)
+    if (bgmGain && actx) {
+        try {
+            bgmGain.gain.cancelScheduledValues(actx.currentTime);
+            bgmGain.gain.linearRampToValueAtTime(0.0001, actx.currentTime + 0.35);
+        } catch(e) {}
     }
+    setTimeout(() => {
+        bgmRunning = false;
+        if (bgmInterval) {
+            clearInterval(bgmInterval);
+            bgmInterval = null;
+        }
+    }, 380);
 }
 
 function toggleSound() {
     isMuted = !isMuted;
     const btn = document.getElementById('btn-sound');
     if (isMuted) {
-        btn.textContent = '🔇'; btn.classList.add('muted');
+        if (btn) { btn.textContent = '🔇'; btn.classList.add('muted'); }
         stopBGM();
         if (masterGain && actx) {
             masterGain.gain.setValueAtTime(0, actx.currentTime);
         }
+        if (typeof showToast === 'function') showToast('Suara Dinonaktifkan', '🔇');
     } else {
-        btn.textContent = '🔊'; btn.classList.remove('muted');
+        if (btn) { btn.textContent = '🔊'; btn.classList.remove('muted'); }
         initAudio();
         if (masterGain && actx) {
             masterGain.gain.setValueAtTime(1.0, actx.currentTime);
         }
-        if (screens.quiz && screens.quiz.classList.contains('active')) startBGM();
+        if (screens && screens.quiz && screens.quiz.classList.contains('active')) {
+            startBGM();
+        }
+        if (typeof showToast === 'function') showToast('Musik Santai Aktif 🎵', '🎧');
     }
 }
 
