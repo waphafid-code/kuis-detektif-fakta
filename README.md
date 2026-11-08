@@ -5,8 +5,12 @@
 
 [![Quality Gate](https://img.shields.io/badge/Quality%20Gate-PASSED-success?style=for-the-badge)](docs/08_QA_Audit_Final_Report.md)
 [![Automated Tests](https://img.shields.io/badge/Automated%20Tests-61%2F61%20PASS-brightgreen?style=for-the-badge)](verify_20_bugs.js)
-[![Black-Box Tests](https://img.shields.io/badge/Black--Box%20Tests-12%2F12%20PASS-blue?style=for-the-badge)](docs/06_Black_Box_Design.md)
+[![Black--Box Tests](https://img.shields.io/badge/Black--Box%20Tests-12%2F12%20PASS-blue?style=for-the-badge)](docs/06_Black_Box_Design.md)
 [![Defects Resolved](https://img.shields.io/badge/Defects-3%20CLOSED-success?style=for-the-badge)](docs/07_Defect_Report_RCA.md)
+[![YouTube Presentation](https://img.shields.io/badge/YouTube-Video%20Presentasi%20QA-red?style=for-the-badge&logo=youtube)](https://youtu.be/SQYn-bsqfPw)
+
+> 🎬 **Tonton Video Presentasi & Demonstrasi Pengujian QA (YouTube):** **[https://youtu.be/SQYn-bsqfPw](https://youtu.be/SQYn-bsqfPw)**  
+> 🚀 **Live Aplikasi Web (GitHub Pages):** **[https://waphafid-code.github.io/kuis-detektif-fakta/](https://waphafid-code.github.io/kuis-detektif-fakta/)**
 
 ---
 
