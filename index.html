@@ -196,9 +196,9 @@
             <div class="pin-slot-dot" id="pdot-3"></div>
         </div>
 
-        <!-- Real Input Container with Eye Toggle -->
+        <!-- Real Input Container with Eye Toggle (type="tel" + text-security prevents Chrome "Simpan Sandi?" popup from blocking WebAuthn) -->
         <div class="pin-input-hidden-wrap">
-            <input type="password" id="pin-input" class="pin-real-input" maxlength="4" inputmode="numeric" autocomplete="off" placeholder="••••" oninput="onPinInputChanged()" onkeydown="if(event.key==='Enter')submitPin(); else if(event.key==='Escape')closeModal();">
+            <input type="tel" id="pin-input" class="pin-real-input" maxlength="4" inputmode="numeric" pattern="[0-9]*" autocomplete="off" data-lpignore="true" data-form-type="other" style="-webkit-text-security: disc; text-security: disc;" placeholder="••••" oninput="onPinInputChanged()" onkeydown="if(event.key==='Enter')submitPin(); else if(event.key==='Escape')closeModal();">
             <button type="button" class="pin-eye-btn" id="btn-pin-eye" onclick="togglePinVisibility()" title="Lihat / Sembunyikan PIN">👁️</button>
         </div>
 
