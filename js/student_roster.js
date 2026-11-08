@@ -232,6 +232,17 @@ const STUDENT_ROSTER = {
         "REYSHA OLIVIA MAHENDRA",
         "RONALDI SAPUTRA",
         "SHADRINA KAMILA"
+    ],
+    'KELAS DEMO': [
+        "MUHAMMAD HAFIDH (AKUN DEMO)",
+        "DOSEN PENGUJI (AUDITOR QA)",
+        "ANDRE GEOVANI (AKUN DEMO)",
+        "HARIE FADHIL (AKUN DEMO)",
+        "PIPIT KHOFIFAH (AKUN DEMO)",
+        "DEMO SISWA TUNTAS (SKOR 85)",
+        "DEMO SISWA REMEDIAL (SKOR 65)",
+        "DEMO SISWA SEMPURNA (SKOR 100)",
+        "DEMO SISWA BARU (BELUM MENGERJAKAN)"
     ]
 };
 
@@ -241,6 +252,7 @@ const normalizeClassName = (cls) => {
     const cleaned = String(cls).toUpperCase().replace(/[^A-Z0-9]/g, '');
     const match = cleaned.match(/^XE([1-6])$/);
     if (match) return `X E ${match[1]}`;
+    if (cleaned.includes('DEMO')) return 'KELAS DEMO';
     return cls.replace(/\./g, ' ').replace(/\s+/g, ' ').trim();
 };
 
@@ -248,7 +260,9 @@ const isClassEquivalent = (c1, c2) => {
     if (!c1 || !c2) return false;
     const n1 = String(c1).toUpperCase().replace(/[^A-Z0-9]/g, '');
     const n2 = String(c2).toUpperCase().replace(/[^A-Z0-9]/g, '');
-    return n1 === n2;
+    if (n1 === n2) return true;
+    if (n1.includes('DEMO') && n2.includes('DEMO')) return true;
+    return false;
 };
 
 const isNameEquivalent = (name1, name2) => {

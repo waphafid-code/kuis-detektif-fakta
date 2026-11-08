@@ -854,6 +854,29 @@
         const targetClass = parseClassFromQuery(p);
 
         // ============================================================
+        // 🧪 INTENT KHUSUS: KELAS & AKUN DEMO QA (ISOLASI DATA)
+        // ============================================================
+        if (/\b(demo|kelas\s*demo|akun\s*demo|uji\s*coba|percobaan|simulasi)\b/i.test(p)) {
+            let reply = `### 🧪 Panduan Kelas Demo & Akun Pengujian QA (Terisolasi 100%)\n\n`;
+            reply += `Untuk keperluan simulasi, presentasi di depan dosen penguji, dan verifikasi fitur tanpa mengganggu data riil:\n\n`;
+            reply += `1. **Arsitektur Pemisahan Data (Data Isolation):**\n`;
+            reply += `   - **Data Resmi:** Meliputi **216 siswa asli** di kelas **X E 1 s.d X E 6** (SMAN 4 Padang).\n`;
+            reply += `   - **Data Demo:** Disimpan di kelas khusus bernama **\`KELAS DEMO\`** dan **TIDAK PERNAH** mencemari atau mengubah nilai rapor siswa resmi.\n\n`;
+            reply += `2. **Daftar Akun Demo yang Tersedia:**\n`;
+            reply += `   - \`MUHAMMAD HAFIDH (AKUN DEMO)\` (Akun Siswa untuk Penguji/Presenter)\n`;
+            reply += `   - \`DOSEN PENGUJI (AUDITOR QA)\` (Akun Khusus Penguji)\n`;
+            reply += `   - \`DEMO SISWA TUNTAS (SKOR 85)\` (Simulasi Siswa Lulus KKM 80)\n`;
+            reply += `   - \`DEMO SISWA REMEDIAL (SKOR 65)\` (Simulasi Siswa Butuh Remedial)\n`;
+            reply += `   - \`DEMO SISWA SEMPURNA (SKOR 100)\` (Simulasi Nilai Maksimal)\n`;
+            reply += `   - \`DEMO SISWA BARU (BELUM MENGERJAKAN)\` (Simulasi Pelacakan Siswa Belum Ujian)\n\n`;
+            reply += `3. **Cara Mengakses di Halaman Utama (Lobby):**\n`;
+            reply += `   Pilih kelas **🧪 KELAS DEMO**, lalu pilih salah satu nama akun di atas dan klik *Mulai Misi Kuis*. Kuis langsung dapat dikerjakan tanpa terhalang jadwal pelajaran.\n\n`;
+            reply += `4. **Pembersihan Sekali Klik:**\n`;
+            reply += `   Pada Dasbor Guru, pilih filter **KELAS DEMO**, lalu klik tombol merah **🧹 Reset Hasil Uji Coba Demo** untuk mengosongkan riwayat simulasi kapan pun dibutuhkan.`;
+            return reply;
+        }
+
+        // ============================================================
         // A. INTENT: PETA MISKONSEPSI & BUTIR SOAL TERSULIT (PRIORITAS TINGGI)
         // ============================================================
         const isMisconceptionQuery = /\b(mis+konsepsi|salah\s*paham|terkecoh|sulit|susah|paling\s*banyak\s*salah|soal\s*tersulit|butir\s*soal|analisis\s*butir|daya\s*serap|kelemahan|titik\s*buta)\b/i.test(p);

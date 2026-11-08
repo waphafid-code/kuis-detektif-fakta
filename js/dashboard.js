@@ -1255,6 +1255,23 @@ function checkClassAccess(cls, moduleId) {
     const classOverride = findDictVal(accessSettings.classOverrides);
     const manualOpen = findDictVal(accessSettings.manualOpenedClasses);
 
+    // 🧪 KHUSUS KELAS DEMO: Selalu terbuka 24/7 untuk keperluan presentasi & pengujian QA (kecuali sengaja dikunci)
+    if (typeof isClassEquivalent === 'function' && isClassEquivalent(cls, 'KELAS DEMO')) {
+        if (classOverride === false) {
+            return {
+                allowed: false,
+                schedule: schedule,
+                currentInfo: nowFullStr,
+                reason: 'Kelas Demo sedang dikunci manual oleh Guru'
+            };
+        }
+        return {
+            allowed: true,
+            isManualOpen: true,
+            reason: 'Kuis terbuka bebas 24 jam untuk pengujian Kelas Demo'
+        };
+    }
+
     if (classOverride === false) {
         return {
             allowed: false,
@@ -2252,19 +2269,56 @@ function renderDashboard() {
     // Render Kontrol Jadwal & Akses Buk RINI
     updateAccessControlUI();
 
-    // 1. Kumpulkan data siswa terdaftar dari Roster Resmi (6 Kelas X E 1 - X E 6)
+    // 1. Kumpulkan data siswa terdaftar dari Roster Resmi (6 Kelas X E 1 - X E 6) atau KELAS DEMO
+    const isDemoFilter = (typeof isClassEquivalent === 'function') 
+        ? isClassEquivalent(filterClass, 'KELAS DEMO') 
+        : (filterClass === 'KELAS DEMO');
+
     const allClasses = ['X E 1', 'X E 2', 'X E 3', 'X E 4', 'X E 5', 'X E 6'];
-    const targetClasses = filterClass === 'all' ? allClasses : [filterClass];
+    const targetClasses = isDemoFilter ? ['KELAS DEMO'] : (filterClass === 'all' ? allClasses : [filterClass]);
 
     const modFaktaId = 'modul_detektif_fakta';
     const modJaringanId = 'modul_jaringan_keamanan';
 
+    // 🛡️ ISOLASI TOTAL: Pisahkan records resmi (216 siswa SMAN 4 Padang) dari records demo
+    const officialRecords = allRecords.filter(r => !(typeof isClassEquivalent === 'function' ? isClassEquivalent(r.class, 'KELAS DEMO') : r.class === 'KELAS DEMO'));
+    const demoRecords = allRecords.filter(r => (typeof isClassEquivalent === 'function' ? isClassEquivalent(r.class, 'KELAS DEMO') : r.class === 'KELAS DEMO'));
+    const activePoolRecords = isDemoFilter ? demoRecords : (filterClass === 'all' ? officialRecords : allRecords.filter(r => isClassEquivalent(r.class, filterClass)));
+
+    // Tampilkan / Sembunyikan Alert Banner Khusus Kelas Demo
+    const demoBanner = document.getElementById('demo-mode-alert-banner');
+    if (demoBanner) {
+        if (isDemoFilter) {
+            demoBanner.style.display = 'block';
+            demoBanner.innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                    <div>
+                        <div style="font-weight: 800; color: #38bdf8; font-size: 0.95rem; display: flex; align-items: center; gap: 8px;">
+                            <span>🧪 RUANG KELAS DEMO &amp; AKUN PENGUJIAN QA</span>
+                            <span style="font-size: 0.72rem; padding: 2px 8px; border-radius: 10px; background: #0284c7; color: #fff; font-weight: 700;">TERISOLASI 100%</span>
+                        </div>
+                        <p style="margin: 4px 0 0; font-size: 0.82rem; color: var(--text-secondary);">
+                            Data pengerjaan di kelas ini tersimpan mandiri untuk keperluan simulasi &amp; presentasi tugas QA, serta <strong>TIDAK MENCAMPURI</strong> 216 data resmi siswa SMAN 4 Padang.
+                        </p>
+                    </div>
+                    <div style="display: flex; gap: 8px;">
+                        <button type="button" class="btn btn-secondary" onclick="resetDemoRecords()" style="font-size: 0.8rem; padding: 7px 14px; border-color: #f43f5e; color: #f43f5e; font-weight: 700;" title="Hapus semua pengerjaan simulasi pada Kelas Demo">
+                            🧹 Reset Hasil Uji Coba Demo
+                        </button>
+                    </div>
+                </div>
+            `;
+        } else {
+            demoBanner.style.display = 'none';
+        }
+    }
+
     // Pisahkan records per modul kuis dengan normalisasi otomatis
-    const recordsFakta = allRecords.filter(r => {
+    const recordsFakta = activePoolRecords.filter(r => {
         const mod = (typeof normalizeModuleId === 'function') ? normalizeModuleId(r.moduleId, r.id, r.date) : (r.moduleId || modFaktaId);
         return mod === modFaktaId;
     });
-    const recordsJaringan = allRecords.filter(r => {
+    const recordsJaringan = activePoolRecords.filter(r => {
         const mod = (typeof normalizeModuleId === 'function') ? normalizeModuleId(r.moduleId, r.id, r.date) : (r.moduleId || modFaktaId);
         return mod === modJaringanId;
     });
@@ -2273,7 +2327,8 @@ function renderDashboard() {
     const badgeAll = document.getElementById('badge-cnt-all-mod');
     const badgeJaringan = document.getElementById('badge-cnt-jaringan-mod');
     const badgeFakta = document.getElementById('badge-cnt-fakta-mod');
-    if (badgeAll) badgeAll.textContent = `${allRecords.length} Data`;
+    const poolLabel = isDemoFilter ? `${demoRecords.length} Data Demo` : `${officialRecords.length} Data Resmi`;
+    if (badgeAll) badgeAll.textContent = poolLabel;
     if (badgeJaringan) badgeJaringan.textContent = `${recordsJaringan.length} Data`;
     if (badgeFakta) badgeFakta.textContent = `${recordsFakta.length} Data`;
 
@@ -2468,6 +2523,31 @@ function renderDashboard() {
             };
             classBreakdown.appendChild(badge);
         });
+
+        // 🧪 Pill Khusus Kelas Demo (Terpisah & Eksklusif untuk Uji Coba & Demo QA)
+        const isDemoSelected = isDemoFilter;
+        const demoRoster = (typeof STUDENT_ROSTER !== 'undefined' && STUDENT_ROSTER['KELAS DEMO']) ? STUDENT_ROSTER['KELAS DEMO'] : [];
+        const demoSubmittedList = demoRecords.filter(r => (filterModule === 'all' || (typeof normalizeModuleId === 'function' ? normalizeModuleId(r.moduleId, r.id, r.date) : r.moduleId) === filterModule));
+        const demoDoneCount = demoSubmittedList.length;
+        const demoBadge = document.createElement('div');
+        demoBadge.style.cssText = `
+            background: ${isDemoSelected ? 'linear-gradient(135deg, rgba(34,197,94,0.3), rgba(6,182,212,0.2))' : 'rgba(255,255,255,0.03)'};
+            border: 1.5px solid ${isDemoSelected ? '#10b981' : 'rgba(16,185,129,0.35)'};
+            border-radius: 12px; padding: 10px 14px; font-size: 0.8rem;
+            cursor: pointer; transition: all 0.2s; text-align: center; min-width: 95px;
+            box-shadow: ${isDemoSelected ? '0 0 16px rgba(16,185,129,0.4)' : 'none'};
+        `;
+        demoBadge.title = "Klik untuk memfilter khusus data uji coba KELAS DEMO (Aman, terisolasi dari 216 siswa asli)";
+        demoBadge.innerHTML = `
+            <div style="font-weight: 800; color: #10b981; font-size: 0.88rem;">🧪 KELAS DEMO</div>
+            <div style="font-family: var(--font-mono); font-weight: 800; font-size: 1.15rem; margin: 3px 0; color: #34d399;">${demoDoneCount} <span style="font-size:0.75rem; color:var(--text-muted); font-weight:500;">/ ${demoRoster.length}</span></div>
+            <div style="color: #6ee7b7; font-size: 0.72rem; font-weight: 700;">Uji Coba QA</div>
+        `;
+        demoBadge.onclick = () => {
+            document.getElementById('filter-class').value = isDemoSelected ? 'all' : 'KELAS DEMO';
+            renderDashboard();
+        };
+        classBreakdown.appendChild(demoBadge);
     }
 
     // 4. Filter Siswa Sesuai Tab Status & Pencarian Nama
@@ -3783,3 +3863,26 @@ function exportFullJsonBackup() {
 window.exportFullJsonBackup = exportFullJsonBackup;
 
 // ============================================================
+// 🧪 RESET DATA PENGUJIAN KELAS DEMO (AMAN DARI DATA ASLI)
+// ============================================================
+function resetDemoRecords() {
+    if (!confirm('Apakah Anda yakin ingin mereset seluruh hasil kuis uji coba pada KELAS DEMO? (Data resmi 216 siswa SMAN 4 Padang tetap aman 100%)')) return;
+    sfxClick();
+    let records = [];
+    try {
+        records = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+    } catch(e) {}
+    const cleaned = records.filter(r => !(typeof isClassEquivalent === 'function' ? isClassEquivalent(r.class, 'KELAS DEMO') : r.class === 'KELAS DEMO'));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(cleaned));
+    
+    let emergency = [];
+    try {
+        emergency = JSON.parse(localStorage.getItem('quizmaster_emergency_backup_records') || '[]');
+    } catch(e) {}
+    const cleanedEmerg = emergency.filter(r => !(typeof isClassEquivalent === 'function' ? isClassEquivalent(r.class, 'KELAS DEMO') : r.class === 'KELAS DEMO'));
+    localStorage.setItem('quizmaster_emergency_backup_records', JSON.stringify(cleanedEmerg));
+    
+    showToast('Data uji coba Kelas Demo berhasil di-reset!', '🧹');
+    renderDashboard();
+}
+window.resetDemoRecords = resetDemoRecords;

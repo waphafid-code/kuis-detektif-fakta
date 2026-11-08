@@ -136,10 +136,19 @@ function getCleanOfficialBaseline() {
     return purgeFakeJkiRecords(raw);
 }
 
+function getCleanDemoBaseline() {
+    const rawDemo = (typeof DEFAULT_DEMO_RECORDS !== 'undefined' && Array.isArray(DEFAULT_DEMO_RECORDS))
+        ? DEFAULT_DEMO_RECORDS
+        : ((typeof window !== 'undefined' && Array.isArray(window.DEFAULT_DEMO_RECORDS)) ? window.DEFAULT_DEMO_RECORDS : []);
+    return rawDemo;
+}
+
 function loadRecords() {
     try {
         const syncVer = localStorage.getItem(OFFICIAL_DATA_SYNC_KEY);
         const baseline = getCleanOfficialBaseline();
+        const demoBaseline = getCleanDemoBaseline();
+        const combinedBaseline = mergeRecordsList(baseline, demoBaseline);
         
         let saved = [];
         try {
@@ -156,16 +165,16 @@ function loadRecords() {
 
         // Jika versi sinkronisasi belum versi bersih terbaru, paksa pembersihan localStorage
         if (syncVer !== CURRENT_OFFICIAL_VERSION) {
-            const mergedClean = filterDeletedRecords(mergeRecordsList(baseline, saved));
+            const mergedClean = filterDeletedRecords(mergeRecordsList(combinedBaseline, saved));
             localStorage.setItem(STORAGE_KEY, JSON.stringify(mergedClean));
             localStorage.setItem('quizmaster_emergency_backup_records', JSON.stringify(filterDeletedRecords(emergency)));
             localStorage.setItem(OFFICIAL_DATA_SYNC_KEY, CURRENT_OFFICIAL_VERSION);
             return mergedClean;
         }
 
-        let baseList = baseline;
+        let baseList = combinedBaseline;
         if (Array.isArray(saved) && saved.length > 0) {
-            baseList = mergeRecordsList(baseline, saved);
+            baseList = mergeRecordsList(combinedBaseline, saved);
         }
         if (Array.isArray(emergency) && emergency.length > 0) {
             baseList = mergeRecordsList(baseList, emergency);
@@ -174,7 +183,7 @@ function loadRecords() {
         baseList = filterDeletedRecords(purgeFakeJkiRecords(baseList));
         return baseList;
     } catch (e) {
-        return filterDeletedRecords(getCleanOfficialBaseline());
+        return filterDeletedRecords(mergeRecordsList(getCleanOfficialBaseline(), getCleanDemoBaseline()));
     }
 }
 window.loadRecords = loadRecords;

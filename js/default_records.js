@@ -5464,9 +5464,128 @@ const OFFICIAL_EXAM_RESULTS = [
   }
 ];
 
+// 🧪 DATA AWAL KHUSUS KELAS DEMO (TERPISAH & TERISOLASI 100% DARI 216 SISWA ASLI SMAN 4 PADANG)
+const DEFAULT_DEMO_RECORDS = [
+  {
+    "id": "demo-rec-1",
+    "moduleId": "modul_jaringan_keamanan",
+    "moduleTitle": "Keamanan Jaringan & Sistem Informasi",
+    "name": "DEMO SISWA TUNTAS (SKOR 85)",
+    "class": "KELAS DEMO",
+    "score": 85,
+    "pointsEarned": 85,
+    "totalPoints": 100,
+    "correct": 17,
+    "total": 20,
+    "streak": 11,
+    "timeTaken": "05m 12s",
+    "date": "08/11/2026",
+    "timestamp": 1794132000000,
+    "tabSwitchCount": 0,
+    "isCheated": false,
+    "statusNote": "TUNTAS KKM"
+  },
+  {
+    "id": "demo-rec-2",
+    "moduleId": "modul_jaringan_keamanan",
+    "moduleTitle": "Keamanan Jaringan & Sistem Informasi",
+    "name": "DEMO SISWA REMEDIAL (SKOR 65)",
+    "class": "KELAS DEMO",
+    "score": 65,
+    "pointsEarned": 65,
+    "totalPoints": 100,
+    "correct": 13,
+    "total": 20,
+    "streak": 4,
+    "timeTaken": "06m 45s",
+    "date": "08/11/2026",
+    "timestamp": 1794132100000,
+    "tabSwitchCount": 0,
+    "isCheated": false,
+    "statusNote": "REMEDIAL"
+  },
+  {
+    "id": "demo-rec-3",
+    "moduleId": "modul_jaringan_keamanan",
+    "moduleTitle": "Keamanan Jaringan & Sistem Informasi",
+    "name": "DEMO SISWA SEMPURNA (SKOR 100)",
+    "class": "KELAS DEMO",
+    "score": 100,
+    "pointsEarned": 100,
+    "totalPoints": 100,
+    "correct": 20,
+    "total": 20,
+    "streak": 20,
+    "timeTaken": "04m 20s",
+    "date": "08/11/2026",
+    "timestamp": 1794132200000,
+    "tabSwitchCount": 0,
+    "isCheated": false,
+    "statusNote": "SEMPURNA"
+  },
+  {
+    "id": "demo-rec-4",
+    "moduleId": "modul_detektif_fakta",
+    "moduleTitle": "Misi Detektif Fakta",
+    "name": "DEMO SISWA TUNTAS (SKOR 85)",
+    "class": "KELAS DEMO",
+    "score": 90,
+    "pointsEarned": 90,
+    "totalPoints": 100,
+    "correct": 18,
+    "total": 20,
+    "streak": 14,
+    "timeTaken": "04m 50s",
+    "date": "08/11/2026",
+    "timestamp": 1794132300000,
+    "tabSwitchCount": 0,
+    "isCheated": false,
+    "statusNote": "TUNTAS KKM"
+  },
+  {
+    "id": "demo-rec-5",
+    "moduleId": "modul_detektif_fakta",
+    "moduleTitle": "Misi Detektif Fakta",
+    "name": "DEMO SISWA REMEDIAL (SKOR 65)",
+    "class": "KELAS DEMO",
+    "score": 70,
+    "pointsEarned": 70,
+    "totalPoints": 100,
+    "correct": 14,
+    "total": 20,
+    "streak": 5,
+    "timeTaken": "07m 10s",
+    "date": "08/11/2026",
+    "timestamp": 1794132400000,
+    "tabSwitchCount": 0,
+    "isCheated": false,
+    "statusNote": "REMEDIAL"
+  },
+  {
+    "id": "demo-rec-6",
+    "moduleId": "modul_detektif_fakta",
+    "moduleTitle": "Misi Detektif Fakta",
+    "name": "DEMO SISWA SEMPURNA (SKOR 100)",
+    "class": "KELAS DEMO",
+    "score": 100,
+    "pointsEarned": 100,
+    "totalPoints": 100,
+    "correct": 20,
+    "total": 20,
+    "streak": 20,
+    "timeTaken": "03m 55s",
+    "date": "08/11/2026",
+    "timestamp": 1794132500000,
+    "tabSwitchCount": 0,
+    "isCheated": false,
+    "statusNote": "SEMPURNA"
+  }
+];
+
 if (typeof window !== 'undefined') {
     window.OFFICIAL_EXAM_RESULTS = OFFICIAL_EXAM_RESULTS;
+    window.DEFAULT_DEMO_RECORDS = DEFAULT_DEMO_RECORDS;
 }
 if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { OFFICIAL_EXAM_RESULTS };
+    module.exports = { OFFICIAL_EXAM_RESULTS, DEFAULT_DEMO_RECORDS };
 }

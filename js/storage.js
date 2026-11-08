@@ -304,7 +304,8 @@ const SCHEDULE_RINI_SYAFITRI = {
     'X E 6': { day: 3, dayName: 'Rabu',  start: '10:50', end: '11:50', period: 'Jam ke 8 - 9' },
     'X E 3': { day: 4, dayName: 'Kamis', start: '08:00', end: '09:00', period: 'Jam ke 3 - 4' },
     'X E 5': { day: 5, dayName: 'Jumat', start: '07:00', end: '08:10', period: 'Jam ke 1 - 2' },
-    'X E 4': { day: 5, dayName: 'Jumat', start: '09:20', end: '10:50', period: 'Jam ke 5 - 6' }
+    'X E 4': { day: 5, dayName: 'Jumat', start: '09:20', end: '10:50', period: 'Jam ke 5 - 6' },
+    'KELAS DEMO': { day: 0, dayName: 'Setiap Hari', start: '00:00', end: '23:59', period: 'Ruang Uji Coba & Demo QA 24 Jam Bebas Akses' }
 };
 const SCHEDULE_BUK_RINI = SCHEDULE_RINI_SYAFITRI;
 const ACCESS_SETTINGS_KEY = 'detektif_fakta_access_control';

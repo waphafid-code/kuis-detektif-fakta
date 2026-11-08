@@ -34,7 +34,7 @@
         }
     </script>
     <!-- QuizMaster Modern Design System & UI Styling -->
-    <link rel="stylesheet" href="css/style.css?v=20261106-release-v3005">
+    <link rel="stylesheet" href="css/style.css?v=20261106-release-v3006-demo">
     <!-- Cyber Guardian Sentinel Protocol & Gemini Teacher AI Assistant Styling -->
     <link rel="stylesheet" href="css/guardian_and_chatbot.css?v=20261106-release-v3002">
 
@@ -709,13 +709,18 @@
                 <div class="form-group">
                     <label class="form-label" for="input-class">🏫 1. Pilih Kelas Anda</label>
                     <select class="form-select" id="input-class" onchange="onHomeClassChanged()">
-                        <option value="" disabled selected>— Pilih Kelas Anda (36 Siswa per Kelas) —</option>
-                        <option value="X E 1">X E.1 (36 Siswa - TA 2026/2027)</option>
-                        <option value="X E 2">X E.2 (36 Siswa - TA 2026/2027)</option>
-                        <option value="X E 3">X E.3 (36 Siswa - TA 2026/2027)</option>
-                        <option value="X E 4">X E.4 (36 Siswa - TA 2026/2027)</option>
-                        <option value="X E 5">X E.5 (36 Siswa - TA 2026/2027)</option>
-                        <option value="X E 6">X E.6 (36 Siswa - TA 2026/2027)</option>
+                        <option value="" disabled selected>— Pilih Kelas Anda —</option>
+                        <optgroup label="🧪 RUANG PENGUJIAN & DEMO (TIDAK MENCAMPURI DATA ASLI)">
+                            <option value="KELAS DEMO" style="font-weight: 800; color: #38bdf8;">🧪 KELAS DEMO (Akun Uji Coba & Demo QA)</option>
+                        </optgroup>
+                        <optgroup label="🏫 KELAS RESMI SMAN 4 PADANG (TA 2026/2027)">
+                            <option value="X E 1">X E.1 (36 Siswa - TA 2026/2027)</option>
+                            <option value="X E 2">X E.2 (36 Siswa - TA 2026/2027)</option>
+                            <option value="X E 3">X E.3 (36 Siswa - TA 2026/2027)</option>
+                            <option value="X E 4">X E.4 (36 Siswa - TA 2026/2027)</option>
+                            <option value="X E 5">X E.5 (36 Siswa - TA 2026/2027)</option>
+                            <option value="X E 6">X E.6 (36 Siswa - TA 2026/2027)</option>
+                        </optgroup>
                     </select>
                 </div>
 
@@ -1453,14 +1458,15 @@
                     <option value="modul_jaringan_keamanan">🛡️ Modul Keamanan Jaringan Saja</option>
                     <option value="modul_detektif_fakta">🕵️ Modul Detektif Fakta Saja</option>
                 </select>
-                <select id="filter-class" onchange="renderDashboard()" class="form-select" style="max-width: 150px; font-size: 0.85rem;">
-                    <option value="all">🏫 Semua Kelas</option>
+                <select id="filter-class" onchange="renderDashboard()" class="form-select" style="max-width: 180px; font-size: 0.85rem;">
+                    <option value="all">🏫 Semua Kelas Resmi (216)</option>
                     <option value="X E 1">X E 1</option>
                     <option value="X E 2">X E 2</option>
                     <option value="X E 3">X E 3</option>
                     <option value="X E 4">X E 4</option>
                     <option value="X E 5">X E 5</option>
                     <option value="X E 6">X E 6</option>
+                    <option value="KELAS DEMO" style="font-weight: 700; color: #38bdf8;">🧪 KELAS DEMO (Uji Coba)</option>
                 </select>
                 <button class="btn btn-secondary" onclick="renderDashboard()" style="padding: 9px 14px; font-size: 0.85rem;" title="Muat Ulang Data">🔄</button>
             </div>
@@ -1502,6 +1508,9 @@
                     </button>
                 </div>
             </div>
+
+            <!-- 🧪 DEMO MODE ALERT BANNER (KHUSUS KELAS DEMO) -->
+            <div id="demo-mode-alert-banner" style="display: none; background: rgba(14, 165, 233, 0.12); border: 1.5px solid #0284c7; border-radius: 12px; padding: 12px 18px; margin-bottom: 14px;"></div>
 
             <!-- DATA TABLE -->
             <div class="dash-table-wrap">
@@ -1602,12 +1611,14 @@
                     <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
                         <label for="diag-class-select" style="font-size: 0.82rem; font-weight: 700; color: var(--text-muted);">Filter Kelas:</label>
                         <select id="diag-class-select" class="form-select-modern" onchange="onDiagnosticClassChange(this.value)" style="min-width: 200px; padding: 6px 14px; font-size: 0.85rem;">
-                            <option value="all">🌐 Semua Kelas (155 Siswa)</option>
+                            <option value="all">🌐 Semua Kelas Resmi (216 Siswa)</option>
                             <option value="X E 1">🏫 Kelas X E 1</option>
                             <option value="X E 2">🏫 Kelas X E 2</option>
                             <option value="X E 3">🏫 Kelas X E 3</option>
                             <option value="X E 4">🏫 Kelas X E 4</option>
+                            <option value="X E 5">🏫 Kelas X E 5</option>
                             <option value="X E 6">🏫 Kelas X E 6</option>
+                            <option value="KELAS DEMO" style="font-weight: 700; color: #38bdf8;">🧪 KELAS DEMO (Uji Coba)</option>
                         </select>
                         <button type="button" class="btn btn-secondary" onclick="renderDiagnosticsDashboard()" style="padding: 7px 14px; font-size: 0.82rem;">
                             🔄 Refresh
@@ -1985,26 +1996,26 @@
 <!-- ============================================================ -->
 <!-- 🧩 MODULAR JAVASCRIPT LIBRARIES & ENGINES                   -->
 <!-- ============================================================ -->
-<script src="js/student_roster.js?v=20261106-release-v3005"></script>
-<script src="js/default_records.js?v=20261106-release-v3005"></script>
-<script src="js/default_questions.js?v=20261106-release-v3005"></script>
-<script src="js/doc_parser.js?v=20261106-release-v3005"></script>
-<script src="js/ai_nemotron.js?v=20261106-release-v3005"></script>
-<script src="js/quiz_manager.js?v=20261106-release-v3005"></script>
-<script src="js/question_editor.js?v=20261106-release-v3005"></script>
-<script src="js/firebase_sync.js?v=20261106-release-v3005"></script>
-<script src="js/deviceTier.js?v=20261106-release-v3005"></script>
-<script src="js/storage.js?v=20261106-release-v3005"></script>
-<script src="js/audio.js?v=20261106-release-v3005"></script>
-<script src="js/particles.js?v=20261106-release-v3005"></script>
-<script src="js/quiz_engine.js?v=20261106-release-v3005"></script>
-<script src="js/dashboard.js?v=20261106-release-v3005"></script>
-<script src="js/export_reports.js?v=20261106-release-v3005"></script>
-<script src="js/ai_studio.js?v=20261106-release-v3005"></script>
-<script src="js/diagnostics.js?v=20261106-release-v3005"></script>
-<script src="js/learning_hub.js?v=20261106-release-v3005"></script>
-<script src="js/mini_games.js?v=20261106-release-v3005"></script>
-<script src="js/teacher_chatbot.js?v=20261106-release-v3005"></script>
+<script src="js/student_roster.js?v=20261106-release-v3006-demo"></script>
+<script src="js/default_records.js?v=20261106-release-v3006-demo"></script>
+<script src="js/default_questions.js?v=20261106-release-v3006-demo"></script>
+<script src="js/doc_parser.js?v=20261106-release-v3006-demo"></script>
+<script src="js/ai_nemotron.js?v=20261106-release-v3006-demo"></script>
+<script src="js/quiz_manager.js?v=20261106-release-v3006-demo"></script>
+<script src="js/question_editor.js?v=20261106-release-v3006-demo"></script>
+<script src="js/firebase_sync.js?v=20261106-release-v3006-demo"></script>
+<script src="js/deviceTier.js?v=20261106-release-v3006-demo"></script>
+<script src="js/storage.js?v=20261106-release-v3006-demo"></script>
+<script src="js/audio.js?v=20261106-release-v3006-demo"></script>
+<script src="js/particles.js?v=20261106-release-v3006-demo"></script>
+<script src="js/quiz_engine.js?v=20261106-release-v3006-demo"></script>
+<script src="js/dashboard.js?v=20261106-release-v3006-demo"></script>
+<script src="js/export_reports.js?v=20261106-release-v3006-demo"></script>
+<script src="js/ai_studio.js?v=20261106-release-v3006-demo"></script>
+<script src="js/diagnostics.js?v=20261106-release-v3006-demo"></script>
+<script src="js/learning_hub.js?v=20261106-release-v3006-demo"></script>
+<script src="js/mini_games.js?v=20261106-release-v3006-demo"></script>
+<script src="js/teacher_chatbot.js?v=20261106-release-v3006-demo"></script>
 <script src="js/cyber_guardian_game.js?v=20261106-release-v3002"></script>
 <script src="js/app.js?v=20261106-release-v3002"></script>
 
