@@ -42,7 +42,7 @@ function getSupabaseConfig() {
         if (saved && saved.url && saved.key && !saved.key.startsWith('eyJ')) {
             return saved;
         }
-    } catch (e) {}
+    } catch (e) { }
     const fresh = {
         url: DEFAULT_SUPABASE_URL,
         key: DEFAULT_SUPABASE_ANON_KEY,
@@ -51,7 +51,7 @@ function getSupabaseConfig() {
     };
     try {
         localStorage.setItem(SUPABASE_CONFIG_KEY, JSON.stringify(fresh));
-    } catch(e) {}
+    } catch (e) { }
     return fresh;
 }
 window.getSupabaseConfig = getSupabaseConfig;
@@ -111,7 +111,7 @@ async function fetchCloudSharedState() {
                 return rows[0].wrong_questions;
             }
         }
-    } catch(e) {
+    } catch (e) {
         console.warn('Gagal memuat Cloud Shared State:', e.message);
     }
     return null;
@@ -121,7 +121,7 @@ window.fetchCloudSharedState = fetchCloudSharedState;
 async function saveCloudSharedState(partialState) {
     const cfg = getSupabaseConfig();
     const baseUrl = `${cfg.url.replace(/\/$/, '')}/rest/v1/${cfg.table || 'quiz_results'}`;
-    
+
     // Gabungkan dengan state yang sudah tersimpan
     let currentState = {};
     try {
@@ -129,8 +129,8 @@ async function saveCloudSharedState(partialState) {
         if (existing && typeof existing === 'object') {
             currentState = existing;
         }
-    } catch(e) {}
-    
+    } catch (e) { }
+
     const mergedState = {
         ...currentState,
         ...partialState,
@@ -167,7 +167,7 @@ async function saveCloudSharedState(partialState) {
             })
         });
         const patchData = await patchRes.json();
-        
+
         // 2. Jika baris belum ada (0 updated rows), lakukan POST
         if (!Array.isArray(patchData) || patchData.length === 0) {
             await fetch(baseUrl, {
@@ -192,7 +192,7 @@ async function saveCloudSharedState(partialState) {
             });
         }
         return true;
-    } catch(e) {
+    } catch (e) {
         console.warn('Gagal menyimpan Cloud Shared State:', e.message);
         return false;
     }
@@ -206,7 +206,7 @@ function getPendingRecords() {
     try {
         const raw = localStorage.getItem(PENDING_SYNC_KEY);
         return raw ? JSON.parse(raw) : [];
-    } catch(e) {
+    } catch (e) {
         return [];
     }
 }
@@ -226,7 +226,7 @@ window.queueRecordForSync = queueRecordForSync;
 async function flushPendingRecords() {
     const queue = getPendingRecords();
     if (!queue || queue.length === 0) return 0;
-    
+
     console.log(`⏳ Memulai sinkronisasi ${queue.length} data nilai yang tertunda ke Cloud Supabase...`);
     const cfg = getSupabaseConfig();
     const successfulIndices = [];
@@ -235,8 +235,8 @@ async function flushPendingRecords() {
         const item = queue[i];
         const r = item.record;
         let uploaded = false;
-        const modId = (typeof normalizeModuleId === 'function') 
-            ? normalizeModuleId(r.moduleId || r.module_id, r.id, r.date || r.quiz_date) 
+        const modId = (typeof normalizeModuleId === 'function')
+            ? normalizeModuleId(r.moduleId || r.module_id, r.id, r.date || r.quiz_date)
             : (r.moduleId || 'modul_detektif_fakta');
         const uploadPayload = {
             student_name: r.name,
@@ -259,7 +259,7 @@ async function flushPendingRecords() {
             try {
                 const { error } = await supabaseClient.from(cfg.table || 'quiz_results').insert([uploadPayload]);
                 if (!error) uploaded = true;
-            } catch(e) {}
+            } catch (e) { }
         }
 
         // Coba via REST jika SDK belum berhasil
@@ -276,7 +276,7 @@ async function flushPendingRecords() {
                     body: JSON.stringify(uploadPayload)
                 });
                 if (res.ok) uploaded = true;
-            } catch(e) {}
+            } catch (e) { }
         }
 
         if (uploaded) {
@@ -301,7 +301,7 @@ window.flushPendingRecords = flushPendingRecords;
 const SCHEDULE_RINI_SYAFITRI = {
     'X E 1': { day: 1, dayName: 'Senin', start: '08:35', end: '09:25', period: 'Jam ke 4 - 5' },
     'X E 2': { day: 1, dayName: 'Senin', start: '10:35', end: '11:25', period: 'Jam ke 8 - 9' },
-    'X E 6': { day: 3, dayName: 'Rabu',  start: '10:50', end: '11:50', period: 'Jam ke 8 - 9' },
+    'X E 6': { day: 3, dayName: 'Rabu', start: '10:50', end: '11:50', period: 'Jam ke 8 - 9' },
     'X E 3': { day: 4, dayName: 'Kamis', start: '08:00', end: '09:00', period: 'Jam ke 3 - 4' },
     'X E 5': { day: 5, dayName: 'Jumat', start: '07:00', end: '08:10', period: 'Jam ke 1 - 2' },
     'X E 4': { day: 5, dayName: 'Jumat', start: '09:20', end: '10:50', period: 'Jam ke 5 - 6' },
@@ -330,8 +330,8 @@ let currentActiveModule = null;
 let earnedPointsTotal = 0;
 let totalPossiblePoints = 100;
 let generatedQuizDraft = null;
-let quizData = (typeof window !== 'undefined' && Array.isArray(window.DEFAULT_BUILTIN_QUESTIONS) && window.DEFAULT_BUILTIN_QUESTIONS.length > 0) 
-    ? [...window.DEFAULT_BUILTIN_QUESTIONS] 
+let quizData = (typeof window !== 'undefined' && Array.isArray(window.DEFAULT_BUILTIN_QUESTIONS) && window.DEFAULT_BUILTIN_QUESTIONS.length > 0)
+    ? [...window.DEFAULT_BUILTIN_QUESTIONS]
     : [];
 window.quizData = quizData;
 
@@ -486,19 +486,19 @@ function detectPotatoDevice() {
         const lowRAM = (navigator.deviceMemory && navigator.deviceMemory <= 3);
         const lowCores = (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4);
         const smallScreen = (window.innerWidth < 768 || (window.screen && window.screen.width < 768));
-        
+
         const manualModeRingan = (typeof localStorage !== 'undefined') && (
-            localStorage.getItem('skuad_mode_ringan') === 'true' || 
+            localStorage.getItem('skuad_mode_ringan') === 'true' ||
             localStorage.getItem('skuad_tier_override') === 'low'
         );
 
         isPotatoDevice = !!(manualModeRingan || isMobileUA || smallScreen || lowRAM || lowCores);
-        
+
         if (isPotatoDevice && typeof document !== 'undefined' && document.documentElement) {
             document.documentElement.classList.add('hp-kentang');
         }
         return isPotatoDevice;
-    } catch(e) {
+    } catch (e) {
         return false;
     }
 }
@@ -515,7 +515,7 @@ let bgmRunning = false;
 let bgmStep = 0;
 let nextNoteTime = 0.0;
 // 🧘 71 BPM Calming Alpha-Wave Study Tempo (210ms per 16th step)
-const BGM_STEP_DURATION = 0.21; 
+const BGM_STEP_DURATION = 0.21;
 const SCHEDULE_AHEAD_TIME = 0.15; // 150ms Lookahead buffer (prevents main thread stutter)
 
 let masterGain = null;
@@ -551,7 +551,7 @@ function initAudio() {
                 }
             }
             if (actx.state === 'suspended') {
-                actx.resume().catch(() => {});
+                actx.resume().catch(() => { });
             }
         }
     } catch (e) {
@@ -565,16 +565,16 @@ function tone(freq, type, dur, vol, slide = null, delay = 0, filterFreq = null, 
     const osc = actx.createOscillator();
     const g = actx.createGain();
     let filter = null;
-    
+
     osc.type = type;
     osc.frequency.setValueAtTime(freq, t);
     if (slide) osc.frequency.exponentialRampToValueAtTime(Math.max(10, slide), t + dur);
-    
+
     g.gain.setValueAtTime(0, t);
     g.gain.linearRampToValueAtTime(vol, t + 0.02);
     g.gain.setValueAtTime(vol * 0.8, t + dur * 0.5);
     g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-    
+
     if (filterFreq) {
         filter = actx.createBiquadFilter();
         filter.type = 'lowpass';
@@ -584,21 +584,21 @@ function tone(freq, type, dur, vol, slide = null, delay = 0, filterFreq = null, 
     } else {
         osc.connect(g);
     }
-    
+
     const destinationNode = targetDest || masterGain || actx.destination;
     g.connect(destinationNode);
-    
+
     osc.start(t);
     const stopTime = t + dur + 0.05;
     osc.stop(stopTime);
-    
+
     // 🛡️ CRITICAL GC CLEANUP: Disconnect all nodes immediately after playback
     osc.onended = () => {
         try {
             osc.disconnect();
             g.disconnect();
             if (filter) filter.disconnect();
-        } catch (e) {}
+        } catch (e) { }
     };
 }
 
@@ -649,9 +649,9 @@ function playWarmPadChord(notes, bassFreq, dur = 3.2, delay = 0, vol = 0.035) {
                     osc.disconnect();
                     filter.disconnect();
                     gain.disconnect();
-                } catch(e) {}
+                } catch (e) { }
             };
-        } catch(e) {}
+        } catch (e) { }
     });
 
     // Warm deep sub-bass (grounding, calm, non-boomy)
@@ -685,9 +685,9 @@ function playWarmPadChord(notes, bassFreq, dur = 3.2, delay = 0, vol = 0.035) {
                     bOsc.disconnect();
                     bFilter.disconnect();
                     bGain.disconnect();
-                } catch(e) {}
+                } catch (e) { }
             };
-        } catch(e) {}
+        } catch (e) { }
     }
 }
 
@@ -722,9 +722,9 @@ function playCalmChime(freq, dur = 0.6, vol = 0.022, delay = 0) {
                 osc.disconnect();
                 filter.disconnect();
                 gain.disconnect();
-            } catch(e) {}
+            } catch (e) { }
         };
-    } catch(e) {}
+    } catch (e) { }
 }
 
 // 💓 Velvet Heartbeat Pulse (Ultra-soft resting human rhythm ~68 BPM)
@@ -759,9 +759,9 @@ function playGentlePulse(delay = 0, vol = 0.035) {
                 osc.disconnect();
                 filter.disconnect();
                 gain.disconnect();
-            } catch(e) {}
+            } catch (e) { }
         };
-    } catch(e) {}
+    } catch (e) { }
 }
 
 // Gentle Lo-Fi Kick (with automatic disconnect)
@@ -783,7 +783,7 @@ function playKick(delay = 0, vol = 0.18) {
         try {
             osc.disconnect();
             gain.disconnect();
-        } catch(e) {}
+        } catch (e) { }
     };
 }
 
@@ -811,7 +811,7 @@ function playSnare(delay = 0, vol = 0.08) {
                 noise.disconnect();
                 filter.disconnect();
                 gain.disconnect();
-            } catch(e) {}
+            } catch (e) { }
         };
     }
     tone(180, 'triangle', 0.06, vol * 0.5, 90, delay, null, bgmGain);
@@ -841,14 +841,14 @@ function playHiHat(delay = 0, vol = 0.015) {
                 noise.disconnect();
                 filter.disconnect();
                 gain.disconnect();
-            } catch(e) {}
+            } catch (e) { }
         };
     }
 }
 
 // ✨ Sophisticated, Pleasant Sound Effects
-function sfxClick() { 
-    playBellNote(659.25, 0.06, 0.08); 
+function sfxClick() {
+    playBellNote(659.25, 0.06, 0.08);
 }
 
 function sfxCorrect() {
@@ -865,8 +865,8 @@ function sfxWrong() {
     playBellNote(277.18, 0.22, 0.10, 0.08);
 }
 
-function sfxCountdown() { 
-    playBellNote(440, 0.15, 0.16); 
+function sfxCountdown() {
+    playBellNote(440, 0.15, 0.16);
 }
 
 function sfxGo() {
@@ -881,12 +881,12 @@ function sfxVictory() {
     });
 }
 
-function sfxTimerWarn() { 
+function sfxTimerWarn() {
     playBellNote(880, 0.09, 0.20);
     playBellNote(1174.66, 0.08, 0.15, 0.06);
 }
 
-function sfxNewData() { 
+function sfxNewData() {
     playBellNote(523.25, 0.18, 0.12, 0);
     playBellNote(783.99, 0.25, 0.14, 0.08);
 }
@@ -906,7 +906,7 @@ function sfxAlarm(durationSec = 20) {
     if (alarmSirenTimer) clearInterval(alarmSirenTimer);
     let up = true;
     let freq = 700;
-    
+
     // First burst
     tone(950, 'sawtooth', 0.5, 0.45, 450);
     const startTime = Date.now();
@@ -929,15 +929,15 @@ function startCheatVibration(durationSec = 20) {
     if ('vibrate' in navigator) {
         if (cheatVibrationTimer) clearInterval(cheatVibrationTimer);
         const startTime = Date.now();
-        try { navigator.vibrate([600, 200, 600, 200, 600, 200]); } catch(e) {}
+        try { navigator.vibrate([600, 200, 600, 200, 600, 200]); } catch (e) { }
         cheatVibrationTimer = setInterval(() => {
             if (Date.now() - startTime >= durationSec * 1000) {
                 clearInterval(cheatVibrationTimer);
                 cheatVibrationTimer = null;
-                try { navigator.vibrate(0); } catch(e) {}
+                try { navigator.vibrate(0); } catch (e) { }
                 return;
             }
-            try { navigator.vibrate([600, 200, 600, 200, 600, 200]); } catch(e) {}
+            try { navigator.vibrate([600, 200, 600, 200, 600, 200]); } catch (e) { }
         }, 1600);
     }
 }
@@ -1038,7 +1038,7 @@ function startBGM() {
             bgmGain.gain.cancelScheduledValues(actx.currentTime);
             bgmGain.gain.setValueAtTime(0.0001, actx.currentTime);
             bgmGain.gain.linearRampToValueAtTime(0.22, actx.currentTime + 1.2);
-        } catch(e) {}
+        } catch (e) { }
     }
 
     if (bgmInterval) clearInterval(bgmInterval);
@@ -1054,7 +1054,7 @@ function stopBGM() {
         try {
             bgmGain.gain.cancelScheduledValues(actx.currentTime);
             bgmGain.gain.linearRampToValueAtTime(0.0001, actx.currentTime + 0.35);
-        } catch(e) {}
+        } catch (e) { }
     }
     setTimeout(() => {
         bgmRunning = false;
@@ -1110,7 +1110,7 @@ function cleanupExpiredStorageFiles() {
                     for (const m of modules) {
                         const createdTime = m.uploadedAt || (m.createdAt ? new Date(m.createdAt).getTime() : 0);
                         const isOlderThan7Days = (createdTime > 0) && (now - createdTime > STORAGE_RETENTION_MS);
-                        
+
                         // Modul default bawaan tidak boleh dihapus
                         const BUILTIN_MODULE_IDS = ['modul_detektif_fakta', 'modul_jaringan_keamanan', 'modul_keamanan_jaringan'];
                         const ALL_PROTECTED_MODULE_IDS = [...BUILTIN_MODULE_IDS, 'modul_hki_profesi_budaya', 'modul_etika_privasi_keamanan'];
@@ -1131,7 +1131,7 @@ function cleanupExpiredStorageFiles() {
                         localStorage.setItem(modulesKey, JSON.stringify(remaining));
                     }
                 }
-            } catch(e) {}
+            } catch (e) { }
         }
 
         // 2. Periksa cache teks ekstrak dokumen sementara & draft yang belum diterbitkan
@@ -1150,7 +1150,7 @@ function cleanupExpiredStorageFiles() {
                         localStorage.removeItem(key);
                         purgedCount++;
                     }
-                } catch(e) {
+                } catch (e) {
                     // Jika data string mentah tanpa struktur, tetap periksa
                 }
             }

@@ -74,10 +74,11 @@ function getExplanationFromVault(q, origQIdx) {
     return (q && q.explanation) ? q.explanation : '';
 }
 
-// 🛡️ PEMBERSIH TEKS SOAL & OPSI (HAPUS PREFIX "SOAL NO...", "PERTANYAAN 1:", "A.", DLL)
+// 🛡️ PEMBERSIH TEKS SOAL & OPSI (HAPUS PREFIX "SOAL NO...", "PERTANYAAN 1:", "**1.**", "1)", "A.", DLL)
 function stripQuestionPrefix(text) {
     if (!text) return '';
     let clean = String(text).trim();
+    clean = clean.replace(/^(?:\(?\d+[\.\)\-\:]\s*|\*+\s*\d+[\.\)]\s*\*+\s*|soal\s+(?:no\.?\s*)?\d+[\s:.-]*|pertanyaan\s+(?:no\.?\s*)?\d+[\s:.-]*|no\.?\s*\d+[\s:.-]*)/i, '');
     clean = clean.replace(/^(?:soal\s+(?:no\.?\s*)?\d+[\s:.-]*|pertanyaan\s+(?:no\.?\s*)?\d+[\s:.-]*|no\.?\s*\d+[\s:.-]*|\d+[\s:.-]+)\s*/i, '');
     return clean.trim();
 }
@@ -1477,7 +1478,7 @@ function loadQuestion(index) {
     const streakDisplay = document.getElementById('streak-display');
 
     if (progressFill) progressFill.style.width = `${pct}%`;
-    if (progressLabel) progressLabel.textContent = `Soal ${index + 1} dari ${quizData.length}`;
+    if (progressLabel) progressLabel.textContent = `🎲 Soal Acak: ${index + 1} dari ${quizData.length}`;
     if (progressPct) progressPct.textContent = `${pct}%`;
     if (scoreDisplay) scoreDisplay.textContent = earnedPointsTotal > 0 ? `⭐ ${earnedPointsTotal} Poin` : `⭐ ${score}`;
     if (streakDisplay) {
