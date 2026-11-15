@@ -689,7 +689,367 @@ window.HKI_CULTURE_BUILTIN_QUESTIONS = [
     }
 ];
 
+window.ETIKA_PRIVASI_BUILTIN_QUESTIONS = [
+    {
+        "id": 1,
+        "type": "mcq",
+        "difficulty": "Easy",
+        "points": 5,
+        "q": "Seorang siswa mengunggah video kegiatan sekolah ke media sosial. Beberapa bulan kemudian, video tersebut ditemukan kembali meskipun unggahan aslinya telah dihapus. Hal ini dapat terjadi karena ....",
+        "options": [
+            "Semua unggahan otomatis tersimpan selamanya di server sekolah.",
+            "Penghapusan unggahan hanya berlaku untuk akun pembuatnya, bukan seluruh salinan yang sudah tersebar.",
+            "Konten digital hanya dapat dihapus apabila pemilik akun menutup akunnya.",
+            "Setiap konten yang pernah diunggah akan selalu muncul dalam hasil pencarian.",
+            "Platform digital tidak menyediakan fitur penghapusan konten."
+        ],
+        "answer": 1,
+        "explanation": "Sifat jejak digital (digital footprint) adalah mudah disalin dan disebarluaskan oleh pihak lain. Penghapusan di akun asli tidak otomatis menghapus salinan, tangkapan layar, atau unduhan yang telah disimpan orang lain.",
+        "hint": "Pikirkan sifat jejak digital di mana konten yang pernah diunggah dapat diunduh atau dibagikan ulang oleh pengguna lain."
+    },
+    {
+        "id": 2,
+        "type": "mcq",
+        "difficulty": "Easy",
+        "points": 5,
+        "q": "Di grup kelas beredar pesan WhatsApp yang menyatakan bahwa sekolah akan diliburkan besok. Pesan tersebut tidak mencantumkan sumber resmi. Seorang siswa ingin meneruskannya ke grup lain. Tindakan yang paling tepat adalah ....",
+        "options": [
+            "Meneruskan pesan dengan menambahkan keterangan bahwa informasi belum pasti.",
+            "Menunggu teman lain memastikan informasi tersebut sebelum ikut menyebarkannya.",
+            "Membagikan pesan karena berasal dari anggota grup kelas.",
+            "Memeriksa pengumuman sekolah atau mengonfirmasi kepada guru sebelum membagikannya.",
+            "Menghapus pesan tanpa perlu memeriksa kebenaran informasinya."
+        ],
+        "answer": 3,
+        "explanation": "Prinsip verifikasi informasi digital adalah selalu menyaring sebelum membagikan (saring sebelum sharing) dengan memeriksa sumber primer atau otoritas resmi sekolah.",
+        "hint": "Lakukan konfirmasi langsung ke pihak yang berwenang sebelum meneruskan informasi yang belum terbukti."
+    },
+    {
+        "id": 3,
+        "type": "mcq",
+        "difficulty": "Easy",
+        "points": 5,
+        "q": "Seorang siswa menggunakan tanggal lahir sebagai kata sandi untuk email, Instagram, dan akun permainan. Suatu hari, salah satu akun mengalami kebocoran. Risiko utama dari kebiasaan tersebut adalah ....",
+        "options": [
+            "Akun lain berpotensi ikut diakses karena menggunakan kata sandi yang sama.",
+            "Semua perangkat yang pernah digunakan otomatis mengalami kerusakan.",
+            "Akun akan terkunci permanen setelah kata sandi diketahui orang lain.",
+            "Data pada seluruh aplikasi otomatis terhapus dari perangkat.",
+            "Pengguna tidak dapat mengganti kata sandi pada akun lainnya."
+        ],
+        "answer": 0,
+        "explanation": "Praktik 'password reuse' (menggunakan kata sandi yang sama di banyak layanan) memicu efek domino serangan Credential Stuffing, di mana peretas menggunakan kredensial yang bocor untuk membobol seluruh akun lainnya.",
+        "hint": "Jika satu kunci digunakan untuk semua pintu, saat kunci itu jatuh ke tangan orang jahat, semua pintu dapat dibuka."
+    },
+    {
+        "id": 4,
+        "type": "mcq",
+        "difficulty": "Medium",
+        "points": 5,
+        "q": "Sebuah aplikasi sederhana meminta akses kamera, mikrofon, lokasi, dan daftar kontak sekaligus. Padahal, fungsi utama aplikasi tersebut hanya menampilkan catatan teks. Berdasarkan materi privasi digital, keputusan paling tepat adalah ....",
+        "options": [
+            "Memberikan seluruh izin agar aplikasi dapat bekerja tanpa gangguan.",
+            "Mengizinkan akses selama aplikasi tersedia di toko aplikasi resmi.",
+            "Menonaktifkan koneksi internet setiap kali membuka aplikasi.",
+            "Menghapus aplikasi tanpa memeriksa fungsi dan kebutuhannya.",
+            "Menolak izin yang tidak relevan dan meninjau kebijakan serta fungsi aplikasi."
+        ],
+        "answer": 4,
+        "explanation": "Prinsip privasi digital 'Least Privilege' mengajarkan agar pengguna hanya memberikan izin yang benar-benar relevan dengan fungsi utama aplikasi dan menolak izin berlebih yang mencurigakan.",
+        "hint": "Aplikasi catatan teks tidak membutuhkan kamera atau mikrofon untuk sekadar menulis teks."
+    },
+    {
+        "id": 5,
+        "type": "mcq",
+        "difficulty": "Medium",
+        "points": 5,
+        "q": "Seorang pengguna ingin mengelola banyak akun tanpa menggunakan kata sandi yang sama. Ia memilih Password Manager. Bagaimana mekanisme utama alat tersebut membantu pengguna?",
+        "options": [
+            "Menggantikan seluruh proses autentikasi dengan satu akun utama.",
+            "Menyimpan seluruh kata sandi dalam catatan yang dapat dibuka publik.",
+            "Menyimpan kata sandi akun lain dalam brankas digital terenkripsi yang dilindungi master password.",
+            "Membagikan kata sandi secara otomatis kepada semua perangkat yang terhubung.",
+            "Menghapus kata sandi lama setiap kali pengguna membuat akun baru."
+        ],
+        "answer": 2,
+        "explanation": "Password Manager bekerja dengan mengenkripsi seluruh kata sandi unik pengguna ke dalam brankas digital aman (vault) yang hanya dapat dibuka menggunakan satu 'master password' yang kuat.",
+        "hint": "Password Manager mengamankan brankas digital dengan enkripsi dan satu kunci utama (master password)."
+    },
+    {
+        "id": 6,
+        "type": "mcq",
+        "difficulty": "Easy",
+        "points": 5,
+        "q": "Seseorang menerima pesan dari pihak yang mengaku sebagai petugas layanan digital. Orang tersebut meminta kode OTP dengan alasan akun akan diblokir jika kode tidak diberikan. Berdasarkan materi, tindakan yang paling tepat adalah ....",
+        "options": [
+            "Memberikan kode apabila pihak tersebut mengetahui nama lengkap pengguna.",
+            "Menutup percakapan, tidak memberikan OTP, lalu memeriksa akun melalui aplikasi resmi.",
+            "Meminta petugas tersebut mengirimkan kode OTP pengganti.",
+            "Membagikan kode setelah memastikan nomor pengirim terlihat resmi.",
+            "Mengirimkan tangkapan layar pesan kepada anggota grup untuk meminta kode."
+        ],
+        "answer": 1,
+        "explanation": "Kode OTP (One-Time Password) bersifat sangat rahasia seperti PIN ATM dan tidak boleh diberikan kepada siapa pun, termasuk pihak yang mengaku sebagai petugas resmi. Ini adalah taktik rekayasa sosial (social engineering).",
+        "hint": "Petugas resmi tidak pernah meminta kode OTP; jangan pernah bagikan OTP kepada pihak mana pun."
+    },
+    {
+        "id": 7,
+        "type": "mcq",
+        "difficulty": "Medium",
+        "points": 5,
+        "q": "Seorang pengguna telah menggunakan kata sandi yang kuat dan mengaktifkan 2FA. Namun, ia membagikan alamat rumah, lokasi harian, dan informasi keluarga secara terbuka. Kondisi tersebut menunjukkan bahwa ....",
+        "options": [
+            "Akun sudah sepenuhnya terlindungi karena memiliki dua lapisan autentikasi.",
+            "Informasi pribadi tidak lagi berisiko karena kata sandi sulit ditebak.",
+            "Pengaturan privasi tidak diperlukan selama perangkat memiliki kunci layar.",
+            "Keamanan akun dan privasi merupakan hal yang berbeda dan harus dijaga bersamaan.",
+            "Penggunaan 2FA secara otomatis membatasi orang lain melihat informasi pribadi."
+        ],
+        "answer": 3,
+        "explanation": "Keamanan (Security) berfokus pada pencegahan akses ilegal ke sistem/akun, sedangkan Privasi (Privacy) berfokus pada pengendalian persebaran data pribadi pengguna. Keduanya merupakan domain berbeda yang wajib dijaga bersamaan.",
+        "hint": "Akun yang aman dari peretasan tetap bisa mengalami kebocoran privasi jika penggunanya oversharing informasi pribadi."
+    },
+    {
+        "id": 8,
+        "type": "mcq",
+        "difficulty": "Medium",
+        "points": 5,
+        "q": "Seorang pengguna mendapatkan notifikasi bahwa akun media sosialnya masuk dari perangkat yang tidak dikenal. Ia juga menemukan beberapa pesan terkirim tanpa sepengetahuannya. Urutan tindakan yang paling sesuai dengan materi adalah ....",
+        "options": [
+            "Mengabaikan notifikasi dan menunggu sampai akun kembali normal.",
+            "Menghapus aplikasi, membuat akun baru, lalu membagikan informasi login kepada teman.",
+            "Membuka tautan dalam notifikasi, memasukkan kata sandi, dan menunggu konfirmasi.",
+            "Mengganti nama akun, menghapus seluruh unggahan, dan menonaktifkan koneksi internet.",
+            "Membuka layanan resmi, mengganti kata sandi dari perangkat tepercaya, mengeluarkan sesi asing, dan mengaktifkan 2FA."
+        ],
+        "answer": 4,
+        "explanation": "Langkah mitigasi pembajakan akun (account takeover) adalah segera login melalui kanal resmi, ganti kata sandi dengan yang baru dan kuat, putuskan seluruh sesi login asing (logout other devices), lalu aktifkan 2FA.",
+        "hint": "Langkah pemulihan akun: amankan kata sandi baru, putuskan sesi perangkat tak dikenal, dan pasang 2FA."
+    },
+    {
+        "id": 9,
+        "type": "checkbox",
+        "maxSelect": 5,
+        "difficulty": "Medium",
+        "points": 5,
+        "q": "Sebuah konten digital dapat berbentuk informasi, karya, maupun media interaktif. Berdasarkan materi, contoh bentuk konten digital ditunjukkan oleh .... (Pilih semua jawaban yang benar)",
+        "options": [
+            "Artikel dan komentar pada platform digital.",
+            "Foto, poster, dan infografis.",
+            "Perangkat keras komputer dan kabel jaringan.",
+            "Podcast dan rekaman suara.",
+            "Polling, kuis, dan permainan digital."
+        ],
+        "answer": [
+            0,
+            1,
+            3,
+            4
+        ],
+        "explanation": "Bentuk konten digital meliputi teks (artikel, komentar), gambar (foto, infografis), audio (podcast), dan media interaktif (polling, kuis). Perangkat keras dan kabel adalah infrastruktur fisik, bukan konten digital.",
+        "hint": "Pilih bentuk media digital informasi dan interaksi (teks, gambar, audio, dan interaktif), kecuali perangkat keras fisik."
+    },
+    {
+        "id": 10,
+        "type": "checkbox",
+        "maxSelect": 5,
+        "difficulty": "Medium",
+        "points": 5,
+        "q": "Seorang siswa menemukan unggahan yang berisi informasi mengejutkan mengenai kondisi sekolah. Ia belum mengetahui siapa pembuatnya dan apakah informasi tersebut benar. Sebelum membagikannya, tindakan yang tepat adalah .... (Pilih semua jawaban yang benar)",
+        "options": [
+            "Memeriksa identitas pembuat dan kredibilitas sumber.",
+            "Melihat apakah informasi memiliki tanggal dan bukti pendukung.",
+            "Memastikan apakah media lain juga mengonfirmasi informasi tersebut.",
+            "Membagikannya terlebih dahulu agar orang lain dapat membantu memeriksa.",
+            "Mempertimbangkan dampak informasi terhadap orang lain dan keutuhan konteksnya."
+        ],
+        "answer": [
+            0,
+            1,
+            2,
+            4
+        ],
+        "explanation": "Verifikasi informasi sebelum disebarkan mencakup cek kredibilitas sumber, validasi tanggal dan bukti, cek silang dengan media terpercaya, serta pertimbangan etika dampak informasi. Jangan pernah menyebarkan info yang belum terverifikasi.",
+        "hint": "Semua tindakan verifikasi sumber, bukti, konfirmasi silang, dan dampak etika adalah benar, kecuali membagikannya sebelum terbukti."
+    },
+    {
+        "id": 11,
+        "type": "checkbox",
+        "maxSelect": 5,
+        "difficulty": "Medium",
+        "points": 5,
+        "q": "Sebuah kelompok siswa menemukan beberapa konten yang beredar di media sosial. Berdasarkan kategori konten berisiko dalam materi, contoh yang termasuk konten negatif adalah .... (Pilih semua jawaban yang benar)",
+        "options": [
+            "Tutorial pembelajaran yang membantu siswa memahami materi.",
+            "Ujaran yang mengajak orang membenci kelompok tertentu.",
+            "Penyebaran identitas dan informasi pribadi seseorang tanpa izin (doxing).",
+            "Informasi resmi mengenai kegiatan beasiswa sekolah.",
+            "Konten perundungan yang mempermalukan seseorang melalui media digital."
+        ],
+        "answer": [
+            1,
+            2,
+            4
+        ],
+        "explanation": "Konten negatif berisiko meliputi ujaran kebencian (hate speech), doxing (penyebaran data pribadi tanpa izin), dan cyberbullying (perundungan siber). Tutorial edukatif dan beasiswa adalah konten positif.",
+        "hint": "Pilih konten yang memicu kebencian, melanggar privasi orang lain, atau mempermalukan seseorang."
+    },
+    {
+        "id": 12,
+        "type": "checkbox",
+        "maxSelect": 5,
+        "difficulty": "Medium",
+        "points": 5,
+        "q": "Seorang siswa ingin memperkuat keamanan akun digitalnya. Ia memiliki akun email, media sosial, dan permainan daring. Tindakan yang sesuai dengan materi keamanan digital adalah .... (Pilih semua jawaban yang benar)",
+        "options": [
+            "Menggunakan kata sandi panjang, unik, dan sulit ditebak.",
+            "Menggunakan satu kata sandi agar seluruh akun lebih mudah diingat.",
+            "Mengaktifkan autentikasi dua langkah pada akun penting.",
+            "Menyimpan semua kata sandi dalam catatan terbuka di ponsel.",
+            "Memanfaatkan Password Manager tepercaya untuk mengelola kata sandi."
+        ],
+        "answer": [
+            0,
+            2,
+            4
+        ],
+        "explanation": "Praktik keamanan digital yang baik adalah membuat kata sandi yang panjang dan unik untuk tiap akun, mengaktifkan 2FA, dan mengelolanya melalui Password Manager terenkripsi.",
+        "hint": "Pilih kebiasaan baik: kata sandi unik, 2FA aktif, dan penggunaan Password Manager."
+    },
+    {
+        "id": 13,
+        "type": "checkbox",
+        "maxSelect": 5,
+        "difficulty": "Hard",
+        "points": 5,
+        "q": "Sebuah aplikasi meminta akses terhadap beberapa informasi dan fitur pada smartphone pengguna. Berdasarkan prinsip privasi digital, pernyataan yang benar adalah .... (Pilih semua jawaban yang benar)",
+        "options": [
+            "Akses kamera dapat dibutuhkan oleh aplikasi yang memiliki fitur mengambil foto atau video.",
+            "Setiap aplikasi seharusnya memperoleh akses lokasi secara permanen.",
+            "Izin mikrofon dapat diperlukan ketika aplikasi memiliki fitur perekaman suara atau panggilan.",
+            "Akses kontak perlu dipertimbangkan berdasarkan fungsi aplikasi.",
+            "Pengguna dapat meninjau dan mengubah izin aplikasi melalui pengaturan smartphone."
+        ],
+        "answer": [
+            0,
+            2,
+            3,
+            4
+        ],
+        "explanation": "Izin hardware (kamera, mikrofon, kontak) harus relevan dengan fungsionalitas aplikasi dan dapat ditinjau ulang di pengaturan ponsel. Tidak ada aplikasi yang seharusnya diberikan akses lokasi permanen tanpa alasan yang jelas.",
+        "hint": "Aplikasi hanya boleh diberi izin sesuai fungsinya, dan pengguna memegang kendali penuh di pengaturan ponsel."
+    },
+    {
+        "id": 14,
+        "type": "checkbox",
+        "maxSelect": 5,
+        "difficulty": "Hard",
+        "points": 5,
+        "q": "Seorang pengguna ingin memastikan bahwa akun digitalnya tidak sedang digunakan oleh pihak lain. Berdasarkan materi pemeriksaan keamanan akun, tindakan yang tepat adalah .... (Pilih semua jawaban yang benar)",
+        "options": [
+            "Memeriksa perangkat, perkiraan lokasi, dan waktu aktivitas login.",
+            "Mengabaikan kode OTP yang masuk tanpa diminta karena tidak berbahaya.",
+            "Memeriksa apakah ada pesan yang terkirim tanpa sepengetahuannya.",
+            "Memastikan email dan nomor pemulihan masih dapat digunakan.",
+            "Mengeluarkan perangkat yang tidak dikenal dari sesi login akun."
+        ],
+        "answer": [
+            0,
+            2,
+            3,
+            4
+        ],
+        "explanation": "Audit keamanan akun mencakup inspeksi perangkat login aktif, mendeteksi aktivitas mencurigakan (pesan terkirim sendiri), memastikan kontak pemulihan aktif, dan memutus sesi perangkat tak dikenal. Kode OTP yang masuk tiba-tiba menandakan ada pihak yang sedang mencoba membobol akun.",
+        "hint": "Periksa riwayat sesi perangkat, kontak pemulihan, aktivitas pesan, dan log out sesi asing."
+    },
+    {
+        "id": 15,
+        "type": "tf",
+        "difficulty": "Easy",
+        "points": 5,
+        "q": "Konten digital dapat berupa teks, gambar, audio, video, dan konten interaktif. Setiap bentuk konten tersebut dapat memberikan pengaruh terhadap cara seseorang memperoleh informasi dan mengambil keputusan.",
+        "options": [
+            "BENAR",
+            "SALAH"
+        ],
+        "answer": 0,
+        "explanation": "Pernyataan BENAR. Konten multimedia digital membentuk persepsi, wawasan, serta memengaruhi pengambilan keputusan pengguna di era informasi.",
+        "hint": "Pikirkan dampak konten informasi digital terhadap opini dan tindakan pembacanya."
+    },
+    {
+        "id": 16,
+        "type": "tf",
+        "difficulty": "Easy",
+        "points": 5,
+        "q": "Sebuah konten yang memiliki banyak penonton dan dibagikan berulang kali dapat langsung dianggap sebagai informasi yang benar karena telah mendapat perhatian masyarakat.",
+        "options": [
+            "BENAR",
+            "SALAH"
+        ],
+        "answer": 1,
+        "explanation": "Pernyataan SALAH. Jumlah tayangan (views) atau viralitas suatu konten bukan indikator kebenaran. Banyak hoaks dan disinformasi sengaja dibuat viral untuk menarik perhatian.",
+        "hint": "Viralitas tidak sama dengan validitas; kabar bohong sering kali menyebar lebih cepat daripada fakta."
+    },
+    {
+        "id": 17,
+        "type": "tf",
+        "difficulty": "Easy",
+        "points": 5,
+        "q": "Penggunaan kata sandi yang sama pada email, media sosial, dan akun permainan dapat meningkatkan risiko karena kebocoran satu akun dapat mengancam akun lainnya.",
+        "options": [
+            "BENAR",
+            "SALAH"
+        ],
+        "answer": 0,
+        "explanation": "Pernyataan BENAR. Penggunaan kata sandi seragam menimbulkan kerentanan berantai jika salah satu basis data layanan diretas.",
+        "hint": "Ingat konsep bahaya daur ulang kata sandi (password reuse)."
+    },
+    {
+        "id": 18,
+        "type": "tf",
+        "difficulty": "Easy",
+        "points": 5,
+        "q": "Autentikasi dua langkah bekerja dengan menambahkan pemeriksaan identitas setelah pengguna memasukkan kata sandi, sehingga kata sandi saja tidak cukup untuk memberikan akses.",
+        "options": [
+            "BENAR",
+            "SALAH"
+        ],
+        "answer": 0,
+        "explanation": "Pernyataan BENAR. 2FA (Two-Factor Authentication) mewajibkan lapisan verifikasi kedua (seperti SMS, aplikasi autentikator, atau biometrik) selain kata sandi.",
+        "hint": "Dua langkah berarti memerlukan dua faktor verifikasi yang berbeda untuk dapat login."
+    },
+    {
+        "id": 19,
+        "type": "tf",
+        "difficulty": "Medium",
+        "points": 5,
+        "q": "Privasi digital berfokus pada kemampuan mengendalikan informasi pribadi, sedangkan keamanan digital berfokus pada perlindungan akun dan akses dari pihak yang tidak berwenang.",
+        "options": [
+            "BENAR",
+            "SALAH"
+        ],
+        "answer": 0,
+        "explanation": "Pernyataan BENAR. Privasi adalah kendali atas data diri, sedangkan keamanan adalah perlindungan teknis terhadap akses tidak sah.",
+        "hint": "Bandingkan hak mengendalikan data pribadi (privasi) dengan pertahanan teknis akun (keamanan)."
+    },
+    {
+        "id": 20,
+        "type": "tf",
+        "difficulty": "Easy",
+        "points": 5,
+        "q": "Apabila sebuah aplikasi meminta izin lokasi, kamera, mikrofon, dan kontak, pengguna harus menyetujui seluruh permintaan tersebut agar aplikasi dapat berjalan dengan optimal, meskipun izin tersebut tidak berkaitan dengan fungsinya.",
+        "options": [
+            "BENAR",
+            "SALAH"
+        ],
+        "answer": 1,
+        "explanation": "Pernyataan SALAH. Pengguna berhak dan dianjurkan untuk menolak izin yang tidak relevan demi mencegah penyalahgunaan data pribadi.",
+        "hint": "Jangan memberikan izin akses data jika tidak diperlukan oleh fitur aplikasi tersebut."
+    }
+];
+
 const QuizManager = {
+
     MODULES_STORAGE_KEY: 'detektif_fakta_all_modules_v2',
     ACTIVE_MODULE_KEY: 'detektif_fakta_active_module_id',
     CUSTOM_QUIZ_DATA_PREFIX: 'detektif_fakta_quiz_data_',
@@ -727,6 +1087,22 @@ const QuizManager = {
         createdAt: '2026-11-15T08:00:00Z'
     },
 
+        // Modul Penilaian Harian Baru: Etika, Privasi, dan Keamanan Digital
+    ETIKA_PRIVASI_MODULE: {
+        id: 'modul_etika_privasi_keamanan',
+        title: 'Penilaian Harian: Etika, Privasi, dan Keamanan Digital',
+        category: 'Dampak Sosial Informatika (DSI)',
+        icon: '🔒',
+        badge: 'Penilaian Harian Baru',
+        description: 'Evaluasi 20 butir soal Jejak Digital, Etika Konten, Privasi Informasi, Kata Sandi Kuat, 2FA/OTP, dan Penanganan Insiden Keamanan Akun Kelas X.',
+        questionCount: 20,
+        kkm: 80,
+        difficulty: 'Campuran (8 PG • 6 PG Kompleks • 6 Benar/Salah)',
+        dataFile: 'bank_soal/modul_etika_privasi_keamanan.json',
+        isDefault: true,
+        createdAt: '2026-11-15T09:00:00Z'
+    },
+
     DEFAULT_MODULE: {
         id: 'modul_detektif_fakta',
         title: 'Misi Detektif Fakta: Uji Validitas Data',
@@ -760,13 +1136,14 @@ const QuizManager = {
         // Index 1: Modul 2 (Misi Detektif Fakta)
         // Index 2+: Modul tambahan buatan guru
         const customModules = (Array.isArray(list) ? list : []).filter(
-            m => m && m.id !== this.DEFAULT_MODULE.id && m.id !== this.NETWORK_SECURITY_MODULE.id && m.id !== this.HKI_CULTURE_MODULE.id
+            m => m && m.id !== this.DEFAULT_MODULE.id && m.id !== this.NETWORK_SECURITY_MODULE.id && m.id !== this.HKI_CULTURE_MODULE.id && m.id !== this.ETIKA_PRIVASI_MODULE.id
         );
 
         const orderedList = [
             this.NETWORK_SECURITY_MODULE,
             this.DEFAULT_MODULE,
             this.HKI_CULTURE_MODULE,
+            this.ETIKA_PRIVASI_MODULE,
             ...customModules
         ];
 
@@ -816,7 +1193,26 @@ const QuizManager = {
             }
         }
 
-                if (targetId === this.HKI_CULTURE_MODULE.id) {
+                        if (targetId === this.ETIKA_PRIVASI_MODULE.id) {
+            try {
+                const res = await fetch('bank_soal/modul_etika_privasi_keamanan.json');
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data && Array.isArray(data.questions) && data.questions.length > 0) {
+                        window.quizData = data.questions;
+                        return data.questions;
+                    }
+                }
+            } catch (e) {
+                console.warn('Fetch modul_etika_privasi_keamanan.json gagal, menggunakan fallback bawaan:', e);
+            }
+            if (Array.isArray(window.ETIKA_PRIVASI_BUILTIN_QUESTIONS)) {
+                window.quizData = window.ETIKA_PRIVASI_BUILTIN_QUESTIONS;
+                return window.ETIKA_PRIVASI_BUILTIN_QUESTIONS;
+            }
+        }
+
+        if (targetId === this.HKI_CULTURE_MODULE.id) {
             try {
                 const res = await fetch('bank_soal/modul_hki_profesi_budaya.json');
                 if (res.ok) {

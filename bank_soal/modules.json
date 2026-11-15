@@ -1,19 +1,5 @@
 [
   {
-    "id": "modul_hki_profesi_budaya",
-    "title": "Penilaian Harian: Teknologi Digital, Profesi Informatika, Budaya & HKI",
-    "category": "Dampak Sosial Informatika (DSI)",
-    "icon": "⚖️",
-    "badge": "Penilaian Harian Baru",
-    "description": "Evaluasi 20 butir soal Teknologi Digital, Profesi Informatika, Digitalisasi Budaya, Etika Kreator, Lisensi, dan Hak Kekayaan Intelektual (HKI) Kelas X.",
-    "questionCount": 20,
-    "kkm": 80,
-    "difficulty": "Campuran (8 PG • 6 PG Kompleks • 6 Benar/Salah)",
-    "dataFile": "bank_soal/modul_hki_profesi_budaya.json",
-    "isDefault": true,
-    "createdAt": "2026-11-15T08:00:00Z"
-  },
-  {
     "id": "modul_jaringan_keamanan",
     "title": "Penilaian Harian: Infrastruktur Jaringan & Keamanan Digital",
     "category": "Jaringan Komputer & Internet (JKI)",
@@ -40,5 +26,33 @@
     "dataFile": "bank_soal/modul_detektif_fakta.json",
     "isDefault": true,
     "createdAt": "2026-09-01T08:00:00Z"
+  },
+  {
+    "id": "modul_hki_profesi_budaya",
+    "title": "Penilaian Harian: Teknologi Digital, Profesi Informatika, Budaya & HKI",
+    "category": "Dampak Sosial Informatika (DSI)",
+    "icon": "⚖️",
+    "badge": "Penilaian Harian Baru",
+    "description": "Evaluasi 20 butir soal Teknologi Digital, Profesi Informatika, Digitalisasi Budaya, Etika Kreator, Lisensi, dan Hak Kekayaan Intelektual (HKI) Kelas X.",
+    "questionCount": 20,
+    "kkm": 80,
+    "difficulty": "Campuran (8 PG • 6 PG Kompleks • 6 Benar/Salah)",
+    "dataFile": "bank_soal/modul_hki_profesi_budaya.json",
+    "isDefault": true,
+    "createdAt": "2026-11-15T08:00:00Z"
+  },
+  {
+    "id": "modul_etika_privasi_keamanan",
+    "title": "Penilaian Harian: Etika, Privasi, dan Keamanan Digital",
+    "category": "Dampak Sosial Informatika (DSI)",
+    "icon": "🔒",
+    "badge": "Penilaian Harian Baru",
+    "description": "Evaluasi 20 butir soal Jejak Digital, Etika Konten, Privasi Informasi, Kata Sandi Kuat, 2FA/OTP, dan Penanganan Insiden Keamanan Akun Kelas X.",
+    "questionCount": 20,
+    "kkm": 80,
+    "difficulty": "Campuran (8 PG • 6 PG Kompleks • 6 Benar/Salah)",
+    "dataFile": "bank_soal/modul_etika_privasi_keamanan.json",
+    "isDefault": true,
+    "createdAt": "2026-11-15T09:00:00Z"
   }
 ]
