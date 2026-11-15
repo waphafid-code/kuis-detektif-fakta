@@ -1185,69 +1185,48 @@ body.dark-theme .form-control:focus {
 }
 
 /* Option Cards (Stitch Selection Cards) */
-.options-grid { display: flex; flex-direction: column; gap: 10px; }
+.options-grid { display: flex; flex-direction: column; gap: 12px; }
 .opt-label {
-    display: flex; align-items: center; padding: 14px 18px;
+    display: flex; align-items: center; padding: 16px 20px;
     background: var(--bg-card); border: 1.5px solid var(--glass-border);
-    border-radius: var(--radius-md); cursor: pointer; transition: all 0.2s ease;
-    font-size: 0.92rem; font-weight: 600; line-height: 1.4; position: relative;
-    text-align: left;
+    border-radius: var(--radius-md); cursor: pointer; transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    font-size: 0.95rem; font-weight: 500; line-height: 1.5; position: relative;
+    text-align: left; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 .opt-label:hover:not(.disabled) {
-    border-color: var(--primary); background: rgba(70, 72, 212, 0.03);
-    transform: translateX(3px);
+    border-color: #6366f1; background: rgba(99, 102, 241, 0.04);
+    transform: translateX(4px); box-shadow: 0 4px 14px rgba(99, 102, 241, 0.1);
 }
 .opt-label input[type="radio"], .opt-label input[type="checkbox"] { display: none; }
 
 .opt-label .check-indicator {
-    width: 22px; height: 22px; border-radius: 50%; margin-right: 14px;
+    width: 24px; height: 24px; border-radius: 50%; margin-right: 14px;
     border: 2px solid var(--glass-border); flex-shrink: 0;
     display: flex; align-items: center; justify-content: center;
-    transition: all 0.2s; font-size: 0.75rem; color: transparent;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1); font-size: 0.82rem; font-weight: 800; color: transparent;
     background: var(--bg-surface-low);
 }
-.opt-label input[type="checkbox"] ~ .check-indicator { border-radius: 6px; }
+.opt-label input[type="checkbox"] ~ .check-indicator { border-radius: 7px; }
 
-.opt-prefix-badge {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 24px;
-    height: 24px;
-    border-radius: 6px;
-    background: rgba(79, 70, 229, 0.1);
-    color: var(--primary);
-    font-weight: 800;
-    font-size: 0.82rem;
-    font-family: var(--font-mono, monospace);
-    margin-right: 12px;
-    flex-shrink: 0;
-    border: 1px solid rgba(79, 70, 229, 0.22);
-    transition: all 0.2s ease;
-}
-[data-theme="dark"] .opt-prefix-badge {
-    background: rgba(99, 102, 241, 0.2);
-    color: #a5b4fc;
-    border-color: rgba(99, 102, 241, 0.35);
-}
-.opt-label.selected-opt .opt-prefix-badge {
-    background: var(--primary);
-    color: #ffffff;
-    border-color: var(--primary);
-}
 .opt-label .opt-text {
     flex: 1;
     word-break: break-word;
+    font-size: 0.95rem;
+    line-height: 1.5;
 }
 .opt-label.selected-opt {
-    border-color: var(--primary) !important;
-    background: #EEF2FF !important;
+    border-color: #6366f1 !important;
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.05) 100%) !important;
+    box-shadow: 0 4px 16px rgba(99, 102, 241, 0.18) !important;
+    transform: translateX(4px);
 }
 [data-theme="dark"] .opt-label.selected-opt {
-    background: rgba(99, 102, 241, 0.2) !important;
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.22) 0%, rgba(139, 92, 246, 0.12) 100%) !important;
+    box-shadow: 0 4px 18px rgba(99, 102, 241, 0.28) !important;
 }
 .opt-label.selected-opt .check-indicator {
-    background: var(--primary); border-color: var(--primary); color: #fff;
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    border-color: transparent; color: #fff; transform: scale(1.05);
 }
 .opt-label.selected-opt .check-indicator::after { content: '✓'; }
 

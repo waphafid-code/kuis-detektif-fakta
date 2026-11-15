@@ -1227,7 +1227,11 @@ function saveActiveExamModuleSetting(val) {
 
     const label = mode === 'modul_jaringan_keamanan' 
         ? '🛡️ Hanya Modul Keamanan Jaringan (Kuis lain disembunyikan)' 
-        : (mode === 'modul_detektif_fakta' ? '🕵️ Hanya Modul Detektif Fakta (Kuis lain disembunyikan)' : '🌐 Semua Modul (Siswa Bebas Memilih)');
+        : (mode === 'modul_hki_profesi_budaya'
+            ? '⚖️ Hanya Modul Teknologi, Budaya & HKI (Kuis lain disembunyikan)'
+            : (mode === 'modul_etika_privasi_keamanan'
+                ? '🔒 Hanya Modul Etika, Privasi & Keamanan (Kuis lain disembunyikan)'
+                : (mode === 'modul_detektif_fakta' ? '🕵️ Hanya Modul Detektif Fakta (Kuis lain disembunyikan)' : '🌐 Semua Modul (Siswa Bebas Memilih)')));
 
     showToast(`Tampilan Siswa Diperbarui: ${label}!`, '🎯');
 

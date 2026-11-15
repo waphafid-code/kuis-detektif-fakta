@@ -9,7 +9,7 @@ function loadActiveExamModuleSetting() {
         const v = localStorage.getItem(ACTIVE_EXAM_MODULE_SETTING_KEY);
         if (v) return v;
     } catch(e) {}
-    return 'modul_jaringan_keamanan'; // Default rilis Penilaian Harian Resmi
+    return 'all'; // Default: semua modul kuis langsung tampil dan bisa dikerjakan siswa
 }
 window.loadActiveExamModuleSetting = loadActiveExamModuleSetting;
 window.getActiveExamModuleSetting = loadActiveExamModuleSetting;

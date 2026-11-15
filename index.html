@@ -34,9 +34,9 @@
         }
     </script>
     <!-- QuizMaster Modern Design System & UI Styling -->
-    <link rel="stylesheet" href="css/style.css?v=20261115-release-v3011-anticheat">
+    <link rel="stylesheet" href="css/style.css?v=20261115-release-v3012-ultimate-ui">
     <!-- Cyber Guardian Sentinel Protocol & Gemini Teacher AI Assistant Styling -->
-    <link rel="stylesheet" href="css/guardian_and_chatbot.css?v=20261106-release-v3002">
+    <link rel="stylesheet" href="css/guardian_and_chatbot.css?v=20261115-release-v3012-ultimate-ui">
 
 
 </head>
@@ -740,7 +740,10 @@
                         <span id="home-module-badge" class="module-badge-pill">20 Soal • Maks 100 Poin</span>
                     </label>
                     <select class="form-select" id="input-module" onchange="handleHomeModuleChange(true)">
-                        <!-- Dinamis via QuizManager -->
+                        <option value="modul_jaringan_keamanan" selected>🛡️ Penilaian Harian: Infrastruktur Jaringan &amp; Keamanan Digital (20 Soal)</option>
+                        <option value="modul_hki_profesi_budaya">⚖️ Penilaian Harian: Teknologi Digital, Profesi Informatika, Budaya &amp; HKI (20 Soal)</option>
+                        <option value="modul_etika_privasi_keamanan">🔒 Penilaian Harian: Etika, Privasi, dan Keamanan Digital (20 Soal)</option>
+                        <option value="modul_detektif_fakta">🕵️ Misi Detektif Fakta: Uji Validitas Data (20 Soal)</option>
                     </select>
                     <div id="home-module-desc" class="home-module-desc-box">
                         Evaluasi 20 butir soal Infrastruktur Jaringan Komputer, Topologi, Media Transmisi, DNS, dan Keamanan Siber (CIA-A) Kelas X.
@@ -1251,9 +1254,11 @@
                     <div class="setting-row">
                         <label for="setting-active-exam-module" style="font-weight: 700; font-size: 0.88rem; color: var(--text);">📚 Modul Ujian Ditampilkan:</label>
                         <select id="setting-active-exam-module" onchange="saveActiveExamModuleSetting()" class="form-select-modern" style="font-size: 0.85rem;">
-                            <option value="modul_jaringan_keamanan" selected>🛡️ Hanya Modul Keamanan Jaringan (Ujian Aktif)</option>
-                            <option value="all">🌐 Tampilkan Semua Modul (Siswa Bebas Memilih)</option>
-                            <option value="modul_detektif_fakta">🕵️ Hanya Modul Detektif Fakta (Literasi Digital)</option>
+                            <option value="all" selected>🌐 Tampilkan Semua Modul (Siswa Bebas Memilih)</option>
+                            <option value="modul_jaringan_keamanan">🛡️ Hanya Modul Keamanan Jaringan</option>
+                            <option value="modul_hki_profesi_budaya">⚖️ Hanya Modul Teknologi, Budaya &amp; HKI</option>
+                            <option value="modul_etika_privasi_keamanan">🔒 Hanya Modul Etika, Privasi &amp; Keamanan</option>
+                            <option value="modul_detektif_fakta">🕵️ Hanya Modul Detektif Fakta</option>
                         </select>
                         <span class="setting-saved" id="active-module-saved-msg" style="display:none; color:var(--success); font-weight:700; font-size:0.8rem;">✅ Tersimpan!</span>
                     </div>
@@ -1996,28 +2001,28 @@
 <!-- ============================================================ -->
 <!-- 🧩 MODULAR JAVASCRIPT LIBRARIES & ENGINES                   -->
 <!-- ============================================================ -->
-<script src="js/student_roster.js?v=20261115-release-v3011-anticheat"></script>
-<script src="js/default_records.js?v=20261115-release-v3011-anticheat"></script>
-<script src="js/default_questions.js?v=20261115-release-v3011-anticheat"></script>
-<script src="js/doc_parser.js?v=20261115-release-v3011-anticheat"></script>
-<script src="js/ai_nemotron.js?v=20261115-release-v3011-anticheat"></script>
-<script src="js/quiz_manager.js?v=20261115-release-v3011-anticheat"></script>
-<script src="js/question_editor.js?v=20261115-release-v3011-anticheat"></script>
-<script src="js/firebase_sync.js?v=20261115-release-v3011-anticheat"></script>
-<script src="js/deviceTier.js?v=20261115-release-v3011-anticheat"></script>
-<script src="js/storage.js?v=20261115-release-v3011-anticheat"></script>
-<script src="js/audio.js?v=20261115-release-v3011-anticheat"></script>
-<script src="js/particles.js?v=20261115-release-v3011-anticheat"></script>
-<script src="js/quiz_engine.js?v=20261115-release-v3011-anticheat"></script>
-<script src="js/dashboard.js?v=20261115-release-v3011-anticheat"></script>
-<script src="js/export_reports.js?v=20261115-release-v3011-anticheat"></script>
-<script src="js/ai_studio.js?v=20261115-release-v3011-anticheat"></script>
-<script src="js/diagnostics.js?v=20261115-release-v3011-anticheat"></script>
-<script src="js/learning_hub.js?v=20261115-release-v3011-anticheat"></script>
-<script src="js/mini_games.js?v=20261115-release-v3011-anticheat"></script>
-<script src="js/teacher_chatbot.js?v=20261115-release-v3011-anticheat"></script>
-<script src="js/cyber_guardian_game.js?v=20261106-release-v3002"></script>
-<script src="js/app.js?v=20261106-release-v3002"></script>
+<script src="js/student_roster.js?v=20261115-release-v3012-ultimate-ui"></script>
+<script src="js/default_records.js?v=20261115-release-v3012-ultimate-ui"></script>
+<script src="js/default_questions.js?v=20261115-release-v3012-ultimate-ui"></script>
+<script src="js/doc_parser.js?v=20261115-release-v3012-ultimate-ui"></script>
+<script src="js/ai_nemotron.js?v=20261115-release-v3012-ultimate-ui"></script>
+<script src="js/quiz_manager.js?v=20261115-release-v3012-ultimate-ui"></script>
+<script src="js/question_editor.js?v=20261115-release-v3012-ultimate-ui"></script>
+<script src="js/firebase_sync.js?v=20261115-release-v3012-ultimate-ui"></script>
+<script src="js/deviceTier.js?v=20261115-release-v3012-ultimate-ui"></script>
+<script src="js/storage.js?v=20261115-release-v3012-ultimate-ui"></script>
+<script src="js/audio.js?v=20261115-release-v3012-ultimate-ui"></script>
+<script src="js/particles.js?v=20261115-release-v3012-ultimate-ui"></script>
+<script src="js/quiz_engine.js?v=20261115-release-v3012-ultimate-ui"></script>
+<script src="js/dashboard.js?v=20261115-release-v3012-ultimate-ui"></script>
+<script src="js/export_reports.js?v=20261115-release-v3012-ultimate-ui"></script>
+<script src="js/ai_studio.js?v=20261115-release-v3012-ultimate-ui"></script>
+<script src="js/diagnostics.js?v=20261115-release-v3012-ultimate-ui"></script>
+<script src="js/learning_hub.js?v=20261115-release-v3012-ultimate-ui"></script>
+<script src="js/mini_games.js?v=20261115-release-v3012-ultimate-ui"></script>
+<script src="js/teacher_chatbot.js?v=20261115-release-v3012-ultimate-ui"></script>
+<script src="js/cyber_guardian_game.js?v=20261115-release-v3012-ultimate-ui"></script>
+<script src="js/app.js?v=20261115-release-v3012-ultimate-ui"></script>
 
 </body>
 </html>

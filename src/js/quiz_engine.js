@@ -1478,7 +1478,7 @@ function loadQuestion(index) {
     const streakDisplay = document.getElementById('streak-display');
 
     if (progressFill) progressFill.style.width = `${pct}%`;
-    if (progressLabel) progressLabel.textContent = `🎲 Soal Acak: ${index + 1} dari ${quizData.length}`;
+    if (progressLabel) progressLabel.textContent = `Progres Ujian (${pct}%) • Soal & Pilihan Diacak 🎲`;
     if (progressPct) progressPct.textContent = `${pct}%`;
     if (scoreDisplay) scoreDisplay.textContent = earnedPointsTotal > 0 ? `⭐ ${earnedPointsTotal} Poin` : `⭐ ${score}`;
     if (streakDisplay) {
@@ -1656,14 +1656,7 @@ function loadQuestion(index) {
             label.appendChild(input);
             label.appendChild(checkMark);
 
-            // Tampilkan badge huruf rapi A, B, C, D (untuk MCQ & Checkbox)
-            if (data.type !== 'tf') {
-                const badgeLetter = document.createElement('span');
-                badgeLetter.className = 'opt-prefix-badge';
-                badgeLetter.textContent = letterBadges[shuffIdx] || `${shuffIdx + 1}`;
-                label.appendChild(badgeLetter);
-            }
-
+            // Bersihkan teks opsi dari prefix abjad (A., B., C., D., 1., dll.) tanpa menampilkan badge A/B/C/D agar tidak bisa dicontek
             const cleanOptText = data.type === 'tf' ? item.val : stripOptionLetterPrefix(item.val);
             const text = document.createElement('span');
             text.className = 'opt-text';
