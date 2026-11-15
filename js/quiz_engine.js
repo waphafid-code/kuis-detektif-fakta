@@ -2003,19 +2003,10 @@ async function finishQuiz() {
     const numCorrect = answeredCorrectly.filter(x => x === true).length;
     const KKM = currentActiveModule ? (currentActiveModule.kkm || 80) : 80;
 
-    // 📈 Rekonsiliasi Nilai Perbaikan Kurikulum Merdeka & Mode 2 Kali Submit
-    let displayScore = finalScore;
-    let reconciledScore = finalScore;
-    if (isRemedialSession && remedialSourceRecord) {
-        const orig = remedialSourceRecord.score || 0;
-        reconciledScore = Math.max(orig, Math.min(100, Math.round(orig + (100 - orig) * (finalScore / 100))));
-        displayScore = reconciledScore;
-    }
-
     const activeModId = (currentActiveModule && currentActiveModule.id) || (window.QuizManager ? QuizManager.getActiveModuleId() : 'modul_detektif_fakta');
     const submissionPolicy = (typeof loadSubmissionPolicy === 'function') ? loadSubmissionPolicy() : 'single_only';
     
-    // Cek pengerjaan sebelumnya untuk memastikan AMBIL NILAI TERTINGGI
+    // Cek pengerjaan sebelumnya untuk memastikan AMBIL NILAI TERTINGGI (mode 2x kesempatan)
     const prevStudentAttempts = loadRecords().filter(r => {
         const rMod = (typeof normalizeModuleId === 'function') ? normalizeModuleId(r.moduleId, r.id, r.date) : (r.moduleId || 'modul_detektif_fakta');
         const nameMatch = (typeof isNameEquivalent === 'function') ? isNameEquivalent(r.name, studentName) : (r.name || '').trim().toLowerCase() === studentName.trim().toLowerCase();
@@ -2026,7 +2017,20 @@ async function finishQuiz() {
     const isSecondAttempt = prevStudentAttempts.length > 0;
     const highestPrevScore = isSecondAttempt ? Math.max(...prevStudentAttempts.map(r => Number(r.score) || 0)) : null;
 
-    if ((submissionPolicy === 'allow_twice_highest' || submissionPolicy === 'allow_remedy') && highestPrevScore !== null) {
+    // 📈 Rekonsiliasi Nilai Perbaikan: Standar Keadilan Remedial (Plafon KKM 80)
+    let displayScore = finalScore;
+    let reconciledScore = finalScore;
+    if (isRemedialSession && remedialSourceRecord) {
+        const orig = Number(remedialSourceRecord.score) || 0;
+        // ⭐ PRINSIP KEADILAN AKADEMIK: Siswa remedial jika berhasil tuntas dipatok maksimal tepat KKM (80).
+        // Nilai siswa remedial tidak boleh melampaui siswa yang lulus murni pada kesempatan pertama.
+        if (finalScore >= KKM) {
+            reconciledScore = KKM;
+        } else {
+            reconciledScore = Math.max(orig, finalScore);
+        }
+        displayScore = reconciledScore;
+    } else if ((submissionPolicy === 'allow_twice_highest' || submissionPolicy === 'allow_remedy') && highestPrevScore !== null) {
         displayScore = Math.max(highestPrevScore, finalScore);
         reconciledScore = displayScore;
     }
@@ -2202,7 +2206,7 @@ async function finishQuiz() {
         if (isPassed) {
             titleEl.textContent = '🎉 Selamat! Remedial Berhasil Tuntas!';
             titleEl.style.color = 'var(--success)';
-            descEl.textContent = `Luar biasa ${studentName}! Anda berhasil memperbaiki pemahaman konsep dengan nilai baru ${displayScore} dari 100 (Melampaui KKM ${KKM}). Nilai perbaikan telah resmi dikirim ke Dasbor Guru (Rini Syafitri).`;
+            descEl.textContent = `Luar biasa ${studentName}! Anda berhasil memperbaiki pemahaman konsep dengan nilai tuntas ${displayScore} dari 100 (Standar KKM ${KKM}). Nilai perbaikan telah resmi dikirim ke Dasbor Guru.`;
             if (typeof sfxVictory === 'function') sfxVictory();
             if (typeof shootConfetti === 'function') shootConfetti();
             if (typeof spawnRandomEmojis === 'function') spawnRandomEmojis('🎉', 4);
