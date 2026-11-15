@@ -331,6 +331,364 @@ window.NETWORK_SECURITY_BUILTIN_QUESTIONS = [
     }
 ];
 
+
+
+window.HKI_CULTURE_BUILTIN_QUESTIONS = [
+    {
+        "id": 1,
+        "type": "mcq",
+        "difficulty": "Easy",
+        "points": 5,
+        "q": "Sebuah sekolah mengembangkan platform digital yang berisi dokumentasi manuskrip, adat istiadat, seni, bahasa, dan permainan rakyat. Platform tersebut dapat diakses masyarakat dari berbagai daerah. Berdasarkan konsep digitalisasi budaya, kegiatan tersebut menunjukkan bahwa teknologi digital berfungsi untuk ....",
+        "options": [
+            "Menggantikan aktivitas kebudayaan yang dilakukan masyarakat.",
+            "Membatasi penyebaran informasi budaya kepada kelompok tertentu.",
+            "Mengubah seluruh kebudayaan menjadi produk teknologi modern.",
+            "Mendokumentasikan, mengelola, menyimpan, dan memperkenalkan kebudayaan.",
+            "Mengurangi keterlibatan masyarakat dalam pelestarian kebudayaan."
+        ],
+        "answer": 3,
+        "explanation": "Digitalisasi budaya bertujuan mendokumentasikan, mengelola, menyimpan, menyebarluaskan, dan memperkenalkan kekayaan budaya melalui media digital tanpa menggantikan praktik aslinya.",
+        "hint": "Fokus pada peran teknologi sebagai media dokumentasi, penyimpanan, dan pengenalan warisan budaya secara luas."
+    },
+    {
+        "id": 2,
+        "type": "mcq",
+        "difficulty": "Easy",
+        "points": 5,
+        "q": "Sebuah lembaga kebudayaan ingin mengintegrasikan data kebudayaan dari berbagai sumber, termasuk informasi yang diperoleh melalui Urun Daya masyarakat. Platform yang sesuai dengan contoh dalam materi adalah ....",
+        "options": [
+            "Budaya Kita.",
+            "SPKT (Sistem Pendataan Kebudayaan Terpadu).",
+            "Platform dokumentasi manuskrip.",
+            "Sistem informasi warisan budaya.",
+            "Platform pengenalan budaya digital."
+        ],
+        "answer": 1,
+        "explanation": "SPKT (Sistem Pendataan Kebudayaan Terpadu) adalah platform integrasi data kebudayaan nasional yang memadukan berbagai sumber data termasuk partisipasi Urun Daya masyarakat.",
+        "hint": "Ingat singkatan sistem terpadu resmi pemerintah untuk pendataan kebudayaan terintegrasi."
+    },
+    {
+        "id": 3,
+        "type": "mcq",
+        "difficulty": "Easy",
+        "points": 5,
+        "q": "Sebuah perusahaan mengembangkan aplikasi pembayaran digital. Tim pengembang bertugas membuat program, melakukan pengujian, memperbaiki kesalahan, dan memelihara fitur aplikasi. Profesi yang paling sesuai dengan tanggung jawab tersebut adalah ....",
+        "options": [
+            "Web Developer.",
+            "System Analyst.",
+            "Programmer / Software Developer.",
+            "Data Analyst.",
+            "Database Administrator."
+        ],
+        "answer": 2,
+        "explanation": "Programmer / Software Developer bertanggung jawab langsung menulis kode program, menguji, memperbaiki bug, dan memelihara fitur perangkat lunak aplikasi.",
+        "hint": "Profesi ini bertugas mengonversi rancangan sistem menjadi baris kode program yang dapat dieksekusi komputer."
+    },
+    {
+        "id": 4,
+        "type": "mcq",
+        "difficulty": "Medium",
+        "points": 5,
+        "q": "Sebelum membangun sistem akademik baru, sebuah sekolah meminta tenaga profesional untuk mengidentifikasi permasalahan administrasi, menganalisis kebutuhan pengguna, dan menyusun rancangan solusi bagi tim pengembang. Profesi yang menjalankan tanggung jawab tersebut adalah ....",
+        "options": [
+            "UI/UX Designer.",
+            "Network Engineer.",
+            "Cybersecurity Specialist.",
+            "Database Administrator.",
+            "System Analyst."
+        ],
+        "answer": 4,
+        "explanation": "System Analyst bertugas menjembatani kebutuhan pengguna dengan tim teknis melalui analisis masalah, perumusan spesifikasi kebutuhan, dan perancangan arsitektur solusi sistem.",
+        "hint": "Profesi ini menjadi analis utama kebutuhan alur kerja sistem sebelum diserahkan ke programmer."
+    },
+    {
+        "id": 5,
+        "type": "mcq",
+        "difficulty": "Medium",
+        "points": 5,
+        "q": "Sebuah perusahaan smartphone memiliki beberapa aset yang perlu dilindungi. Perusahaan ingin melindungi nama dagang dan logo produknya, sekaligus menjaga resep internal yang tidak boleh diketahui pihak lain. Bentuk perlindungan yang tepat secara berurutan adalah ....",
+        "options": [
+            "Merek dan Rahasia Dagang.",
+            "Hak Cipta dan Paten.",
+            "Paten dan Desain Industri.",
+            "Desain Industri dan Hak Cipta.",
+            "Rahasia Dagang dan Merek."
+        ],
+        "answer": 0,
+        "explanation": "Nama dagang dan logo dilindungi melalui rezim Merek (Trademark), sedangkan formula rahasia atau metode internal yang dirahasiakan dilindungi melalui Rahasia Dagang (Trade Secret).",
+        "hint": "Nama dagang dan identitas visual dilindungi Merek; informasi bisnis bernilai komersial yang dirahasiakan dilindungi Rahasia Dagang."
+    },
+    {
+        "id": 6,
+        "type": "mcq",
+        "difficulty": "Easy",
+        "points": 5,
+        "q": "Sebuah perusahaan mengalami gangguan konektivitas antarkomputer. Tenaga profesional yang bertugas memeriksa kinerja jaringan, merancang konektivitas, dan melakukan troubleshooting adalah ....",
+        "options": [
+            "Data Analyst.",
+            "Network Engineer.",
+            "System Analyst.",
+            "AI/Machine Learning Engineer.",
+            "Web Developer."
+        ],
+        "answer": 1,
+        "explanation": "Network Engineer berfokus pada infrastruktur jaringan komunikasi data, instalasi perangkat routing/switching, pemantauan performa koneksi, serta penanganan masalah (troubleshooting) jaringan.",
+        "hint": "Profesi ini mengurusi infrastruktur konektivitas kabel, nirkabel, dan lalu lintas komunikasi data antarkomputer."
+    },
+    {
+        "id": 7,
+        "type": "mcq",
+        "difficulty": "Medium",
+        "points": 5,
+        "q": "Seorang siswa menemukan foto dokumentasi budaya di internet dan ingin menggunakannya dalam presentasi. Ia mengetahui bahwa foto tersebut memiliki pemilik dan ketentuan penggunaan. Tindakan yang paling mencerminkan etika digital adalah ....",
+        "options": [
+            "Menggunakan foto tersebut karena sudah tersedia untuk umum.",
+            "Menghapus identitas pemilik agar presentasi terlihat lebih sederhana.",
+            "Mengunggah kembali foto tersebut sebelum memeriksa ketentuan penggunaannya.",
+            "Memeriksa izin penggunaan, mengikuti ketentuan karya, dan mencantumkan sumbernya.",
+            "Menggunakan foto tersebut tanpa izin selama tidak memperoleh keuntungan."
+        ],
+        "answer": 3,
+        "explanation": "Etika digital menuntut penghargaan terhadap karya orang lain dengan memverifikasi lisensi izin pakai, mematuhi batas penggunaan, dan memberikan atribusi sumber yang jelas.",
+        "hint": "Prinsip dasar etika digital adalah menghormati hak cipta pemilik dengan izin dan pencantuman sumber."
+    },
+    {
+        "id": 8,
+        "type": "mcq",
+        "difficulty": "Easy",
+        "points": 5,
+        "q": "Seorang profesional bertugas mengumpulkan data transaksi, membersihkan data, mencari pola pembelian, dan menyajikan hasilnya melalui dashboard. Profesi yang paling tepat untuk pekerjaan tersebut adalah ....",
+        "options": [
+            "System Analyst.",
+            "Database Administrator.",
+            "Data Analyst.",
+            "Programmer / Software Developer.",
+            "Cybersecurity Specialist."
+        ],
+        "answer": 2,
+        "explanation": "Data Analyst bertugas mengolah dataset mentah, melakukan pembersihan data (data cleaning), menemukan pola atau wawasan statistik, dan memvisualisasikannya ke dasbor untuk pengambilan keputusan.",
+        "hint": "Profesi ini berfokus pada analisis pola data historis dan penyajian grafik visual informasi."
+    },
+    {
+        "id": 9,
+        "type": "checkbox",
+        "maxSelect": 5,
+        "difficulty": "Medium",
+        "points": 5,
+        "q": "Sebuah pemerintah daerah memanfaatkan teknologi digital untuk memperkenalkan kebudayaan daerah kepada generasi muda. Berdasarkan manfaat transformasi digital dalam materi, kegiatan tersebut dapat memberikan manfaat berupa .... (Pilih semua jawaban yang benar)",
+        "options": [
+            "Memperluas jangkauan pengenalan budaya.",
+            "Mengurangi kebutuhan dokumentasi kebudayaan.",
+            "Mendukung kegiatan pembelajaran.",
+            "Mendorong kreativitas dalam pembuatan konten budaya.",
+            "Menghilangkan peran masyarakat dalam pelestarian budaya."
+        ],
+        "answer": [
+            0,
+            2,
+            3
+        ],
+        "explanation": "Manfaat transformasi digital budaya mencakup: memperluas jangkauan sebaran budaya secara global, mendukung sarana edukasi pembelajaran interaktif, dan memantik kreativitas konten lokal.",
+        "hint": "Pilih manfaat positif yang memperluas jangkauan, mengedukasi, dan menumbuhkan kreativitas seni budaya."
+    },
+    {
+        "id": 10,
+        "type": "checkbox",
+        "maxSelect": 5,
+        "difficulty": "Medium",
+        "points": 5,
+        "q": "Seorang kreator membuat konten tentang tradisi suatu komunitas. Ia ingin memastikan informasi yang disampaikan tetap bertanggung jawab dan menghormati pemilik budaya. Tindakan yang sesuai dengan panduan etika kreator budaya digital adalah .... (Pilih semua jawaban yang benar)",
+        "options": [
+            "Mengambil dokumentasi pribadi masyarakat tanpa meminta izin.",
+            "Memastikan informasi menggunakan sumber yang dapat dipercaya.",
+            "Mengubah informasi sejarah agar lebih menarik perhatian.",
+            "Mencantumkan sumber informasi yang digunakan.",
+            "Menghormati masyarakat atau komunitas pemilik budaya."
+        ],
+        "answer": [
+            1,
+            3,
+            4
+        ],
+        "explanation": "Etika kreator budaya digital mewajibkan validasi kebenaran informasi dari narasumber terpercaya, mencantumkan kredit sumber/atribusi, dan menjunjung tinggi kehormatan masyarakat adat pemilik budaya.",
+        "hint": "Fokus pada prinsip kejujuran data, pencantuman atribusi, dan penghormatan martabat komunitas pemilik budaya."
+    },
+    {
+        "id": 11,
+        "type": "checkbox",
+        "maxSelect": 5,
+        "difficulty": "Hard",
+        "points": 5,
+        "q": "Sebuah perusahaan mengembangkan produk smartphone yang memiliki kode aplikasi, teknologi sensor sidik jari, logo, desain casing, dan resep internal perusahaan. Berdasarkan lima perlindungan HKI dalam materi, pasangan yang tepat adalah .... (Pilih semua jawaban yang benar)",
+        "options": [
+            "Kode aplikasi dilindungi melalui Hak Cipta.",
+            "Logo produk dilindungi melalui Paten.",
+            "Teknologi sensor sidik jari dilindungi melalui Paten.",
+            "Desain casing dilindungi melalui Desain Industri.",
+            "Resep internal perusahaan dilindungi melalui Rahasia Dagang."
+        ],
+        "answer": [
+            0,
+            2,
+            3,
+            4
+        ],
+        "explanation": "Kode aplikasi dilindungi Hak Cipta, inovasi teknologi sensor dilindungi Paten, bentuk estetika fisik casing dilindungi Desain Industri, dan formula rahasia dilindungi Rahasia Dagang. Logo dilindungi Merek (bukan Paten).",
+        "hint": "Logo dilindungi rezim Merek, bukan Paten. Inovasi fungsi teknologi dilindungi Paten, dan bentuk fisik dilindungi Desain Industri."
+    },
+    {
+        "id": 12,
+        "type": "checkbox",
+        "maxSelect": 5,
+        "difficulty": "Medium",
+        "points": 5,
+        "q": "Sebuah tim teknologi sedang membangun aplikasi pembelajaran. Mereka melibatkan beberapa tenaga profesional dengan tanggung jawab berbeda. Pernyataan yang sesuai dengan tugas profesi Informatika dalam materi adalah .... (Pilih semua jawaban yang benar)",
+        "options": [
+            "UI/UX Designer merancang tampilan visual dan alur interaksi aplikasi.",
+            "Network Engineer mengelola database siswa dan nilai akademik.",
+            "AI/Machine Learning Engineer menyiapkan data serta melatih dan menguji model.",
+            "Database Administrator melakukan backup dan recovery database.",
+            "Cybersecurity Specialist bertugas membuat prototipe tampilan aplikasi."
+        ],
+        "answer": [
+            0,
+            2,
+            3
+        ],
+        "explanation": "UI/UX Designer merancang antarmuka visual dan kenyamanan interaksi, AI Engineer melatih model cerdas, dan DBA mengelola keandalan data serta backup/recovery. Mengelola basis data adalah tugas DBA, bukan Network Engineer.",
+        "hint": "Perhatikan pembagian tugas spesifik: UI/UX untuk desain pengalaman, AI Engineer untuk model data, dan DBA untuk keamanan penyimpanan basis data."
+    },
+    {
+        "id": 13,
+        "type": "checkbox",
+        "maxSelect": 5,
+        "difficulty": "Medium",
+        "points": 5,
+        "q": "Dalam sebuah tugas sekolah, seorang siswa menggunakan beberapa karya digital milik orang lain. Perilaku yang termasuk contoh pelanggaran HKI berdasarkan materi adalah .... (Pilih semua jawaban yang benar)",
+        "options": [
+            "Mencantumkan sumber foto yang digunakan.",
+            "Mengakui karya orang lain sebagai hasil ciptaannya.",
+            "Mengunggah ulang karya tanpa mematuhi ketentuan penggunaannya.",
+            "Melakukan plagiasi tulisan tanpa mencantumkan sumber.",
+            "Meminta izin kepada pemilik karya sebelum menggunakannya."
+        ],
+        "answer": [
+            1,
+            2,
+            3
+        ],
+        "explanation": "Pelanggaran HKI mencakup plagiarisme (mengklaim ciptaan orang lain), re-upload ilegal tanpa mematuhi lisensi pemegang hak cipta, dan mencuri tulisan tanpa atribusi.",
+        "hint": "Pilih tindakan tidak terpuji yang merampas hak moral pencipta atau mengabaikan aturan lisensi penggunaan."
+    },
+    {
+        "id": 14,
+        "type": "checkbox",
+        "maxSelect": 5,
+        "difficulty": "Hard",
+        "points": 5,
+        "q": "Dalam penggunaan karya digital, atribusi dan lisensi memiliki fungsi yang berbeda. Pernyataan yang benar mengenai kedua konsep tersebut adalah .... (Pilih semua jawaban yang benar)",
+        "options": [
+            "Atribusi menunjukkan asal informasi atau karya yang digunakan.",
+            "Lisensi mengatur bagaimana orang lain diperbolehkan menggunakan karya.",
+            "Pencantuman atribusi secara otomatis memberikan hak untuk menggunakan semua karya secara bebas.",
+            "Ketentuan lisensi dapat mencakup larangan penggunaan untuk kepentingan komersial.",
+            "Atribusi dapat diabaikan apabila karya digunakan untuk kepentingan pendidikan."
+        ],
+        "answer": [
+            0,
+            1,
+            3
+        ],
+        "explanation": "Atribusi berfungsi memberikan kredit/pengakuan asal karya, sedangkan lisensi adalah izin hukum mengenai cara pemanfaatan karya (termasuk batasan non-komersial). Atribusi tidak otomatis menggugurkan ketentuan lisensi.",
+        "hint": "Atribusi = identitas asal karya; Lisensi = izin hukum syarat pemanfaatan (misalnya lisensi Non-Commercial)."
+    },
+    {
+        "id": 15,
+        "type": "tf",
+        "difficulty": "Easy",
+        "points": 5,
+        "q": "Digitalisasi budaya membantu masyarakat mendokumentasikan, menyimpan, mengelola, menyebarluaskan, dan memperkenalkan kebudayaan melalui teknologi digital.",
+        "options": [
+            "BENAR",
+            "SALAH"
+        ],
+        "answer": 0,
+        "explanation": "Pernyataan BENAR. Transformasi digital memberikan sarana terstruktur untuk preservasi jangka panjang dan promosi kekayaan budaya lokal.",
+        "hint": "Cermati tujuan utama digitalisasi budaya sebagai upaya pelestarian dan penyebarluasan warisan leluhur."
+    },
+    {
+        "id": 16,
+        "type": "tf",
+        "difficulty": "Easy",
+        "points": 5,
+        "q": "Web Developer bertugas mengembangkan situs web, sedangkan UI/UX Designer berfokus pada perancangan antarmuka dan pengalaman pengguna.",
+        "options": [
+            "BENAR",
+            "SALAH"
+        ],
+        "answer": 0,
+        "explanation": "Pernyataan BENAR. Web Developer mengimplementasikan fungsionalitas web, sedangkan UI/UX Designer mendesain estetika tampilan dan kenyamanan alur interaksi pengguna.",
+        "hint": "Bandingkan fokus kerja teknis coding web dengan perancangan estetika antarmuka."
+    },
+    {
+        "id": 17,
+        "type": "tf",
+        "difficulty": "Medium",
+        "points": 5,
+        "q": "Hak Cipta merupakan bentuk perlindungan yang digunakan untuk melindungi nama dagang dan logo agar dapat membedakan suatu produk dari produk lainnya.",
+        "options": [
+            "BENAR",
+            "SALAH"
+        ],
+        "answer": 1,
+        "explanation": "Pernyataan SALAH. Perlindungan hukum terhadap nama dagang, logo, dan simbol pembeda produk diatur dalam rezim Merek (Trademark), bukan Hak Cipta.",
+        "hint": "Pikirkan rezim HKI yang khusus membedakan simbol merek dagang suatu barang dengan produk kompetitor."
+    },
+    {
+        "id": 18,
+        "type": "tf",
+        "difficulty": "Easy",
+        "points": 5,
+        "q": "Database Administrator memiliki tanggung jawab dalam pengelolaan penyimpanan data, backup, recovery, dan pemantauan kinerja database.",
+        "options": [
+            "BENAR",
+            "SALAH"
+        ],
+        "answer": 0,
+        "explanation": "Pernyataan BENAR. Tugas utama DBA adalah memastikan ketersediaan, integritas, keamanan cadangan (backup), dan kecepatan akses basis data perusahaan.",
+        "hint": "DBA adalah pengawal utama kesehatan dan keselamatan penyimpanan data sistem."
+    },
+    {
+        "id": 19,
+        "type": "tf",
+        "difficulty": "Easy",
+        "points": 5,
+        "q": "Dalam membuat konten budaya digital, kreator perlu memvalidasi informasi, mencantumkan sumber, menjaga konteks asli, serta memperhatikan izin pribadi dan hak cipta.",
+        "options": [
+            "BENAR",
+            "SALAH"
+        ],
+        "answer": 0,
+        "explanation": "Pernyataan BENAR. Etika pembuatan konten edukasi budaya menuntut keaslian konteks sejarah, akurasi fakta, serta kepatuhan hukum hak cipta.",
+        "hint": "Kreator bertanggung jawab terhadap kebenaran informasi dan penghormatan privasi komunitas adat."
+    },
+    {
+        "id": 20,
+        "type": "tf",
+        "difficulty": "Medium",
+        "points": 5,
+        "q": "Jika suatu karya digital dapat diakses secara bebas melalui internet, karya tersebut otomatis boleh digandakan, diunggah ulang, dan digunakan untuk kepentingan komersial tanpa memperhatikan lisensi.",
+        "options": [
+            "BENAR",
+            "SALAH"
+        ],
+        "answer": 1,
+        "explanation": "Pernyataan SALAH. Aksesibilitas publik di internet tidak berarti materi tersebut berstatus domain publik atau bebas hak cipta. Penggunaan komersial wajib tunduk pada izin lisensi pencipta.",
+        "hint": "Dapat dilihat secara gratis bukan berarti bebas dimanfaatkan untuk mencari keuntungan ekonomi."
+    }
+];
+
 const QuizManager = {
     MODULES_STORAGE_KEY: 'detektif_fakta_all_modules_v2',
     ACTIVE_MODULE_KEY: 'detektif_fakta_active_module_id',
@@ -353,6 +711,22 @@ const QuizManager = {
     },
 
     // Modul bawaan aplikasi (Detektif Fakta)
+    // Modul Penilaian Harian Baru: Teknologi Digital, Profesi, Budaya & HKI
+    HKI_CULTURE_MODULE: {
+        id: 'modul_hki_profesi_budaya',
+        title: 'Penilaian Harian: Teknologi Digital, Profesi Informatika, Budaya & HKI',
+        category: 'Dampak Sosial Informatika (DSI)',
+        icon: '⚖️',
+        badge: 'Penilaian Harian Baru',
+        description: 'Evaluasi 20 butir soal Teknologi Digital, Profesi Informatika, Digitalisasi Budaya, Etika Kreator, Lisensi, dan Hak Kekayaan Intelektual (HKI) Kelas X.',
+        questionCount: 20,
+        kkm: 80,
+        difficulty: 'Campuran (8 PG • 6 PG Kompleks • 6 Benar/Salah)',
+        dataFile: 'bank_soal/modul_hki_profesi_budaya.json',
+        isDefault: true,
+        createdAt: '2026-11-15T08:00:00Z'
+    },
+
     DEFAULT_MODULE: {
         id: 'modul_detektif_fakta',
         title: 'Misi Detektif Fakta: Uji Validitas Data',
@@ -386,12 +760,13 @@ const QuizManager = {
         // Index 1: Modul 2 (Misi Detektif Fakta)
         // Index 2+: Modul tambahan buatan guru
         const customModules = (Array.isArray(list) ? list : []).filter(
-            m => m && m.id !== this.DEFAULT_MODULE.id && m.id !== this.NETWORK_SECURITY_MODULE.id
+            m => m && m.id !== this.DEFAULT_MODULE.id && m.id !== this.NETWORK_SECURITY_MODULE.id && m.id !== this.HKI_CULTURE_MODULE.id
         );
 
         const orderedList = [
             this.NETWORK_SECURITY_MODULE,
             this.DEFAULT_MODULE,
+            this.HKI_CULTURE_MODULE,
             ...customModules
         ];
 
@@ -438,6 +813,25 @@ const QuizManager = {
                 }
             } catch (e) {
                 console.error("Gagal parse soal custom:", e);
+            }
+        }
+
+                if (targetId === this.HKI_CULTURE_MODULE.id) {
+            try {
+                const res = await fetch('bank_soal/modul_hki_profesi_budaya.json');
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data && Array.isArray(data.questions) && data.questions.length > 0) {
+                        window.quizData = data.questions;
+                        return data.questions;
+                    }
+                }
+            } catch (e) {
+                console.warn('Fetch modul_hki_profesi_budaya.json gagal, menggunakan fallback bawaan:', e);
+            }
+            if (Array.isArray(window.HKI_CULTURE_BUILTIN_QUESTIONS)) {
+                window.quizData = window.HKI_CULTURE_BUILTIN_QUESTIONS;
+                return window.HKI_CULTURE_BUILTIN_QUESTIONS;
             }
         }
 

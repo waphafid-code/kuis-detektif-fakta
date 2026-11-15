@@ -1113,7 +1113,8 @@ function cleanupExpiredStorageFiles() {
                         
                         // Modul default bawaan tidak boleh dihapus
                         const BUILTIN_MODULE_IDS = ['modul_detektif_fakta', 'modul_jaringan_keamanan', 'modul_keamanan_jaringan'];
-                        if (isOlderThan7Days && !m.isDefault && !BUILTIN_MODULE_IDS.includes(m.id)) {
+                        const ALL_PROTECTED_MODULE_IDS = [...BUILTIN_MODULE_IDS, 'modul_hki_profesi_budaya'];
+                        if (isOlderThan7Days && !m.isDefault && !BUILTIN_MODULE_IDS.includes(m.id) && !ALL_PROTECTED_MODULE_IDS.includes(m.id)) {
                             const dataKey = 'quizmaster_quiz_data_' + m.id;
                             const dataVal = localStorage.getItem(dataKey);
                             if (dataVal) {
