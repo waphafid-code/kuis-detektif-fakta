@@ -1302,6 +1302,24 @@ body.dark-theme .form-control:focus {
     color: #1e1b4b !important;
 }
 
+/* Review Postponed Card */
+.review-postponed-card {
+    background: rgba(99, 102, 241, 0.08);
+    border: 1.5px solid rgba(99, 102, 241, 0.35);
+    border-radius: var(--radius-lg, 16px);
+    padding: 22px 20px;
+    text-align: center;
+    margin: 20px 0;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+}
+[data-theme="light"] .review-postponed-card {
+    background: #f8fafc;
+    border-color: #cbd5e1;
+}
+[data-theme="light"] .review-postponed-card h4 {
+    color: #312e81;
+}
+
 /* Navigation Bar */
 .q-actions {
     display: flex; justify-content: flex-end; gap: 10px; margin-top: 24px;

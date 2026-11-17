@@ -18,11 +18,11 @@
             "points": 5,
             "q": "Sebuah sekolah mengembangkan platform digital yang berisi dokumentasi manuskrip, adat istiadat, seni, bahasa, dan permainan rakyat. Platform tersebut dapat diakses masyarakat dari berbagai daerah. Berdasarkan konsep digitalisasi budaya, kegiatan tersebut menunjukkan bahwa teknologi digital berfungsi untuk ....",
             "options": [
-                "Menggantikan aktivitas kebudayaan yang dilakukan masyarakat.",
-                "Membatasi penyebaran informasi budaya kepada kelompok tertentu.",
-                "Mengubah seluruh kebudayaan menjadi produk teknologi modern.",
-                "Mendokumentasikan, mengelola, menyimpan, dan memperkenalkan kebudayaan.",
-                "Mengurangi keterlibatan masyarakat dalam pelestarian kebudayaan."
+                "Menggantikan seluruh kegiatan kebudayaan fisik yang dilakukan masyarakat secara turun-temurun.",
+                "Membatasi penyebaran informasi nilai tradisi agar hanya dinikmati oleh kelompok masyarakat tertentu.",
+                "Mengubah seluruh warisan budaya daerah menjadi komoditas produk teknologi komersial modern.",
+                "Mendokumentasikan, melestarikan, dan memperkenalkan kebudayaan ke masyarakat luas.",
+                "Mengurangi keterlibatan langsung masyarakat lokal dalam merawat tradisi kesenian daerah mereka."
             ],
             "answer": 3,
             "explanation": "Digitalisasi budaya bertujuan mendokumentasikan, mengelola, menyimpan, menyebarluaskan, dan memperkenalkan kekayaan budaya melalui media digital tanpa menggantikan praktik aslinya.",
@@ -35,11 +35,11 @@
             "points": 5,
             "q": "Sebuah lembaga kebudayaan ingin mengintegrasikan data kebudayaan dari berbagai sumber, termasuk informasi yang diperoleh melalui Urun Daya masyarakat. Platform yang sesuai dengan contoh dalam materi adalah ....",
             "options": [
-                "Budaya Kita.",
+                "Budaya Kita: Portal Komunitas Pelestari Tradisi Terbuka.",
                 "SPKT (Sistem Pendataan Kebudayaan Terpadu).",
-                "Platform dokumentasi manuskrip.",
-                "Sistem informasi warisan budaya.",
-                "Platform pengenalan budaya digital."
+                "SIWB (Sistem Informasi Warisan Budaya Nasional Terintegrasi).",
+                "PDMD (Platform Dokumentasi Manuskrip dan Tradisi Daerah).",
+                "PPBD (Portal Pengenalan Budaya Digital Berbasis Komunitas)."
             ],
             "answer": 1,
             "explanation": "SPKT (Sistem Pendataan Kebudayaan Terpadu) adalah platform integrasi data kebudayaan nasional yang memadukan berbagai sumber data termasuk partisipasi Urun Daya masyarakat.",
@@ -52,11 +52,11 @@
             "points": 5,
             "q": "Sebuah perusahaan mengembangkan aplikasi pembayaran digital. Tim pengembang bertugas membuat program, melakukan pengujian, memperbaiki kesalahan, dan memelihara fitur aplikasi. Profesi yang paling sesuai dengan tanggung jawab tersebut adalah ....",
             "options": [
-                "Web Developer.",
-                "System Analyst.",
+                "Web Developer / Pengembang Antarmuka Web.",
+                "System Analyst / Perancang Arsitektur Sistem.",
                 "Programmer / Software Developer.",
-                "Data Analyst.",
-                "Database Administrator."
+                "Data Analyst / Spesialis Pengolah Pola Data.",
+                "Database Administrator / Pengelola Basis Data."
             ],
             "answer": 2,
             "explanation": "Programmer / Software Developer bertanggung jawab langsung menulis kode program, menguji, memperbaiki bug, dan memelihara fitur perangkat lunak aplikasi.",
@@ -69,11 +69,11 @@
             "points": 5,
             "q": "Sebelum membangun sistem akademik baru, sebuah sekolah meminta tenaga profesional untuk mengidentifikasi permasalahan administrasi, menganalisis kebutuhan pengguna, dan menyusun rancangan solusi bagi tim pengembang. Profesi yang menjalankan tanggung jawab tersebut adalah ....",
             "options": [
-                "UI/UX Designer.",
-                "Network Engineer.",
-                "Cybersecurity Specialist.",
-                "Database Administrator.",
-                "System Analyst."
+                "UI/UX Designer / Perancang Interaksi Pengguna.",
+                "Network Engineer / Arsitek Konektivitas Jaringan.",
+                "Cybersecurity Specialist / Analis Keamanan Siber.",
+                "Database Administrator / Pengelola Basis Data.",
+                "System Analyst / Analis Kebutuhan Sistem."
             ],
             "answer": 4,
             "explanation": "System Analyst bertugas menjembatani kebutuhan pengguna dengan tim teknis melalui analisis masalah, perumusan spesifikasi kebutuhan, dan perancangan arsitektur solusi sistem.",
@@ -103,11 +103,11 @@
             "points": 5,
             "q": "Sebuah perusahaan mengalami gangguan konektivitas antarkomputer. Tenaga profesional yang bertugas memeriksa kinerja jaringan, merancang konektivitas, dan melakukan troubleshooting adalah ....",
             "options": [
-                "Data Analyst.",
-                "Network Engineer.",
-                "System Analyst.",
-                "AI/Machine Learning Engineer.",
-                "Web Developer."
+                "Data Analyst / Analis Pola Data.",
+                "Network Engineer / Teknisi Jaringan.",
+                "System Analyst / Analis Kebutuhan Sistem.",
+                "AI Engineer / Pengembang Model Kecerdasan.",
+                "Web Developer / Pengembang Aplikasi Web."
             ],
             "answer": 1,
             "explanation": "Network Engineer berfokus pada infrastruktur jaringan komunikasi data, instalasi perangkat routing/switching, pemantauan performa koneksi, serta penanganan masalah (troubleshooting) jaringan.",
@@ -120,11 +120,11 @@
             "points": 5,
             "q": "Seorang siswa menemukan foto dokumentasi budaya di internet dan ingin menggunakannya dalam presentasi. Ia mengetahui bahwa foto tersebut memiliki pemilik dan ketentuan penggunaan. Tindakan yang paling mencerminkan etika digital adalah ....",
             "options": [
-                "Menggunakan foto tersebut karena sudah tersedia untuk umum.",
-                "Menghapus identitas pemilik agar presentasi terlihat lebih sederhana.",
-                "Mengunggah kembali foto tersebut sebelum memeriksa ketentuan penggunaannya.",
-                "Memeriksa izin penggunaan, mengikuti ketentuan karya, dan mencantumkan sumbernya.",
-                "Menggunakan foto tersebut tanpa izin selama tidak memperoleh keuntungan."
+                "Menggunakan foto tersebut secara bebas dengan anggapan seluruh materi di internet adalah domain publik.",
+                "Menghapus tanda kepemilikan pencipta agar tampilan materi presentasi terlihat lebih rapi dan ringkas.",
+                "Mengunggah ulang foto ke platform lain tanpa memverifikasi hak cipta dan ketentuan lisensi pemilik karya.",
+                "Memeriksa izin lisensi karya dan mencantumkan sumber atribusinya.",
+                "Menggunakan karya tanpa konfirmasi tertulis selama tujuannya tidak untuk memperoleh keuntungan finansial."
             ],
             "answer": 3,
             "explanation": "Etika digital menuntut penghargaan terhadap karya orang lain dengan memverifikasi lisensi izin pakai, mematuhi batas penggunaan, dan memberikan atribusi sumber yang jelas.",
@@ -137,11 +137,11 @@
             "points": 5,
             "q": "Seorang profesional bertugas mengumpulkan data transaksi, membersihkan data, mencari pola pembelian, dan menyajikan hasilnya melalui dashboard. Profesi yang paling tepat untuk pekerjaan tersebut adalah ....",
             "options": [
-                "System Analyst.",
-                "Database Administrator.",
-                "Data Analyst.",
-                "Programmer / Software Developer.",
-                "Cybersecurity Specialist."
+                "System Analyst / Analis Arsitektur Sistem.",
+                "Database Administrator / Administrator Data.",
+                "Data Analyst / Analis Pengolah Data.",
+                "Programmer / Software Developer Perangkat Lunak.",
+                "Cybersecurity Specialist / Spesialis Keamanan."
             ],
             "answer": 2,
             "explanation": "Data Analyst bertugas mengolah dataset mentah, melakukan pembersihan data (data cleaning), menemukan pola atau wawasan statistik, dan memvisualisasikannya ke dasbor untuk pengambilan keputusan.",

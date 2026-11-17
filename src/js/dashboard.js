@@ -1209,6 +1209,55 @@ function initFullscreenSettingUi() {
 }
 window.initFullscreenSettingUi = initFullscreenSettingUi;
 
+// 📋 KONTROL PUBLIKASI RAPOR & KUNCI PEMBAHASAN SOAL SISWA
+const REVIEW_RELEASE_SETTING_KEY = 'quizmaster_review_release_mode';
+
+function loadReviewReleaseSetting() {
+    try {
+        const v = localStorage.getItem(REVIEW_RELEASE_SETTING_KEY);
+        if (v) return v;
+    } catch(e) {}
+    return 'locked'; // Default: Ditunda demi keamanan & integritas ujian bersama
+}
+window.loadReviewReleaseSetting = loadReviewReleaseSetting;
+
+function isReviewPostponed() {
+    return loadReviewReleaseSetting() === 'locked';
+}
+window.isReviewPostponed = isReviewPostponed;
+
+function saveReviewReleaseSetting() {
+    const sel = document.getElementById('setting-review-release-mode');
+    if (!sel) return;
+    const val = sel.value;
+    localStorage.setItem(REVIEW_RELEASE_SETTING_KEY, val);
+    const msg = document.getElementById('review-release-saved-msg');
+    if (msg) {
+        msg.style.display = 'inline';
+        setTimeout(() => { if (msg) msg.style.display = 'none'; }, 2500);
+    }
+    if (typeof sfxCorrect === 'function') sfxCorrect();
+    showToast(val === 'locked' 
+        ? 'Rapor & Kunci Pembahasan: DITUNDA 🔒 (Kunci dirahasiakan sampai seluruh ujian selesai)' 
+        : 'Rapor & Kunci Pembahasan: DIBUKA 🟢 (Siswa bebas melihat analisis butir soal)', 
+        val === 'locked' ? '🔒' : '📋'
+    );
+
+    // ☁️ Sinkronkan ke Cloud Supabase Shared State
+    if (typeof saveCloudSharedState === 'function') {
+        saveCloudSharedState({ reviewReleaseMode: val });
+    }
+}
+window.saveReviewReleaseSetting = saveReviewReleaseSetting;
+
+function initReviewReleaseSettingUi() {
+    const sel = document.getElementById('setting-review-release-mode');
+    if (sel) {
+        sel.value = loadReviewReleaseSetting();
+    }
+}
+window.initReviewReleaseSettingUi = initReviewReleaseSettingUi;
+
 // 📚 KONTROL PENGATURAN MODUL UJIAN DITAMPILKAN KE SISWA
 function loadActiveExamModuleSetting() {
     try {
@@ -2821,6 +2870,7 @@ function renderDashboard() {
     }
     initRemedialSettingUi();
     initFullscreenSettingUi();
+    initReviewReleaseSettingUi();
     initActiveExamModuleUi();
     if (typeof updateApplyButtonState === 'function') updateApplyButtonState();
 
@@ -4084,6 +4134,37 @@ function exportStudentPDF() {
         doc.setFontSize(8.5);
         doc.text(isLulus ? 'STATUS: LULUS (≥80)' : 'STATUS: REMEDIAL (<80)', 163, 63, { align: 'center' });
 
+        const isPostponed = (typeof isReviewPostponed === 'function') 
+            ? isReviewPostponed() 
+            : (localStorage.getItem('quizmaster_review_release_mode') !== 'open');
+
+        if (isPostponed) {
+            // 🛡️ TAMPILKAN SURAT BUKTI PENGUMPULAN UJIAN RESMI TANPA MEMBOCORKAN BUTIR SOAL
+            doc.setFillColor(241, 245, 249);
+            doc.setDrawColor(203, 213, 225);
+            doc.roundedRect(14, 82, 182, 60, 3, 3, 'FD');
+
+            doc.setTextColor(30, 41, 59);
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(11);
+            doc.text('🔒 BUKTI TANDA TERIMA PENGUMPULAN UJIAN RESMI', 20, 93);
+
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(9);
+            doc.setTextColor(71, 85, 105);
+            doc.text('Jawaban lembar ujian Anda telah berhasil tervalidasi dan tersimpan di Dasbor Guru.', 20, 102);
+            doc.text('Untuk menjaga kerahasiaan & integritas ujian bersama Kelas X SMAN 4 Padang,', 20, 108);
+            doc.text('analisis butir soal serta kunci pembahasan ditunda resmi oleh Guru Pengampu.', 20, 114);
+            doc.text('Guru Pengampu : Bpk. MUHAMMAD HAFIDH PUTRA ROSHADI, S.Pd.', 20, 122);
+            doc.text('Status Cloud   : Terverifikasi Aman di Peladen Sekolah (Supabase)', 20, 128);
+            doc.text(`Nomor Bukti    : ${proofId}`, 20, 134);
+
+            doc.save(`Bukti_Ujian_${(studentClass||'XE').replace(/\s+/g,'_')}_${(studentName||'Siswa').replace(/\s+/g,'_')}.pdf`);
+            if (typeof sfxSuccess === 'function') sfxSuccess();
+            showToast('Bukti Tanda Terima Ujian Resmi berhasil diunduh! 📄', '✅');
+            return;
+        }
+
         // 3. Question Details Table (Dengan Pembahasan, Penjelasan Edukatif & Tingkat Kesulitan)
         const tableBody = shuffledQuizOrder.map((origIdx, playIdx) => {
             const qData = quizData[origIdx];
@@ -4207,6 +4288,10 @@ function exportStudentExcel() {
         const modTitle = (typeof currentActiveModule !== 'undefined' && currentActiveModule && currentActiveModule.title) || (window.QuizManager && QuizManager.getActiveModule() ? QuizManager.getActiveModule().title : 'Evaluasi Kuis Pembelajaran Informatika');
         const proofId = window.lastSubmittedProofId || `SMAN4-${(studentClass||'XE').replace(/[^A-Za-z0-9]/g,'')}-${finalScore}-${Date.now().toString(36).toUpperCase()}`;
 
+        const isPostponed = (typeof isReviewPostponed === 'function') 
+            ? isReviewPostponed() 
+            : (localStorage.getItem('quizmaster_review_release_mode') !== 'open');
+
         // Opsi 1: Jika Pustaka XLSX Tersedia di Browser Siswa
         if (typeof XLSX !== 'undefined') {
             try {
@@ -4224,38 +4309,48 @@ function exportStudentExcel() {
                     ['Status Kelulusan', isLulus ? 'LULUS (KOMPETEN)' : 'BELUM LULUS (REMEDIAL)'],
                     ['Max Streak', `${maxStreak}x Jawaban Benar Beruntun`],
                     ['Waktu Pengerjaan', nowStr],
-                    [],
-                    ['No', 'Tingkat Kesulitan', 'Pertanyaan Soal', 'Hasil Analisis', 'Kunci Jawaban Valid', 'Pembahasan & Logika Edukatif']
+                    []
                 ];
 
-                shuffledQuizOrder.forEach((origIdx, playIdx) => {
-                    const qData = quizData[origIdx];
-                    const isRight = answeredCorrectly[origIdx];
-                    const ansKey = (typeof getAnswerFromVault === 'function') ? getAnswerFromVault(qData, origIdx) : qData.answer;
-                    const expReview = (typeof getExplanationFromVault === 'function') ? getExplanationFromVault(qData, origIdx) : (qData.explanation || '-');
+                if (isPostponed) {
+                    sheetData.push(
+                        ['Keterangan Rapor', '🔒 Rapor butir soal & pembahasan dirahasiakan oleh Guru selama sesi ujian bersama berlangsung'],
+                        ['Guru Pengampu', 'Bpk. MUHAMMAD HAFIDH PUTRA ROSHADI, S.Pd.']
+                    );
+                } else {
+                    sheetData.push(
+                        ['No', 'Tingkat Kesulitan', 'Pertanyaan Soal', 'Hasil Analisis', 'Kunci Jawaban Valid', 'Pembahasan & Logika Edukatif']
+                    );
 
-                    let correctAns = '-';
-                    if (window.isAnswersLocked) {
-                        correctAns = '🔒 Dikunci oleh Guru';
-                    } else if (qData.type === 'matrix_tf') {
-                        correctAns = (Array.isArray(ansKey) ? ansKey : []).map((ans, i) => `[#${i+1}] ${ans === 0 ? 'Benar' : 'Salah'}`).join(' • ');
-                    } else if (Array.isArray(ansKey)) {
-                        correctAns = ansKey.map(a => (qData.options && qData.options[a]) || a).join(' | ');
-                    } else if (ansKey !== null && ansKey !== undefined) {
-                        correctAns = (qData.options && qData.options[ansKey]) || ansKey;
-                    }
-                    const diffStr = qData.difficulty === 'Easy' ? 'Mudah' : (qData.difficulty === 'Hard' ? 'Sulit' : 'Sedang');
-                    const safeExp = window.isAnswersLocked ? '🔒 Pembahasan dikunci selama mode ujian' : expReview;
+                    shuffledQuizOrder.forEach((origIdx, playIdx) => {
+                        const qData = quizData[origIdx];
+                        const isRight = answeredCorrectly[origIdx];
+                        const ansKey = (typeof getAnswerFromVault === 'function') ? getAnswerFromVault(qData, origIdx) : qData.answer;
+                        const expReview = (typeof getExplanationFromVault === 'function') ? getExplanationFromVault(qData, origIdx) : (qData.explanation || '-');
 
-                    sheetData.push([
-                        playIdx + 1,
-                        diffStr,
-                        qData.q,
-                        isRight ? 'BENAR' : 'SALAH',
-                        correctAns,
-                        safeExp
-                    ]);
-                });
+                        let correctAns = '-';
+                        if (window.isAnswersLocked) {
+                            correctAns = '🔒 Dikunci oleh Guru';
+                        } else if (qData.type === 'matrix_tf') {
+                            correctAns = (Array.isArray(ansKey) ? ansKey : []).map((ans, i) => `[#${i+1}] ${ans === 0 ? 'Benar' : 'Salah'}`).join(' • ');
+                        } else if (Array.isArray(ansKey)) {
+                            correctAns = ansKey.map(a => (qData.options && qData.options[a]) || a).join(' | ');
+                        } else if (ansKey !== null && ansKey !== undefined) {
+                            correctAns = (qData.options && qData.options[ansKey]) || ansKey;
+                        }
+                        const diffStr = qData.difficulty === 'Easy' ? 'Mudah' : (qData.difficulty === 'Hard' ? 'Sulit' : 'Sedang');
+                        const safeExp = window.isAnswersLocked ? '🔒 Pembahasan dikunci selama mode ujian' : expReview;
+
+                        sheetData.push([
+                            playIdx + 1,
+                            diffStr,
+                            qData.q,
+                            isRight ? 'BENAR' : 'SALAH',
+                            correctAns,
+                            safeExp
+                        ]);
+                    });
+                }
 
                 const ws = XLSX.utils.aoa_to_sheet(sheetData);
                 ws['!cols'] = [{ wch: 6 }, { wch: 18 }, { wch: 55 }, { wch: 16 }, { wch: 40 }, { wch: 60 }];

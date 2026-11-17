@@ -18,11 +18,11 @@
             "points": 5,
             "q": "Seorang siswa mengunggah video kegiatan sekolah ke media sosial. Beberapa bulan kemudian, video tersebut ditemukan kembali meskipun unggahan aslinya telah dihapus. Hal ini dapat terjadi karena ....",
             "options": [
-                "Semua unggahan otomatis tersimpan selamanya di server sekolah.",
-                "Penghapusan unggahan hanya berlaku untuk akun pembuatnya, bukan seluruh salinan yang sudah tersebar.",
-                "Konten digital hanya dapat dihapus apabila pemilik akun menutup akunnya.",
-                "Setiap konten yang pernah diunggah akan selalu muncul dalam hasil pencarian.",
-                "Platform digital tidak menyediakan fitur penghapusan konten."
+                "Seluruh rekaman unggahan digital secara otomatis tersimpan permanen di pusat server sekolah.",
+                "Salinan konten telah diunduh, dibagikan ulang, atau disimpan oleh pengguna lain.",
+                "Konten digital hanya dapat dibersihkan tuntas apabila pemilik menutup akunnya secara permanen.",
+                "Setiap berkas yang pernah diunggah otomatis tersinkronisasi selamanya ke indeks pencarian publik.",
+                "Penyedia platform media sosial tidak menyediakan fasilitas penghapusan bagi pengguna berstatus pelajar."
             ],
             "answer": 1,
             "explanation": "Sifat jejak digital (digital footprint) adalah mudah disalin dan disebarluaskan oleh pihak lain. Penghapusan di akun asli tidak otomatis menghapus salinan, tangkapan layar, atau unduhan yang telah disimpan orang lain.",
@@ -35,11 +35,11 @@
             "points": 5,
             "q": "Di grup kelas beredar pesan WhatsApp yang menyatakan bahwa sekolah akan diliburkan besok. Pesan tersebut tidak mencantumkan sumber resmi. Seorang siswa ingin meneruskannya ke grup lain. Tindakan yang paling tepat adalah ....",
             "options": [
-                "Meneruskan pesan dengan menambahkan keterangan bahwa informasi belum pasti.",
-                "Menunggu teman lain memastikan informasi tersebut sebelum ikut menyebarkannya.",
-                "Membagikan pesan karena berasal dari anggota grup kelas.",
-                "Memeriksa pengumuman sekolah atau mengonfirmasi kepada guru sebelum membagikannya.",
-                "Menghapus pesan tanpa perlu memeriksa kebenaran informasinya."
+                "Meneruskan pesan ke grup lain dengan mencantumkan catatan tambahan bahwa kabar ini belum tentu benar.",
+                "Menunggu teman lain memastikan kebenaran informasi tersebut sebelum memutuskan ikut menyebarkannya.",
+                "Membagikan pesan ke forum lain karena informasi tersebut berasal dari rekan tepercaya di grup kelas.",
+                "Mengonfirmasi kebenaran informasi langsung ke pihak sekolah atau guru.",
+                "Menghapus pesan seketika tanpa perlu menelusuri kebenaran informasinya demi ketertiban komunikasi kelas."
             ],
             "answer": 3,
             "explanation": "Prinsip verifikasi informasi digital adalah selalu menyaring sebelum membagikan (saring sebelum sharing) dengan memeriksa sumber primer atau otoritas resmi sekolah.",
@@ -52,11 +52,11 @@
             "points": 5,
             "q": "Seorang siswa menggunakan tanggal lahir sebagai kata sandi untuk email, Instagram, dan akun permainan. Suatu hari, salah satu akun mengalami kebocoran. Risiko utama dari kebiasaan tersebut adalah ....",
             "options": [
-                "Akun lain berpotensi ikut diakses karena menggunakan kata sandi yang sama.",
-                "Semua perangkat yang pernah digunakan otomatis mengalami kerusakan.",
-                "Akun akan terkunci permanen setelah kata sandi diketahui orang lain.",
-                "Data pada seluruh aplikasi otomatis terhapus dari perangkat.",
-                "Pengguna tidak dapat mengganti kata sandi pada akun lainnya."
+                "Akun lain berisiko ikut dibobol karena menggunakan kata sandi yang sama.",
+                "Perangkat gawai yang pernah digunakan login otomatis mengalami kerusakan sistem operasi yang parah.",
+                "Seluruh akun media sosial akan langsung terkunci permanen oleh server pusat tanpa bisa dipulihkan.",
+                "Data penting pada seluruh aplikasi perbankan otomatis terhapus secara permanen dari memori perangkat.",
+                "Pengguna kehilangan hak administratif untuk memperbarui kata sandi pada layanan aplikasi lainnya."
             ],
             "answer": 0,
             "explanation": "Praktik 'password reuse' (menggunakan kata sandi yang sama di banyak layanan) memicu efek domino serangan Credential Stuffing, di mana peretas menggunakan kredensial yang bocor untuk membobol seluruh akun lainnya.",
@@ -69,13 +69,13 @@
             "points": 5,
             "q": "Sebuah aplikasi sederhana meminta akses kamera, mikrofon, lokasi, dan daftar kontak sekaligus. Padahal, fungsi utama aplikasi tersebut hanya menampilkan catatan teks. Berdasarkan materi privasi digital, keputusan paling tepat adalah ....",
             "options": [
-                "Memberikan seluruh izin agar aplikasi dapat bekerja tanpa gangguan.",
-                "Mengizinkan akses selama aplikasi tersedia di toko aplikasi resmi.",
-                "Menonaktifkan koneksi internet setiap kali membuka aplikasi.",
-                "Menghapus aplikasi tanpa memeriksa fungsi dan kebutuhannya.",
-                "Menolak izin yang tidak relevan dan meninjau kebijakan serta fungsi aplikasi."
+                "Memberikan seluruh izin agar aplikasi catatan teks dapat bekerja optimal tanpa kendala notifikasi sistem.",
+                "Mengizinkan seluruh akses selama aplikasi tersebut telah terdaftar resmi di toko aplikasi smartphone.",
+                "Mematikan sambungan internet seluler setiap kali hendak membuka dan membaca berkas catatan pada aplikasi.",
+                "Menolak izin berlebih yang tidak relevan dengan fungsi utama aplikasi.",
+                "Menghapus aplikasi tanpa meninjau ulang pengaturan hak akses data yang sebenarnya dibutuhkan pengguna."
             ],
-            "answer": 4,
+            "answer": 3,
             "explanation": "Prinsip privasi digital 'Least Privilege' mengajarkan agar pengguna hanya memberikan izin yang benar-benar relevan dengan fungsi utama aplikasi dan menolak izin berlebih yang mencurigakan.",
             "hint": "Aplikasi catatan teks tidak membutuhkan kamera atau mikrofon untuk sekadar menulis teks."
         },
@@ -86,11 +86,11 @@
             "points": 5,
             "q": "Seorang pengguna ingin mengelola banyak akun tanpa menggunakan kata sandi yang sama. Ia memilih Password Manager. Bagaimana mekanisme utama alat tersebut membantu pengguna?",
             "options": [
-                "Menggantikan seluruh proses autentikasi dengan satu akun utama.",
-                "Menyimpan seluruh kata sandi dalam catatan yang dapat dibuka publik.",
-                "Menyimpan kata sandi akun lain dalam brankas digital terenkripsi yang dilindungi master password.",
-                "Membagikan kata sandi secara otomatis kepada semua perangkat yang terhubung.",
-                "Menghapus kata sandi lama setiap kali pengguna membuat akun baru."
+                "Menggabungkan seluruh proses autentikasi login multi-aplikasi ke dalam satu akun profil publik terpadu.",
+                "Menyimpan seluruh kata sandi dalam basis data catatan daring terbuka yang dapat disinkronkan secara bebas.",
+                "Menyimpan kata sandi terenkripsi dalam brankas digital ber-master password.",
+                "Membagikan kata sandi secara otomatis tanpa pengamanan ke semua perangkat yang terhubung dalam satu jaringan.",
+                "Menghapus kata sandi akun lama secara berkala setiap kali pengguna mendaftarkan akun baru pada peramban web."
             ],
             "answer": 2,
             "explanation": "Password Manager bekerja dengan mengenkripsi seluruh kata sandi unik pengguna ke dalam brankas digital aman (vault) yang hanya dapat dibuka menggunakan satu 'master password' yang kuat.",
@@ -103,11 +103,11 @@
             "points": 5,
             "q": "Seseorang menerima pesan dari pihak yang mengaku sebagai petugas layanan digital. Orang tersebut meminta kode OTP dengan alasan akun akan diblokir jika kode tidak diberikan. Berdasarkan materi, tindakan yang paling tepat adalah ....",
             "options": [
-                "Memberikan kode apabila pihak tersebut mengetahui nama lengkap pengguna.",
-                "Menutup percakapan, tidak memberikan OTP, lalu memeriksa akun melalui aplikasi resmi.",
-                "Meminta petugas tersebut mengirimkan kode OTP pengganti.",
-                "Membagikan kode setelah memastikan nomor pengirim terlihat resmi.",
-                "Mengirimkan tangkapan layar pesan kepada anggota grup untuk meminta kode."
+                "Memberikan kode OTP apabila penelepon dapat menyebutkan nama lengkap serta nomor kartu keluarga korban.",
+                "Menutup kontak, menolak membagikan OTP, dan mengecek akun lewat kanal resmi.",
+                "Meminta petugas tersebut mengirimkan kode verifikasi pengganti melalui jalur percakapan media sosial.",
+                "Membagikan kode setelah memastikan nomor telepon penelepon menggunakan format kode area resmi perusahaan.",
+                "Meneruskan tangkapan layar pesan ke forum grup percakapan daring untuk meminta konfirmasi keaslian kode."
             ],
             "answer": 1,
             "explanation": "Kode OTP (One-Time Password) bersifat sangat rahasia seperti PIN ATM dan tidak boleh diberikan kepada siapa pun, termasuk pihak yang mengaku sebagai petugas resmi. Ini adalah taktik rekayasa sosial (social engineering).",
@@ -120,11 +120,11 @@
             "points": 5,
             "q": "Seorang pengguna telah menggunakan kata sandi yang kuat dan mengaktifkan 2FA. Namun, ia membagikan alamat rumah, lokasi harian, dan informasi keluarga secara terbuka. Kondisi tersebut menunjukkan bahwa ....",
             "options": [
-                "Akun sudah sepenuhnya terlindungi karena memiliki dua lapisan autentikasi.",
-                "Informasi pribadi tidak lagi berisiko karena kata sandi sulit ditebak.",
-                "Pengaturan privasi tidak diperlukan selama perangkat memiliki kunci layar.",
-                "Keamanan akun dan privasi merupakan hal yang berbeda dan harus dijaga bersamaan.",
-                "Penggunaan 2FA secara otomatis membatasi orang lain melihat informasi pribadi."
+                "Akun sudah sepenuhnya aman dari segala risiko kebocoran karena memiliki dua lapisan pengamanan ganda.",
+                "Informasi pribadi tidak lagi mengandung ancaman kejahatan selama kata sandi sulit ditebak oleh orang lain.",
+                "Pengaturan privasi tidak diperlukan lagi apabila gawai pengguna telah dilengkapi pemindai sidik jari.",
+                "Keamanan akun dan privasi data adalah hal berbeda yang wajib dijaga bersama.",
+                "Fitur 2FA secara otomatis menyaring orang lain agar tidak bisa melihat data pribadi yang diunggah publik."
             ],
             "answer": 3,
             "explanation": "Keamanan (Security) berfokus pada pencegahan akses ilegal ke sistem/akun, sedangkan Privasi (Privacy) berfokus pada pengendalian persebaran data pribadi pengguna. Keduanya merupakan domain berbeda yang wajib dijaga bersamaan.",
@@ -137,11 +137,11 @@
             "points": 5,
             "q": "Seorang pengguna mendapatkan notifikasi bahwa akun media sosialnya masuk dari perangkat yang tidak dikenal. Ia juga menemukan beberapa pesan terkirim tanpa sepengetahuannya. Urutan tindakan yang paling sesuai dengan materi adalah ....",
             "options": [
-                "Mengabaikan notifikasi dan menunggu sampai akun kembali normal.",
-                "Menghapus aplikasi, membuat akun baru, lalu membagikan informasi login kepada teman.",
-                "Membuka tautan dalam notifikasi, memasukkan kata sandi, dan menunggu konfirmasi.",
-                "Mengganti nama akun, menghapus seluruh unggahan, dan menonaktifkan koneksi internet.",
-                "Membuka layanan resmi, mengganti kata sandi dari perangkat tepercaya, mengeluarkan sesi asing, dan mengaktifkan 2FA."
+                "Mengabaikan notifikasi tersebut dan menunggu sistem peladen aplikasi memulihkan akun secara otomatis.",
+                "Menghapus aplikasi dari gawai, mendaftar akun baru, lalu membagikan kata sandi baru kepada rekan dekat.",
+                "Mengeklik tautan dalam notifikasi asing tersebut dan memasukkan ulang kata sandi lama untuk konfirmasi.",
+                "Mengganti nama profil, menghapus seluruh unggahan, dan mematikan koneksi data seluler pada perangkat.",
+                "Ganti kata sandi di kanal resmi, putuskan sesi perangkat asing, dan pasang 2FA."
             ],
             "answer": 4,
             "explanation": "Langkah mitigasi pembajakan akun (account takeover) adalah segera login melalui kanal resmi, ganti kata sandi dengan yang baru dan kuat, putuskan seluruh sesi login asing (logout other devices), lalu aktifkan 2FA.",

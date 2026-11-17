@@ -655,6 +655,13 @@ function applyCloudSharedStateToLocal(state) {
             if (fsSel) fsSel.value = state.fullscreenMode;
         }
 
+        // 1c. Sinkronisasi Publikasi Rapor & Kunci Pembahasan Siswa
+        if (state.reviewReleaseMode !== undefined) {
+            localStorage.setItem('quizmaster_review_release_mode', state.reviewReleaseMode);
+            const revSel = document.getElementById('setting-review-release-mode');
+            if (revSel) revSel.value = state.reviewReleaseMode;
+        }
+
         // 2. Sinkronisasi Durasi Timer Kuis
         if (typeof state.timerSeconds === 'number' && state.timerSeconds > 0) {
             localStorage.setItem(TIMER_SETTING_KEY, state.timerSeconds);

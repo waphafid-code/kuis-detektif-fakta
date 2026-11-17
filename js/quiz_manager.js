@@ -59,10 +59,10 @@ window.NETWORK_SECURITY_BUILTIN_QUESTIONS = [
         "points": 5,
         "q": "Di sebuah laboratorium komputer yang terdiri atas 25 unit PC, teknisi memutuskan untuk mengganti perangkat penghubung Hub menjadi Switch guna mengoptimalkan performa lalu lintas data lokal. Alasan teknis utama yang mendasari keputusan teknisi tersebut adalah...",
         "options": [
-            "Switch mampu mengubah sinyal digital menjadi gelombang analog untuk saluran telepon.",
+            "Switch mampu mengubah sinyal digital menjadi gelombang analog untuk transmisi saluran telepon kabel.",
             "Switch menyebarkan seluruh paket data ke semua port secara acak dalam waktu bersamaan.",
-            "Switch menghubungkan jaringan lokal laboratorium langsung dengan jaringan berskala global.",
-            "Switch meneruskan paket data langsung ke alamat perangkat tujuan secara spesifik dan terarah."
+            "Switch menghubungkan jaringan lokal laboratorium langsung dengan infrastruktur jaringan berskala global.",
+            "Switch meneruskan data langsung ke alamat port tujuan secara spesifik."
         ],
         "answer": 3,
         "explanation": "Switch bersifat cerdas karena meneruskan frame data langsung ke port alamat tujuan spesifik, bukan broadcast ke semua arah seperti Hub.",
@@ -96,7 +96,10 @@ window.NETWORK_SECURITY_BUILTIN_QUESTIONS = [
             "Menerapkan rancangan topologi Mesh atau Star guna menghubungkan jaringan LAN tiap gedung.",
             "Menghubungkan jaringan lintas benua dan samudra menggunakan konstelasi satelit orbit bumi."
         ],
-        "answer": [1, 2],
+        "answer": [
+            1,
+            2
+        ],
         "explanation": "Jaringan skala kota (MAN) umumnya menggunakan transmisi Fiber Optik/UTP dengan topologi Mesh atau Star antargedung di satu kota.",
         "hint": "Evaluasi kebutuhan transmisi dan topologi untuk menghubungkan beberapa gedung di dalam satu kota."
     },
@@ -123,10 +126,10 @@ window.NETWORK_SECURITY_BUILTIN_QUESTIONS = [
         "points": 5,
         "q": "Sebuah gedung sekolah 3 lantai memiliki 3 laboratorium komputer di mana masing-masing laboratorium menggunakan Switch tersendiri. Ketiga Switch tersebut dihubungkan secara hierarkis (Topologi Tree) ke satu server pusat di ruang guru. Jika kabel utama yang menghubungkan server pusat ke Switch lantai 2 terputus, kondisi yang akan terjadi pada jaringan sekolah adalah...",
         "options": [
-            "Seluruh komputer di lantai 1, 2, dan 3 mengalami kelumpuhan jaringan secara bersamaan.",
-            "Komputer di lantai 2 terputus dari server pusat namun tetap bisa berkomunikasi antarsesama PC lantai 2.",
-            "Komputer di lantai 1 dan 3 kehilangan koneksi lokal tetapi masih dapat mengakses server pusat.",
-            "Jaringan di lantai 2 otomatis berpindah ke topologi Ring tanpa memerlukan perangkat tambahan."
+            "Seluruh komputer di lantai 1, 2, dan 3 mengalami kelumpuhan total karena kegagalan pada simpul percabangan utama.",
+            "Komputer lantai 2 terputus dari server pusat namun koneksi internal antarsesama PC lantai 2 tetap berfungsi normal.",
+            "Komputer di lantai 1 dan 3 kehilangan koneksi lokal namun komunikasi data ke server pusat tetap berlangsung stabil.",
+            "Jaringan di lantai 2 secara otomatis berpindah konfigurasi menjadi topologi Ring mandiri tanpa intervensi perangkat."
         ],
         "answer": 1,
         "explanation": "Pada Topologi Tree, putusnya jalur cabang ke Switch lantai 2 hanya memutus koneksi lantai 2 ke pusat; LAN internal di dalam lantai 2 tetap aktif karena Switch lantai 2 masih menyala.",
@@ -161,7 +164,10 @@ window.NETWORK_SECURITY_BUILTIN_QUESTIONS = [
             "Memiliki kapasitas transmisi tertinggi dan kebal terhadap gangguan gelombang elektromagnetik.",
             "Membutuhkan arus listrik tegangan tinggi di sepanjang inti serat kaca untuk memperkuat sinyal."
         ],
-        "answer": [1, 2],
+        "answer": [
+            1,
+            2
+        ],
         "explanation": "Fiber Optik mentransmisikan pulsa cahaya melalui serat kaca tipis, tidak menggunakan arus listrik, berkapasitas tertinggi, dan kebal interferensi elektromagnetik.",
         "hint": "Fokus pada karakteristik fisik serat kaca dan media rambat cahaya pada kabel Fiber Optik."
     },
@@ -187,10 +193,10 @@ window.NETWORK_SECURITY_BUILTIN_QUESTIONS = [
         "points": 5,
         "q": "Seorang siswa sedang duduk di kafe dan terhubung ke jaringan Wi-Fi publik gratis tanpa kata sandi. Di sudut ruangan, seorang peretas menjalankan program penganalisis jaringan untuk memantau dan mencegat paket data yang lewat di jaringan Wi-Fi tersebut secara diam-diam tanpa mengirimkan pesan atau program apa pun ke perangkat korban. Jenis ancaman keamanan yang sedang terjadi adalah...",
         "options": [
-            "Penyebaran Malware berjenis Ransomware untuk mengunci dokumen pribadi milik korban.",
-            "Manipulasi psikologis melalui teknik Phising menggunakan halaman login palsu.",
-            "Tindakan Sniffing berupa penyadapan pasif terhadap lalu lintas data pada jaringan terbuka.",
-            "Perusakan fisik perangkat keras Access Point menggunakan gelombang elektromagnetik."
+            "Penyebaran perangkat lunak jahat (Malware Ransomware) untuk menyandera dokumen penting milik korban.",
+            "Rekayasa sosial melalui teknik Phising menggunakan halaman tiruan untuk memancing data rahasia korban.",
+            "Aktivitas Sniffing berupa penyadapan pasif paket data pada jaringan terbuka.",
+            "Perusakan fisik perangkat pemancar sinyal (Access Point) menggunakan interferensi gelombang elektromagnetik."
         ],
         "answer": 2,
         "explanation": "Tindakan memantau atau menyadap lalu lintas paket data yang melintas pada jaringan secara diam-diam untuk mencegat informasi rahasia disebut Sniffing.",
@@ -203,10 +209,10 @@ window.NETWORK_SECURITY_BUILTIN_QUESTIONS = [
         "points": 5,
         "q": "Saat proses pengiriman data nilai rapor digital dari komputer guru ke server akademik, seorang peretas berhasil mencegat paket data di tengah jalur transmisi dan mengubah nilai Informatika seorang siswa dari 74 menjadi 96 sebelum data tersebut tersimpan di server. Pilar utama keamanan jaringan yang telah dilanggar secara langsung dalam insiden ini adalah...",
         "options": [
-            "Availability (Ketersediaan Layanan)",
-            "Integrity (Keutuhan dan Keaslian Data)",
-            "Confidentiality (Kerahasiaan Akses)",
-            "Authentication (Verifikasi Identitas)"
+            "Pilar Availability (Menjamin ketersediaan layanan sistem bagi pengguna yang berhak).",
+            "Pilar Integrity (Menjamin keutuhan data dan mencegah modifikasi tidak sah).",
+            "Pilar Confidentiality (Menjamin kerahasiaan data agar tidak diakses pihak luar).",
+            "Pilar Authentication (Menjamin pembuktian keabsahan identitas pihak pengirim data)."
         ],
         "answer": 1,
         "explanation": "Pilar Integrity (Integritas) menjamin bahwa data tetap utuh, akurat, dan tidak diubah atau dimodifikasi tanpa izin di tengah jalan.",
@@ -241,7 +247,11 @@ window.NETWORK_SECURITY_BUILTIN_QUESTIONS = [
             "Insiden ini turut melanggar pilar Confidentiality karena data rahasia nasabah jatuh ke pihak tidak sah.",
             "Serangan tersebut murni disebabkan oleh putusnya kabel Fiber Optik pada jaringan penyedia internet."
         ],
-        "answer": [0, 1, 2],
+        "answer": [
+            0,
+            1,
+            2
+        ],
         "explanation": "Tautan palsu merupakan teknik Phising (1), pencurian kredensial merusak verifikasi identitas/Authentication (2), dan bocornya informasi rahasia melanggar Confidentiality (3).",
         "hint": "Analisis kaitan antara trik penipuan pesan palsu dengan pilar-pilar keamanan CIA-A yang berhasil ditembus."
     },
@@ -270,10 +280,10 @@ window.NETWORK_SECURITY_BUILTIN_QUESTIONS = [
         "caseStudy": "HOTS — Perancangan Arsitektur Infrastruktur Jaringan.",
         "q": "Sebuah perusahaan teknologi memiliki dua gedung kantor yang berjarak 250 meter dan dipisahkan oleh jalan raya. Di dalam tiap gedung, karyawan dituntut bermobilitas tinggi menggunakan laptop sambil berpindah ruang rapat. Namun, server basis data di Gedung A dan Gedung B harus terhubung dengan kecepatan sangat tinggi, stabil, dan tahan terhadap interferensi petir/cuaca luar ruangan. Solusi arsitektur infrastruktur yang paling optimal adalah...",
         "options": [
-            "Kabel UTP tanpa pelindung untuk jalur antargedung dan konektor Bluetooth untuk laptop karyawan.",
-            "Gelombang Wi-Fi untuk jalur antargedung dan kabel Koaksial kaku untuk setiap laptop karyawan.",
-            "Kabel Fiber Optik untuk jalur utama antargedung dan Access Point (Wi-Fi) untuk laptop di dalam ruangan.",
-            "Perangkat Hub untuk penghubung antargedung dan kabel STP dengan konektor RJ-45 untuk ponsel karyawan."
+            "Kabel UTP tanpa pelindung untuk jalur antargedung dan konektor nirkabel Bluetooth untuk laptop karyawan kantor.",
+            "Gelombang Wi-Fi luar ruang untuk antargedung dan kabel Koaksial kaku untuk koneksi laptop karyawan di ruangan.",
+            "Kabel Fiber Optik antargedung dan Access Point (Wi-Fi) untuk laptop di dalam gedung.",
+            "Perangkat Hub untuk jalur antargedung dan kabel STP berpelindung untuk koneksi gawai karyawan di ruangan."
         ],
         "answer": 2,
         "explanation": "Jalur antargedung 250 meter di luar ruangan wajib menggunakan Fiber Optik karena berkecepatan cahaya dan kebal petir/elektromagnetik, sedangkan mobilitas karyawan di dalam gedung dilayani oleh Access Point (Wi-Fi).",
@@ -293,7 +303,11 @@ window.NETWORK_SECURITY_BUILTIN_QUESTIONS = [
             "Mengganti perangkat Hub menjadi Switch akan membatasi pengiriman paket data hanya menuju port alamat perangkat yang dituju.",
             "Mengganti konektor RJ-45 dengan kabel Koaksial pada Hub tersebut akan otomatis mengaktifkan fitur enkripsi anti-sadap."
         ],
-        "answer": [0, 1, 2],
+        "answer": [
+            0,
+            1,
+            2
+        ],
         "explanation": "Sifat broadcast pada Hub mengalirkan semua trafik ke seluruh port termasuk port peretas (1) sehingga sangat rawan disadap/Sniffing (2); solusinya adalah mengganti Hub dengan Switch yang meneruskan paket secara spesifik (3).",
         "hint": "Hubungkan cara kerja broadcast pada Hub dengan celah penyadapan (Sniffing) serta solusi perangkat penggantinya."
     },
@@ -320,18 +334,16 @@ window.NETWORK_SECURITY_BUILTIN_QUESTIONS = [
         "caseStudy": "HOTS — Sintesis Insiden Serangan Siber Berlapis.",
         "q": "Sebuah rumah sakit mengalami rentetan serangan siber dalam satu pagi: (1) Pukul 08.00, seorang staf mengklik tautan email palsu yang menyamar sebagai portal Kementerian Kesehatan dan memasukkan akun resminya; (2) Pukul 09.00, peretas masuk menggunakan akun staf tersebut lalu menginstal program jahat yang mengenkripsi (mengunci) seluruh basis data rekam medis dan meminta uang tebusan; (3) Pukul 10.00, sistem pendaftaran pasien lumpuh total dan tidak dapat diakses oleh dokter maupun pasien. Korelasi yang tepat antara ancaman pukul 08.00, ancaman pukul 09.00, dan pilar keamanan yang lumpuh pada pukul 10.00 adalah...",
         "options": [
-            "Sniffing — Phising — Confidentiality",
-            "Phising — Malware (Ransomware) — Availability",
-            "Malware (Virus) — Sniffing — Integrity",
-            "Phising — Sniffing — Authentication"
+            "Penyadapan Sniffing — Serangan Phising — Kerahasiaan Data (Confidentiality)",
+            "Phising — Malware (Ransomware) — Ketersediaan (Availability)",
+            "Malware (Virus Komputer) — Sniffing — Keutuhan Data (Integrity)",
+            "Phising — Penyadapan Sniffing — Keaslian Pengguna (Authentication)"
         ],
         "answer": 1,
         "explanation": "Pukul 08.00 adalah penipuan tautan palsu (Phising); Pukul 09.00 adalah program jahat pengunci data tebusan (Malware Ransomware); Pukul 10.00 adalah lumpuhnya ketersediaan layanan bagi pengguna berhak (Availability).",
         "hint": "Urutkan jenis serangan dari email penyamaran (08.00), program pengunci data (09.00), hingga lumpuhnya layanan sistem (10.00)."
     }
 ];
-
-
 
 window.HKI_CULTURE_BUILTIN_QUESTIONS = [
     {
@@ -341,11 +353,11 @@ window.HKI_CULTURE_BUILTIN_QUESTIONS = [
         "points": 5,
         "q": "Sebuah sekolah mengembangkan platform digital yang berisi dokumentasi manuskrip, adat istiadat, seni, bahasa, dan permainan rakyat. Platform tersebut dapat diakses masyarakat dari berbagai daerah. Berdasarkan konsep digitalisasi budaya, kegiatan tersebut menunjukkan bahwa teknologi digital berfungsi untuk ....",
         "options": [
-            "Menggantikan aktivitas kebudayaan yang dilakukan masyarakat.",
-            "Membatasi penyebaran informasi budaya kepada kelompok tertentu.",
-            "Mengubah seluruh kebudayaan menjadi produk teknologi modern.",
-            "Mendokumentasikan, mengelola, menyimpan, dan memperkenalkan kebudayaan.",
-            "Mengurangi keterlibatan masyarakat dalam pelestarian kebudayaan."
+            "Menggantikan seluruh kegiatan kebudayaan fisik yang dilakukan masyarakat secara turun-temurun.",
+            "Membatasi penyebaran informasi nilai tradisi agar hanya dinikmati oleh kelompok masyarakat tertentu.",
+            "Mengubah seluruh warisan budaya daerah menjadi komoditas produk teknologi komersial modern.",
+            "Mendokumentasikan, melestarikan, dan memperkenalkan kebudayaan ke masyarakat luas.",
+            "Mengurangi keterlibatan langsung masyarakat lokal dalam merawat tradisi kesenian daerah mereka."
         ],
         "answer": 3,
         "explanation": "Digitalisasi budaya bertujuan mendokumentasikan, mengelola, menyimpan, menyebarluaskan, dan memperkenalkan kekayaan budaya melalui media digital tanpa menggantikan praktik aslinya.",
@@ -358,11 +370,11 @@ window.HKI_CULTURE_BUILTIN_QUESTIONS = [
         "points": 5,
         "q": "Sebuah lembaga kebudayaan ingin mengintegrasikan data kebudayaan dari berbagai sumber, termasuk informasi yang diperoleh melalui Urun Daya masyarakat. Platform yang sesuai dengan contoh dalam materi adalah ....",
         "options": [
-            "Budaya Kita.",
+            "Budaya Kita: Portal Komunitas Pelestari Tradisi Terbuka.",
             "SPKT (Sistem Pendataan Kebudayaan Terpadu).",
-            "Platform dokumentasi manuskrip.",
-            "Sistem informasi warisan budaya.",
-            "Platform pengenalan budaya digital."
+            "SIWB (Sistem Informasi Warisan Budaya Nasional Terintegrasi).",
+            "PDMD (Platform Dokumentasi Manuskrip dan Tradisi Daerah).",
+            "PPBD (Portal Pengenalan Budaya Digital Berbasis Komunitas)."
         ],
         "answer": 1,
         "explanation": "SPKT (Sistem Pendataan Kebudayaan Terpadu) adalah platform integrasi data kebudayaan nasional yang memadukan berbagai sumber data termasuk partisipasi Urun Daya masyarakat.",
@@ -375,11 +387,11 @@ window.HKI_CULTURE_BUILTIN_QUESTIONS = [
         "points": 5,
         "q": "Sebuah perusahaan mengembangkan aplikasi pembayaran digital. Tim pengembang bertugas membuat program, melakukan pengujian, memperbaiki kesalahan, dan memelihara fitur aplikasi. Profesi yang paling sesuai dengan tanggung jawab tersebut adalah ....",
         "options": [
-            "Web Developer.",
-            "System Analyst.",
+            "Web Developer / Pengembang Antarmuka Web.",
+            "System Analyst / Perancang Arsitektur Sistem.",
             "Programmer / Software Developer.",
-            "Data Analyst.",
-            "Database Administrator."
+            "Data Analyst / Spesialis Pengolah Pola Data.",
+            "Database Administrator / Pengelola Basis Data."
         ],
         "answer": 2,
         "explanation": "Programmer / Software Developer bertanggung jawab langsung menulis kode program, menguji, memperbaiki bug, dan memelihara fitur perangkat lunak aplikasi.",
@@ -392,11 +404,11 @@ window.HKI_CULTURE_BUILTIN_QUESTIONS = [
         "points": 5,
         "q": "Sebelum membangun sistem akademik baru, sebuah sekolah meminta tenaga profesional untuk mengidentifikasi permasalahan administrasi, menganalisis kebutuhan pengguna, dan menyusun rancangan solusi bagi tim pengembang. Profesi yang menjalankan tanggung jawab tersebut adalah ....",
         "options": [
-            "UI/UX Designer.",
-            "Network Engineer.",
-            "Cybersecurity Specialist.",
-            "Database Administrator.",
-            "System Analyst."
+            "UI/UX Designer / Perancang Interaksi Pengguna.",
+            "Network Engineer / Arsitek Konektivitas Jaringan.",
+            "Cybersecurity Specialist / Analis Keamanan Siber.",
+            "Database Administrator / Pengelola Basis Data.",
+            "System Analyst / Analis Kebutuhan Sistem."
         ],
         "answer": 4,
         "explanation": "System Analyst bertugas menjembatani kebutuhan pengguna dengan tim teknis melalui analisis masalah, perumusan spesifikasi kebutuhan, dan perancangan arsitektur solusi sistem.",
@@ -426,11 +438,11 @@ window.HKI_CULTURE_BUILTIN_QUESTIONS = [
         "points": 5,
         "q": "Sebuah perusahaan mengalami gangguan konektivitas antarkomputer. Tenaga profesional yang bertugas memeriksa kinerja jaringan, merancang konektivitas, dan melakukan troubleshooting adalah ....",
         "options": [
-            "Data Analyst.",
-            "Network Engineer.",
-            "System Analyst.",
-            "AI/Machine Learning Engineer.",
-            "Web Developer."
+            "Data Analyst / Analis Pola Data.",
+            "Network Engineer / Teknisi Jaringan.",
+            "System Analyst / Analis Kebutuhan Sistem.",
+            "AI Engineer / Pengembang Model Kecerdasan.",
+            "Web Developer / Pengembang Aplikasi Web."
         ],
         "answer": 1,
         "explanation": "Network Engineer berfokus pada infrastruktur jaringan komunikasi data, instalasi perangkat routing/switching, pemantauan performa koneksi, serta penanganan masalah (troubleshooting) jaringan.",
@@ -443,11 +455,11 @@ window.HKI_CULTURE_BUILTIN_QUESTIONS = [
         "points": 5,
         "q": "Seorang siswa menemukan foto dokumentasi budaya di internet dan ingin menggunakannya dalam presentasi. Ia mengetahui bahwa foto tersebut memiliki pemilik dan ketentuan penggunaan. Tindakan yang paling mencerminkan etika digital adalah ....",
         "options": [
-            "Menggunakan foto tersebut karena sudah tersedia untuk umum.",
-            "Menghapus identitas pemilik agar presentasi terlihat lebih sederhana.",
-            "Mengunggah kembali foto tersebut sebelum memeriksa ketentuan penggunaannya.",
-            "Memeriksa izin penggunaan, mengikuti ketentuan karya, dan mencantumkan sumbernya.",
-            "Menggunakan foto tersebut tanpa izin selama tidak memperoleh keuntungan."
+            "Menggunakan foto tersebut secara bebas dengan anggapan seluruh materi di internet adalah domain publik.",
+            "Menghapus tanda kepemilikan pencipta agar tampilan materi presentasi terlihat lebih rapi dan ringkas.",
+            "Mengunggah ulang foto ke platform lain tanpa memverifikasi hak cipta dan ketentuan lisensi pemilik karya.",
+            "Memeriksa izin lisensi karya dan mencantumkan sumber atribusinya.",
+            "Menggunakan karya tanpa konfirmasi tertulis selama tujuannya tidak untuk memperoleh keuntungan finansial."
         ],
         "answer": 3,
         "explanation": "Etika digital menuntut penghargaan terhadap karya orang lain dengan memverifikasi lisensi izin pakai, mematuhi batas penggunaan, dan memberikan atribusi sumber yang jelas.",
@@ -460,11 +472,11 @@ window.HKI_CULTURE_BUILTIN_QUESTIONS = [
         "points": 5,
         "q": "Seorang profesional bertugas mengumpulkan data transaksi, membersihkan data, mencari pola pembelian, dan menyajikan hasilnya melalui dashboard. Profesi yang paling tepat untuk pekerjaan tersebut adalah ....",
         "options": [
-            "System Analyst.",
-            "Database Administrator.",
-            "Data Analyst.",
-            "Programmer / Software Developer.",
-            "Cybersecurity Specialist."
+            "System Analyst / Analis Arsitektur Sistem.",
+            "Database Administrator / Administrator Data.",
+            "Data Analyst / Analis Pengolah Data.",
+            "Programmer / Software Developer Perangkat Lunak.",
+            "Cybersecurity Specialist / Spesialis Keamanan."
         ],
         "answer": 2,
         "explanation": "Data Analyst bertugas mengolah dataset mentah, melakukan pembersihan data (data cleaning), menemukan pola atau wawasan statistik, dan memvisualisasikannya ke dasbor untuk pengambilan keputusan.",
@@ -697,11 +709,11 @@ window.ETIKA_PRIVASI_BUILTIN_QUESTIONS = [
         "points": 5,
         "q": "Seorang siswa mengunggah video kegiatan sekolah ke media sosial. Beberapa bulan kemudian, video tersebut ditemukan kembali meskipun unggahan aslinya telah dihapus. Hal ini dapat terjadi karena ....",
         "options": [
-            "Semua unggahan otomatis tersimpan selamanya di server sekolah.",
-            "Penghapusan unggahan hanya berlaku untuk akun pembuatnya, bukan seluruh salinan yang sudah tersebar.",
-            "Konten digital hanya dapat dihapus apabila pemilik akun menutup akunnya.",
-            "Setiap konten yang pernah diunggah akan selalu muncul dalam hasil pencarian.",
-            "Platform digital tidak menyediakan fitur penghapusan konten."
+            "Seluruh rekaman unggahan digital secara otomatis tersimpan permanen di pusat server sekolah.",
+            "Salinan konten telah diunduh, dibagikan ulang, atau disimpan oleh pengguna lain.",
+            "Konten digital hanya dapat dibersihkan tuntas apabila pemilik menutup akunnya secara permanen.",
+            "Setiap berkas yang pernah diunggah otomatis tersinkronisasi selamanya ke indeks pencarian publik.",
+            "Penyedia platform media sosial tidak menyediakan fasilitas penghapusan bagi pengguna berstatus pelajar."
         ],
         "answer": 1,
         "explanation": "Sifat jejak digital (digital footprint) adalah mudah disalin dan disebarluaskan oleh pihak lain. Penghapusan di akun asli tidak otomatis menghapus salinan, tangkapan layar, atau unduhan yang telah disimpan orang lain.",
@@ -714,11 +726,11 @@ window.ETIKA_PRIVASI_BUILTIN_QUESTIONS = [
         "points": 5,
         "q": "Di grup kelas beredar pesan WhatsApp yang menyatakan bahwa sekolah akan diliburkan besok. Pesan tersebut tidak mencantumkan sumber resmi. Seorang siswa ingin meneruskannya ke grup lain. Tindakan yang paling tepat adalah ....",
         "options": [
-            "Meneruskan pesan dengan menambahkan keterangan bahwa informasi belum pasti.",
-            "Menunggu teman lain memastikan informasi tersebut sebelum ikut menyebarkannya.",
-            "Membagikan pesan karena berasal dari anggota grup kelas.",
-            "Memeriksa pengumuman sekolah atau mengonfirmasi kepada guru sebelum membagikannya.",
-            "Menghapus pesan tanpa perlu memeriksa kebenaran informasinya."
+            "Meneruskan pesan ke grup lain dengan mencantumkan catatan tambahan bahwa kabar ini belum tentu benar.",
+            "Menunggu teman lain memastikan kebenaran informasi tersebut sebelum memutuskan ikut menyebarkannya.",
+            "Membagikan pesan ke forum lain karena informasi tersebut berasal dari rekan tepercaya di grup kelas.",
+            "Mengonfirmasi kebenaran informasi langsung ke pihak sekolah atau guru.",
+            "Menghapus pesan seketika tanpa perlu menelusuri kebenaran informasinya demi ketertiban komunikasi kelas."
         ],
         "answer": 3,
         "explanation": "Prinsip verifikasi informasi digital adalah selalu menyaring sebelum membagikan (saring sebelum sharing) dengan memeriksa sumber primer atau otoritas resmi sekolah.",
@@ -731,11 +743,11 @@ window.ETIKA_PRIVASI_BUILTIN_QUESTIONS = [
         "points": 5,
         "q": "Seorang siswa menggunakan tanggal lahir sebagai kata sandi untuk email, Instagram, dan akun permainan. Suatu hari, salah satu akun mengalami kebocoran. Risiko utama dari kebiasaan tersebut adalah ....",
         "options": [
-            "Akun lain berpotensi ikut diakses karena menggunakan kata sandi yang sama.",
-            "Semua perangkat yang pernah digunakan otomatis mengalami kerusakan.",
-            "Akun akan terkunci permanen setelah kata sandi diketahui orang lain.",
-            "Data pada seluruh aplikasi otomatis terhapus dari perangkat.",
-            "Pengguna tidak dapat mengganti kata sandi pada akun lainnya."
+            "Akun lain berisiko ikut dibobol karena menggunakan kata sandi yang sama.",
+            "Perangkat gawai yang pernah digunakan login otomatis mengalami kerusakan sistem operasi yang parah.",
+            "Seluruh akun media sosial akan langsung terkunci permanen oleh server pusat tanpa bisa dipulihkan.",
+            "Data penting pada seluruh aplikasi perbankan otomatis terhapus secara permanen dari memori perangkat.",
+            "Pengguna kehilangan hak administratif untuk memperbarui kata sandi pada layanan aplikasi lainnya."
         ],
         "answer": 0,
         "explanation": "Praktik 'password reuse' (menggunakan kata sandi yang sama di banyak layanan) memicu efek domino serangan Credential Stuffing, di mana peretas menggunakan kredensial yang bocor untuk membobol seluruh akun lainnya.",
@@ -748,13 +760,13 @@ window.ETIKA_PRIVASI_BUILTIN_QUESTIONS = [
         "points": 5,
         "q": "Sebuah aplikasi sederhana meminta akses kamera, mikrofon, lokasi, dan daftar kontak sekaligus. Padahal, fungsi utama aplikasi tersebut hanya menampilkan catatan teks. Berdasarkan materi privasi digital, keputusan paling tepat adalah ....",
         "options": [
-            "Memberikan seluruh izin agar aplikasi dapat bekerja tanpa gangguan.",
-            "Mengizinkan akses selama aplikasi tersedia di toko aplikasi resmi.",
-            "Menonaktifkan koneksi internet setiap kali membuka aplikasi.",
-            "Menghapus aplikasi tanpa memeriksa fungsi dan kebutuhannya.",
-            "Menolak izin yang tidak relevan dan meninjau kebijakan serta fungsi aplikasi."
+            "Memberikan seluruh izin agar aplikasi catatan teks dapat bekerja optimal tanpa kendala notifikasi sistem.",
+            "Mengizinkan seluruh akses selama aplikasi tersebut telah terdaftar resmi di toko aplikasi smartphone.",
+            "Mematikan sambungan internet seluler setiap kali hendak membuka dan membaca berkas catatan pada aplikasi.",
+            "Menolak izin berlebih yang tidak relevan dengan fungsi utama aplikasi.",
+            "Menghapus aplikasi tanpa meninjau ulang pengaturan hak akses data yang sebenarnya dibutuhkan pengguna."
         ],
-        "answer": 4,
+        "answer": 3,
         "explanation": "Prinsip privasi digital 'Least Privilege' mengajarkan agar pengguna hanya memberikan izin yang benar-benar relevan dengan fungsi utama aplikasi dan menolak izin berlebih yang mencurigakan.",
         "hint": "Aplikasi catatan teks tidak membutuhkan kamera atau mikrofon untuk sekadar menulis teks."
     },
@@ -765,11 +777,11 @@ window.ETIKA_PRIVASI_BUILTIN_QUESTIONS = [
         "points": 5,
         "q": "Seorang pengguna ingin mengelola banyak akun tanpa menggunakan kata sandi yang sama. Ia memilih Password Manager. Bagaimana mekanisme utama alat tersebut membantu pengguna?",
         "options": [
-            "Menggantikan seluruh proses autentikasi dengan satu akun utama.",
-            "Menyimpan seluruh kata sandi dalam catatan yang dapat dibuka publik.",
-            "Menyimpan kata sandi akun lain dalam brankas digital terenkripsi yang dilindungi master password.",
-            "Membagikan kata sandi secara otomatis kepada semua perangkat yang terhubung.",
-            "Menghapus kata sandi lama setiap kali pengguna membuat akun baru."
+            "Menggabungkan seluruh proses autentikasi login multi-aplikasi ke dalam satu akun profil publik terpadu.",
+            "Menyimpan seluruh kata sandi dalam basis data catatan daring terbuka yang dapat disinkronkan secara bebas.",
+            "Menyimpan kata sandi terenkripsi dalam brankas digital ber-master password.",
+            "Membagikan kata sandi secara otomatis tanpa pengamanan ke semua perangkat yang terhubung dalam satu jaringan.",
+            "Menghapus kata sandi akun lama secara berkala setiap kali pengguna mendaftarkan akun baru pada peramban web."
         ],
         "answer": 2,
         "explanation": "Password Manager bekerja dengan mengenkripsi seluruh kata sandi unik pengguna ke dalam brankas digital aman (vault) yang hanya dapat dibuka menggunakan satu 'master password' yang kuat.",
@@ -782,11 +794,11 @@ window.ETIKA_PRIVASI_BUILTIN_QUESTIONS = [
         "points": 5,
         "q": "Seseorang menerima pesan dari pihak yang mengaku sebagai petugas layanan digital. Orang tersebut meminta kode OTP dengan alasan akun akan diblokir jika kode tidak diberikan. Berdasarkan materi, tindakan yang paling tepat adalah ....",
         "options": [
-            "Memberikan kode apabila pihak tersebut mengetahui nama lengkap pengguna.",
-            "Menutup percakapan, tidak memberikan OTP, lalu memeriksa akun melalui aplikasi resmi.",
-            "Meminta petugas tersebut mengirimkan kode OTP pengganti.",
-            "Membagikan kode setelah memastikan nomor pengirim terlihat resmi.",
-            "Mengirimkan tangkapan layar pesan kepada anggota grup untuk meminta kode."
+            "Memberikan kode OTP apabila penelepon dapat menyebutkan nama lengkap serta nomor kartu keluarga korban.",
+            "Menutup kontak, menolak membagikan OTP, dan mengecek akun lewat kanal resmi.",
+            "Meminta petugas tersebut mengirimkan kode verifikasi pengganti melalui jalur percakapan media sosial.",
+            "Membagikan kode setelah memastikan nomor telepon penelepon menggunakan format kode area resmi perusahaan.",
+            "Meneruskan tangkapan layar pesan ke forum grup percakapan daring untuk meminta konfirmasi keaslian kode."
         ],
         "answer": 1,
         "explanation": "Kode OTP (One-Time Password) bersifat sangat rahasia seperti PIN ATM dan tidak boleh diberikan kepada siapa pun, termasuk pihak yang mengaku sebagai petugas resmi. Ini adalah taktik rekayasa sosial (social engineering).",
@@ -799,11 +811,11 @@ window.ETIKA_PRIVASI_BUILTIN_QUESTIONS = [
         "points": 5,
         "q": "Seorang pengguna telah menggunakan kata sandi yang kuat dan mengaktifkan 2FA. Namun, ia membagikan alamat rumah, lokasi harian, dan informasi keluarga secara terbuka. Kondisi tersebut menunjukkan bahwa ....",
         "options": [
-            "Akun sudah sepenuhnya terlindungi karena memiliki dua lapisan autentikasi.",
-            "Informasi pribadi tidak lagi berisiko karena kata sandi sulit ditebak.",
-            "Pengaturan privasi tidak diperlukan selama perangkat memiliki kunci layar.",
-            "Keamanan akun dan privasi merupakan hal yang berbeda dan harus dijaga bersamaan.",
-            "Penggunaan 2FA secara otomatis membatasi orang lain melihat informasi pribadi."
+            "Akun sudah sepenuhnya aman dari segala risiko kebocoran karena memiliki dua lapisan pengamanan ganda.",
+            "Informasi pribadi tidak lagi mengandung ancaman kejahatan selama kata sandi sulit ditebak oleh orang lain.",
+            "Pengaturan privasi tidak diperlukan lagi apabila gawai pengguna telah dilengkapi pemindai sidik jari.",
+            "Keamanan akun dan privasi data adalah hal berbeda yang wajib dijaga bersama.",
+            "Fitur 2FA secara otomatis menyaring orang lain agar tidak bisa melihat data pribadi yang diunggah publik."
         ],
         "answer": 3,
         "explanation": "Keamanan (Security) berfokus pada pencegahan akses ilegal ke sistem/akun, sedangkan Privasi (Privacy) berfokus pada pengendalian persebaran data pribadi pengguna. Keduanya merupakan domain berbeda yang wajib dijaga bersamaan.",
@@ -816,11 +828,11 @@ window.ETIKA_PRIVASI_BUILTIN_QUESTIONS = [
         "points": 5,
         "q": "Seorang pengguna mendapatkan notifikasi bahwa akun media sosialnya masuk dari perangkat yang tidak dikenal. Ia juga menemukan beberapa pesan terkirim tanpa sepengetahuannya. Urutan tindakan yang paling sesuai dengan materi adalah ....",
         "options": [
-            "Mengabaikan notifikasi dan menunggu sampai akun kembali normal.",
-            "Menghapus aplikasi, membuat akun baru, lalu membagikan informasi login kepada teman.",
-            "Membuka tautan dalam notifikasi, memasukkan kata sandi, dan menunggu konfirmasi.",
-            "Mengganti nama akun, menghapus seluruh unggahan, dan menonaktifkan koneksi internet.",
-            "Membuka layanan resmi, mengganti kata sandi dari perangkat tepercaya, mengeluarkan sesi asing, dan mengaktifkan 2FA."
+            "Mengabaikan notifikasi tersebut dan menunggu sistem peladen aplikasi memulihkan akun secara otomatis.",
+            "Menghapus aplikasi dari gawai, mendaftar akun baru, lalu membagikan kata sandi baru kepada rekan dekat.",
+            "Mengeklik tautan dalam notifikasi asing tersebut dan memasukkan ulang kata sandi lama untuk konfirmasi.",
+            "Mengganti nama profil, menghapus seluruh unggahan, dan mematikan koneksi data seluler pada perangkat.",
+            "Ganti kata sandi di kanal resmi, putuskan sesi perangkat asing, dan pasang 2FA."
         ],
         "answer": 4,
         "explanation": "Langkah mitigasi pembajakan akun (account takeover) adalah segera login melalui kanal resmi, ganti kata sandi dengan yang baru dan kuat, putuskan seluruh sesi login asing (logout other devices), lalu aktifkan 2FA.",

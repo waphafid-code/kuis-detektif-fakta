@@ -2307,6 +2307,24 @@ async function finishQuiz() {
         }
     }
 
+    // 🔒 Kontrol Penundaan Rapor & Kunci Pembahasan oleh Guru
+    const isPostponed = (typeof isReviewPostponed === 'function') 
+        ? isReviewPostponed() 
+        : (localStorage.getItem('quizmaster_review_release_mode') !== 'open');
+
+    const postponedCard = document.getElementById('review-postponed-card');
+    const btnToggleReview = document.getElementById('btn-toggle-review');
+    const reviewSection = document.getElementById('review-section');
+
+    if (isPostponed) {
+        if (postponedCard) postponedCard.style.display = 'block';
+        if (btnToggleReview) btnToggleReview.style.display = 'none';
+        if (reviewSection) reviewSection.style.display = 'none';
+    } else {
+        if (postponedCard) postponedCard.style.display = 'none';
+        if (btnToggleReview) btnToggleReview.style.display = 'inline-flex';
+    }
+
     // 🔁 Kontrol Tampilan Tombol & Card Remedial Adaptif (Sesuai Pengaturan Guru)
     const isRemedialConfigEnabled = (typeof loadRemedialSetting === 'function') 
         ? loadRemedialSetting() 
@@ -2318,7 +2336,8 @@ async function finishQuiz() {
     const remedialBtnCount = document.getElementById('remedial-q-count');
 
     const wrongList = record.wrongQuestions || [];
-    if (!isPassed && wrongList.length > 0 && isRemedialConfigEnabled) {
+    // Jangan izinkan remedial instan jika mode tunda review aktif agar tidak dimanfaatkan untuk tebak kunci
+    if (!isPassed && wrongList.length > 0 && isRemedialConfigEnabled && !isPostponed) {
         remedialSourceRecord = record;
         window.remedialSourceRecord = record;
         if (remedialCard) {
@@ -2355,6 +2374,14 @@ function buildReview() {
     const list = document.getElementById('review-list');
     if (!list) return;
     list.innerHTML = '';
+
+    const isPostponed = (typeof isReviewPostponed === 'function') 
+        ? isReviewPostponed() 
+        : (localStorage.getItem('quizmaster_review_release_mode') !== 'open');
+
+    if (isPostponed) {
+        return; // Seluruh DOM review dinonaktifkan tuntas saat mode tunda aktif
+    }
 
     // Cek apakah modul saat ini adalah Modul Ujian Keamanan Jaringan dan status kunci jawaban ujian aktif
     const activeModId = currentActiveModule ? currentActiveModule.id : (window.QuizManager ? QuizManager.getActiveModuleId() : 'modul_detektif_fakta');
@@ -2441,9 +2468,22 @@ function buildReview() {
 
 let reviewVisible = false;
 function toggleReview() {
+    const isPostponed = (typeof isReviewPostponed === 'function') 
+        ? isReviewPostponed() 
+        : (localStorage.getItem('quizmaster_review_release_mode') !== 'open');
+
+    if (isPostponed) {
+        if (typeof showToast === 'function') {
+            showToast('🔒 Rapor butir soal & kunci pembahasan dirahasiakan oleh Guru sampai seluruh ujian selesai.', '🔒');
+        }
+        return;
+    }
+
     reviewVisible = !reviewVisible;
-    document.getElementById('review-section').style.display = reviewVisible ? 'block' : 'none';
-    document.getElementById('btn-toggle-review').textContent = reviewVisible ? '🔼 Sembunyikan Review' : '📋 Lihat Review';
+    const revSec = document.getElementById('review-section');
+    if (revSec) revSec.style.display = reviewVisible ? 'block' : 'none';
+    const btn = document.getElementById('btn-toggle-review');
+    if (btn) btn.textContent = reviewVisible ? '🔼 Sembunyikan Review' : '📋 Lihat Review';
 }
 
 function shootConfetti() {

@@ -1240,6 +1240,20 @@
                 </div>
             </div>
 
+            <!-- 🔒 KARTU INFORMASI PENUNDAAN RAPOR & PEMBAHASAN SOAL OLEH GURU -->
+            <div id="review-postponed-card" class="review-postponed-card" style="display:none;">
+                <div style="font-size: 2.2rem; margin-bottom: 8px;">🔒📋</div>
+                <h4 style="margin: 0 0 6px 0; font-size: 1.1rem; font-weight: 800; color: #a5b4fc;">
+                    Rapor Butir Soal &amp; Kunci Pembahasan Ditunda oleh Guru
+                </h4>
+                <p style="font-size: 0.88rem; color: var(--text-secondary); line-height: 1.5; margin: 0 auto; max-width: 520px;">
+                    Jawaban Anda telah <strong>berhasil dikumpulkan &amp; tersimpan resmi</strong> di Dasbor Guru <strong>Bpk. MUHAMMAD HAFIDH PUTRA ROSHADI, S.Pd.</strong> Untuk menjaga kerahasiaan soal selama ujian berlangsung, rincian butir soal dan kunci pembahasan akan dibuka setelah seluruh sesi ujian selesai.
+                </p>
+                <div style="margin-top: 12px; display: inline-flex; align-items: center; gap: 8px; font-size: 0.8rem; padding: 6px 16px; background: rgba(99, 102, 241, 0.12); border: 1px solid rgba(99, 102, 241, 0.35); border-radius: 20px; color: #cbd5e1;">
+                    🛡️ Status: <strong>Terkirim Aman ke Server Guru</strong>
+                </div>
+            </div>
+
             <div class="review-section" id="review-section" style="display:none;">
                 <h3>📋 Review Jawaban & Pembahasan</h3>
                 <div id="review-list"></div>
@@ -1411,6 +1425,15 @@
                             <option value="opsional">⚪ Bebas / Latihan (Tanpa Kunci Layar)</option>
                         </select>
                         <span class="setting-saved" id="fullscreen-saved-msg" style="display:none; color:var(--success); font-weight:700; font-size:0.8rem;">✅ Tersimpan!</span>
+                    </div>
+
+                    <div class="setting-row">
+                        <label for="setting-review-release-mode" style="font-weight: 700; font-size: 0.88rem; color: var(--text);">📋 Rapor &amp; Pembahasan Soal:</label>
+                        <select id="setting-review-release-mode" onchange="saveReviewReleaseSetting()" class="form-select-modern" style="font-size: 0.85rem;">
+                            <option value="locked" selected>🔒 Ditunda (Kunci Rahasia sampai Seluruh Siswa Selesai)</option>
+                            <option value="open">🟢 Buka Langsung (Siswa Boleh Langsung Melihat Pembahasan)</option>
+                        </select>
+                        <span class="setting-saved" id="review-release-saved-msg" style="display:none; color:var(--success); font-weight:700; font-size:0.8rem;">✅ Tersimpan!</span>
                     </div>
 
                     <div class="setting-row">
