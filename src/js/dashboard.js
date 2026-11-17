@@ -2440,6 +2440,269 @@ function remindStudentByIndex(itemIdx) {
 }
 window.remindStudentByIndex = remindStudentByIndex;
 
+let currentWaReminderCategory = 'all';
+
+function setWaReminderCategory(category) {
+    if (typeof sfxClick === 'function') sfxClick();
+    currentWaReminderCategory = category || 'all';
+    
+    // Update active button state
+    ['all', 'unsubmitted', 'remedial'].forEach(cat => {
+        const btn = document.getElementById(`btn-wa-cat-${cat}`);
+        if (btn) {
+            if (cat === currentWaReminderCategory) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
+        }
+    });
+
+    updateWaReminderPreview();
+}
+window.setWaReminderCategory = setWaReminderCategory;
+
+function openWaReminderModal(selectedClass = null, selectedModule = null) {
+    if (typeof sfxClick === 'function') sfxClick();
+    const modal = document.getElementById('wa-reminder-modal');
+    if (!modal) return;
+
+    // Sync class dropdown
+    const classSelect = document.getElementById('wa-remind-class');
+    if (classSelect) {
+        if (selectedClass) {
+            classSelect.value = selectedClass;
+        } else {
+            const currentDashClass = document.getElementById('filter-class') ? document.getElementById('filter-class').value : 'all';
+            classSelect.value = currentDashClass || 'all';
+        }
+    }
+
+    // Sync module dropdown
+    const modSelect = document.getElementById('wa-remind-module');
+    if (modSelect) {
+        if (selectedModule) {
+            modSelect.value = selectedModule;
+        } else {
+            const currentDashMod = window.currentDashboardModuleFilter || (document.getElementById('filter-module') ? document.getElementById('filter-module').value : 'all');
+            modSelect.value = currentDashMod || 'all';
+        }
+    }
+
+    currentWaReminderCategory = 'all';
+    ['all', 'unsubmitted', 'remedial'].forEach(cat => {
+        const btn = document.getElementById(`btn-wa-cat-${cat}`);
+        if (btn) {
+            if (cat === 'all') btn.classList.add('active');
+            else btn.classList.remove('active');
+        }
+    });
+
+    modal.classList.add('active');
+    updateWaReminderPreview();
+}
+window.openWaReminderModal = openWaReminderModal;
+
+function closeWaReminderModal() {
+    if (typeof sfxClick === 'function') sfxClick();
+    const modal = document.getElementById('wa-reminder-modal');
+    if (modal) modal.classList.remove('active');
+}
+window.closeWaReminderModal = closeWaReminderModal;
+
+function getHumanModuleName(modId) {
+    if (!modId || modId === 'all') return 'Evaluasi Pembelajaran Informatika (Semua Modul)';
+    if (modId === 'modul_jaringan_keamanan') return 'Penilaian Harian: Infrastruktur Jaringan & Keamanan Digital';
+    if (modId === 'modul_detektif_fakta') return 'Misi Detektif Fakta: Uji Validitas Data';
+    if (modId === 'modul_hki_profesi_budaya') return 'Penilaian Harian: Teknologi Digital, Profesi, Budaya & HKI';
+    if (modId === 'modul_etika_privasi_keamanan') return 'Penilaian Harian: Etika, Privasi, dan Keamanan Digital';
+    return modId;
+}
+
+function updateWaReminderPreview() {
+    const classSelect = document.getElementById('wa-remind-class');
+    const modSelect = document.getElementById('wa-remind-module');
+    const selectedClass = classSelect ? classSelect.value : 'all';
+    const selectedModule = modSelect ? modSelect.value : 'all';
+
+    const classes = (selectedClass === 'all') 
+        ? ['X E 1', 'X E 2', 'X E 3', 'X E 4', 'X E 5', 'X E 6'] 
+        : [selectedClass];
+
+    const allRecords = (typeof loadRecords === 'function') ? (loadRecords() || []) : [];
+
+    const unsubmitted = [];
+    const remedial = [];
+    const passed = [];
+    let totalRoster = 0;
+
+    classes.forEach(c => {
+        let roster = (typeof STUDENT_ROSTER !== 'undefined' && STUDENT_ROSTER[c]) ? STUDENT_ROSTER[c] : [];
+        if ((!roster || roster.length === 0) && c === 'KELAS DEMO') {
+            const demoRecs = allRecords.filter(r => (typeof isClassEquivalent === 'function' ? isClassEquivalent(r.class, c) : (r.class || '').trim() === c));
+            const distinctNames = Array.from(new Set(demoRecs.map(r => r.name).filter(Boolean)));
+            roster = distinctNames.length > 0 ? distinctNames : ['Siswa Demo 1', 'Siswa Demo 2'];
+        }
+        totalRoster += roster.length;
+
+        roster.forEach(name => {
+            const studentRecs = allRecords.filter(r => {
+                const nameMatches = (typeof isNameEquivalent === 'function') 
+                    ? isNameEquivalent(r.name, name) 
+                    : (r.name || '').trim().toLowerCase() === name.trim().toLowerCase();
+                const classMatches = (typeof isClassEquivalent === 'function') 
+                    ? isClassEquivalent(r.class, c) 
+                    : (r.class || '').replace(/\s+/g, '').toUpperCase() === c.replace(/\s+/g, '').toUpperCase();
+                if (!nameMatches || !classMatches) return false;
+                if (selectedModule === 'all') return true;
+                const rMod = (typeof normalizeModuleId === 'function') 
+                    ? normalizeModuleId(r.moduleId, r.id, r.date) 
+                    : (r.moduleId || 'modul_detektif_fakta');
+                return rMod === selectedModule;
+            });
+
+            if (studentRecs.length === 0) {
+                unsubmitted.push({ name, class: c });
+            } else {
+                const maxScore = Math.max(...studentRecs.map(r => Number(r.score) || 0));
+                if (maxScore < 80) {
+                    remedial.push({ name, class: c, score: maxScore });
+                } else {
+                    passed.push({ name, class: c, score: maxScore });
+                }
+            }
+        });
+    });
+
+    // Update Counter Badges in Modal
+    const badgeUnsub = document.getElementById('wa-badge-unsubmitted');
+    const badgeRem = document.getElementById('wa-badge-remedial');
+    const badgePas = document.getElementById('wa-badge-passed');
+    const badgeTot = document.getElementById('wa-badge-total');
+    if (badgeUnsub) badgeUnsub.textContent = unsubmitted.length;
+    if (badgeRem) badgeRem.textContent = remedial.length;
+    if (badgePas) badgePas.textContent = passed.length;
+    if (badgeTot) badgeTot.textContent = totalRoster;
+
+    // Compose formatted WhatsApp Markdown Message
+    const teacherName = 'Bpk. MUHAMMAD HAFIDH PUTRA ROSHADI, S.Pd.';
+    const modTitle = getHumanModuleName(selectedModule);
+    const classTitle = (selectedClass === 'all') ? 'Semua Kelas Resmi (X E 1 - X E 6)' : selectedClass;
+
+    let text = `📢 *PENGUMUMAN & PENGINGAT KUIS INFORMATIKA* 📢\n`;
+    text += `🏫 *SMAN 4 PADANG*\n`;
+    text += `👨‍🏫 *Guru Mata Pelajaran:* ${teacherName}\n`;
+    text += `📚 *Materi/Modul:* ${modTitle}\n`;
+    text += `🎯 *Kelas:* ${classTitle}\n`;
+    text += `🎯 *Standar KKM:* 80\n`;
+    text += `━━━━━━━━━━━━━━━━━━━━━\n`;
+
+    const cat = currentWaReminderCategory || 'all';
+
+    if (cat === 'all' || cat === 'unsubmitted') {
+        if (unsubmitted.length > 0) {
+            text += `❌ *DAFTAR SISWA BELUM MENGERJAKAN (${unsubmitted.length} Siswa):*\n`;
+            unsubmitted.forEach((s, idx) => {
+                text += `${idx + 1}. ${s.name} (${s.class})\n`;
+            });
+            text += `\n`;
+        } else if (cat === 'unsubmitted') {
+            text += `🎉 *Alhamdulillah! Seluruh siswa kelas ${classTitle} telah menyelesaikan kuis ini!* 👏\n\n`;
+        }
+    }
+
+    if (cat === 'all' || cat === 'remedial') {
+        if (remedial.length > 0) {
+            text += `🔄 *DAFTAR SISWA PERLU REMEDIAL MANDIRI (Nilai < KKM 80 - ${remedial.length} Siswa):*\n`;
+            remedial.forEach((s, idx) => {
+                text += `${idx + 1}. ${s.name} (${s.class}) — Nilai: ${s.score} (Perlu Remedial KKM 80)\n`;
+            });
+            text += `\n`;
+        } else if (cat === 'remedial') {
+            text += `🎉 *Hebat! Tidak ada siswa yang perlu remedial untuk kelas ${classTitle}. Seluruh peserta telah tuntas memenuhi KKM (≥ 80)!* 🌟\n\n`;
+        }
+    }
+
+    if (cat === 'all' && unsubmitted.length === 0 && remedial.length === 0) {
+        text += `🎉 *Luar Biasa! Seluruh siswa kelas ${classTitle} telah menuntaskan kuis dan mencapai KKM (≥ 80).*\n`;
+        text += `Terima kasih atas disiplin, kerja keras, dan integritas seluruh siswa! 🌟👏\n\n`;
+    }
+
+    text += `━━━━━━━━━━━━━━━━━━━━━\n`;
+    text += `🌐 *Tautan Akses Ujian & Remedial:*\n`;
+    text += `https://waphafid-code.github.io/kuis-detektif-fakta/\n\n`;
+    text += `⚠️ *Catatan Penting Guru:*\n`;
+    text += `• Bagi siswa yang *belum mengerjakan*, dimohon segera membuka platform dan menyelesaikan kuis sebelum batas waktu ditutup.\n`;
+    text += `• Bagi siswa yang *nilai belum mencapai KKM 80*, silakan manfaatkan fitur *🔁 Remedial Mandiri* di halaman hasil kuis untuk memperbaiki nilai.\n`;
+    text += `• Kerjakan secara jujur, mandiri, dan teliti. Terima kasih atas kerja samanya! 🙏`;
+
+    const previewArea = document.getElementById('wa-remind-preview-text');
+    if (previewArea) {
+        previewArea.value = text;
+    }
+    const charCount = document.getElementById('wa-preview-char-count');
+    if (charCount) {
+        charCount.textContent = `${text.length} karakter`;
+    }
+}
+window.updateWaReminderPreview = updateWaReminderPreview;
+
+function copyWaReminderText() {
+    if (typeof sfxClick === 'function') sfxClick();
+    const previewArea = document.getElementById('wa-remind-preview-text');
+    const text = previewArea ? previewArea.value : '';
+    if (!text) return;
+
+    const triggerCopyFallback = () => {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        try {
+            document.execCommand('copy');
+            if (typeof showToast === 'function') showToast('📋 Pesan WhatsApp berhasil disalin ke clipboard!', '📋');
+        } catch(e) {
+            if (typeof showToast === 'function') showToast('Gagal menyalin otomatis, silakan salin manual dari kotak pratinjau.', '⚠️');
+        }
+        document.body.removeChild(ta);
+    };
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(() => {
+            if (typeof showToast === 'function') showToast('📋 Pesan WhatsApp berhasil disalin ke clipboard!', '📋');
+        }).catch(() => {
+            triggerCopyFallback();
+        });
+    } else {
+        triggerCopyFallback();
+    }
+}
+window.copyWaReminderText = copyWaReminderText;
+
+function openWhatsAppWithReminder() {
+    if (typeof sfxClick === 'function') sfxClick();
+    const previewArea = document.getElementById('wa-remind-preview-text');
+    const text = previewArea ? previewArea.value : '';
+    if (!text) return;
+
+    // 1. Salin teks ke clipboard terlebih dahulu sebagai jaminan cadangan
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).catch(() => {});
+    }
+
+    // 2. Buka link WhatsApp Web / App
+    const waUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
+    if (typeof window.open === 'function') {
+        window.open(waUrl, '_blank');
+    }
+    if (typeof showToast === 'function') {
+        showToast('📲 Membuka WhatsApp & pesan telah disalin ke clipboard!', '🚀');
+    }
+}
+window.openWhatsAppWithReminder = openWhatsAppWithReminder;
+
 function copyUnsubmittedStudentsList() {
     sfxClick();
     const filterClass = document.getElementById('filter-class') ? document.getElementById('filter-class').value : 'all';

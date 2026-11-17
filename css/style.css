@@ -8537,3 +8537,26 @@ body.dark-theme .modal-cheat-desc {
     color: #fee2e2 !important;
 }
 
+/* ============================================================ */
+/* 📲 WHATSAPP REMINDER BROADCAST MODAL STYLES                  */
+/* ============================================================ */
+.wa-category-btn {
+    transition: all 0.2s ease-in-out;
+    border: 1.5px solid var(--glass-border);
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--text-secondary);
+    cursor: pointer;
+}
+.wa-category-btn:hover {
+    border-color: rgba(37, 211, 102, 0.5);
+    color: #25D366;
+    background: rgba(37, 211, 102, 0.08);
+}
+.wa-category-btn.active {
+    background: rgba(37, 211, 102, 0.2) !important;
+    border-color: #25D366 !important;
+    color: #25D366 !important;
+    box-shadow: 0 0 14px rgba(37, 211, 102, 0.25);
+}
+
+
