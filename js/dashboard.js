@@ -626,6 +626,13 @@ function closeModal() {
 window.closeModal = closeModal;
 
 function grantTeacherAccess(authMethod = 'PIN') {
+    // 🔒 SECURITY GUARD: Tolak panggilan langsung dari console jika belum terverifikasi
+    if (!_isTeacherAuthenticated && !isTeacherAuthValid() && !window._biometricPinVerified) {
+        console.warn('Akses ditolak: Panggilan tidak sah ke grantTeacherAccess.');
+        if (typeof openPinModal === 'function') openPinModal();
+        return;
+    }
+
     pinFailedAttempts = 0;
     pinLockoutUntil = 0;
     _isTeacherAuthenticated = true;
@@ -2781,6 +2788,13 @@ function closeAlreadySubmittedModal() {
 window.closeAlreadySubmittedModal = closeAlreadySubmittedModal;
 
 function renderDashboard() {
+    // 🔒 SECURITY GUARD: Jangan muat dan render data jika belum terverifikasi PIN Guru
+    if (typeof isTeacherAuthValid === 'function' && !isTeacherAuthValid()) {
+        const tbody = document.getElementById('dash-tbody');
+        if (tbody) tbody.innerHTML = '<tr><td colspan="9" style="text-align:center; padding:24px; color:var(--text-muted); font-size:0.9rem;">🔒 Dasbor Terkunci. Masukkan PIN Guru untuk melihat data rekap nilai.</td></tr>';
+        return;
+    }
+
     const allRecords = loadRecords();
     const filterClass = document.getElementById('filter-class') ? document.getElementById('filter-class').value : 'all';
     const filterModuleEl = document.getElementById('filter-module');

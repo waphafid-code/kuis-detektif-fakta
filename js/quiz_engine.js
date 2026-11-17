@@ -26,30 +26,29 @@ function vaultAnswers(questions) {
         return sanitized;
     });
 
-    // 🛡️ SECURITY: Bersihkan kunci mentah dari window.DEFAULT_BUILTIN_QUESTIONS & window.NETWORK_SECURITY_BUILTIN_QUESTIONS
+    // 🛡️ SECURITY: Bersihkan kunci mentah dari SEMUA 4 MODUL PEMBELAJARAN
     // Mencegah siswa membuka Console DevTools dan membaca kunci jawaban langsung
     try {
         if (typeof window !== 'undefined') {
-            if (Array.isArray(window.DEFAULT_BUILTIN_QUESTIONS)) {
-                window.DEFAULT_BUILTIN_QUESTIONS.forEach((q, idx) => {
-                    const qId = q.id || `q_${idx}`;
-                    if (!_secureAnswerVault.has(qId) && q.answer !== undefined) {
-                        _secureAnswerVault.set(qId, { answer: q.answer, explanation: q.explanation });
-                    }
-                    delete q.answer;
-                    delete q.explanation;
-                });
-            }
-            if (Array.isArray(window.NETWORK_SECURITY_BUILTIN_QUESTIONS)) {
-                window.NETWORK_SECURITY_BUILTIN_QUESTIONS.forEach((q, idx) => {
-                    const qId = q.id || `net_q_${idx}`;
-                    if (!_secureAnswerVault.has(qId) && q.answer !== undefined) {
-                        _secureAnswerVault.set(qId, { answer: q.answer, explanation: q.explanation });
-                    }
-                    delete q.answer;
-                    delete q.explanation;
-                });
-            }
+            const moduleSources = [
+                { list: window.DEFAULT_BUILTIN_QUESTIONS, prefix: 'q_' },
+                { list: window.NETWORK_SECURITY_BUILTIN_QUESTIONS, prefix: 'net_q_' },
+                { list: window.HKI_CULTURE_BUILTIN_QUESTIONS, prefix: 'hki_q_' },
+                { list: window.ETIKA_PRIVASI_BUILTIN_QUESTIONS, prefix: 'etika_q_' }
+            ];
+
+            moduleSources.forEach(src => {
+                if (Array.isArray(src.list)) {
+                    src.list.forEach((q, idx) => {
+                        const qId = q.id || `${src.prefix}${idx}`;
+                        if (!_secureAnswerVault.has(qId) && q.answer !== undefined) {
+                            _secureAnswerVault.set(qId, { answer: q.answer, explanation: q.explanation });
+                        }
+                        delete q.answer;
+                        delete q.explanation;
+                    });
+                }
+            });
         }
     } catch(e) {}
 
@@ -534,17 +533,31 @@ document.addEventListener('visibilitychange', () => {
 
 window.addEventListener('blur', () => {
     if (!isQuizActive() || isCheatWarningActive || isQuizFinishing) return;
-    // Jangan gunakan !document.hasFocus() karena interaksi elemen form pada browser mobile sering memicu kehilangan fokus palsu.
-    // Hanya reaktif jika tab browser benar-benar disembunyikan (document.hidden)
-    if (document.hidden) {
-        clearBlurGraceTimer();
-        blurGraceTimer = setTimeout(() => {
-            if (document.hidden && isQuizActive() && !isCheatWarningActive && !isQuizFinishing) {
-                handleAntiCheatEvent('🌐 Berpindah Tab / Meminimalkan Browser');
+    clearBlurGraceTimer();
+    // 🛡️ ANTI-CHEAT FLOATING WINDOW & POP-UP APP:
+    // Aktifkan timer grace period bahkan saat document.hidden bernilai false (misal aplikasi mengambang / split-screen)
+    const graceMs = isMobileOrTouchDevice() ? 8000 : 5000;
+    blurGraceTimer = setTimeout(() => {
+        if (isQuizActive() && !isCheatWarningActive && !isQuizFinishing) {
+            handleAntiCheatEvent('🌐 Kehilangan Fokus / Jendela Mengambang (Floating App) Terdeteksi');
+        }
+        blurGraceTimer = null;
+    }, graceMs);
+});
+
+// 📱 DETEKSI SPLIT SCREEN / RESIZE ANOMALI SAAT UJIAN
+window.addEventListener('resize', () => {
+    if (!isQuizActive() || isCheatWarningActive || isQuizFinishing) return;
+    try {
+        const screenH = (window.screen && (window.screen.availHeight || window.screen.height)) || 800;
+        // Jika tinggi jendela browser menyusut drastis (< 55% tinggi layar HP dan bukan input form aktif)
+        if (isMobileOrTouchDevice() && window.innerHeight < screenH * 0.55) {
+            const activeTag = document.activeElement ? (document.activeElement.tagName || '').toLowerCase() : '';
+            if (activeTag !== 'input' && activeTag !== 'textarea') {
+                handleAntiCheatEvent('📱 Layar Terbelah (Split Screen) Terdeteksi');
             }
-            blurGraceTimer = null;
-        }, 8000);
-    }
+        }
+    } catch(e) {}
 });
 
 window.addEventListener('focus', () => {
@@ -851,6 +864,19 @@ async function initiateQuiz() {
             return nameMatch && classMatch && rMod === targetModId;
         });
 
+        // 🛡️ ANTI-INCOGNITO & ANTI-CLEAR CACHE BYPASS GUARD:
+        // Jika di memori lokal perangkat kosong, cek ke Cloud apakah siswa ini sebenarnya sudah pernah submit
+        if (previousAttempts.length === 0 && (policy === 'single_only' || policy === 'allow_remedy') && typeof checkCloudStudentSubmission === 'function') {
+            try {
+                const cloudSubmissions = await checkCloudStudentSubmission(name, cls, targetModId);
+                if (Array.isArray(cloudSubmissions) && cloudSubmissions.length > 0) {
+                    previousAttempts = cloudSubmissions;
+                }
+            } catch(e) {
+                console.warn('Pengecekan cloud pra-ujian gagal:', e);
+            }
+        }
+
         // 🔄 CLOUD INTEGRITY GUARD:
         // Jika secara lokal siswa tercatat sudah pernah mengerjakan (sehingga berpotensi diblokir),
         // LAKUKAN PENGECEKAN KE CLOUD FIREBASE untuk memastikan apakah data siswa ini sebenarnya SUDAH DIHAPUS OLEH GURU!
@@ -1058,6 +1084,8 @@ let questionDuration = 0;
 let questionRemainingSec = 0;
 let lastWarnedSec = -1;
 
+let questionStartPerf = 0;
+
 function startTimer(customDuration) {
     stopTimer();
     if (TIMER_MAX === 0) {
@@ -1067,15 +1095,17 @@ function startTimer(customDuration) {
     }
     questionDuration = (customDuration !== undefined && customDuration > 0) ? customDuration : TIMER_MAX;
     questionStartTime = Date.now();
+    questionStartPerf = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
     questionRemainingSec = questionDuration;
     timerVal = questionDuration;
     lastWarnedSec = -1;
     updateTimerDisplay();
 
-    // 🛡️ DRIFT-PROOF & ANTI-TAMPERING:
-    // Waktu dihitung dari selisih waktu nyata sistem (Date.now() - questionStartTime)
+    // 🛡️ HARDWARE MONOTONIC CLOCK (ANTI-TAMPERING):
+    // Menggunakan performance.now() yang kebal terhadap manipulasi jam sistem operasi HP
     timerInterval = setInterval(() => {
-        const elapsedSec = Math.floor((Date.now() - questionStartTime) / 1000);
+        const nowPerf = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
+        const elapsedSec = Math.max(0, Math.floor((nowPerf - questionStartPerf) / 1000));
         timerVal = Math.max(0, questionDuration - elapsedSec);
         questionRemainingSec = timerVal;
         updateTimerDisplay();
@@ -1097,8 +1127,9 @@ function stopTimer() {
         clearInterval(timerInterval);
         timerInterval = null;
     }
-    if (questionStartTime > 0 && questionDuration > 0) {
-        const elapsedSec = Math.floor((Date.now() - questionStartTime) / 1000);
+    if (questionStartPerf > 0 && questionDuration > 0) {
+        const nowPerf = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
+        const elapsedSec = Math.max(0, Math.floor((nowPerf - questionStartPerf) / 1000));
         questionRemainingSec = Math.max(0, questionDuration - elapsedSec);
     }
 }
@@ -1788,38 +1819,56 @@ function checkAnswer(isAutoTimeout = false) {
         const answerKey = getAnswerFromVault(data, origQIdx);
         correctOriginals = Array.isArray(answerKey) ? answerKey : (answerKey !== null && answerKey !== undefined ? [answerKey] : []);
 
+        const isExamLive = !isRemedialSession;
+
         if (data.type === 'mcq' || data.type === 'tf') {
             isCorrect = selectedOriginals.length > 0 && selectedOriginals[0] === correctOriginals[0];
-            if (isCorrect) {
-                const l = document.getElementById(`label-${selectedShuffleIdxs[0]}`);
-                if (l) l.classList.add('correct');
-            } else {
+            if (isExamLive) {
+                // 🛡️ ANTI-LEAK LIVE EXAM: Kunci pilihan tanpa mewarnai hijau/merah agar kawan di sebelah tidak melihat kunci
                 if (selectedShuffleIdxs.length > 0) {
                     const l = document.getElementById(`label-${selectedShuffleIdxs[0]}`);
-                    if (l) l.classList.add('wrong');
+                    if (l) l.classList.add('selected-locked');
                 }
-                currentShuffleMap.forEach((origIdx, shuffIdx) => {
-                    if (origIdx === correctOriginals[0]) {
-                        const l = document.getElementById(`label-${shuffIdx}`);
-                        if (l) l.classList.add('correct');
+            } else {
+                if (isCorrect) {
+                    const l = document.getElementById(`label-${selectedShuffleIdxs[0]}`);
+                    if (l) l.classList.add('correct');
+                } else {
+                    if (selectedShuffleIdxs.length > 0) {
+                        const l = document.getElementById(`label-${selectedShuffleIdxs[0]}`);
+                        if (l) l.classList.add('wrong');
                     }
-                });
+                    currentShuffleMap.forEach((origIdx, shuffIdx) => {
+                        if (origIdx === correctOriginals[0]) {
+                            const l = document.getElementById(`label-${shuffIdx}`);
+                            if (l) l.classList.add('correct');
+                        }
+                    });
+                }
             }
         } else {
             const correctSet = new Set(correctOriginals);
             const selectedSet = new Set(selectedOriginals);
             isCorrect = correctSet.size === selectedSet.size && [...correctSet].every(v => selectedSet.has(v));
 
-            currentShuffleMap.forEach((origIdx, shuffIdx) => {
-                if (correctSet.has(origIdx)) {
+            if (isExamLive) {
+                // 🛡️ ANTI-LEAK LIVE EXAM: Hanya tandai pilihan terkunci tanpa membocorkan opsi mana yang benar
+                selectedShuffleIdxs.forEach(shuffIdx => {
                     const l = document.getElementById(`label-${shuffIdx}`);
-                    if (l) l.classList.add('correct');
-                }
-                if (selectedShuffleIdxs.includes(shuffIdx) && !correctSet.has(origIdx)) {
-                    const l = document.getElementById(`label-${shuffIdx}`);
-                    if (l) l.classList.add('wrong');
-                }
-            });
+                    if (l) l.classList.add('selected-locked');
+                });
+            } else {
+                currentShuffleMap.forEach((origIdx, shuffIdx) => {
+                    if (correctSet.has(origIdx)) {
+                        const l = document.getElementById(`label-${shuffIdx}`);
+                        if (l) l.classList.add('correct');
+                    }
+                    if (selectedShuffleIdxs.includes(shuffIdx) && !correctSet.has(origIdx)) {
+                        const l = document.getElementById(`label-${shuffIdx}`);
+                        if (l) l.classList.add('wrong');
+                    }
+                });
+            }
         }
 
         pointRes = window.NemotronAI ? window.NemotronAI.calculateQuestionPoints({ ...data, answer: answerKey }, selectedOriginals) : {
@@ -1875,42 +1924,67 @@ function checkAnswer(isAutoTimeout = false) {
     if (hintBtn) hintBtn.style.display = 'none';
     if (hintBox) hintBox.style.display = 'none';
 
-    if (pointRes.isFullCorrect) {
-        sfxCorrect();
-        score++;
-        streak++;
-        if (streak > maxStreak) maxStreak = streak;
-        answeredCorrectly[origQIdx] = true;
+    if (isExamLive) {
+        // 🔒 ANTI-LEAK LIVE UJIAN KELAS:
+        // Pada saat ujian langsung (Penilaian Harian), feedback visual hijau/merah dan pembahasan disembunyikan
+        // agar tidak terbaca oleh teman sebangku/sebelah siswa di ruang kelas.
+        sfxClick();
+        if (pointRes.isFullCorrect) {
+            score++;
+            streak++;
+            if (streak > maxStreak) maxStreak = streak;
+            answeredCorrectly[origQIdx] = true;
+        } else if (pointRes.isPartial) {
+            streak = 0;
+            answeredCorrectly[origQIdx] = true;
+        } else {
+            streak = 0;
+            answeredCorrectly[origQIdx] = false;
+        }
 
-        triggerStreakVibration(streak);
-
-        fb.className = 'feedback-box correct-fb';
-        fb.innerHTML = `<h4>${isAutoTimeout ? '⏰ Waktu Habis — Pilihan Terkunci & Benar! ✅' : '✅ Jawaban Benar Penuh!'} (+${pointRes.pointsEarned} Poin)</h4>${formatPedagogicalFeedback(expText)}`;
-
-        const streakEl = document.getElementById('streak-display');
-        streakEl.style.transform = 'scale(1.25)';
-        setTimeout(() => streakEl.style.transform = '', 250);
-
-        if (card) card.classList.toggle('streak-on-fire', streak >= 3);
-        if (streak >= 2) showMegaComboHero(streak);
-    } else if (pointRes.isPartial) {
-        sfxCorrect();
-        streak = 0;
-        answeredCorrectly[origQIdx] = true;
-
-        fb.className = 'feedback-box warning-fb';
-        fb.innerHTML = `<h4>🟡 Jawaban Benar Sebagian (+${pointRes.pointsEarned}/${pointRes.maxPoints} Poin)</h4><p style="font-weight: 700; color: #fde047; margin-bottom: 6px;">${pointRes.summary}</p>${formatPedagogicalFeedback(expText)}`;
-
+        fb.className = 'feedback-box locked-fb';
+        fb.innerHTML = `<h4>🔒 Jawaban Terkunci & Disimpan</h4><p style="font-size:0.85rem; color:var(--text-secondary); margin-top:4px;">Pilihan Anda telah tercatat resmi oleh sistem. Kunci jawaban dan pembahasan lengkap dapat ditinjau setelah ujian selesai.</p>`;
         if (card) card.classList.remove('streak-on-fire');
     } else {
-        sfxWrong();
-        streak = 0;
-        answeredCorrectly[origQIdx] = false;
+        // 🎓 MODE REMEDIAL / LATIHAN PEDAGOGIS:
+        // Tampilkan pembahasan komprehensif, animasi kombo, dan suara interaktif
+        if (pointRes.isFullCorrect) {
+            sfxCorrect();
+            score++;
+            streak++;
+            if (streak > maxStreak) maxStreak = streak;
+            answeredCorrectly[origQIdx] = true;
 
-        fb.className = 'feedback-box wrong-fb';
-        fb.innerHTML = `<h4>${isAutoTimeout ? '⏰ Waktu Habis — Pilihan Otomatis Terkunci! ❌' : '❌ Analisis Kurang Tepat'} (0/${pointRes.maxPoints} Poin)</h4>${formatPedagogicalFeedback(expText)}`;
+            triggerStreakVibration(streak);
 
-        if (card) card.classList.remove('streak-on-fire');
+            fb.className = 'feedback-box correct-fb';
+            fb.innerHTML = `<h4>${isAutoTimeout ? '⏰ Waktu Habis — Pilihan Terkunci & Benar! ✅' : '✅ Jawaban Benar Penuh!'} (+${pointRes.pointsEarned} Poin)</h4>${formatPedagogicalFeedback(expText)}`;
+
+            const streakEl = document.getElementById('streak-display');
+            streakEl.style.transform = 'scale(1.25)';
+            setTimeout(() => streakEl.style.transform = '', 250);
+
+            if (card) card.classList.toggle('streak-on-fire', streak >= 3);
+            if (streak >= 2) showMegaComboHero(streak);
+        } else if (pointRes.isPartial) {
+            sfxCorrect();
+            streak = 0;
+            answeredCorrectly[origQIdx] = true;
+
+            fb.className = 'feedback-box warning-fb';
+            fb.innerHTML = `<h4>🟡 Jawaban Benar Sebagian (+${pointRes.pointsEarned}/${pointRes.maxPoints} Poin)</h4><p style="font-weight: 700; color: #fde047; margin-bottom: 6px;">${pointRes.summary}</p>${formatPedagogicalFeedback(expText)}`;
+
+            if (card) card.classList.remove('streak-on-fire');
+        } else {
+            sfxWrong();
+            streak = 0;
+            answeredCorrectly[origQIdx] = false;
+
+            fb.className = 'feedback-box wrong-fb';
+            fb.innerHTML = `<h4>${isAutoTimeout ? '⏰ Waktu Habis — Pilihan Otomatis Terkunci! ❌' : '❌ Analisis Kurang Tepat'} (0/${pointRes.maxPoints} Poin)</h4>${formatPedagogicalFeedback(expText)}`;
+
+            if (card) card.classList.remove('streak-on-fire');
+        }
     }
 
     fb.style.display = 'block';

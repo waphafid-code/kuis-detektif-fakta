@@ -143,6 +143,73 @@ function getCleanDemoBaseline() {
     return rawDemo;
 }
 
+// 🛡️ CLOUD STUDENT SUBMISSION VERIFIER (MENCEGAH BYPASS VIA INCOGNITO / HAPUS CACHE)
+async function checkCloudStudentSubmission(name, cls, targetModId) {
+    if (!name || !cls) return [];
+    const results = [];
+
+    // 1. Cek dari Cloud Supabase
+    try {
+        const cfg = (typeof getSupabaseConfig === 'function') ? getSupabaseConfig() : { table: 'quiz_results' };
+        const client = window.supabaseClient || (typeof initSupabaseClient === 'function' ? initSupabaseClient() : null);
+        if (client) {
+            const { data, error } = await client
+                .from(cfg.table || 'quiz_results')
+                .select('id, student_name, student_class, score, quiz_date, time_str, duration, module_id')
+                .ilike('student_name', name.trim())
+                .limit(10);
+
+            if (!error && Array.isArray(data)) {
+                data.forEach(r => {
+                    const cMatch = (typeof isClassEquivalent === 'function') ? isClassEquivalent(r.student_class, cls) : (r.student_class || '').replace(/\s+/g,'').toUpperCase() === cls.replace(/\s+/g,'').toUpperCase();
+                    const nMatch = (typeof isNameEquivalent === 'function') ? isNameEquivalent(r.student_name, name) : (r.student_name || '').trim().toLowerCase() === name.trim().toLowerCase();
+                    const rMod = (typeof normalizeModuleId === 'function') ? normalizeModuleId(r.module_id, r.id, r.quiz_date) : r.module_id;
+                    if (cMatch && nMatch && rMod === targetModId) {
+                        results.push({
+                            name: r.student_name,
+                            class: r.student_class,
+                            score: Number(r.score) || 0,
+                            date: r.quiz_date,
+                            time: r.time_str,
+                            duration: r.duration,
+                            moduleId: rMod
+                        });
+                    }
+                });
+            }
+        }
+    } catch(e) {}
+
+    return results;
+}
+window.checkCloudStudentSubmission = checkCloudStudentSubmission;
+
+// 🛡️ SAFE STORAGE SETTER DENGAN PENANGANAN QUOTAEXCEEDEDERROR
+function safeLocalStorageSet(key, value) {
+    try {
+        localStorage.setItem(key, value);
+        return true;
+    } catch (err) {
+        const isQuota = (err && (err.name === 'QuotaExceededError' || err.code === 22 || err.code === 1014));
+        if (isQuota) {
+            console.warn('⚠️ [Storage Quota Exceeded]: Menyelamatkan memori lokal dari overload...');
+            try {
+                localStorage.removeItem('quizmaster_emergency_backup_records');
+                if (key === 'quizmaster_records' || (typeof STORAGE_KEY !== 'undefined' && key === STORAGE_KEY)) {
+                    let parsed = JSON.parse(value);
+                    if (Array.isArray(parsed) && parsed.length > 200) {
+                        parsed = parsed.slice(-200);
+                        localStorage.setItem(key, JSON.stringify(parsed));
+                        return true;
+                    }
+                }
+            } catch (e2) {}
+        }
+        return false;
+    }
+}
+window.safeLocalStorageSet = safeLocalStorageSet;
+
 function loadRecords() {
     try {
         const syncVer = localStorage.getItem(OFFICIAL_DATA_SYNC_KEY);
@@ -166,9 +233,9 @@ function loadRecords() {
         // Jika versi sinkronisasi belum versi bersih terbaru, paksa pembersihan localStorage
         if (syncVer !== CURRENT_OFFICIAL_VERSION) {
             const mergedClean = filterDeletedRecords(mergeRecordsList(combinedBaseline, saved));
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(mergedClean));
-            localStorage.setItem('quizmaster_emergency_backup_records', JSON.stringify(filterDeletedRecords(emergency)));
-            localStorage.setItem(OFFICIAL_DATA_SYNC_KEY, CURRENT_OFFICIAL_VERSION);
+            safeLocalStorageSet(STORAGE_KEY, JSON.stringify(mergedClean));
+            safeLocalStorageSet('quizmaster_emergency_backup_records', JSON.stringify(filterDeletedRecords(emergency)));
+            safeLocalStorageSet(OFFICIAL_DATA_SYNC_KEY, CURRENT_OFFICIAL_VERSION);
             return mergedClean;
         }
 
@@ -457,8 +524,8 @@ async function saveMiniGamesTimerSetting() {
 window.saveMiniGamesTimerSetting = saveMiniGamesTimerSetting;
 
 async function fetchSupabaseRecords(cfg) {
-    // Ambil data siswa & modul custom, abaikan __SYSTEM_CONFIG__ agar tidak memenuhi kuota 1000 baris PostgREST
-    const targetUrl = `${cfg.url.replace(/\/$/, '')}/rest/v1/${cfg.table || 'quiz_results'}?student_class=neq.__SYSTEM_CONFIG__&select=*&order=id.desc&limit=5000`;
+    // Ambil data siswa & modul custom, batasi ke 500 baris terbaru agar efisien dan aman dari kuota memori HP
+    const targetUrl = `${cfg.url.replace(/\/$/, '')}/rest/v1/${cfg.table || 'quiz_results'}?student_class=neq.__SYSTEM_CONFIG__&select=*&order=id.desc&limit=500`;
     const res = await fetch(targetUrl, {
         headers: {
             'apikey': cfg.key,
@@ -721,7 +788,7 @@ async function syncWithBackend(showFeedback = false) {
                         .select('*')
                         .neq('student_class', '__SYSTEM_CONFIG__')
                         .order('id', { ascending: false })
-                        .limit(5000);
+                        .limit(500);
                     if (!error && Array.isArray(data)) return data;
                 }
                 throw restErr;
