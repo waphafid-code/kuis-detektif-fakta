@@ -134,6 +134,8 @@ window.addEventListener('DOMContentLoaded', () => {
 
     switchScreen('home');
     checkUnfinishedSession();
+    if (typeof applyDemoVisibilitySetting === 'function') applyDemoVisibilitySetting();
+    if (typeof applyExamTokenSetting === 'function') applyExamTokenSetting();
     initModulesCatalog();
     initAiStudio();
     initParticles();

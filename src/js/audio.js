@@ -701,7 +701,9 @@ function applyCloudSharedStateToLocal(state) {
         }
 
         // 4. Sinkronisasi Modul Ujian Aktif & Visibilitas Modul
-        const lockedMode = state.activeExamModuleMode || localStorage.getItem('quizmaster_active_exam_module_mode') || 'modul_jaringan_keamanan';
+        const lockedMode = (state.activeExamModuleMode !== undefined) 
+            ? state.activeExamModuleMode 
+            : (localStorage.getItem('quizmaster_active_exam_module_mode') || 'all');
         if (state.activeExamModuleMode !== undefined) {
             localStorage.setItem('quizmaster_active_exam_module_mode', state.activeExamModuleMode);
             const examModSel = document.getElementById('setting-active-exam-module');
@@ -722,6 +724,33 @@ function applyCloudSharedStateToLocal(state) {
             }
         }
         if (typeof initModulesCatalog === 'function') initModulesCatalog();
+
+        // 4b. Sinkronisasi Visibilitas Akun & Kelas Demo Siswa
+        if (state.demoVisibility !== undefined) {
+            localStorage.setItem('quizmaster_demo_accounts_visibility', state.demoVisibility);
+            if (typeof applyDemoVisibilitySetting === 'function') {
+                applyDemoVisibilitySetting(state.demoVisibility);
+            }
+        }
+
+        // 4c. Sinkronisasi Pengaturan Anti-Joki (Kunci HP & Token Ujian)
+        if (state.deviceBindingMode !== undefined) {
+            localStorage.setItem('quizmaster_device_binding_mode', state.deviceBindingMode);
+            const devBindSel = document.getElementById('setting-device-binding');
+            if (devBindSel) devBindSel.value = state.deviceBindingMode;
+        }
+        if (state.resetDeviceBindingsTimestamp) {
+            if (typeof resetAllDeviceBindings === 'function') {
+                resetAllDeviceBindings(false);
+            }
+        }
+        if (state.examTokenMode !== undefined || state.examTokenCode !== undefined) {
+            if (state.examTokenMode !== undefined) localStorage.setItem('quizmaster_exam_token_mode', state.examTokenMode);
+            if (state.examTokenCode !== undefined) localStorage.setItem('quizmaster_exam_token_code', state.examTokenCode);
+            if (typeof applyExamTokenSetting === 'function') {
+                applyExamTokenSetting(state.examTokenMode, state.examTokenCode);
+            }
+        }
 
         // 5. Sinkronisasi Daftar Penghapusan Siswa (Tombstone Deletions)
         if (Array.isArray(state.deletedRecords) && state.deletedRecords.length > 0) {

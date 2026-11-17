@@ -42,6 +42,21 @@ async function initModulesCatalog() {
     const homeSelect = document.getElementById('input-module');
     const filterSelect = document.getElementById('filter-module');
 
+    // 🛡️ GARANSI 100%: 4 Modul Resmi Selalu Tersedia
+    const officialModules = [
+        QuizManager.NETWORK_SECURITY_MODULE,
+        QuizManager.DEFAULT_MODULE,
+        QuizManager.HKI_CULTURE_MODULE,
+        QuizManager.ETIKA_PRIVASI_MODULE
+    ].filter(Boolean);
+
+    const mergedModules = Array.isArray(modules) ? [...modules] : [];
+    officialModules.forEach(off => {
+        if (!mergedModules.some(m => m.id === off.id)) {
+            mergedModules.push(off);
+        }
+    });
+
     const activeExamMode = loadActiveExamModuleSetting(); // 'modul_jaringan_keamanan', 'all', 'modul_detektif_fakta'
     
     let activeId;
@@ -57,10 +72,10 @@ async function initModulesCatalog() {
 
     // Filter modul yang tampil ke siswa jika guru memilih mengunci satu modul
     const visibleModules = (activeExamMode && activeExamMode !== 'all')
-        ? modules.filter(m => m.id === activeExamMode)
-        : modules;
+        ? mergedModules.filter(m => m.id === activeExamMode)
+        : mergedModules;
 
-    const listToRender = (visibleModules && visibleModules.length > 0) ? visibleModules : modules;
+    const listToRender = (visibleModules && visibleModules.length > 0) ? visibleModules : mergedModules;
 
     if (homeSelect) {
         homeSelect.innerHTML = '';

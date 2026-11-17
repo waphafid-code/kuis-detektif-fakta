@@ -1258,6 +1258,269 @@ function initReviewReleaseSettingUi() {
 }
 window.initReviewReleaseSettingUi = initReviewReleaseSettingUi;
 
+// 🧪 KONTROL VISIBILITAS KELAS & AKUN SISWA DEMO
+const DEMO_VISIBILITY_STORAGE_KEY = 'quizmaster_demo_accounts_visibility';
+
+function loadDemoVisibilitySetting() {
+    try {
+        const v = localStorage.getItem(DEMO_VISIBILITY_STORAGE_KEY);
+        if (v === 'show') return 'show';
+    } catch(e) {}
+    return 'hide'; // Default: disembunyikan agar siswa hanya melihat kelas resmi X E 1 - X E 6
+}
+window.loadDemoVisibilitySetting = loadDemoVisibilitySetting;
+
+function isDemoAccountsVisible() {
+    return loadDemoVisibilitySetting() === 'show';
+}
+window.isDemoAccountsVisible = isDemoAccountsVisible;
+
+function applyDemoVisibilitySetting(mode = null) {
+    const val = mode || loadDemoVisibilitySetting();
+    const isVisible = (val === 'show');
+    const demoOptgroup = document.getElementById('optgroup-demo-class');
+    const classSelect = document.getElementById('input-class');
+
+    if (demoOptgroup) {
+        demoOptgroup.style.display = isVisible ? '' : 'none';
+        demoOptgroup.disabled = !isVisible;
+    }
+
+    // Jika disembunyikan dan saat ini terpilih KELAS DEMO, reset pilihan kelas siswa
+    if (!isVisible && classSelect && classSelect.value === 'KELAS DEMO') {
+        classSelect.value = '';
+        if (typeof onHomeClassChanged === 'function') {
+            onHomeClassChanged();
+        }
+    }
+
+    const settingSel = document.getElementById('setting-demo-visibility');
+    if (settingSel) {
+        settingSel.value = val;
+    }
+}
+window.applyDemoVisibilitySetting = applyDemoVisibilitySetting;
+
+function saveDemoVisibilitySetting(val, broadcast = true) {
+    const settingVal = val || 'hide';
+    try {
+        localStorage.setItem(DEMO_VISIBILITY_STORAGE_KEY, settingVal);
+    } catch(e) {}
+
+    applyDemoVisibilitySetting(settingVal);
+
+    const msg = document.getElementById('demo-visibility-saved-msg');
+    if (msg) {
+        msg.style.display = 'inline';
+        setTimeout(() => { if (msg) msg.style.display = 'none'; }, 2500);
+    }
+    if (typeof sfxCorrect === 'function') sfxCorrect();
+
+    if (broadcast && typeof saveCloudSharedState === 'function') {
+        saveCloudSharedState({ demoVisibility: settingVal });
+    }
+
+    if (typeof showToast === 'function') {
+        showToast(
+            settingVal === 'show'
+                ? '👁️ Akun & Kelas Demo DITAMPILKAN di menu siswa untuk pengujian Guru.'
+                : '🙈 Akun & Kelas Demo BERHASIL DISEMBUNYIKAN dari menu siswa agar tidak membingungkan.',
+            settingVal === 'show' ? 'ℹ️' : '🔒'
+        );
+    }
+}
+window.saveDemoVisibilitySetting = saveDemoVisibilitySetting;
+
+function initDemoVisibilitySettingUi() {
+    const sel = document.getElementById('setting-demo-visibility');
+    if (sel) {
+        sel.value = loadDemoVisibilitySetting();
+    }
+    applyDemoVisibilitySetting(loadDemoVisibilitySetting());
+}
+window.initDemoVisibilitySettingUi = initDemoVisibilitySettingUi;
+
+// 📱 ANTI-JOKI: KUNCI 1 SISWA PER HP (DEVICE BINDING)
+const DEVICE_BINDING_SETTING_KEY = 'quizmaster_device_binding_mode';
+
+function loadDeviceBindingSetting() {
+    try {
+        const v = localStorage.getItem(DEVICE_BINDING_SETTING_KEY);
+        if (v) return v;
+    } catch(e) {}
+    return 'enabled'; // Default: Aktif (1 HP hanya boleh dipakai 1 nama siswa)
+}
+window.loadDeviceBindingSetting = loadDeviceBindingSetting;
+
+function isDeviceBindingEnabled() {
+    return loadDeviceBindingSetting() === 'enabled';
+}
+window.isDeviceBindingEnabled = isDeviceBindingEnabled;
+
+function saveDeviceBindingSetting(val, broadcast = true) {
+    const mode = val || 'enabled';
+    try {
+        localStorage.setItem(DEVICE_BINDING_SETTING_KEY, mode);
+    } catch(e) {}
+
+    const sel = document.getElementById('setting-device-binding');
+    if (sel) sel.value = mode;
+
+    const msg = document.getElementById('device-binding-saved-msg');
+    if (msg) {
+        msg.style.display = 'inline';
+        setTimeout(() => { if (msg) msg.style.display = 'none'; }, 2500);
+    }
+    if (typeof sfxCorrect === 'function') sfxCorrect();
+
+    if (broadcast && typeof saveCloudSharedState === 'function') {
+        saveCloudSharedState({ deviceBindingMode: mode });
+    }
+
+    if (typeof showToast === 'function') {
+        showToast(
+            mode === 'enabled'
+                ? '📱 Kunci Perangkat AKTIF: 1 HP hanya boleh dipakai 1 nama siswa (Anti-Joki).'
+                : '⚪ Kunci Perangkat NONAKTIF: Perangkat bebas dipakai bergantian.',
+            mode === 'enabled' ? '🔒' : '⚪'
+        );
+    }
+}
+window.saveDeviceBindingSetting = saveDeviceBindingSetting;
+
+function resetAllDeviceBindings(broadcast = true) {
+    try {
+        const keysToRemove = [];
+        for (let i = 0; i < localStorage.length; i++) {
+            const k = localStorage.key(i);
+            if (k && k.startsWith('quizmaster_bound_device_')) {
+                keysToRemove.push(k);
+            }
+        }
+        keysToRemove.forEach(k => localStorage.removeItem(k));
+    } catch(e) {}
+
+    if (typeof sfxCorrect === 'function') sfxCorrect();
+    if (typeof showToast === 'function') {
+        showToast('🔄 Kunci perangkat siswa di HP ini berhasil direset!', '✅');
+    }
+
+    if (broadcast && typeof saveCloudSharedState === 'function') {
+        saveCloudSharedState({ resetDeviceBindingsTimestamp: Date.now() });
+    }
+}
+window.resetAllDeviceBindings = resetAllDeviceBindings;
+
+function initDeviceBindingSettingUi() {
+    const sel = document.getElementById('setting-device-binding');
+    if (sel) {
+        sel.value = loadDeviceBindingSetting();
+    }
+}
+window.initDeviceBindingSettingUi = initDeviceBindingSettingUi;
+
+// 🔑 ANTI-JOKI: TOKEN UJIAN KELAS DINAMIS
+const EXAM_TOKEN_MODE_KEY = 'quizmaster_exam_token_mode';
+const EXAM_TOKEN_CODE_KEY = 'quizmaster_exam_token_code';
+
+function loadExamTokenSetting() {
+    try {
+        const mode = localStorage.getItem(EXAM_TOKEN_MODE_KEY) || 'disabled';
+        let code = localStorage.getItem(EXAM_TOKEN_CODE_KEY);
+        if (!code) {
+            code = 'TIK-' + Math.floor(100 + Math.random() * 900);
+            localStorage.setItem(EXAM_TOKEN_CODE_KEY, code);
+        }
+        return { mode, code: code.toUpperCase() };
+    } catch(e) {
+        return { mode: 'disabled', code: 'TIK-101' };
+    }
+}
+window.loadExamTokenSetting = loadExamTokenSetting;
+
+function isExamTokenRequired() {
+    return loadExamTokenSetting().mode === 'enabled';
+}
+window.isExamTokenRequired = isExamTokenRequired;
+
+function getExpectedExamToken() {
+    return (loadExamTokenSetting().code || '').trim().toUpperCase();
+}
+window.getExpectedExamToken = getExpectedExamToken;
+
+function applyExamTokenSetting(mode = null, code = null) {
+    const setting = loadExamTokenSetting();
+    const effMode = mode !== null ? mode : setting.mode;
+    const effCode = code !== null ? code : setting.code;
+
+    const tokenGroup = document.getElementById('group-exam-token');
+    if (tokenGroup) {
+        tokenGroup.style.display = (effMode === 'enabled') ? 'block' : 'none';
+    }
+
+    const modeSel = document.getElementById('setting-exam-token-mode');
+    const codeInp = document.getElementById('setting-exam-token-code');
+    if (modeSel) modeSel.value = effMode;
+    if (codeInp) codeInp.value = effCode;
+}
+window.applyExamTokenSetting = applyExamTokenSetting;
+
+function saveExamTokenSetting(broadcast = true) {
+    const modeSel = document.getElementById('setting-exam-token-mode');
+    const codeInp = document.getElementById('setting-exam-token-code');
+    const mode = modeSel ? modeSel.value : 'disabled';
+    let code = codeInp ? codeInp.value.trim().toUpperCase() : '';
+    if (!code) code = 'TIK-' + Math.floor(100 + Math.random() * 900);
+
+    try {
+        localStorage.setItem(EXAM_TOKEN_MODE_KEY, mode);
+        localStorage.setItem(EXAM_TOKEN_CODE_KEY, code);
+    } catch(e) {}
+
+    applyExamTokenSetting(mode, code);
+
+    const msg = document.getElementById('exam-token-saved-msg');
+    if (msg) {
+        msg.style.display = 'inline';
+        setTimeout(() => { if (msg) msg.style.display = 'none'; }, 2500);
+    }
+    if (typeof sfxCorrect === 'function') sfxCorrect();
+
+    if (broadcast && typeof saveCloudSharedState === 'function') {
+        saveCloudSharedState({ examTokenMode: mode, examTokenCode: code });
+    }
+
+    if (typeof showToast === 'function') {
+        showToast(
+            mode === 'enabled' 
+                ? `🔑 Token Ujian DIAKTIFKAN: "${code}". Tuliskan token ini di papan tulis kelas!` 
+                : '⚪ Token Ujian DINONAKTIFKAN (Siswa bebas masuk langsung).',
+            mode === 'enabled' ? '🔑' : '⚪'
+        );
+    }
+}
+window.saveExamTokenSetting = saveExamTokenSetting;
+
+function generateRandomExamToken() {
+    const prefix = ['TIK', 'INF', 'KUIS', 'X', 'SMAN4'][Math.floor(Math.random() * 5)];
+    const num = Math.floor(100 + Math.random() * 900);
+    const newToken = `${prefix}-${num}`;
+    const codeInp = document.getElementById('setting-exam-token-code');
+    if (codeInp) codeInp.value = newToken;
+    saveExamTokenSetting(true);
+}
+window.generateRandomExamToken = generateRandomExamToken;
+
+function initExamTokenSettingUi() {
+    const setting = loadExamTokenSetting();
+    const modeSel = document.getElementById('setting-exam-token-mode');
+    const codeInp = document.getElementById('setting-exam-token-code');
+    if (modeSel) modeSel.value = setting.mode;
+    if (codeInp) codeInp.value = setting.code;
+    applyExamTokenSetting(setting.mode, setting.code);
+}
+window.initExamTokenSettingUi = initExamTokenSettingUi;
+
 // 📚 KONTROL PENGATURAN MODUL UJIAN DITAMPILKAN KE SISWA
 function loadActiveExamModuleSetting() {
     try {
@@ -2871,6 +3134,9 @@ function renderDashboard() {
     initRemedialSettingUi();
     initFullscreenSettingUi();
     initReviewReleaseSettingUi();
+    initDemoVisibilitySettingUi();
+    initDeviceBindingSettingUi();
+    initExamTokenSettingUi();
     initActiveExamModuleUi();
     if (typeof updateApplyButtonState === 'function') updateApplyButtonState();
 

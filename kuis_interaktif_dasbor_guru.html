@@ -831,7 +831,7 @@
                     <label class="form-label" for="input-class">🏫 1. Pilih Kelas Anda</label>
                     <select class="form-select" id="input-class" onchange="onHomeClassChanged()">
                         <option value="" disabled selected>— Pilih Kelas Anda —</option>
-                        <optgroup label="🧪 RUANG PENGUJIAN & DEMO (TIDAK MENCAMPURI DATA ASLI)">
+                        <optgroup id="optgroup-demo-class" label="🧪 RUANG PENGUJIAN & DEMO (TIDAK MENCAMPURI DATA ASLI)">
                             <option value="KELAS DEMO" style="font-weight: 800; color: #38bdf8;">🧪 KELAS DEMO (Akun Uji Coba & Demo QA)</option>
                         </optgroup>
                         <optgroup label="🏫 KELAS RESMI SMAN 4 PADANG (TA 2026/2027)">
@@ -869,6 +869,17 @@
                     <div id="home-module-desc" class="home-module-desc-box">
                         Evaluasi 20 butir soal Infrastruktur Jaringan Komputer, Topologi, Media Transmisi, DNS, dan Keamanan Siber (CIA-A) Kelas X.
                     </div>
+                </div>
+
+                <div class="form-group" id="group-exam-token" style="display:none;">
+                    <label class="form-label form-label-split" for="input-exam-token">
+                        <span class="form-label-text">🔑 4. Token Ujian Kelas</span>
+                        <span class="module-badge-pill" style="color: #facc15; border-color: rgba(234,179,8,0.4); background: rgba(234,179,8,0.12);">Wajib saat Ujian di Kelas</span>
+                    </label>
+                    <input type="text" id="input-exam-token" class="form-input" placeholder="Masukkan token resmi dari Guru di kelas (contoh: TIK-89)" maxlength="10" autocomplete="off" autocapitalize="characters" style="text-transform: uppercase; letter-spacing: 1.5px; font-weight: 700;">
+                    <small style="font-size: 0.72rem; color: var(--text-muted); display: block; margin-top: 4px;">
+                        Token resmi diberikan oleh Bpk. Muhammad Hafidh Putra Roshadi, S.Pd. di papan tulis kelas untuk mencegah joki dari luar sekolah.
+                    </small>
                 </div>
             </div>
 
@@ -1434,6 +1445,44 @@
                             <option value="open">🟢 Buka Langsung (Siswa Boleh Langsung Melihat Pembahasan)</option>
                         </select>
                         <span class="setting-saved" id="review-release-saved-msg" style="display:none; color:var(--success); font-weight:700; font-size:0.8rem;">✅ Tersimpan!</span>
+                    </div>
+
+                    <div class="setting-row">
+                        <label for="setting-demo-visibility" style="font-weight: 700; font-size: 0.88rem; color: var(--text);">🧪 Akun &amp; Kelas Demo di Menu Siswa:</label>
+                        <select id="setting-demo-visibility" onchange="saveDemoVisibilitySetting(this.value)" class="form-select-modern" style="font-size: 0.85rem;">
+                            <option value="hide" selected>🙈 Sembunyikan dari Siswa (Hanya Kelas Resmi X E 1 - X E 6)</option>
+                            <option value="show">👁️ Tampilkan untuk Pengujian (Termasuk KELAS DEMO)</option>
+                        </select>
+                        <span class="setting-saved" id="demo-visibility-saved-msg" style="display:none; color:var(--success); font-weight:700; font-size:0.8rem;">✅ Tersimpan!</span>
+                    </div>
+
+                    <div class="setting-row">
+                        <label for="setting-device-binding" style="font-weight: 700; font-size: 0.88rem; color: var(--text);">📱 Kunci 1 Siswa per HP (Anti-Joki Pinjam HP):</label>
+                        <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                            <select id="setting-device-binding" onchange="saveDeviceBindingSetting(this.value)" class="form-select-modern" style="font-size: 0.85rem; min-width: 170px;">
+                                <option value="enabled" selected>🔒 Aktif (1 HP hanya untuk 1 Siswa)</option>
+                                <option value="disabled">⚪ Nonaktif (Bebas berganti nama)</option>
+                            </select>
+                            <button type="button" class="btn btn-secondary" onclick="resetAllDeviceBindings()" style="padding: 6px 12px; font-size: 0.76rem; border-radius: 8px;" title="Reset kunci jika ada siswa yang HP-nya bermasalah dan ganti perangkat">
+                                🔄 Reset Kunci HP Siswa
+                            </button>
+                        </div>
+                        <span class="setting-saved" id="device-binding-saved-msg" style="display:none; color:var(--success); font-weight:700; font-size:0.8rem;">✅ Tersimpan!</span>
+                    </div>
+
+                    <div class="setting-row">
+                        <label for="setting-exam-token-mode" style="font-weight: 700; font-size: 0.88rem; color: var(--text);">🔑 Token Ujian Masuk (Anti-Joki Jarak Jauh):</label>
+                        <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                            <select id="setting-exam-token-mode" onchange="saveExamTokenSetting()" class="form-select-modern" style="font-size: 0.85rem; min-width: 170px;">
+                                <option value="disabled" selected>⚪ Nonaktif (Siswa Langsung Masuk)</option>
+                                <option value="enabled">🔒 Wajib Masukkan Token dari Guru</option>
+                            </select>
+                            <input type="text" id="setting-exam-token-code" class="form-input" style="width: 110px; padding: 6px 10px; font-size: 0.85rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px; text-align: center;" placeholder="TOKEN" maxlength="10" onchange="saveExamTokenSetting()">
+                            <button type="button" class="btn btn-secondary" onclick="generateRandomExamToken()" style="padding: 6px 10px; font-size: 0.76rem; border-radius: 8px;" title="Buat Token Acak Baru untuk Ditulis di Papan Tulis">
+                                🎲 Acak Token
+                            </button>
+                        </div>
+                        <span class="setting-saved" id="exam-token-saved-msg" style="display:none; color:var(--success); font-weight:700; font-size:0.8rem;">✅ Tersimpan!</span>
                     </div>
 
                     <div class="setting-row">
@@ -2191,28 +2240,28 @@
 <!-- ============================================================ -->
 <!-- 🧩 MODULAR JAVASCRIPT LIBRARIES & ENGINES                   -->
 <!-- ============================================================ -->
-<script src="js/student_roster.js?v=20261117-v3016-security-live-exam-no-cache"></script>
-<script src="js/default_records.js?v=20261117-v3016-security-live-exam-no-cache"></script>
-<script src="js/default_questions.js?v=20261117-v3016-security-live-exam-no-cache"></script>
-<script src="js/doc_parser.js?v=20261117-v3016-security-live-exam-no-cache"></script>
-<script src="js/ai_nemotron.js?v=20261117-v3016-security-live-exam-no-cache"></script>
-<script src="js/quiz_manager.js?v=20261117-v3016-security-live-exam-no-cache"></script>
-<script src="js/question_editor.js?v=20261117-v3016-security-live-exam-no-cache"></script>
-<script src="js/firebase_sync.js?v=20261117-v3016-security-live-exam-no-cache"></script>
-<script src="js/deviceTier.js?v=20261117-v3016-security-live-exam-no-cache"></script>
-<script src="js/storage.js?v=20261117-v3016-security-live-exam-no-cache"></script>
-<script src="js/audio.js?v=20261117-v3016-security-live-exam-no-cache"></script>
-<script src="js/particles.js?v=20261117-v3016-security-live-exam-no-cache"></script>
-<script src="js/quiz_engine.js?v=20261117-v3016-security-live-exam-no-cache"></script>
-<script src="js/dashboard.js?v=20261117-v3016-security-live-exam-no-cache"></script>
-<script src="js/export_reports.js?v=20261117-v3016-security-live-exam-no-cache"></script>
-<script src="js/ai_studio.js?v=20261117-v3016-security-live-exam-no-cache"></script>
-<script src="js/diagnostics.js?v=20261117-v3016-security-live-exam-no-cache"></script>
-<script src="js/learning_hub.js?v=20261117-v3016-security-live-exam-no-cache"></script>
-<script src="js/mini_games.js?v=20261117-v3016-security-live-exam-no-cache"></script>
-<script src="js/teacher_chatbot.js?v=20261117-v3016-security-live-exam-no-cache"></script>
-<script src="js/cyber_guardian_game.js?v=20261117-v3016-security-live-exam-no-cache"></script>
-<script src="js/app.js?v=20261117-v3016-security-live-exam-no-cache"></script>
+<script src="js/student_roster.js?v=20261117-v3018-anti-joki-and-demo-toggle"></script>
+<script src="js/default_records.js?v=20261117-v3018-anti-joki-and-demo-toggle"></script>
+<script src="js/default_questions.js?v=20261117-v3018-anti-joki-and-demo-toggle"></script>
+<script src="js/doc_parser.js?v=20261117-v3018-anti-joki-and-demo-toggle"></script>
+<script src="js/ai_nemotron.js?v=20261117-v3018-anti-joki-and-demo-toggle"></script>
+<script src="js/quiz_manager.js?v=20261117-v3018-anti-joki-and-demo-toggle"></script>
+<script src="js/question_editor.js?v=20261117-v3018-anti-joki-and-demo-toggle"></script>
+<script src="js/firebase_sync.js?v=20261117-v3018-anti-joki-and-demo-toggle"></script>
+<script src="js/deviceTier.js?v=20261117-v3018-anti-joki-and-demo-toggle"></script>
+<script src="js/storage.js?v=20261117-v3018-anti-joki-and-demo-toggle"></script>
+<script src="js/audio.js?v=20261117-v3018-anti-joki-and-demo-toggle"></script>
+<script src="js/particles.js?v=20261117-v3018-anti-joki-and-demo-toggle"></script>
+<script src="js/quiz_engine.js?v=20261117-v3018-anti-joki-and-demo-toggle"></script>
+<script src="js/dashboard.js?v=20261117-v3018-anti-joki-and-demo-toggle"></script>
+<script src="js/export_reports.js?v=20261117-v3018-anti-joki-and-demo-toggle"></script>
+<script src="js/ai_studio.js?v=20261117-v3018-anti-joki-and-demo-toggle"></script>
+<script src="js/diagnostics.js?v=20261117-v3018-anti-joki-and-demo-toggle"></script>
+<script src="js/learning_hub.js?v=20261117-v3018-anti-joki-and-demo-toggle"></script>
+<script src="js/mini_games.js?v=20261117-v3018-anti-joki-and-demo-toggle"></script>
+<script src="js/teacher_chatbot.js?v=20261117-v3018-anti-joki-and-demo-toggle"></script>
+<script src="js/cyber_guardian_game.js?v=20261117-v3018-anti-joki-and-demo-toggle"></script>
+<script src="js/app.js?v=20261117-v3018-anti-joki-and-demo-toggle"></script>
 
 </body>
 </html>

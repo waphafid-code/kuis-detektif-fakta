@@ -820,6 +820,24 @@ async function initiateQuiz() {
         }
     }
 
+    // 🔑 ANTI-JOKI 1: Token Ujian Kelas Dinamis (Cegah joki dari luar ruangan kelas)
+    if (cls !== 'KELAS DEMO' && typeof isExamTokenRequired === 'function' && isExamTokenRequired()) {
+        const tokenInput = document.getElementById('input-exam-token');
+        const enteredToken = tokenInput ? tokenInput.value.trim().toUpperCase() : '';
+        const expectedToken = (typeof getExpectedExamToken === 'function') ? getExpectedExamToken().toUpperCase() : '';
+        if (!enteredToken || enteredToken !== expectedToken) {
+            if (typeof sfxWrong === 'function') sfxWrong();
+            if (tokenInput) {
+                tokenInput.style.borderColor = 'var(--danger)';
+                tokenInput.style.animation = 'shake 0.4s';
+                tokenInput.focus();
+                setTimeout(() => { tokenInput.style.borderColor = ''; tokenInput.style.animation = ''; }, 1500);
+            }
+            showToast('🔑 Token Ujian Salah atau Belum Diisi! Silakan lihat token yang ditulis Guru di papan tulis kelas.', '⛔');
+            return;
+        }
+    }
+
     isInitiatingQuiz = true;
     const startBtn = document.getElementById('btn-start-quiz');
     const origBtnHtml = startBtn ? startBtn.innerHTML : '';
@@ -833,6 +851,26 @@ async function initiateQuiz() {
 
         // 📦 Tentukan Modul Pembelajaran Terpilih terlebih dahulu
         const targetModId = moduleId || (currentActiveModule ? currentActiveModule.id : (window.QuizManager ? QuizManager.getActiveModuleId() : 'modul_detektif_fakta'));
+
+        // 📱 ANTI-JOKI 2: Kunci 1 Siswa per HP (Cegah satu siswa mengerjakan ujian milik siswa lain di HP yang sama)
+        if (cls !== 'KELAS DEMO' && typeof isDeviceBindingEnabled === 'function' && isDeviceBindingEnabled()) {
+            const boundKey = 'quizmaster_bound_device_' + targetModId;
+            const boundStudent = localStorage.getItem(boundKey);
+            if (boundStudent && boundStudent !== name) {
+                if (typeof sfxWrong === 'function') sfxWrong();
+                showToast(`⛔ ANTI-JOKI: Perangkat ini sudah terkunci atas nama "${boundStudent}" untuk modul ujian ini. 1 HP hanya boleh digunakan oleh 1 siswa! Hubungi Guru jika HP Anda rusak/berganti.`, '⚠️');
+                if (startBtn) {
+                    startBtn.disabled = false;
+                    startBtn.innerHTML = origBtnHtml;
+                }
+                isInitiatingQuiz = false;
+                return;
+            }
+            // Kunci perangkat ini ke nama siswa tersebut
+            try {
+                localStorage.setItem(boundKey, name);
+            } catch(e) {}
+        }
 
         // 🔒 Verifikasi Akses Jadwal Guru Muhammad Hafidh Putra Roshadi, S.Pd. & Pengaturan Akses
         const access = checkClassAccess(cls, targetModId);
