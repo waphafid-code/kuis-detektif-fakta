@@ -65,10 +65,10 @@
             "points": 5,
             "q": "Di sebuah laboratorium komputer yang terdiri atas 25 unit PC, teknisi memutuskan untuk mengganti perangkat penghubung Hub menjadi Switch guna mengoptimalkan performa lalu lintas data lokal. Alasan teknis utama yang mendasari keputusan teknisi tersebut adalah...",
             "options": [
-                "Switch mampu mengubah sinyal digital menjadi gelombang analog untuk saluran telepon.",
+                "Switch mampu mengubah sinyal digital menjadi gelombang analog untuk transmisi saluran telepon kabel.",
                 "Switch menyebarkan seluruh paket data ke semua port secara acak dalam waktu bersamaan.",
-                "Switch menghubungkan jaringan lokal laboratorium langsung dengan jaringan berskala global.",
-                "Switch meneruskan paket data langsung ke alamat perangkat tujuan secara spesifik dan terarah."
+                "Switch menghubungkan jaringan lokal laboratorium langsung dengan infrastruktur jaringan berskala global.",
+                "Switch meneruskan data langsung ke alamat port tujuan secara spesifik."
             ],
             "answer": 3,
             "explanation": "Switch bersifat cerdas karena meneruskan frame data langsung ke port alamat tujuan spesifik, bukan broadcast ke semua arah seperti Hub.",
@@ -132,10 +132,10 @@
             "points": 5,
             "q": "Sebuah gedung sekolah 3 lantai memiliki 3 laboratorium komputer di mana masing-masing laboratorium menggunakan Switch tersendiri. Ketiga Switch tersebut dihubungkan secara hierarkis (Topologi Tree) ke satu server pusat di ruang guru. Jika kabel utama yang menghubungkan server pusat ke Switch lantai 2 terputus, kondisi yang akan terjadi pada jaringan sekolah adalah...",
             "options": [
-                "Seluruh komputer di lantai 1, 2, dan 3 mengalami kelumpuhan jaringan secara bersamaan.",
-                "Komputer di lantai 2 terputus dari server pusat namun tetap bisa berkomunikasi antarsesama PC lantai 2.",
-                "Komputer di lantai 1 dan 3 kehilangan koneksi lokal tetapi masih dapat mengakses server pusat.",
-                "Jaringan di lantai 2 otomatis berpindah ke topologi Ring tanpa memerlukan perangkat tambahan."
+                "Seluruh komputer di lantai 1, 2, dan 3 mengalami kelumpuhan total karena kegagalan pada simpul percabangan utama.",
+                "Komputer lantai 2 terputus dari server pusat namun koneksi internal antarsesama PC lantai 2 tetap berfungsi normal.",
+                "Komputer di lantai 1 dan 3 kehilangan koneksi lokal namun komunikasi data ke server pusat tetap berlangsung stabil.",
+                "Jaringan di lantai 2 secara otomatis berpindah konfigurasi menjadi topologi Ring mandiri tanpa intervensi perangkat."
             ],
             "answer": 1,
             "explanation": "Pada Topologi Tree, putusnya jalur cabang ke Switch lantai 2 hanya memutus koneksi lantai 2 ke pusat; LAN internal di dalam lantai 2 tetap aktif karena Switch lantai 2 masih menyala.",
@@ -199,10 +199,10 @@
             "points": 5,
             "q": "Seorang siswa sedang duduk di kafe dan terhubung ke jaringan Wi-Fi publik gratis tanpa kata sandi. Di sudut ruangan, seorang peretas menjalankan program penganalisis jaringan untuk memantau dan mencegat paket data yang lewat di jaringan Wi-Fi tersebut secara diam-diam tanpa mengirimkan pesan atau program apa pun ke perangkat korban. Jenis ancaman keamanan yang sedang terjadi adalah...",
             "options": [
-                "Penyebaran Malware berjenis Ransomware untuk mengunci dokumen pribadi milik korban.",
-                "Manipulasi psikologis melalui teknik Phising menggunakan halaman login palsu.",
-                "Tindakan Sniffing berupa penyadapan pasif terhadap lalu lintas data pada jaringan terbuka.",
-                "Perusakan fisik perangkat keras Access Point menggunakan gelombang elektromagnetik."
+                "Penyebaran perangkat lunak jahat (Malware Ransomware) untuk menyandera dokumen penting milik korban.",
+                "Rekayasa sosial melalui teknik Phising menggunakan halaman tiruan untuk memancing data rahasia korban.",
+                "Aktivitas Sniffing berupa penyadapan pasif paket data pada jaringan terbuka.",
+                "Perusakan fisik perangkat pemancar sinyal (Access Point) menggunakan interferensi gelombang elektromagnetik."
             ],
             "answer": 2,
             "explanation": "Tindakan memantau atau menyadap lalu lintas paket data yang melintas pada jaringan secara diam-diam untuk mencegat informasi rahasia disebut Sniffing.",
@@ -215,10 +215,10 @@
             "points": 5,
             "q": "Saat proses pengiriman data nilai rapor digital dari komputer guru ke server akademik, seorang peretas berhasil mencegat paket data di tengah jalur transmisi dan mengubah nilai Informatika seorang siswa dari 74 menjadi 96 sebelum data tersebut tersimpan di server. Pilar utama keamanan jaringan yang telah dilanggar secara langsung dalam insiden ini adalah...",
             "options": [
-                "Availability (Ketersediaan Layanan)",
-                "Integrity (Keutuhan dan Keaslian Data)",
-                "Confidentiality (Kerahasiaan Akses)",
-                "Authentication (Verifikasi Identitas)"
+                "Pilar Availability (Menjamin ketersediaan layanan sistem bagi pengguna yang berhak).",
+                "Pilar Integrity (Menjamin keutuhan data dan mencegah modifikasi tidak sah).",
+                "Pilar Confidentiality (Menjamin kerahasiaan data agar tidak diakses pihak luar).",
+                "Pilar Authentication (Menjamin pembuktian keabsahan identitas pihak pengirim data)."
             ],
             "answer": 1,
             "explanation": "Pilar Integrity (Integritas) menjamin bahwa data tetap utuh, akurat, dan tidak diubah atau dimodifikasi tanpa izin di tengah jalan.",
@@ -286,10 +286,10 @@
             "caseStudy": "HOTS — Perancangan Arsitektur Infrastruktur Jaringan.",
             "q": "Sebuah perusahaan teknologi memiliki dua gedung kantor yang berjarak 250 meter dan dipisahkan oleh jalan raya. Di dalam tiap gedung, karyawan dituntut bermobilitas tinggi menggunakan laptop sambil berpindah ruang rapat. Namun, server basis data di Gedung A dan Gedung B harus terhubung dengan kecepatan sangat tinggi, stabil, dan tahan terhadap interferensi petir/cuaca luar ruangan. Solusi arsitektur infrastruktur yang paling optimal adalah...",
             "options": [
-                "Kabel UTP tanpa pelindung untuk jalur antargedung dan konektor Bluetooth untuk laptop karyawan.",
-                "Gelombang Wi-Fi untuk jalur antargedung dan kabel Koaksial kaku untuk setiap laptop karyawan.",
-                "Kabel Fiber Optik untuk jalur utama antargedung dan Access Point (Wi-Fi) untuk laptop di dalam ruangan.",
-                "Perangkat Hub untuk penghubung antargedung dan kabel STP dengan konektor RJ-45 untuk ponsel karyawan."
+                "Kabel UTP tanpa pelindung untuk jalur antargedung dan konektor nirkabel Bluetooth untuk laptop karyawan kantor.",
+                "Gelombang Wi-Fi luar ruang untuk antargedung dan kabel Koaksial kaku untuk koneksi laptop karyawan di ruangan.",
+                "Kabel Fiber Optik antargedung dan Access Point (Wi-Fi) untuk laptop di dalam gedung.",
+                "Perangkat Hub untuk jalur antargedung dan kabel STP berpelindung untuk koneksi gawai karyawan di ruangan."
             ],
             "answer": 2,
             "explanation": "Jalur antargedung 250 meter di luar ruangan wajib menggunakan Fiber Optik karena berkecepatan cahaya dan kebal petir/elektromagnetik, sedangkan mobilitas karyawan di dalam gedung dilayani oleh Access Point (Wi-Fi).",
@@ -340,10 +340,10 @@
             "caseStudy": "HOTS — Sintesis Insiden Serangan Siber Berlapis.",
             "q": "Sebuah rumah sakit mengalami rentetan serangan siber dalam satu pagi: (1) Pukul 08.00, seorang staf mengklik tautan email palsu yang menyamar sebagai portal Kementerian Kesehatan dan memasukkan akun resminya; (2) Pukul 09.00, peretas masuk menggunakan akun staf tersebut lalu menginstal program jahat yang mengenkripsi (mengunci) seluruh basis data rekam medis dan meminta uang tebusan; (3) Pukul 10.00, sistem pendaftaran pasien lumpuh total dan tidak dapat diakses oleh dokter maupun pasien. Korelasi yang tepat antara ancaman pukul 08.00, ancaman pukul 09.00, dan pilar keamanan yang lumpuh pada pukul 10.00 adalah...",
             "options": [
-                "Sniffing — Phising — Confidentiality",
-                "Phising — Malware (Ransomware) — Availability",
-                "Malware (Virus) — Sniffing — Integrity",
-                "Phising — Sniffing — Authentication"
+                "Penyadapan Sniffing — Serangan Phising — Kerahasiaan Data (Confidentiality)",
+                "Phising — Malware (Ransomware) — Ketersediaan (Availability)",
+                "Malware (Virus Komputer) — Sniffing — Keutuhan Data (Integrity)",
+                "Phising — Penyadapan Sniffing — Keaslian Pengguna (Authentication)"
             ],
             "answer": 1,
             "explanation": "Pukul 08.00 adalah penipuan tautan palsu (Phising); Pukul 09.00 adalah program jahat pengunci data tebusan (Malware Ransomware); Pukul 10.00 adalah lumpuhnya ketersediaan layanan bagi pengguna berhak (Availability).",
