@@ -212,4 +212,4 @@ document.addEventListener('click', (e) => {
         else if (m.id === 'already-submitted-modal' && typeof closeAlreadySubmittedModal === 'function') closeAlreadySubmittedModal();
         else if (m.id === 'remedial-briefing-modal' && typeof closeRemedialBriefing === 'function') closeRemedialBriefing();
     }
-});
+});
