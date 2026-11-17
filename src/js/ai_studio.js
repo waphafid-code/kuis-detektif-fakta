@@ -126,12 +126,12 @@ async function handleHomeModuleChange(isUserAction = false) {
     if (badgeEl) {
         if (moduleId === 'modul_jaringan_keamanan') {
             if (accessStatus && !accessStatus.allowed) {
-                badgeEl.textContent = `🔒 Terjadwal (Jam Buk Rini) · ${current.questionCount || 0} Soal`;
+                badgeEl.textContent = `🔒 Terjadwal (Jam Pak Hafidh) · ${current.questionCount || 0} Soal`;
                 badgeEl.style.background = 'rgba(234, 179, 8, 0.15)';
                 badgeEl.style.color = '#facc15';
                 badgeEl.style.borderColor = 'rgba(234, 179, 8, 0.4)';
                 if (descEl) {
-                    descEl.innerHTML = `${current.description || ''} <span style="display:block; margin-top:6px; color:#facc15; font-size:0.83rem; font-weight:600;">🕒 Kuis dibuka otomatis saat jam pelajaran resmi. Anda tetap dapat membaca materi di Ruang Belajar.</span>`;
+                    descEl.innerHTML = `${current.description || ''} <span style="display:block; margin-top:6px; color:#facc15; font-size:0.83rem; font-weight:600;">🕒 Kuis dibuka otomatis saat jam pelajaran resmi atau rentang waktu yang diatur Guru Bpk. Muhammad Hafidh Putra Roshadi, S.Pd. Anda tetap dapat membaca materi di Ruang Belajar.</span>`;
                 }
             } else {
                 badgeEl.textContent = `🟢 Sesi Aktif · ${current.questionCount || 0} Soal · KKM ${current.kkm || 80}`;
@@ -1429,4 +1429,4 @@ async function previewModuleQuestions(moduleId) {
     previewSec.style.display = 'block';
     previewSec.scrollIntoView({ behavior: 'smooth' });
 }
-
+

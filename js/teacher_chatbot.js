@@ -340,7 +340,7 @@
                    `Mohon maaf, informasi mengenai **rekapitulasi nilai, peringkat kelas, siapa nilai terendah atau tertinggi, serta status kelulusan/pengerjaan kuis siswa** bersifat **rahasia** dan tidak dapat diakses oleh siswa.\n\n` +
                    `Kerahasiaan nilai dilindungi agar setiap siswa dapat fokus pada peningkatan kompetensinya masing-masing tanpa merasa terbebani komparasi nilai antar teman.\n\n` +
                    `🔑 **Akses Analisis Nilai:**\n` +
-                   `Fitur rekapitulasi nilai dan analitik performa hanya dapat dibuka secara resmi oleh **Ibu Guru (Ibu Rini Syafitri, S.Pd.)** melalui Dasbor Guru terverifikasi PIN.\n\n` +
+                   `Fitur rekapitulasi nilai dan analitik performa hanya dapat dibuka secara resmi oleh **Bapak Guru (Bpk. Muhammad Hafidh Putra Roshadi, S.Pd.)** melalui Dasbor Guru terverifikasi PIN.\n\n` +
                    `---\n` +
                    `💡 **Sebagai Asisten Belajar Siswa, saya siap membantumu memahami seluruh materi pelajaran!**\n` +
                    `Silakan tanyakan materi atau konsep pembelajaran Informatika, misalnya:\n` +

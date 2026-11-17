@@ -168,15 +168,16 @@ assert(
         'Canonical module order prioritizes Penilaian Harian: Jaringan & Keamanan at index 0'
     );
 
-    // TEST 3: Default active exam module is modul_jaringan_keamanan
+    // TEST 3: Default active exam module is "all" (semua modul langsung tampil)
     sandbox.localStorage.clear();
     const defaultMode = sandbox.window.loadActiveExamModuleSetting();
     assert(
-        defaultMode === 'modul_jaringan_keamanan',
-        'Default active exam module setting is modul_jaringan_keamanan'
+        defaultMode === 'all',
+        'Default active exam module setting is "all" (semua modul langsung tampil)'
     );
 
     // TEST 4: When locked to modul_jaringan_keamanan, input-module has ONLY 1 option
+    sandbox.window.saveActiveExamModuleSetting('modul_jaringan_keamanan');
     await sandbox.window.initModulesCatalog();
     const homeSel = mockElements['input-module'];
     const options = homeSel.children;

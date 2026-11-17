@@ -234,12 +234,13 @@ async function enrollSingleBiometricCredential() {
                 publicKey: {
                     challenge: challenge,
                     rp: {
-                        name: "QuizMaster SMAN 4 Padang"
+                        name: "QuizMaster SMAN 4 Padang",
+                        id: window.location.hostname || undefined
                     },
                     user: {
                         id: userId,
-                        name: "guru-sman4padang",
-                        displayName: "Dra. Nurul H. (Guru Pengampu)"
+                        name: "muhammad-hafidh-roshadi",
+                        displayName: "Muhammad Hafidh Putra Roshadi, S.Pd."
                     },
                     pubKeyCredParams: [
                         { alg: -7, type: "public-key" },   // ES256 (Standar Android/iOS TEE)
@@ -265,11 +266,14 @@ async function enrollSingleBiometricCredential() {
             credential = await navigator.credentials.create({
                 publicKey: {
                     challenge: challenge,
-                    rp: { name: "QuizMaster" },
+                    rp: { 
+                        name: "QuizMaster",
+                        id: window.location.hostname || undefined
+                    },
                     user: {
                         id: userId,
                         name: "guru",
-                        displayName: "Guru Pengampu"
+                        displayName: "Muhammad Hafidh Putra Roshadi, S.Pd."
                     },
                     pubKeyCredParams: [
                         { alg: -7, type: "public-key" },
@@ -289,7 +293,7 @@ async function enrollSingleBiometricCredential() {
             // Menimpa/menghapus kredensial lama sehingga tepat 1 sidik jari perangkat yang sah
             localStorage.setItem('quizmaster_biometric_cred_id', credIdBase64);
             localStorage.setItem('quizmaster_biometric_mode', 'webauthn_hardware');
-            localStorage.setItem('quizmaster_biometric_owner', 'Dra. Nurul H. (Guru Pengampu)');
+            localStorage.setItem('quizmaster_biometric_owner', 'Muhammad Hafidh Putra Roshadi, S.Pd.');
             localStorage.setItem('quizmaster_biometric_registered_at', new Date().toISOString());
             localStorage.setItem('quizmaster_biometric_device', navigator.userAgent.slice(0, 50));
 
@@ -309,7 +313,11 @@ async function enrollSingleBiometricCredential() {
 
         // TAHAP 3: Jika Layanan Google Credential Manager Android mengalami bug sistem internal ("talking to the credential manager")
         // sementara PIN Guru sudah terverifikasi sah pada perangkat HTTPS ini, ikat 1 Kunci Kriptografi Perangkat Tunggal (WebCrypto ECDSA P-256)
-        if (window._biometricPinVerified && (err.name === 'UnknownError' || msg.toLowerCase().includes('credential manager') || msg.toLowerCase().includes('unknown error'))) {
+        const isCredManagerError = (err && (err.name === 'NotReadableError' || err.name === 'UnknownError')) || 
+                                   msg.toLowerCase().includes('credential manager') || 
+                                   msg.toLowerCase().includes('unknown error');
+
+        if (window._biometricPinVerified && isCredManagerError) {
             try {
                 const rawSeed = new Uint8Array(24);
                 window.crypto.getRandomValues(rawSeed);
@@ -318,7 +326,7 @@ async function enrollSingleBiometricCredential() {
                 // 🛡️ HANYA SATU KREDENSIAL PERANGKAT YANG TERSIMPAN
                 localStorage.setItem('quizmaster_biometric_cred_id', fallbackCredId);
                 localStorage.setItem('quizmaster_biometric_mode', 'device_bound_single');
-                localStorage.setItem('quizmaster_biometric_owner', 'Dra. Nurul H. (Guru Pengampu)');
+                localStorage.setItem('quizmaster_biometric_owner', 'Muhammad Hafidh Putra Roshadi, S.Pd.');
                 localStorage.setItem('quizmaster_biometric_registered_at', new Date().toISOString());
                 localStorage.setItem('quizmaster_biometric_device', navigator.userAgent.slice(0, 50));
 
@@ -1067,7 +1075,7 @@ async function confirmClearData() {
 window.confirmClearData = confirmClearData;
 
 // ============================================================
-//  🕒 KONTROL AKSES & JADWAL GURU MATA PELAJARAN (RINI SYAFITRI)
+//  🕒 KONTROL AKSES & JADWAL GURU MATA PELAJARAN: MUHAMMAD HAFIDH PUTRA ROSHADI, S.Pd.
 // ============================================================
 const SUBMISSION_POLICY_KEY = 'quizmaster_submission_policy';
 
@@ -1200,7 +1208,7 @@ function loadActiveExamModuleSetting() {
         const v = localStorage.getItem('quizmaster_active_exam_module_mode');
         if (v) return v;
     } catch(e) {}
-    return 'modul_jaringan_keamanan'; // Default rilis Penilaian Harian Resmi
+    return 'all'; // Default: semua modul kuis langsung tampil dan bisa dikerjakan siswa
 }
 window.loadActiveExamModuleSetting = loadActiveExamModuleSetting;
 window.getActiveExamModuleSetting = loadActiveExamModuleSetting;
@@ -1339,7 +1347,7 @@ function getDayName(dayIndex) {
 }
 
 function getClassSchedule(cls) {
-    const schedules = (typeof SCHEDULE_BUK_RINI !== 'undefined') ? SCHEDULE_BUK_RINI : ((typeof SCHEDULE_RINI_SYAFITRI !== 'undefined') ? SCHEDULE_RINI_SYAFITRI : {});
+    const schedules = (typeof SCHEDULE_PAK_HAFIDH !== 'undefined') ? SCHEDULE_PAK_HAFIDH : ((typeof SCHEDULE_MUHAMMAD_HAFIDH !== 'undefined') ? SCHEDULE_MUHAMMAD_HAFIDH : ((typeof SCHEDULE_BUK_RINI !== 'undefined') ? SCHEDULE_BUK_RINI : ((typeof SCHEDULE_RINI_SYAFITRI !== 'undefined') ? SCHEDULE_RINI_SYAFITRI : {})));
     if (cls && schedules[cls]) return schedules[cls];
     if (cls && typeof isClassEquivalent === 'function') {
         for (const [k, v] of Object.entries(schedules)) {
@@ -1354,8 +1362,8 @@ function checkClassAccess(cls, moduleId) {
     if ((typeof quizInProgress !== 'undefined' && quizInProgress) || (typeof window !== 'undefined' && window.quizInProgress)) {
         return { allowed: true, reason: 'Sesi kuis sedang berjalan aktif' };
     }
-    const quizScreenEl = document.getElementById('screen-quiz');
-    if (quizScreenEl && quizScreenEl.classList.contains('active')) {
+    const quizScreenEl = (typeof document !== 'undefined') ? document.getElementById('screen-quiz') : null;
+    if (quizScreenEl && quizScreenEl.classList && quizScreenEl.classList.contains('active')) {
         return { allowed: true, reason: 'Sesi kuis sedang berada di layar aktif' };
     }
 
@@ -1420,21 +1428,77 @@ function checkClassAccess(cls, moduleId) {
         };
     }
 
-    // 4. Mode Deadline (Tenggat Waktu Kustom)
+    // 4. Mode Rentang Tanggal & Jam (Custom Date-Time Window)
+    if (accessSettings.mode === 'date_range') {
+        const startTs = accessSettings.rangeStartTimestamp;
+        const endTs = accessSettings.rangeEndTimestamp;
+        const nowMs = Date.now();
+        if (startTs && nowMs < startTs) {
+            return {
+                allowed: false,
+                schedule: schedule,
+                currentInfo: nowFullStr,
+                reason: `Kuis belum dibuka. Waktu pengerjaan dijadwalkan: ${accessSettings.rangeStartStr || 'segera'}`
+            };
+        }
+        if (endTs && nowMs > endTs) {
+            return {
+                allowed: false,
+                schedule: schedule,
+                currentInfo: nowFullStr,
+                reason: `Waktu pengerjaan kuis telah berakhir pada: ${accessSettings.rangeEndStr || 'tenggat waktu'}`
+            };
+        }
+        if (startTs || endTs) {
+            return {
+                allowed: true,
+                isManualOpen: true,
+                reason: `Kuis aktif dalam rentang waktu (${accessSettings.rangeStartStr || ''} s.d ${accessSettings.rangeEndStr || ''})`
+            };
+        }
+    }
+
+    // 5. Mode Deadline (Durasi Waktu / Hitung Mundur Kustom)
     if (accessSettings.mode === 'deadline') {
         if (accessSettings.deadlineTimestamp && Date.now() < accessSettings.deadlineTimestamp) {
-            return { allowed: true, reason: 'Kuis dalam rentang waktu aktif' };
+            const minsLeft = Math.max(1, Math.round((accessSettings.deadlineTimestamp - Date.now()) / 60000));
+            return {
+                allowed: true,
+                isManualOpen: true,
+                reason: `Kuis aktif dengan durasi pengerjaan (tersisa ~${minsLeft} menit s.d ${accessSettings.deadlineEndStr || 'tenggat'})`
+            };
         } else {
             return { 
                 allowed: false, 
                 schedule: schedule, 
-                reason: 'Tenggat waktu kuis telah berakhir', 
+                reason: `Batas durasi kuis telah berakhir (${accessSettings.deadlineEndStr || 'waktu habis'})`, 
                 currentInfo: nowFullStr 
             };
         }
     }
 
-    // 5. Mode Manual Per Kelas
+    // 6. Mode Otomatis (Mengikuti Jadwal Pelajaran Resmi Guru)
+    if (accessSettings.mode === 'auto') {
+        if (schedule) {
+            const isToday = (currentDay === schedule.day);
+            const inTimeRange = (currentTimeStr >= schedule.start && currentTimeStr <= schedule.end);
+            if (isToday && inTimeRange) {
+                return {
+                    allowed: true,
+                    isManualOpen: false,
+                    reason: `Kuis dibuka otomatis sesuai jam pelajaran (${schedule.period})`
+                };
+            }
+            return {
+                allowed: false,
+                schedule: schedule,
+                currentInfo: nowFullStr,
+                reason: `Kuis hanya dibuka saat jam pelajaran resmi Guru Muhammad Hafidh Putra Roshadi, S.Pd. (${schedule.dayName}, ${schedule.start} - ${schedule.end} WIB)`
+            };
+        }
+    }
+
+    // 7. Mode Manual Per Kelas
     if (accessSettings.mode === 'manual') {
         if (classOverride === true || manualOpen === true) {
             return { allowed: true, isManualOpen: true, reason: 'Kelas ini dibuka manual oleh Guru' };
@@ -1447,7 +1511,7 @@ function checkClassAccess(cls, moduleId) {
         };
     }
 
-    // 6. Mode Always Open & Default SMAN 4 Padang:
+    // 8. Mode Always Open & Default SMAN 4 Padang:
     // Seluruh 6 kelas resmi (X E 1 - X E 6) bebas mengerjakan kapanpun guru memberikan ujian,
     // TIDAK PERNAH terblokir otomatis di tengah jalan kecuali guru secara sengaja menekan 'Kunci'.
     return { 
@@ -1474,10 +1538,11 @@ function setAccessMode(mode) {
     saveAccessSettings(settings);
     updateAccessControlUI();
     const labelMap = {
-        'always_open': '🟢 Kuis dibuka sekarang untuk semua kelas (Permanen oleh Admin)!',
-        'auto': '🕒 Kuis diatur otomatis mengikuti jadwal mengajar Rini Syafitri!',
-        'manual': '🎛️ Mode kontrol manual per kelas aktif!',
-        'deadline': '⏱️ Mode tenggat waktu kustom aktif!'
+        'always_open': '🟢 Kuis dibuka sekarang untuk semua kelas (Bebas Akses)!',
+        'date_range': '📅 Mode rentang tanggal & jam aktif!',
+        'deadline': '⏱️ Mode durasi waktu (hitung mundur) aktif!',
+        'auto': '🕒 Kuis diatur otomatis mengikuti jadwal mengajar Muhammad Hafidh Putra Roshadi, S.Pd.!',
+        'manual': '🎛️ Mode kontrol manual per kelas aktif!'
     };
     showToast(labelMap[mode] || 'Pengaturan akses diperbarui!', '🕒');
 }
@@ -1486,9 +1551,10 @@ function updateAccessControlUI() {
     const settings = loadAccessSettings();
     const modes = [
         { key: 'always_open', btnId: 'btn-mode-always' },
+        { key: 'date_range', btnId: 'btn-mode-date-range' },
+        { key: 'deadline', btnId: 'btn-mode-deadline' },
         { key: 'auto', btnId: 'btn-mode-auto' },
-        { key: 'manual', btnId: 'btn-mode-manual' },
-        { key: 'deadline', btnId: 'btn-mode-deadline' }
+        { key: 'manual', btnId: 'btn-mode-manual' }
     ];
 
     modes.forEach(m => {
@@ -1496,18 +1562,43 @@ function updateAccessControlUI() {
         if (btn) btn.classList.toggle('active', settings.mode === m.key);
     });
 
+    // Date-Time Range Setting Box
+    const dateRangeBox = document.getElementById('date-range-setting-box');
+    if (dateRangeBox) {
+        dateRangeBox.style.display = settings.mode === 'date_range' ? 'block' : 'none';
+    }
+    if (settings.mode === 'date_range') {
+        const rangeTxt = document.getElementById('date-range-status-text');
+        if (rangeTxt) {
+            const nowMs = Date.now();
+            const startTs = settings.rangeStartTimestamp;
+            const endTs = settings.rangeEndTimestamp;
+            if (startTs && nowMs < startTs) {
+                rangeTxt.textContent = `⏳ Kuis dijadwalkan buka pada: ${settings.rangeStartStr || ''}`;
+                rangeTxt.style.color = '#facc15';
+            } else if (endTs && nowMs > endTs) {
+                rangeTxt.textContent = `🔒 Waktu kuis telah berakhir pada: ${settings.rangeEndStr || ''}`;
+                rangeTxt.style.color = 'var(--danger)';
+            } else if (startTs || endTs) {
+                rangeTxt.textContent = `🟢 Kuis sedang aktif (${settings.rangeStartStr || ''} s.d ${settings.rangeEndStr || ''})`;
+                rangeTxt.style.color = 'var(--success)';
+            }
+        }
+    }
+
+    // Deadline Duration Box
     const deadlineBox = document.getElementById('deadline-setting-box');
     if (deadlineBox) {
         deadlineBox.style.display = settings.mode === 'deadline' ? 'block' : 'none';
     }
-
     if (settings.mode === 'deadline' && settings.deadlineTimestamp) {
         const d = new Date(settings.deadlineTimestamp);
         const timeStr = `${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}`;
         const txt = document.getElementById('deadline-status-text');
         if (txt) {
             const isExpired = Date.now() > settings.deadlineTimestamp;
-            txt.textContent = isExpired ? `⚠️ Tenggat telah lewat (${timeStr} WIB)` : `🟢 Aktif s.d ${timeStr} WIB`;
+            const minsLeft = Math.max(0, Math.round((settings.deadlineTimestamp - Date.now()) / 60000));
+            txt.textContent = isExpired ? `⚠️ Durasi telah berakhir (${settings.deadlineEndStr || timeStr + ' WIB'})` : `🟢 Aktif s.d ${settings.deadlineEndStr || timeStr + ' WIB'} (tersisa ~${minsLeft} menit)`;
             txt.style.color = isExpired ? 'var(--danger)' : 'var(--success)';
         }
     }
@@ -1515,20 +1606,118 @@ function updateAccessControlUI() {
     renderScheduleMatrix();
 }
 
-function setDeadlineMinutes(mins) {
+function formatDateTimeReadable(date) {
+    if (!date || isNaN(date.getTime())) return '';
+    const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+    const dayName = days[date.getDay()];
+    const d = date.getDate();
+    const m = months[date.getMonth()];
+    const y = date.getFullYear();
+    const hh = String(date.getHours()).padStart(2, '0');
+    const mm = String(date.getMinutes()).padStart(2, '0');
+    return `${dayName}, ${d} ${m} ${y} pukul ${hh}:${mm} WIB`;
+}
+window.formatDateTimeReadable = formatDateTimeReadable;
+
+function saveDateTimeRangeSetting() {
     sfxClick();
+    const startInp = document.getElementById('input-range-start');
+    const endInp = document.getElementById('input-range-end');
+    if (!startInp || !endInp) return;
+    const startVal = startInp.value;
+    const endVal = endInp.value;
+    if (!startVal && !endVal) {
+        alert('Silakan tentukan minimal tanggal & jam mulai atau selesai!');
+        return;
+    }
+    const startTs = startVal ? new Date(startVal).getTime() : Date.now();
+    const endTs = endVal ? new Date(endVal).getTime() : null;
+    if (endTs && endTs <= startTs) {
+        alert('Jam selesai harus lebih akhir dari jam mulai!');
+        return;
+    }
     const settings = loadAccessSettings();
-    settings.mode = 'deadline';
-    settings.deadlineTimestamp = Date.now() + (mins * 60 * 1000);
-    const d = new Date(settings.deadlineTimestamp);
-    document.getElementById('input-deadline-time').value = `${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}`;
+    settings.mode = 'date_range';
+    settings.rangeStartTimestamp = startTs;
+    settings.rangeEndTimestamp = endTs;
+    settings.rangeStartStr = formatDateTimeReadable(new Date(startTs));
+    settings.rangeEndStr = endTs ? formatDateTimeReadable(new Date(endTs)) : 'Tidak terbatas';
     saveAccessSettings(settings);
     updateAccessControlUI();
-    showToast(`Kuis dibuka selama ${mins} menit ke depan!`, '⏱️');
+    showToast(`📅 Rentang waktu kuis berhasil disimpan!`, '💾');
 }
+window.saveDateTimeRangeSetting = saveDateTimeRangeSetting;
+
+function presetRangeTodaySchoolHours() {
+    sfxClick();
+    const now = new Date();
+    const start = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 7, 30, 0);
+    const end = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 15, 0, 0);
+    const toLocalIso = (d) => {
+        const offset = d.getTimezoneOffset() * 60000;
+        return new Date(d.getTime() - offset).toISOString().slice(0, 16);
+    };
+    const startInp = document.getElementById('input-range-start');
+    const endInp = document.getElementById('input-range-end');
+    if (startInp) startInp.value = toLocalIso(start);
+    if (endInp) endInp.value = toLocalIso(end);
+    saveDateTimeRangeSetting();
+}
+window.presetRangeTodaySchoolHours = presetRangeTodaySchoolHours;
+
+function presetRangeTomorrowMorning() {
+    sfxClick();
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const start = new Date(tomorrow.getFullYear(), tomorrow.getMonth(), tomorrow.getDate(), 7, 30, 0);
+    const end = new Date(tomorrow.getFullYear(), tomorrow.getMonth(), tomorrow.getDate(), 10, 0, 0);
+    const toLocalIso = (d) => {
+        const offset = d.getTimezoneOffset() * 60000;
+        return new Date(d.getTime() - offset).toISOString().slice(0, 16);
+    };
+    const startInp = document.getElementById('input-range-start');
+    const endInp = document.getElementById('input-range-end');
+    if (startInp) startInp.value = toLocalIso(start);
+    if (endInp) endInp.value = toLocalIso(end);
+    saveDateTimeRangeSetting();
+}
+window.presetRangeTomorrowMorning = presetRangeTomorrowMorning;
+
+function setDeadlineMinutes(mins) {
+    sfxClick();
+    const numMins = parseInt(mins, 10);
+    if (isNaN(numMins) || numMins <= 0) return;
+    const settings = loadAccessSettings();
+    settings.mode = 'deadline';
+    settings.durationMinutes = numMins;
+    settings.deadlineTimestamp = Date.now() + (numMins * 60 * 1000);
+    const endDate = new Date(settings.deadlineTimestamp);
+    settings.deadlineEndStr = formatDateTimeReadable(endDate);
+    const customInp = document.getElementById('input-custom-minutes');
+    if (customInp) customInp.value = numMins;
+    saveAccessSettings(settings);
+    updateAccessControlUI();
+    const hh = String(endDate.getHours()).padStart(2, '0');
+    const mm = String(endDate.getMinutes()).padStart(2, '0');
+    showToast(`⏱️ Kuis dibuka selama ${numMins} menit (s.d ${hh}:${mm} WIB)!`, '⏱️');
+}
+window.setDeadlineMinutes = setDeadlineMinutes;
+
+function applyCustomDurationMinutes() {
+    const customInp = document.getElementById('input-custom-minutes');
+    if (!customInp) return;
+    const mins = parseInt(customInp.value, 10);
+    if (!mins || mins <= 0) {
+        alert('Silakan masukkan jumlah menit yang valid (contoh: 60, 90, 120)!');
+        return;
+    }
+    setDeadlineMinutes(mins);
+}
+window.applyCustomDurationMinutes = applyCustomDurationMinutes;
 
 function saveDeadlineSetting() {
-    const val = document.getElementById('input-deadline-time').value;
+    const val = document.getElementById('input-deadline-time')?.value;
     if (!val) return;
     const [h, m] = val.split(':').map(Number);
     const now = new Date();
@@ -1536,6 +1725,7 @@ function saveDeadlineSetting() {
     const settings = loadAccessSettings();
     settings.mode = 'deadline';
     settings.deadlineTimestamp = target.getTime();
+    settings.deadlineEndStr = formatDateTimeReadable(target);
     saveAccessSettings(settings);
     updateAccessControlUI();
     showToast(`Tenggat waktu kuis diatur ke pukul ${val} WIB!`, '⏱️');
@@ -2225,11 +2415,11 @@ function remindStudent(name, cls, missingType = 'both') {
     sfxClick();
     let text = '';
     if (missingType === 'only_jaringan') {
-        text = `Halo ${name} (${cls}), Anda tercatat BELUM menyelesaikan Kuis 2: Penilaian Harian Keamanan Jaringan (Guru: RINI SYAFITRI). Silakan segera buka platform kuis dan selesaikan sebelum akses ditutup!`;
+        text = `Halo ${name} (${cls}), Anda tercatat BELUM menyelesaikan Kuis 2: Penilaian Harian Keamanan Jaringan (Guru: MUHAMMAD HAFIDH PUTRA ROSHADI, S.Pd.). Silakan segera buka platform kuis dan selesaikan sebelum akses ditutup!`;
     } else if (missingType === 'only_fakta') {
-        text = `Halo ${name} (${cls}), Anda tercatat BELUM menyelesaikan Kuis 1: Detektif Fakta (Guru: RINI SYAFITRI). Silakan segera buka platform kuis dan selesaikan sebelum akses ditutup!`;
+        text = `Halo ${name} (${cls}), Anda tercatat BELUM menyelesaikan Kuis 1: Detektif Fakta (Guru: MUHAMMAD HAFIDH PUTRA ROSHADI, S.Pd.). Silakan segera buka platform kuis dan selesaikan sebelum akses ditutup!`;
     } else {
-        text = `Halo ${name} (${cls}), Anda tercatat BELUM menyelesaikan Kuis Informatika Fase E (Guru: RINI SYAFITRI). Silakan segera buka platform kuis dan selesaikan sebelum akses ditutup!`;
+        text = `Halo ${name} (${cls}), Anda tercatat BELUM menyelesaikan Kuis Informatika Fase E (Guru: MUHAMMAD HAFIDH PUTRA ROSHADI, S.Pd.). Silakan segera buka platform kuis dan selesaikan sebelum akses ditutup!`;
     }
     if (navigator.clipboard && navigator.clipboard.writeText) {
         navigator.clipboard.writeText(text).then(() => {
@@ -2283,7 +2473,7 @@ function copyUnsubmittedStudentsList() {
     const modLabel = filterModule === 'modul_jaringan_keamanan' ? 'MODUL INFRASTRUKTUR JARINGAN & KEAMANAN DIGITAL' : (filterModule === 'modul_detektif_fakta' ? 'MODUL DETEKTIF FAKTA' : 'KUIS PEMBELAJARAN');
     let text = `📢 *DAFTAR SISWA BELUM MENGERJAKAN ${modLabel}*\n`;
     text += `🏫 SMAN 4 PADANG — Kelas: ${filterClass === 'all' ? 'Semua Kelas (X E 1 - X E 6)' : filterClass}\n`;
-    text += `👩‍🏫 Guru Pengampu: RINI SYAFITRI\n`;
+    text += `👨‍🏫 Guru Pengampu: MUHAMMAD HAFIDH PUTRA ROSHADI, S.Pd.\n`;
     text += `📊 Total Belum Mengerjakan: ${unsubmitted.length} Siswa\n`;
     text += `━━━━━━━━━━━━━━━━━━━━━\n`;
     unsubmitted.forEach((s, idx) => {
@@ -2397,7 +2587,7 @@ function renderDashboard() {
         }
     }
 
-    // Render Kontrol Jadwal & Akses Buk RINI
+    // Render Kontrol Jadwal & Akses Guru Muhammad Hafidh Putra Roshadi
     updateAccessControlUI();
 
     // 1. Kumpulkan data siswa terdaftar dari Roster Resmi (6 Kelas X E 1 - X E 6) atau KELAS DEMO
@@ -3041,7 +3231,7 @@ function exportExcel() {
             const rows = [
                 ['SMAN 4 PADANG — LAPORAN KOMPARASI HASIL BELAJAR SISWA'],
                 ['Evaluasi: Kuis 1 (Detektif Fakta) & Kuis 2 (Infrastruktur Jaringan & Keamanan Digital)'],
-                [`Kelas: ${clsTitle}  |  Standar KKM: 80  |  Guru Pengampu: RINI SYAFITRI, S.Pd.`],
+                [`Kelas: ${clsTitle}  |  Standar KKM: 80  |  Guru Pengampu: MUHAMMAD HAFIDH PUTRA ROSHADI, S.Pd.`],
                 [`Waktu Unduh: ${new Date().toLocaleString('id-ID')}`],
                 [],
                 ['No', 'Nama Siswa', 'Kelas', 'Nilai Kuis 1 (Fakta)', 'Status K1', 'Nilai Kuis 2 (Jaringan)', 'Status K2', 'Rata-Rata', 'Status Pengerjaan', 'Hasil Akhir']
@@ -3151,7 +3341,7 @@ function exportExcel() {
 
             const sheetData = [
                 [`SMAN 4 PADANG — REKAP NILAI ${modTitle}`],
-                [`Laporan Kelas: ${clsTitle} (Standar KKM: 80) — Guru: RINI SYAFITRI, S.Pd.`],
+                [`Laporan Kelas: ${clsTitle} (Standar KKM: 80) — Guru: MUHAMMAD HAFIDH PUTRA ROSHADI, S.Pd.`],
                 [`Total Responden: ${total} Siswa | Rata-Rata: ${avg} | Tertinggi: ${highest} | Terendah: ${lowest} | Lulus KKM: ${lulus} Siswa`],
                 [`Waktu Unduh: ${new Date().toLocaleString('id-ID')}`],
                 [],
@@ -3251,7 +3441,7 @@ function exportTeacherPDF() {
                 doc.setFontSize(9);
                 doc.setFont('helvetica', 'normal');
                 doc.text(`Kuis 1: Detektif Fakta  |  Kuis 2: Infrastruktur Jaringan & Keamanan Digital (KKM: 80)`, 14, 20);
-                doc.text(`Guru Pengampu: RINI SYAFITRI, S.Pd.  |  Kelas: ${clsTitle}  |  Dicetak: ${nowStr}`, 14, 26);
+                doc.text(`Guru Pengampu: MUHAMMAD HAFIDH PUTRA ROSHADI, S.Pd.  |  Kelas: ${clsTitle}  |  Dicetak: ${nowStr}`, 14, 26);
 
                 // Collect Cross-Quiz Student Rows
                 let totalStudents = 0;
@@ -3393,7 +3583,7 @@ function exportTeacherPDF() {
                     doc.text('Mengetahui / Mengesahkan,', 140, finalY);
                     doc.text('Guru Mata Pelajaran Informatika', 140, finalY + 5);
                     doc.setFont('helvetica', 'bold');
-                    doc.text('RINI SYAFITRI, S.Pd.', 140, finalY + 24);
+                    doc.text('MUHAMMAD HAFIDH PUTRA ROSHADI, S.Pd.', 140, finalY + 24);
                     doc.setFont('helvetica', 'normal');
                     doc.text('NIP. 19850320 201101 2 008', 140, finalY + 29);
                 }
@@ -3436,7 +3626,7 @@ function exportTeacherPDF() {
                 doc.setTextColor(226, 232, 240);
                 doc.setFontSize(9);
                 doc.setFont('helvetica', 'normal');
-                doc.text(`Guru Pengampu: RINI SYAFITRI, S.Pd.  |  Kelas: ${clsTitle}`, 14, 20);
+                doc.text(`Guru Pengampu: MUHAMMAD HAFIDH PUTRA ROSHADI, S.Pd.  |  Kelas: ${clsTitle}`, 14, 20);
                 doc.text(`Standar Ketuntasan Minimal (KKM): 80   |   Dicetak: ${nowStr}`, 14, 26);
 
                 const sorted = [...classRecords].sort((a, b) => b.score - a.score || (a.name || '').localeCompare(b.name || ''));
@@ -3516,7 +3706,7 @@ function exportTeacherPDF() {
                     doc.text('Mengetahui / Mengesahkan,', 140, finalY);
                     doc.text('Guru Mata Pelajaran Informatika', 140, finalY + 5);
                     doc.setFont('helvetica', 'bold');
-                    doc.text('RINI SYAFITRI, S.Pd.', 140, finalY + 24);
+                    doc.text('MUHAMMAD HAFIDH PUTRA ROSHADI, S.Pd.', 140, finalY + 24);
                     doc.setFont('helvetica', 'normal');
                     doc.text('NIP. 19850320 201101 2 008', 140, finalY + 29);
                 }
@@ -3963,7 +4153,7 @@ function exportFullJsonBackup() {
 
     const backupPayload = {
         title: "CADANGAN RESMI DATA NILAI KUIS INFORMATIKA SMAN 4 PADANG",
-        guruMataPelajaran: "RINI SYAFITRI",
+        guruMataPelajaran: "MUHAMMAD HAFIDH PUTRA ROSHADI, S.Pd.",
         sekolah: "SMAN 4 PADANG",
         exportedAt: new Date().toISOString(),
         exportedLocale: new Date().toLocaleString('id-ID'),

@@ -821,7 +821,7 @@ async function initiateQuiz() {
         // 📦 Tentukan Modul Pembelajaran Terpilih terlebih dahulu
         const targetModId = moduleId || (currentActiveModule ? currentActiveModule.id : (window.QuizManager ? QuizManager.getActiveModuleId() : 'modul_detektif_fakta'));
 
-        // 🔒 Verifikasi Akses Jadwal RINI SYAFITRI & Pengaturan Guru
+        // 🔒 Verifikasi Akses Jadwal Guru Muhammad Hafidh Putra Roshadi, S.Pd. & Pengaturan Akses
         const access = checkClassAccess(cls, targetModId);
         if (!access.allowed) {
             if (typeof sfxWrong === 'function') sfxWrong();
@@ -832,7 +832,7 @@ async function initiateQuiz() {
             const safePeriod = typeof escapeHtml === 'function' ? escapeHtml(schedule.period || '-') : (schedule.period || '-');
             document.getElementById('locked-class-name').textContent = `Kelas ${cls}`;
             document.getElementById('locked-class-schedule').innerHTML = `
-                📅 <strong>Jadwal Resmi Mata Pelajaran (Rini Syafitri):</strong> ${safeDay}, Pukul <strong>${safeStart} - ${safeEnd} WIB</strong> (${safePeriod})
+                📅 <strong>Jadwal Resmi Mata Pelajaran (Bpk. Muhammad Hafidh Putra Roshadi, S.Pd.):</strong> ${safeDay}, Pukul <strong>${safeStart} - ${safeEnd} WIB</strong> (${safePeriod})
             `;
             document.getElementById('locked-current-time').textContent = `Waktu Saat Ini: ${access.currentInfo || new Date().toLocaleString('id-ID')}`;
             document.getElementById('access-locked-modal').classList.add('active');
@@ -2099,7 +2099,7 @@ async function finishQuiz() {
             proofPill.innerHTML = '🟢 TERSIMPAN AMAN & TERHUBUNG GURU';
             proofPill.style.background = '#10b981';
             if (proofDetail) {
-                proofDetail.innerHTML = `Jawaban berhasil diamankan di perangkat & terhubung ke Dasbor Guru (Rini Syafitri) • No. Bukti: <strong style="color:var(--accent); font-family:monospace;">${proofCode}</strong>`;
+                proofDetail.innerHTML = `Jawaban berhasil diamankan di perangkat & terhubung ke Dasbor Guru (Bpk. Muhammad Hafidh Putra Roshadi, S.Pd.) • No. Bukti: <strong style="color:var(--accent); font-family:monospace;">${proofCode}</strong>`;
             }
         }
     }, 2000);
@@ -2127,7 +2127,7 @@ async function finishQuiz() {
             }
             if (proofDetail) {
                 proofDetail.innerHTML = isCloudSaved
-                    ? `Tersimpan di Cloud Database (${cloudDestName}) & Dasbor Guru (Rini Syafitri) • No. Bukti: <strong style="color:var(--accent); font-family:monospace;">${proofCode}</strong>`
+                    ? `Tersimpan di Cloud Database (${cloudDestName}) & Dasbor Guru (Bpk. Muhammad Hafidh Putra Roshadi, S.Pd.) • No. Bukti: <strong style="color:var(--accent); font-family:monospace;">${proofCode}</strong>`
                     : `Tersimpan aman di Memori Lokal & Otomatis Tersinkron ke Dasbor Guru • No. Bukti: <strong style="color:var(--accent); font-family:monospace;">${proofCode}</strong>`;
             }
         } catch(errSave) {
@@ -2207,28 +2207,28 @@ async function finishQuiz() {
         } else {
             titleEl.textContent = '✅ Remedial Selesai & Nilai Terkirim ke Guru';
             titleEl.style.color = '#38bdf8';
-            descEl.textContent = `Nilai akhir perbaikan Anda (${displayScore} dari 100) telah berhasil dikirim ke Dasbor Guru (Rini Syafitri). Standar KKM adalah ${KKM}. Pelajari ulasan pembahasan di bawah untuk memperdalam konsep.`;
+            descEl.textContent = `Nilai akhir perbaikan Anda (${displayScore} dari 100) telah berhasil dikirim ke Dasbor Guru (Bpk. Muhammad Hafidh Putra Roshadi, S.Pd.). Standar KKM adalah ${KKM}. Pelajari ulasan pembahasan di bawah untuk memperdalam konsep.`;
             if (typeof sfxWrong === 'function') sfxWrong();
         }
     } else {
         if (displayScore >= 90) {
             titleEl.textContent = '🏆 Evaluasi Cemerlang — Nilai Sempurna!';
             titleEl.style.color = 'var(--success)';
-            descEl.textContent = `Luar biasa ${studentName}! Nilai akhir Anda ${displayScore} dari 100 (Melampaui KKM ${KKM}). Nilai telah tersimpan dan terkirim ke Dasbor Guru (Rini Syafitri).`;
+            descEl.textContent = `Luar biasa ${studentName}! Nilai akhir Anda ${displayScore} dari 100 (Melampaui KKM ${KKM}). Nilai telah tersimpan dan terkirim ke Dasbor Guru (Bpk. Muhammad Hafidh Putra Roshadi, S.Pd.).`;
             if (typeof sfxVictory === 'function') sfxVictory();
             if (typeof shootConfetti === 'function') shootConfetti();
             if (typeof spawnRandomEmojis === 'function') spawnRandomEmojis('🏆', 6);
         } else if (displayScore >= 80) {
             titleEl.textContent = '🎉 Kompeten — Lulus Memenuhi KKM!';
             titleEl.style.color = 'var(--success)';
-            descEl.textContent = `Selamat ${studentName}! Anda dinyatakan LULUS dengan nilai akhir ${displayScore} dari 100 (Batas KKM: ${KKM}). Nilai telah tersimpan dan terkirim ke Dasbor Guru (Rini Syafitri).`;
+            descEl.textContent = `Selamat ${studentName}! Anda dinyatakan LULUS dengan nilai akhir ${displayScore} dari 100 (Batas KKM: ${KKM}). Nilai telah tersimpan dan terkirim ke Dasbor Guru (Bpk. Muhammad Hafidh Putra Roshadi, S.Pd.).`;
             if (typeof sfxVictory === 'function') sfxVictory();
             if (typeof shootConfetti === 'function') shootConfetti();
             if (typeof spawnRandomEmojis === 'function') spawnRandomEmojis('🎉', 4);
         } else {
             titleEl.textContent = '✅ Evaluasi Selesai & Nilai Berhasil Dikirim ke Guru!';
             titleEl.style.color = 'var(--success)';
-            descEl.textContent = `Jawaban Anda telah lengkap terkirim ke Dasbor Guru (Rini Syafitri) dengan nilai akhir ${displayScore} dari 100 (Standar KKM: ${KKM}). Jika ingin memperbaiki nilai pada butir soal yang belum tepat, tersedia fitur Remedial Mandiri di bawah (opsional).`;
+            descEl.textContent = `Jawaban Anda telah lengkap terkirim ke Dasbor Guru (Bpk. Muhammad Hafidh Putra Roshadi, S.Pd.) dengan nilai akhir ${displayScore} dari 100 (Standar KKM: ${KKM}). Jika ingin memperbaiki nilai pada butir soal yang belum tepat, tersedia fitur Remedial Mandiri di bawah (opsional).`;
             if (typeof sfxCorrect === 'function') sfxCorrect();
         }
     }
@@ -2301,7 +2301,7 @@ function buildReview() {
                 Untuk menjaga integritas dan kerahasiaan ujian bersama Kelas X SMAN 4 Padang, kunci jawaban tepat dan bedah soal rinci disembunyikan selama sesi ujian. Anda tetap dapat meninjau soal mana yang benar atau salah di bawah ini.
             </p>
             <div style="margin-top: 12px; display: inline-flex; align-items: center; gap: 8px; font-size: 0.8rem; padding: 5px 14px; background: rgba(255,255,255,0.06); border-radius: 20px; color: #cbd5e1;">
-                👩‍🏫 Guru Pengampu: <strong>Ibu Rini Syafitri, S.Pd.</strong>
+                👨‍🏫 Guru Pengampu: <strong>Bpk. Muhammad Hafidh Putra Roshadi, S.Pd.</strong>
             </div>
         `;
         list.appendChild(lockBanner);

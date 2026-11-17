@@ -1,6 +1,6 @@
 /**
  * 📋 DATA RESMI REKAPITULASI NILAI KUIS INFORMATIKA SMAN 4 PADANG
- * GURU MATA PELAJARAN: RINI SYAFITRI
+ * GURU MATA PELAJARAN: MUHAMMAD HAFIDH PUTRA ROSHADI, S.Pd.
  * - Modul 1: Misi Detektif Fakta (Literasi Digital & Komputasional) — 155 Nilai Resmi Hasil Ujian Asli dari PDF
  * - Modul 2: Penilaian Harian: Infrastruktur Jaringan & Keamanan Digital (JKI) — 66 Nilai Resmi Siswa X E 1 & X E 2
  * Total: 221 Data Pengerjaan Resmi Tersimpan Permanen

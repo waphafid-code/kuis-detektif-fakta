@@ -8,7 +8,7 @@
  * - Rekomendasi Tindak Lanjut & Rencana Aksi Remedial Klasikal Guru
  * 
  * Pengembang: QuizMaster EdTech Engine
- * Guru Pembina: Ibu Rini Syafitri, S.Pd.
+ * Guru Pembina: Bpk. Muhammad Hafidh Putra Roshadi, S.Pd.
  * ============================================================
  */
 
@@ -384,7 +384,7 @@ function renderDiagnosticsDashboard(selectedClass = null) {
                     <div class="action-banner-icon">📋</div>
                     <div>
                         <h4 style="margin: 0; font-size: 1.05rem; font-weight: 800; color: var(--text);">Rencana Aksi Intervensi Pedagogis Klasikal</h4>
-                        <div style="font-size: 0.82rem; color: var(--text-muted);">Panduan perbaikan pembelajaran terarah bagi Ibu Rini Syafitri, S.Pd. berdasarkan topik dengan tingkat kekeliruan tertinggi.</div>
+                        <div style="font-size: 0.82rem; color: var(--text-muted);">Panduan perbaikan pembelajaran terarah bagi Bpk. Muhammad Hafidh Putra Roshadi, S.Pd. berdasarkan topik dengan tingkat kekeliruan tertinggi.</div>
                     </div>
                 </div>
             </div>

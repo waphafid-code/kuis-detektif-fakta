@@ -296,7 +296,7 @@ async function flushPendingRecords() {
 }
 window.flushPendingRecords = flushPendingRecords;
 
-// 🕒 JADWAL MENGAJAR RESMI GURU MATA PELAJARAN (RINI SYAFITRI)
+// 🕒 JADWAL MENGAJAR RESMI GURU MATA PELAJARAN: MUHAMMAD HAFIDH PUTRA ROSHADI, S.Pd.
 // 0: Minggu, 1: Senin, 2: Selasa, 3: Rabu, 4: Kamis, 5: Jumat, 6: Sabtu
 const SCHEDULE_RINI_SYAFITRI = {
     'X E 1': { day: 1, dayName: 'Senin', start: '08:35', end: '09:25', period: 'Jam ke 4 - 5' },
@@ -307,7 +307,17 @@ const SCHEDULE_RINI_SYAFITRI = {
     'X E 4': { day: 5, dayName: 'Jumat', start: '09:20', end: '10:50', period: 'Jam ke 5 - 6' },
     'KELAS DEMO': { day: 0, dayName: 'Setiap Hari', start: '00:00', end: '23:59', period: 'Ruang Uji Coba & Demo QA 24 Jam Bebas Akses' }
 };
+const SCHEDULE_MUHAMMAD_HAFIDH = SCHEDULE_RINI_SYAFITRI;
+const SCHEDULE_PAK_HAFIDH = SCHEDULE_RINI_SYAFITRI;
 const SCHEDULE_BUK_RINI = SCHEDULE_RINI_SYAFITRI;
+const SCHEDULE_TEACHER = SCHEDULE_MUHAMMAD_HAFIDH;
+const OFFICIAL_TEACHER_NAME = "Muhammad Hafidh Putra Roshadi, S.Pd.";
+window.SCHEDULE_RINI_SYAFITRI = SCHEDULE_RINI_SYAFITRI;
+window.SCHEDULE_MUHAMMAD_HAFIDH = SCHEDULE_MUHAMMAD_HAFIDH;
+window.SCHEDULE_PAK_HAFIDH = SCHEDULE_PAK_HAFIDH;
+window.SCHEDULE_BUK_RINI = SCHEDULE_BUK_RINI;
+window.SCHEDULE_TEACHER = SCHEDULE_TEACHER;
+window.OFFICIAL_TEACHER_NAME = OFFICIAL_TEACHER_NAME;
 const ACCESS_SETTINGS_KEY = 'detektif_fakta_access_control';
 
 let TIMER_MAX = 30;

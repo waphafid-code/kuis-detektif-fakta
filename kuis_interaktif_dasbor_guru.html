@@ -34,9 +34,9 @@
         }
     </script>
     <!-- QuizMaster Modern Design System & UI Styling -->
-    <link rel="stylesheet" href="css/style.css?v=20261115-release-v3012-ultimate-ui">
+    <link rel="stylesheet" href="css/style.css?v=20261117-release-v3013-schedule-hafid">
     <!-- Cyber Guardian Sentinel Protocol & Gemini Teacher AI Assistant Styling -->
-    <link rel="stylesheet" href="css/guardian_and_chatbot.css?v=20261115-release-v3012-ultimate-ui">
+    <link rel="stylesheet" href="css/guardian_and_chatbot.css?v=20261117-release-v3013-schedule-hafid">
 
 
 </head>
@@ -314,20 +314,20 @@
     </div>
 </div>
 
-<!-- Class Access Locked Modal (Jadwal RINI SYAFITRI) -->
+<!-- Class Access Locked Modal (Jadwal MUHAMMAD HAFIDH PUTRA ROSHADI) -->
 <div class="modal-overlay" id="access-locked-modal">
     <div class="modal-box modal-locked-box">
         <div style="font-size: 3rem; margin-bottom: 6px;">🔒🕒</div>
         <h3 class="modal-locked-title" id="locked-modal-title">Akses Kuis Belum Dibuka</h3>
         <p class="modal-locked-sub">
-            Kuis ini hanya dapat diakses pada jam mata pelajaran:<br>
-            <strong style="font-size: 1.05rem;">👩‍🏫 Guru Mata Pelajaran: RINI SYAFITRI</strong>
+            Kuis ini hanya dapat diakses pada jam mata pelajaran atau rentang waktu yang diatur Guru:<br>
+            <strong style="font-size: 1.05rem;">👨‍🏫 Guru Mata Pelajaran: MUHAMMAD HAFIDH PUTRA ROSHADI, S.Pd.</strong>
         </p>
 
         <div class="modal-locked-banner">
             <div class="modal-locked-class" id="locked-class-name">Kelas -</div>
             <div class="modal-locked-detail" id="locked-class-schedule">
-                Jadwal Resmi Mata Pelajaran (Rini Syafitri): -
+                Jadwal Resmi Mata Pelajaran (Bpk. Muhammad Hafidh Putra Roshadi, S.Pd.): -
             </div>
             <div class="modal-locked-time" id="locked-current-time">
                 Waktu Saat Ini: -
@@ -1077,7 +1077,7 @@
                                 <span id="proof-status-pill" style="font-size: 0.72rem; padding: 2px 8px; border-radius: 10px; background: #10b981; color: #fff; font-weight: 700;">🟢 TERKIRIM</span>
                             </div>
                             <div id="proof-details-text" style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 3px;">
-                                Tersimpan di Cloud Database &amp; Dasbor Guru (Rini Syafitri) • No. Bukti: <strong id="proof-id-code" style="color: var(--accent); font-family: monospace;">-</strong>
+                                Tersimpan di Cloud Database &amp; Dasbor Guru (Bpk. Muhammad Hafidh Putra Roshadi, S.Pd.) • No. Bukti: <strong id="proof-id-code" style="color: var(--accent); font-family: monospace;">-</strong>
                             </div>
                         </div>
                     </div>
@@ -1141,7 +1141,7 @@
                     <div class="reflection-chip" data-val="Ragu" onclick="selectReflectionChip(this)">🧗 Masih Ragu / Butuh Bimbingan</div>
                 </div>
 
-                <label class="reflection-chips-label" for="reflection-student-note">Catatan Refleksi / Pertanyaan untuk Guru (Ibu Rini Syafitri):</label>
+                <label class="reflection-chips-label" for="reflection-student-note">Catatan Refleksi / Pertanyaan untuk Guru (Bpk. Muhammad Hafidh Putra Roshadi, S.Pd.):</label>
                 <textarea class="reflection-textarea" id="reflection-student-note" placeholder="Tuliskan materi atau butir soal yang paling menantang bagi Anda, atau pertanyaan yang ingin Anda diskusikan..."></textarea>
                 
                 <div class="reflection-actions">
@@ -1304,11 +1304,11 @@
                 </div>
             </div>
 
-            <!-- SCHEDULE & ACCESS CONTROL PANEL (RINI SYAFITRI) -->
+            <!-- SCHEDULE & ACCESS CONTROL PANEL (MUHAMMAD HAFIDH PUTRA ROSHADI) -->
             <div class="schedule-control-panel">
                 <div class="schedule-header">
                     <h4>
-                        <span>🕒 Kontrol Jadwal & Akses Kuis (Guru Mata Pelajaran: RINI SYAFITRI)</span>
+                        <span>🕒 Kontrol Jadwal &amp; Akses Kuis (Guru Mata Pelajaran: MUHAMMAD HAFIDH PUTRA ROSHADI, S.Pd.)</span>
                     </h4>
                     <span class="setting-saved" id="access-saved-msg" style="display:none; color: var(--success); font-weight: 700; font-size: 0.8rem;">✅ Pengaturan Akses Tersimpan!</span>
                 </div>
@@ -1322,28 +1322,70 @@
                         <button type="button" class="access-mode-btn active" id="btn-mode-always" onclick="setAccessMode('always_open')">
                             🟢 Buka Sekarang (Semua Kelas)
                         </button>
+                        <button type="button" class="access-mode-btn" id="btn-mode-date-range" onclick="setAccessMode('date_range')">
+                            📅 Rentang Tanggal &amp; Jam
+                        </button>
+                        <button type="button" class="access-mode-btn" id="btn-mode-deadline" onclick="setAccessMode('deadline')">
+                            ⏱️ Durasi / Hitung Mundur
+                        </button>
                         <button type="button" class="access-mode-btn" id="btn-mode-auto" onclick="setAccessMode('auto')">
-                            🕒 Otomatis (Jadwal RINI SYAFITRI)
+                            🕒 Otomatis (Jadwal Mengajar)
                         </button>
                         <button type="button" class="access-mode-btn" id="btn-mode-manual" onclick="setAccessMode('manual')">
                             🎛️ Manual Per Kelas
                         </button>
-                        <button type="button" class="access-mode-btn" id="btn-mode-deadline" onclick="setAccessMode('deadline')">
-                            ⏱️ Tenggat Waktu Kustom
-                        </button>
                     </div>
                 </div>
 
-                <!-- Deadline Setting Box -->
-                <div id="deadline-setting-box" style="display: none; background: rgba(255,255,255,0.03); padding: 12px 14px; border-radius: 10px; margin-bottom: 16px; border: 1px solid var(--glass-border);">
-                    <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-                        <label for="input-deadline-time" style="font-size: 0.85rem; font-weight: 700; color: #fde68a;">
-                            ⏱ Kuis aktif hingga pukul:
-                        </label>
-                        <input type="time" id="input-deadline-time" class="form-input" style="width: 140px; padding: 6px 10px; font-size: 0.9rem;" onchange="saveDeadlineSetting()">
-                        <button class="btn btn-primary" onclick="setDeadlineMinutes(45)" style="padding: 6px 12px; font-size: 0.8rem;">+45 Menit</button>
-                        <button class="btn btn-primary" onclick="setDeadlineMinutes(90)" style="padding: 6px 12px; font-size: 0.8rem;">+90 Menit</button>
-                        <span id="deadline-status-text" style="font-size: 0.8rem; color: var(--accent); font-weight: 700;"></span>
+                <!-- Date-Time Range Setting Box -->
+                <div id="date-range-setting-box" style="display: none; background: rgba(56, 189, 248, 0.05); padding: 14px 16px; border-radius: 12px; margin-bottom: 16px; border: 1.5px solid rgba(56, 189, 248, 0.3);">
+                    <div style="display: flex; flex-direction: column; gap: 10px;">
+                        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
+                            <span style="font-size: 0.88rem; font-weight: 700; color: #38bdf8;">
+                                📅 Atur Rentang Tanggal &amp; Jam Buka Kuis:
+                            </span>
+                            <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+                                <button type="button" class="btn btn-secondary" onclick="presetRangeTodaySchoolHours()" style="padding: 4px 10px; font-size: 0.75rem;">🏫 Jam Sekolah Hari Ini (07:30 - 15:00)</button>
+                                <button type="button" class="btn btn-secondary" onclick="presetRangeTomorrowMorning()" style="padding: 4px 10px; font-size: 0.75rem;">🌅 Besok Pagi (07:30 - 10:00)</button>
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+                            <div style="display: flex; flex-direction: column; gap: 4px;">
+                                <label for="input-range-start" style="font-size: 0.75rem; color: var(--text-secondary); font-weight: 600;">Mulai Dibuka:</label>
+                                <input type="datetime-local" id="input-range-start" class="form-input" style="padding: 6px 10px; font-size: 0.85rem; border-radius: 8px;">
+                            </div>
+                            <div style="display: flex; flex-direction: column; gap: 4px;">
+                                <label for="input-range-end" style="font-size: 0.75rem; color: var(--text-secondary); font-weight: 600;">Batas Selesai:</label>
+                                <input type="datetime-local" id="input-range-end" class="form-input" style="padding: 6px 10px; font-size: 0.85rem; border-radius: 8px;">
+                            </div>
+                            <div style="display: flex; align-items: flex-end; padding-top: 18px;">
+                                <button type="button" class="btn btn-primary" onclick="saveDateTimeRangeSetting()" style="padding: 7px 16px; font-size: 0.82rem; font-weight: 700;">
+                                    Simpan Rentang Waktu 💾
+                                </button>
+                            </div>
+                        </div>
+                        <div id="date-range-status-text" style="font-size: 0.82rem; color: #38bdf8; font-weight: 600; margin-top: 4px;"></div>
+                    </div>
+                </div>
+
+                <!-- Deadline / Duration Setting Box -->
+                <div id="deadline-setting-box" style="display: none; background: rgba(245, 158, 11, 0.05); padding: 14px 16px; border-radius: 12px; margin-bottom: 16px; border: 1.5px solid rgba(245, 158, 11, 0.3);">
+                    <div style="display: flex; flex-direction: column; gap: 10px;">
+                        <span style="font-size: 0.88rem; font-weight: 700; color: #fbbf24;">
+                            ⏱️ Buka Kuis dengan Durasi Waktu (Hitung Mundur):
+                        </span>
+                        <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                            <button type="button" class="btn btn-secondary" onclick="setDeadlineMinutes(30)" style="padding: 6px 12px; font-size: 0.8rem; font-weight: 700;">⚡ 30 Menit</button>
+                            <button type="button" class="btn btn-primary" onclick="setDeadlineMinutes(60)" style="padding: 6px 14px; font-size: 0.82rem; font-weight: 800; background: linear-gradient(135deg, #2563eb, #3b82f6);">🕒 60 Menit (1 Jam)</button>
+                            <button type="button" class="btn btn-primary" onclick="setDeadlineMinutes(90)" style="padding: 6px 14px; font-size: 0.82rem; font-weight: 800; background: linear-gradient(135deg, #7c3aed, #8b5cf6);">🎯 90 Menit (1.5 Jam)</button>
+                            <button type="button" class="btn btn-secondary" onclick="setDeadlineMinutes(120)" style="padding: 6px 12px; font-size: 0.8rem; font-weight: 700;">⏳ 120 Menit (2 Jam)</button>
+                        </div>
+                        <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 4px;">
+                            <label for="input-custom-minutes" style="font-size: 0.8rem; color: var(--text-secondary); font-weight: 600;">Atau Kustom Durasi:</label>
+                            <input type="number" id="input-custom-minutes" min="5" max="300" step="5" placeholder="Menit (cth: 75)" class="form-input" style="width: 140px; padding: 6px 10px; font-size: 0.85rem;">
+                            <button type="button" class="btn btn-primary" onclick="applyCustomDurationMinutes()" style="padding: 6px 12px; font-size: 0.8rem; font-weight: 700;">Terapkan Durasi</button>
+                            <span id="deadline-status-text" style="font-size: 0.82rem; color: #fbbf24; font-weight: 700;"></span>
+                        </div>
                     </div>
                 </div>
 
@@ -1351,7 +1393,7 @@
                 <div>
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
                         <span style="font-size: 0.82rem; font-weight: 700; color: var(--text-secondary);">
-                            Status Akses Kelas (Berdasarkan Roster Resmi Buk RINI):
+                            Status Akses Kelas (Berdasarkan Roster Resmi Bpk. Muhammad Hafidh Putra Roshadi, S.Pd.):
                         </span>
                         <div style="display: flex; gap: 8px;">
                             <button type="button" class="btn btn-secondary" onclick="toggleAllClasses(true)" style="padding: 5px 12px; font-size: 0.74rem; color: var(--success); font-weight: 700; border-color: rgba(16,185,129,0.3);">
@@ -1639,7 +1681,7 @@
                     <!-- Populated by diagnostics.js -->
                 </div>
 
-                <!-- Action Plan Card for Guru Rini Syafitri -->
+                <!-- Action Plan Card for Guru Muhammad Hafidh Putra Roshadi -->
                 <div class="action-plan-wrapper" id="diag-action-plan-container">
                     <!-- Populated by diagnostics.js -->
                 </div>
@@ -2001,28 +2043,28 @@
 <!-- ============================================================ -->
 <!-- 🧩 MODULAR JAVASCRIPT LIBRARIES & ENGINES                   -->
 <!-- ============================================================ -->
-<script src="js/student_roster.js?v=20261115-release-v3012-ultimate-ui"></script>
-<script src="js/default_records.js?v=20261115-release-v3012-ultimate-ui"></script>
-<script src="js/default_questions.js?v=20261115-release-v3012-ultimate-ui"></script>
-<script src="js/doc_parser.js?v=20261115-release-v3012-ultimate-ui"></script>
-<script src="js/ai_nemotron.js?v=20261115-release-v3012-ultimate-ui"></script>
-<script src="js/quiz_manager.js?v=20261115-release-v3012-ultimate-ui"></script>
-<script src="js/question_editor.js?v=20261115-release-v3012-ultimate-ui"></script>
-<script src="js/firebase_sync.js?v=20261115-release-v3012-ultimate-ui"></script>
-<script src="js/deviceTier.js?v=20261115-release-v3012-ultimate-ui"></script>
-<script src="js/storage.js?v=20261115-release-v3012-ultimate-ui"></script>
-<script src="js/audio.js?v=20261115-release-v3012-ultimate-ui"></script>
-<script src="js/particles.js?v=20261115-release-v3012-ultimate-ui"></script>
-<script src="js/quiz_engine.js?v=20261115-release-v3012-ultimate-ui"></script>
-<script src="js/dashboard.js?v=20261115-release-v3012-ultimate-ui"></script>
-<script src="js/export_reports.js?v=20261115-release-v3012-ultimate-ui"></script>
-<script src="js/ai_studio.js?v=20261115-release-v3012-ultimate-ui"></script>
-<script src="js/diagnostics.js?v=20261115-release-v3012-ultimate-ui"></script>
-<script src="js/learning_hub.js?v=20261115-release-v3012-ultimate-ui"></script>
-<script src="js/mini_games.js?v=20261115-release-v3012-ultimate-ui"></script>
-<script src="js/teacher_chatbot.js?v=20261115-release-v3012-ultimate-ui"></script>
-<script src="js/cyber_guardian_game.js?v=20261115-release-v3012-ultimate-ui"></script>
-<script src="js/app.js?v=20261115-release-v3012-ultimate-ui"></script>
+<script src="js/student_roster.js?v=20261117-release-v3013-schedule-hafid"></script>
+<script src="js/default_records.js?v=20261117-release-v3013-schedule-hafid"></script>
+<script src="js/default_questions.js?v=20261117-release-v3013-schedule-hafid"></script>
+<script src="js/doc_parser.js?v=20261117-release-v3013-schedule-hafid"></script>
+<script src="js/ai_nemotron.js?v=20261117-release-v3013-schedule-hafid"></script>
+<script src="js/quiz_manager.js?v=20261117-release-v3013-schedule-hafid"></script>
+<script src="js/question_editor.js?v=20261117-release-v3013-schedule-hafid"></script>
+<script src="js/firebase_sync.js?v=20261117-release-v3013-schedule-hafid"></script>
+<script src="js/deviceTier.js?v=20261117-release-v3013-schedule-hafid"></script>
+<script src="js/storage.js?v=20261117-release-v3013-schedule-hafid"></script>
+<script src="js/audio.js?v=20261117-release-v3013-schedule-hafid"></script>
+<script src="js/particles.js?v=20261117-release-v3013-schedule-hafid"></script>
+<script src="js/quiz_engine.js?v=20261117-release-v3013-schedule-hafid"></script>
+<script src="js/dashboard.js?v=20261117-release-v3013-schedule-hafid"></script>
+<script src="js/export_reports.js?v=20261117-release-v3013-schedule-hafid"></script>
+<script src="js/ai_studio.js?v=20261117-release-v3013-schedule-hafid"></script>
+<script src="js/diagnostics.js?v=20261117-release-v3013-schedule-hafid"></script>
+<script src="js/learning_hub.js?v=20261117-release-v3013-schedule-hafid"></script>
+<script src="js/mini_games.js?v=20261117-release-v3013-schedule-hafid"></script>
+<script src="js/teacher_chatbot.js?v=20261117-release-v3013-schedule-hafid"></script>
+<script src="js/cyber_guardian_game.js?v=20261117-release-v3013-schedule-hafid"></script>
+<script src="js/app.js?v=20261117-release-v3013-schedule-hafid"></script>
 
 </body>
 </html>
