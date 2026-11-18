@@ -1163,6 +1163,8 @@ function startQuizActual() {
     isQuizFinishing = false;
     isCheatingTriggered = false;
     isCheatWarningActive = false;
+    isCheckingAnswer = false;
+    isTransitioningQuestion = false;
     cheatStrikes = 0;
     sessionHintsUsedCount = 0;
     initialQuizWidth = window.innerWidth;
@@ -1567,7 +1569,9 @@ function loadQuestion(index) {
         return;
     }
 
-    // Reset status petunjuk berpikir
+    // Reset status petunjuk berpikir & guard flags
+    isCheckingAnswer = false;
+    isTransitioningQuestion = false;
     currentQuestionHintOpened = false;
     const hintBox = document.getElementById('hint-box');
     const hintBtn = document.getElementById('btn-hint');
@@ -1824,326 +1828,366 @@ window.handleMatrixRadioSelect = function(rowIdx, val) {
     }
 };
 
+let isCheckingAnswer = false;
+let isTransitioningQuestion = false;
+
 function checkAnswer(isAutoTimeout = false) {
-    stopTimer();
-    const isExamLive = !isRemedialSession;
-    const origQIdx = shuffledQuizOrder[currentQ];
-    const data = quizData[origQIdx];
-    const grid = document.getElementById('options-grid');
+    if (isCheckingAnswer) return;
+    isCheckingAnswer = true;
+    try {
+        stopTimer();
+        const isExamLive = !isRemedialSession;
+        const origQIdx = shuffledQuizOrder[currentQ];
+        const data = quizData[origQIdx];
+        if (!data) return;
+        const grid = document.getElementById('options-grid');
+        if (!grid) return;
 
-    let selectedOriginals = [];
-    let correctOriginals = [];
-    let isCorrect = false;
-    let pointRes = null;
+        let selectedOriginals = [];
+        let correctOriginals = [];
+        let isCorrect = false;
+        let pointRes = null;
 
-    if (data.type === 'matrix_tf') {
-        const rows = grid.querySelectorAll('tr[data-stmt-idx]');
-        let allChosen = true;
-        let userAnswers = []; // 0 = Benar, 1 = Salah, null = belum
-        rows.forEach((row, rIdx) => {
-            let checked = row.querySelector(`input[name="matrix_row_${currentQ}_${rIdx}"]:checked`);
-            // 🛡️ RECOVERY FALLBACK: Jika browser touch tidak memicu checked namun label bertanda active
-            if (!checked) {
-                const lblTrue = document.getElementById(`matrix-lbl-${rIdx}-0`);
-                const lblFalse = document.getElementById(`matrix-lbl-${rIdx}-1`);
-                if (lblTrue && lblTrue.classList.contains('active')) {
-                    const inp = lblTrue.querySelector('input');
-                    if (inp) { inp.checked = true; checked = inp; }
-                } else if (lblFalse && lblFalse.classList.contains('active')) {
-                    const inp = lblFalse.querySelector('input');
-                    if (inp) { inp.checked = true; checked = inp; }
-                }
-            }
-            if (!checked) {
-                allChosen = false;
-                userAnswers.push(null);
-            } else {
-                userAnswers.push(parseInt(checked.value, 10));
-            }
-        });
-
-        if (!allChosen && !isAutoTimeout) {
-            sfxWrong();
-            showToast('Harap tentukan [Benar] atau [Salah] untuk setiap baris sebelum mengecek!', '⚠️');
-            if (TIMER_MAX > 0) startTimer();
-            return;
-        }
-
-        // Disable all matrix radios
-        grid.querySelectorAll('input[type="radio"]').forEach(inp => inp.disabled = true);
-        const table = document.getElementById('matrix-active-table');
-        if (table) table.classList.add('disabled-row');
-
-        const answerKey = getAnswerFromVault(data, origQIdx);
-        correctOriginals = Array.isArray(answerKey) ? answerKey : [];
-        selectedOriginals = userAnswers;
-
-        let correctCount = 0;
-        rows.forEach((row, rIdx) => {
-            const userVal = userAnswers[rIdx];
-            const correctVal = correctOriginals[rIdx];
-            const lblTrue = document.getElementById(`matrix-lbl-${rIdx}-0`);
-            const lblFalse = document.getElementById(`matrix-lbl-${rIdx}-1`);
-
-            // Tandai kunci benar dengan border hijau
-            if (correctVal === 0 && lblTrue) lblTrue.classList.add('correct-choice');
-            if (correctVal === 1 && lblFalse) lblFalse.classList.add('correct-choice');
-
-            // Jika jawaban siswa salah, tandai pilihan siswa dengan border merah
-            if (userVal !== null && userVal !== correctVal) {
-                const wrongLbl = userVal === 0 ? lblTrue : lblFalse;
-                if (wrongLbl) wrongLbl.classList.add('wrong-choice');
-            }
-
-            if (userVal === correctVal) {
-                correctCount++;
-            }
-        });
-
-        const totalRows = correctOriginals.length || 1;
-        isCorrect = correctCount === totalRows;
-        const maxPts = data.points || 5;
-        const ptsEarned = Math.round((correctCount / totalRows) * maxPts);
-
-        pointRes = {
-            pointsEarned: ptsEarned,
-            maxPoints: maxPts,
-            isFullCorrect: isCorrect,
-            isPartial: !isCorrect && ptsEarned > 0,
-            summary: `${ptsEarned}/${maxPts} Poin (${correctCount}/${totalRows} Pernyataan Tepat)`
-        };
-    } else {
-        const inputs = document.querySelectorAll('input[name="q-opt"]');
-        const labels = document.querySelectorAll('.opt-label');
-
-        let selectedShuffleIdxs = [];
-        inputs.forEach(inp => {
-            if (inp.checked) selectedShuffleIdxs.push(parseInt(inp.value));
-        });
-
-        // 🛡️ RECOVERY FALLBACK: Jika radio checked tidak terdeteksi oleh browser touch tetapi ada label yang dipilih secara visual
-        if (selectedShuffleIdxs.length === 0) {
-            labels.forEach((lbl) => {
-                if (lbl.classList.contains('selected-opt')) {
-                    const inp = lbl.querySelector('input[name="q-opt"]');
-                    if (inp) {
-                        inp.checked = true;
-                        const val = parseInt(inp.value);
-                        if (!isNaN(val) && !selectedShuffleIdxs.includes(val)) {
-                            selectedShuffleIdxs.push(val);
-                        }
+        if (data.type === 'matrix_tf') {
+            const rows = grid.querySelectorAll('tr[data-stmt-idx]');
+            let allChosen = true;
+            let userAnswers = []; // 0 = Benar, 1 = Salah, null = belum
+            rows.forEach((row, rIdx) => {
+                let checked = row.querySelector(`input[name="matrix_row_${currentQ}_${rIdx}"]:checked`);
+                // 🛡️ RECOVERY FALLBACK: Jika browser touch tidak memicu checked namun label bertanda active
+                if (!checked) {
+                    const lblTrue = document.getElementById(`matrix-lbl-${rIdx}-0`);
+                    const lblFalse = document.getElementById(`matrix-lbl-${rIdx}-1`);
+                    if (lblTrue && lblTrue.classList.contains('active')) {
+                        const inp = lblTrue.querySelector('input');
+                        if (inp) { inp.checked = true; checked = inp; }
+                    } else if (lblFalse && lblFalse.classList.contains('active')) {
+                        const inp = lblFalse.querySelector('input');
+                        if (inp) { inp.checked = true; checked = inp; }
                     }
                 }
+                if (!checked) {
+                    allChosen = false;
+                    userAnswers.push(null);
+                } else {
+                    userAnswers.push(parseInt(checked.value, 10));
+                }
             });
-        }
 
-        if (selectedShuffleIdxs.length === 0 && !isAutoTimeout) {
-            sfxWrong();
-            showToast('Silakan pilih jawaban terlebih dahulu!', '⚠️');
-            if (TIMER_MAX > 0) startTimer();
-            return;
-        }
-
-        if (data.type === 'checkbox' && !isAutoTimeout) {
-            if (selectedShuffleIdxs.length === 0) {
+            if (!allChosen && !isAutoTimeout) {
                 sfxWrong();
-                showToast('Silakan pilih minimal 1 jawaban sebelum mengunci!', '⚠️');
+                showToast('Harap tentukan [Benar] atau [Salah] untuk setiap baris sebelum mengecek!', '⚠️');
                 if (TIMER_MAX > 0) startTimer();
                 return;
             }
-        }
 
-        inputs.forEach(inp => inp.disabled = true);
-        labels.forEach(lbl => lbl.classList.add('disabled'));
+            // Disable all matrix radios
+            grid.querySelectorAll('input[type="radio"]').forEach(inp => inp.disabled = true);
+            const table = document.getElementById('matrix-active-table');
+            if (table) table.classList.add('disabled-row');
 
-        selectedOriginals = selectedShuffleIdxs.map(si => currentShuffleMap[si]);
-        const answerKey = getAnswerFromVault(data, origQIdx);
-        correctOriginals = Array.isArray(answerKey) ? answerKey : (answerKey !== null && answerKey !== undefined ? [answerKey] : []);
+            const answerKey = getAnswerFromVault(data, origQIdx);
+            correctOriginals = Array.isArray(answerKey) ? answerKey : [];
+            selectedOriginals = userAnswers;
 
-        if (data.type === 'mcq' || data.type === 'tf') {
-            isCorrect = selectedOriginals.length > 0 && selectedOriginals[0] === correctOriginals[0];
-            if (isExamLive) {
-                // 🛡️ ANTI-LEAK LIVE EXAM: Kunci pilihan tanpa mewarnai hijau/merah agar kawan di sebelah tidak melihat kunci
-                if (selectedShuffleIdxs.length > 0) {
-                    const l = document.getElementById(`label-${selectedShuffleIdxs[0]}`);
-                    if (l) l.classList.add('selected-locked');
+            let correctCount = 0;
+            rows.forEach((row, rIdx) => {
+                const userVal = userAnswers[rIdx];
+                const correctVal = correctOriginals[rIdx];
+                const lblTrue = document.getElementById(`matrix-lbl-${rIdx}-0`);
+                const lblFalse = document.getElementById(`matrix-lbl-${rIdx}-1`);
+
+                // Tandai kunci benar dengan border hijau
+                if (correctVal === 0 && lblTrue) lblTrue.classList.add('correct-choice');
+                if (correctVal === 1 && lblFalse) lblFalse.classList.add('correct-choice');
+
+                // Jika jawaban siswa salah, tandai pilihan siswa dengan border merah
+                if (userVal !== null && userVal !== correctVal) {
+                    const wrongLbl = userVal === 0 ? lblTrue : lblFalse;
+                    if (wrongLbl) wrongLbl.classList.add('wrong-choice');
                 }
-            } else {
-                if (isCorrect) {
-                    const l = document.getElementById(`label-${selectedShuffleIdxs[0]}`);
-                    if (l) l.classList.add('correct');
-                } else {
+
+                if (userVal === correctVal) {
+                    correctCount++;
+                }
+            });
+
+            const totalRows = correctOriginals.length || 1;
+            isCorrect = correctCount === totalRows;
+            const maxPts = data.points || 5;
+            const ptsEarned = Math.round((correctCount / totalRows) * maxPts);
+
+            pointRes = {
+                pointsEarned: ptsEarned,
+                maxPoints: maxPts,
+                isFullCorrect: isCorrect,
+                isPartial: !isCorrect && ptsEarned > 0,
+                summary: `${ptsEarned}/${maxPts} Poin (${correctCount}/${totalRows} Pernyataan Tepat)`
+            };
+        } else {
+            const inputs = document.querySelectorAll('input[name="q-opt"]');
+            const labels = document.querySelectorAll('.opt-label');
+
+            let selectedShuffleIdxs = [];
+            inputs.forEach(inp => {
+                if (inp.checked) selectedShuffleIdxs.push(parseInt(inp.value));
+            });
+
+            // 🛡️ RECOVERY FALLBACK: Jika radio checked tidak terdeteksi oleh browser touch tetapi ada label yang dipilih secara visual
+            if (selectedShuffleIdxs.length === 0) {
+                labels.forEach((lbl) => {
+                    if (lbl.classList.contains('selected-opt')) {
+                        const inp = lbl.querySelector('input[name="q-opt"]');
+                        if (inp) {
+                            inp.checked = true;
+                            const val = parseInt(inp.value);
+                            if (!isNaN(val) && !selectedShuffleIdxs.includes(val)) {
+                                selectedShuffleIdxs.push(val);
+                            }
+                        }
+                    }
+                });
+            }
+
+            if (selectedShuffleIdxs.length === 0 && !isAutoTimeout) {
+                sfxWrong();
+                showToast('Silakan pilih jawaban terlebih dahulu!', '⚠️');
+                if (TIMER_MAX > 0) startTimer();
+                return;
+            }
+
+            if (data.type === 'checkbox' && !isAutoTimeout) {
+                if (selectedShuffleIdxs.length === 0) {
+                    sfxWrong();
+                    showToast('Silakan pilih minimal 1 jawaban sebelum mengunci!', '⚠️');
+                    if (TIMER_MAX > 0) startTimer();
+                    return;
+                }
+            }
+
+            inputs.forEach(inp => inp.disabled = true);
+            labels.forEach(lbl => lbl.classList.add('disabled'));
+
+            selectedOriginals = selectedShuffleIdxs.map(si => currentShuffleMap[si]);
+            const answerKey = getAnswerFromVault(data, origQIdx);
+            correctOriginals = Array.isArray(answerKey) ? answerKey : (answerKey !== null && answerKey !== undefined ? [answerKey] : []);
+
+            if (data.type === 'mcq' || data.type === 'tf') {
+                isCorrect = selectedOriginals.length > 0 && selectedOriginals[0] === correctOriginals[0];
+                if (isExamLive) {
+                    // 🛡️ ANTI-LEAK LIVE EXAM: Kunci pilihan tanpa mewarnai hijau/merah agar kawan di sebelah tidak melihat kunci
                     if (selectedShuffleIdxs.length > 0) {
                         const l = document.getElementById(`label-${selectedShuffleIdxs[0]}`);
-                        if (l) l.classList.add('wrong');
+                        if (l) l.classList.add('selected-locked');
                     }
+                } else {
+                    if (isCorrect) {
+                        const l = document.getElementById(`label-${selectedShuffleIdxs[0]}`);
+                        if (l) l.classList.add('correct');
+                    } else {
+                        if (selectedShuffleIdxs.length > 0) {
+                            const l = document.getElementById(`label-${selectedShuffleIdxs[0]}`);
+                            if (l) l.classList.add('wrong');
+                        }
+                        currentShuffleMap.forEach((origIdx, shuffIdx) => {
+                            if (origIdx === correctOriginals[0]) {
+                                const l = document.getElementById(`label-${shuffIdx}`);
+                                if (l) l.classList.add('correct');
+                            }
+                        });
+                    }
+                }
+            } else {
+                const correctSet = new Set(correctOriginals);
+                const selectedSet = new Set(selectedOriginals);
+                isCorrect = correctSet.size === selectedSet.size && [...correctSet].every(v => selectedSet.has(v));
+
+                if (isExamLive) {
+                    // 🛡️ ANTI-LEAK LIVE EXAM: Hanya tandai pilihan terkunci tanpa membocorkan opsi mana yang benar
+                    selectedShuffleIdxs.forEach(shuffIdx => {
+                        const l = document.getElementById(`label-${shuffIdx}`);
+                        if (l) l.classList.add('selected-locked');
+                    });
+                } else {
                     currentShuffleMap.forEach((origIdx, shuffIdx) => {
-                        if (origIdx === correctOriginals[0]) {
+                        if (correctSet.has(origIdx)) {
                             const l = document.getElementById(`label-${shuffIdx}`);
                             if (l) l.classList.add('correct');
+                        }
+                        if (selectedShuffleIdxs.includes(shuffIdx) && !correctSet.has(origIdx)) {
+                            const l = document.getElementById(`label-${shuffIdx}`);
+                            if (l) l.classList.add('wrong');
                         }
                     });
                 }
             }
-        } else {
-            const correctSet = new Set(correctOriginals);
-            const selectedSet = new Set(selectedOriginals);
-            isCorrect = correctSet.size === selectedSet.size && [...correctSet].every(v => selectedSet.has(v));
 
-            if (isExamLive) {
-                // 🛡️ ANTI-LEAK LIVE EXAM: Hanya tandai pilihan terkunci tanpa membocorkan opsi mana yang benar
-                selectedShuffleIdxs.forEach(shuffIdx => {
-                    const l = document.getElementById(`label-${shuffIdx}`);
-                    if (l) l.classList.add('selected-locked');
-                });
-            } else {
-                currentShuffleMap.forEach((origIdx, shuffIdx) => {
-                    if (correctSet.has(origIdx)) {
-                        const l = document.getElementById(`label-${shuffIdx}`);
-                        if (l) l.classList.add('correct');
-                    }
-                    if (selectedShuffleIdxs.includes(shuffIdx) && !correctSet.has(origIdx)) {
-                        const l = document.getElementById(`label-${shuffIdx}`);
-                        if (l) l.classList.add('wrong');
-                    }
-                });
+            try {
+                pointRes = window.NemotronAI ? window.NemotronAI.calculateQuestionPoints({ ...data, answer: answerKey }, selectedOriginals) : null;
+            } catch (errNemotron) {
+                console.warn('Nemotron point calc fallback:', errNemotron);
+                pointRes = null;
+            }
+
+            if (!pointRes) {
+                pointRes = {
+                    pointsEarned: isCorrect ? (data.points || 5) : 0,
+                    maxPoints: data.points || 5,
+                    isFullCorrect: isCorrect,
+                    isPartial: false,
+                    summary: isCorrect ? 'Benar Penuh' : 'Salah'
+                };
             }
         }
 
-        pointRes = window.NemotronAI ? window.NemotronAI.calculateQuestionPoints({ ...data, answer: answerKey }, selectedOriginals) : {
-            pointsEarned: isCorrect ? (data.points || 5) : 0,
-            maxPoints: data.points || 5,
-            isFullCorrect: isCorrect,
-            isPartial: false,
-            summary: isCorrect ? 'Benar Penuh' : 'Salah'
+        earnedPointsTotal += pointRes.pointsEarned;
+
+        const card = document.querySelector('#screen-quiz .glass-card');
+        const fb = document.getElementById('feedback-box');
+
+        let selectedText = [];
+        let correctText = [];
+        if (data.type === 'matrix_tf') {
+            const stmts = data.statements || data.options || [];
+            selectedText = selectedOriginals.map((val, idx) => `[#${idx+1}] ${val === 0 ? 'Benar' : (val === 1 ? 'Salah' : 'Belum')}`);
+            correctText = correctOriginals.map((val, idx) => `[#${idx+1}] ${val === 0 ? 'Benar' : 'Salah'}`);
+        } else {
+            selectedText = selectedOriginals.map(idx => (data.options && data.options[idx]) || idx);
+            correctText = correctOriginals.map(idx => (data.options && data.options[idx]) || idx);
+        }
+
+        const expText = getExplanationFromVault(data, origQIdx);
+
+        detailedAnswers[origQIdx] = {
+            qIndex: origQIdx,
+            questionNumber: currentQ + 1,
+            questionText: data.q,
+            caseStudy: data.caseStudy || null,
+            difficulty: data.difficulty || 'Medium',
+            type: data.type,
+            options: data.options || data.statements,
+            selectedIndices: selectedOriginals,
+            selectedText: selectedText.length > 0 ? selectedText : ['(Waktu Habis — Belum Memilih)'],
+            correctIndices: correctOriginals,
+            correctText: correctText,
+            isCorrect: isCorrect,
+            pointsEarned: pointRes.pointsEarned,
+            maxPoints: pointRes.maxPoints,
+            isPartial: pointRes.isPartial,
+            pointSummary: pointRes.summary,
+            explanation: expText
         };
-    }
 
-    earnedPointsTotal += pointRes.pointsEarned;
+        // Sembunyikan tombol petunjuk saat jawaban sudah dikunci
+        const hintBtn = document.getElementById('btn-hint');
+        const hintBox = document.getElementById('hint-box');
+        if (hintBtn) hintBtn.style.display = 'none';
+        if (hintBox) hintBox.style.display = 'none';
 
-    const card = document.querySelector('#screen-quiz .glass-card');
-    const fb = document.getElementById('feedback-box');
+        if (isExamLive) {
+            // 🔒 ANTI-LEAK LIVE UJIAN KELAS:
+            // Pada saat ujian langsung (Penilaian Harian), feedback visual hijau/merah dan pembahasan disembunyikan
+            // agar tidak terbaca oleh teman sebangku/sebelah siswa di ruang kelas.
+            sfxClick();
+            if (pointRes.isFullCorrect) {
+                score++;
+                streak++;
+                if (streak > maxStreak) maxStreak = streak;
+                answeredCorrectly[origQIdx] = true;
+            } else if (pointRes.isPartial) {
+                streak = 0;
+                answeredCorrectly[origQIdx] = true;
+            } else {
+                streak = 0;
+                answeredCorrectly[origQIdx] = false;
+            }
 
-    let selectedText = [];
-    let correctText = [];
-    if (data.type === 'matrix_tf') {
-        const stmts = data.statements || data.options || [];
-        selectedText = selectedOriginals.map((val, idx) => `[#${idx+1}] ${val === 0 ? 'Benar' : (val === 1 ? 'Salah' : 'Belum')}`);
-        correctText = correctOriginals.map((val, idx) => `[#${idx+1}] ${val === 0 ? 'Benar' : 'Salah'}`);
-    } else {
-        selectedText = selectedOriginals.map(idx => (data.options && data.options[idx]) || idx);
-        correctText = correctOriginals.map(idx => (data.options && data.options[idx]) || idx);
-    }
-
-    const expText = getExplanationFromVault(data, origQIdx);
-
-    detailedAnswers[origQIdx] = {
-        qIndex: origQIdx,
-        questionNumber: currentQ + 1,
-        questionText: data.q,
-        caseStudy: data.caseStudy || null,
-        difficulty: data.difficulty || 'Medium',
-        type: data.type,
-        options: data.options || data.statements,
-        selectedIndices: selectedOriginals,
-        selectedText: selectedText.length > 0 ? selectedText : ['(Waktu Habis — Belum Memilih)'],
-        correctIndices: correctOriginals,
-        correctText: correctText,
-        isCorrect: isCorrect,
-        pointsEarned: pointRes.pointsEarned,
-        maxPoints: pointRes.maxPoints,
-        isPartial: pointRes.isPartial,
-        pointSummary: pointRes.summary,
-        explanation: expText
-    };
-
-    // Sembunyikan tombol petunjuk saat jawaban sudah dikunci
-    const hintBtn = document.getElementById('btn-hint');
-    const hintBox = document.getElementById('hint-box');
-    if (hintBtn) hintBtn.style.display = 'none';
-    if (hintBox) hintBox.style.display = 'none';
-
-    if (isExamLive) {
-        // 🔒 ANTI-LEAK LIVE UJIAN KELAS:
-        // Pada saat ujian langsung (Penilaian Harian), feedback visual hijau/merah dan pembahasan disembunyikan
-        // agar tidak terbaca oleh teman sebangku/sebelah siswa di ruang kelas.
-        sfxClick();
-        if (pointRes.isFullCorrect) {
-            score++;
-            streak++;
-            if (streak > maxStreak) maxStreak = streak;
-            answeredCorrectly[origQIdx] = true;
-        } else if (pointRes.isPartial) {
-            streak = 0;
-            answeredCorrectly[origQIdx] = true;
-        } else {
-            streak = 0;
-            answeredCorrectly[origQIdx] = false;
-        }
-
-        fb.className = 'feedback-box locked-fb';
-        fb.innerHTML = `<h4>🔒 Jawaban Terkunci & Disimpan</h4><p style="font-size:0.85rem; color:var(--text-secondary); margin-top:4px;">Pilihan Anda telah tercatat resmi oleh sistem. Kunci jawaban dan pembahasan lengkap dapat ditinjau setelah ujian selesai.</p>`;
-        if (card) card.classList.remove('streak-on-fire');
-    } else {
-        // 🎓 MODE REMEDIAL / LATIHAN PEDAGOGIS:
-        // Tampilkan pembahasan komprehensif, animasi kombo, dan suara interaktif
-        if (pointRes.isFullCorrect) {
-            sfxCorrect();
-            score++;
-            streak++;
-            if (streak > maxStreak) maxStreak = streak;
-            answeredCorrectly[origQIdx] = true;
-
-            triggerStreakVibration(streak);
-
-            fb.className = 'feedback-box correct-fb';
-            fb.innerHTML = `<h4>${isAutoTimeout ? '⏰ Waktu Habis — Pilihan Terkunci & Benar! ✅' : '✅ Jawaban Benar Penuh!'} (+${pointRes.pointsEarned} Poin)</h4>${formatPedagogicalFeedback(expText)}`;
-
-            const streakEl = document.getElementById('streak-display');
-            streakEl.style.transform = 'scale(1.25)';
-            setTimeout(() => streakEl.style.transform = '', 250);
-
-            if (card) card.classList.toggle('streak-on-fire', streak >= 3);
-            if (streak >= 2) showMegaComboHero(streak);
-        } else if (pointRes.isPartial) {
-            sfxCorrect();
-            streak = 0;
-            answeredCorrectly[origQIdx] = true;
-
-            fb.className = 'feedback-box warning-fb';
-            fb.innerHTML = `<h4>🟡 Jawaban Benar Sebagian (+${pointRes.pointsEarned}/${pointRes.maxPoints} Poin)</h4><p style="font-weight: 700; color: #fde047; margin-bottom: 6px;">${pointRes.summary}</p>${formatPedagogicalFeedback(expText)}`;
-
+            if (fb) {
+                fb.className = 'feedback-box locked-fb';
+                fb.innerHTML = `<h4>🔒 Jawaban Terkunci & Disimpan</h4><p style="font-size:0.85rem; color:var(--text-secondary); margin-top:4px;">Pilihan Anda telah tercatat resmi oleh sistem. Kunci jawaban dan pembahasan lengkap dapat ditinjau setelah ujian selesai.</p>`;
+            }
             if (card) card.classList.remove('streak-on-fire');
         } else {
-            sfxWrong();
-            streak = 0;
-            answeredCorrectly[origQIdx] = false;
+            // 🎓 MODE REMEDIAL / LATIHAN PEDAGOGIS:
+            // Tampilkan pembahasan komprehensif, animasi kombo, dan suara interaktif
+            if (pointRes.isFullCorrect) {
+                sfxCorrect();
+                score++;
+                streak++;
+                if (streak > maxStreak) maxStreak = streak;
+                answeredCorrectly[origQIdx] = true;
 
-            fb.className = 'feedback-box wrong-fb';
-            fb.innerHTML = `<h4>${isAutoTimeout ? '⏰ Waktu Habis — Pilihan Otomatis Terkunci! ❌' : '❌ Analisis Kurang Tepat'} (0/${pointRes.maxPoints} Poin)</h4>${formatPedagogicalFeedback(expText)}`;
+                triggerStreakVibration(streak);
 
-            if (card) card.classList.remove('streak-on-fire');
+                if (fb) {
+                    fb.className = 'feedback-box correct-fb';
+                    fb.innerHTML = `<h4>${isAutoTimeout ? '⏰ Waktu Habis — Pilihan Terkunci & Benar! ✅' : '✅ Jawaban Benar Penuh!'} (+${pointRes.pointsEarned} Poin)</h4>${formatPedagogicalFeedback(expText)}`;
+                }
+
+                const streakEl = document.getElementById('streak-display');
+                if (streakEl) {
+                    streakEl.style.transform = 'scale(1.25)';
+                    setTimeout(() => streakEl.style.transform = '', 250);
+                }
+
+                if (card) card.classList.toggle('streak-on-fire', streak >= 3);
+                if (streak >= 2) showMegaComboHero(streak);
+            } else if (pointRes.isPartial) {
+                sfxCorrect();
+                streak = 0;
+                answeredCorrectly[origQIdx] = true;
+
+                if (fb) {
+                    fb.className = 'feedback-box warning-fb';
+                    fb.innerHTML = `<h4>🟡 Jawaban Benar Sebagian (+${pointRes.pointsEarned}/${pointRes.maxPoints} Poin)</h4><p style="font-weight: 700; color: #fde047; margin-bottom: 6px;">${pointRes.summary}</p>${formatPedagogicalFeedback(expText)}`;
+                }
+
+                if (card) card.classList.remove('streak-on-fire');
+            } else {
+                sfxWrong();
+                streak = 0;
+                answeredCorrectly[origQIdx] = false;
+
+                if (fb) {
+                    fb.className = 'feedback-box wrong-fb';
+                    fb.innerHTML = `<h4>${isAutoTimeout ? '⏰ Waktu Habis — Pilihan Otomatis Terkunci! ❌' : '❌ Analisis Kurang Tepat'} (0/${pointRes.maxPoints} Poin)</h4>${formatPedagogicalFeedback(expText)}`;
+                }
+
+                if (card) card.classList.remove('streak-on-fire');
+            }
         }
-    }
 
-    fb.style.display = 'block';
-    document.getElementById('score-display').textContent = `⭐ ${earnedPointsTotal} Poin`;
-    document.getElementById('streak-display').textContent = `🔥 ${streak}`;
-    document.getElementById('streak-display').classList.toggle('on-fire', streak >= 3);
+        if (fb) fb.style.display = 'block';
+        const scoreEl = document.getElementById('score-display');
+        if (scoreEl) scoreEl.textContent = `⭐ ${earnedPointsTotal} Poin`;
+        const streakEl = document.getElementById('streak-display');
+        if (streakEl) {
+            streakEl.textContent = `🔥 ${streak}`;
+            streakEl.classList.toggle('on-fire', streak >= 3);
+        }
 
-    const isFinalQ = (currentQ >= quizData.length - 1);
-    const checkBtn = document.getElementById('btn-check');
-    const nextBtn = document.getElementById('btn-next');
-    if (checkBtn) checkBtn.style.display = 'none';
-    if (nextBtn) {
-        nextBtn.style.display = 'inline-flex';
-        nextBtn.disabled = false;
-        nextBtn.innerHTML = isFinalQ ? '🏁 Kirim Nilai ke Dasbor Guru ➔' : 'Lanjut Soal ➡️';
+        const isFinalQ = (currentQ >= quizData.length - 1);
+        const checkBtn = document.getElementById('btn-check');
+        const nextBtn = document.getElementById('btn-next');
+        if (checkBtn) {
+            checkBtn.style.display = 'none';
+            checkBtn.disabled = true;
+        }
+        if (nextBtn) {
+            nextBtn.style.display = 'inline-flex';
+            nextBtn.disabled = false;
+            nextBtn.innerHTML = isFinalQ ? '🏁 Kirim Nilai ke Dasbor Guru ➔' : 'Lanjut Soal ➡️';
+        }
+        saveCurrentQuizSession();
+    } finally {
+        isCheckingAnswer = false;
     }
-    saveCurrentQuizSession();
 }
 
 function nextQuestion() {
+    if (isTransitioningQuestion) return;
+    isTransitioningQuestion = true;
+
     const isFinalQ = (currentQ >= quizData.length - 1);
     if (isFinalQ) {
         // ⚡ INSTANT FINISH: Langsung panggil finishQuiz() seketika tanpa penundaan setTimeout!
@@ -2168,9 +2212,13 @@ function nextQuestion() {
 
     setTimeout(() => {
         currentQ++;
-        if (currentQ < quizData.length) loadQuestion(currentQ);
-        else finishQuiz();
-    }, 200);
+        if (currentQ < quizData.length) {
+            loadQuestion(currentQ);
+        } else {
+            finishQuiz();
+        }
+        isTransitioningQuestion = false;
+    }, 180);
 }
 
 async function finishQuiz() {
