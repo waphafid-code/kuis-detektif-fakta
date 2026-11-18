@@ -64,12 +64,12 @@ assert(!hasOptionPrefix, 'All options are strictly clean of letter prefixes ("A.
 // Q1: B (1)
 // Q2: D (3)
 // Q3: A (0)
-// Q4: E (4)
+// Q4: D (3) - Refactored for Anti-Guess Heuristic (prevents longest answer bias)
 // Q5: C (2)
 // Q6: B (1)
 // Q7: D (3)
 // Q8: E (4)
-const expectedMCQ = [1, 3, 0, 4, 2, 1, 3, 4];
+const expectedMCQ = [1, 3, 0, 3, 2, 1, 3, 4];
 for (let i = 0; i < 8; i++) {
     assert(moduleData.questions[i].answer === expectedMCQ[i], `MCQ #${i + 1} answer matches expected key (Index: ${expectedMCQ[i]})`);
 }

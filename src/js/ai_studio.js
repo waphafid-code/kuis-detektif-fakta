@@ -78,14 +78,26 @@ async function initModulesCatalog() {
     const listToRender = (visibleModules && visibleModules.length > 0) ? visibleModules : mergedModules;
 
     if (homeSelect) {
-        homeSelect.innerHTML = '';
-        listToRender.forEach(m => {
-            const opt = document.createElement('option');
-            opt.value = m.id;
-            opt.textContent = `${m.icon || '📚'} ${m.title} (${m.questionCount || 0} Soal)`;
-            if (m.id === activeId || listToRender.length === 1) opt.selected = true;
-            homeSelect.appendChild(opt);
-        });
+        const existingValues = Array.from(homeSelect.options || []).map(o => o.value);
+        const targetValues = listToRender.map(m => m.id);
+        const isIdentical = existingValues.length === targetValues.length &&
+            existingValues.every((val, idx) => val === targetValues[idx]);
+
+        // 🛡️ ANTI-GLITCH: Jangan wipe innerHTML jika opsi sudah sama persis (mencegah dropdown berkedip/menutup sendiri)
+        if (!isIdentical) {
+            homeSelect.innerHTML = '';
+            listToRender.forEach(m => {
+                const opt = document.createElement('option');
+                opt.value = m.id;
+                opt.textContent = `${m.icon || '📚'} ${m.title} (${m.questionCount || 0} Soal)`;
+                if (m.id === activeId || listToRender.length === 1) opt.selected = true;
+                homeSelect.appendChild(opt);
+            });
+        }
+
+        if (homeSelect.value !== activeId) {
+            homeSelect.value = activeId;
+        }
 
         // Jika hanya 1 modul yang diizinkan tampil, pastikan activeId sesuai modul tersebut
         if (listToRender.length === 1) {
@@ -96,13 +108,22 @@ async function initModulesCatalog() {
     }
 
     if (filterSelect) {
-        let opts = '<option value="all">📊 Komparasi 2 Modul (Lengkap)</option>';
-        modules.forEach(m => {
-            opts += `<option value="${m.id}">${m.icon || '📚'} ${m.title}</option>`;
-        });
-        filterSelect.innerHTML = opts;
+        const existingFilterVals = Array.from(filterSelect.options || []).map(o => o.value);
+        const targetFilterVals = ['all', ...modules.map(m => m.id)];
+        const isFilterIdentical = existingFilterVals.length === targetFilterVals.length &&
+            existingFilterVals.every((val, idx) => val === targetFilterVals[idx]);
+
+        if (!isFilterIdentical) {
+            let opts = '<option value="all">📊 Komparasi 2 Modul (Lengkap)</option>';
+            modules.forEach(m => {
+                opts += `<option value="${m.id}">${m.icon || '📚'} ${m.title}</option>`;
+            });
+            filterSelect.innerHTML = opts;
+        }
         const currentDashFilter = localStorage.getItem('quizmaster_dashboard_module_filter') || 'modul_jaringan_keamanan';
-        filterSelect.value = currentDashFilter;
+        if (filterSelect.value !== currentDashFilter) {
+            filterSelect.value = currentDashFilter;
+        }
     }
 
     // Sinkronkan elemen dropdown di Settings Panel Dasbor Guru
@@ -124,8 +145,17 @@ async function handleHomeModuleChange(isUserAction = false) {
     }
     QuizManager.setActiveModuleId(moduleId, false); // Jangan broadcast perubahan lokal siswa ke cloud!
 
-    const modules = await QuizManager.getAllModules();
-    const current = modules.find(m => m.id === moduleId) || QuizManager.DEFAULT_MODULE;
+    // ⚡ INSTANT RESOLVE: Cari modul secara sinkron terlebih dahulu tanpa await agar badge & deskripsi berubah 0ms tanpa glitch
+    let current = null;
+    if (QuizManager.NETWORK_SECURITY_MODULE && moduleId === QuizManager.NETWORK_SECURITY_MODULE.id) current = QuizManager.NETWORK_SECURITY_MODULE;
+    else if (QuizManager.HKI_CULTURE_MODULE && moduleId === QuizManager.HKI_CULTURE_MODULE.id) current = QuizManager.HKI_CULTURE_MODULE;
+    else if (QuizManager.ETIKA_PRIVASI_MODULE && moduleId === QuizManager.ETIKA_PRIVASI_MODULE.id) current = QuizManager.ETIKA_PRIVASI_MODULE;
+    else if (QuizManager.DEFAULT_MODULE && moduleId === QuizManager.DEFAULT_MODULE.id) current = QuizManager.DEFAULT_MODULE;
+
+    if (!current) {
+        const modules = await QuizManager.getAllModules();
+        current = modules.find(m => m.id === moduleId) || QuizManager.DEFAULT_MODULE;
+    }
     currentActiveModule = current;
 
     const badgeEl = document.getElementById('home-module-badge');

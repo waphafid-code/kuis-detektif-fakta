@@ -1197,7 +1197,14 @@ body.dark-theme .form-control:focus {
     border-color: #6366f1; background: rgba(99, 102, 241, 0.04);
     transform: translateX(4px); box-shadow: 0 4px 14px rgba(99, 102, 241, 0.1);
 }
-.opt-label input[type="radio"], .opt-label input[type="checkbox"] { display: none; }
+.opt-label input[type="radio"], .opt-label input[type="checkbox"] {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+    pointer-events: none;
+    margin: 0;
+}
 
 .opt-label .check-indicator {
     width: 24px; height: 24px; border-radius: 50%; margin-right: 14px;
@@ -1259,7 +1266,14 @@ body.dark-theme .form-control:focus {
     cursor: pointer; border: 1.5px solid var(--glass-border); transition: all 0.2s ease;
     background: var(--bg-card); color: var(--text-secondary);
 }
-.matrix-btn-label input { display: none; }
+.matrix-btn-label input {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+    pointer-events: none;
+    margin: 0;
+}
 .matrix-btn-label.true-btn.active {
     background: var(--primary); border-color: var(--primary); color: #fff;
 }

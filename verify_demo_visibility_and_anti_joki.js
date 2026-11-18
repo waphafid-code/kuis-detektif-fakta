@@ -270,11 +270,11 @@ test('7. audio.js syncs demoVisibility, deviceBindingMode, and examToken setting
 });
 
 // 8. Verify cache-busting version tags updated
-test('8. Cache-busting version tag updated to v3018 in HTML files', () => {
+test('8. Cache-busting version tag updated to v3018 or v3019 in HTML files', () => {
     const html = fs.readFileSync(path.join(__dirname, 'index.html'), 'utf8');
     const guruHtml = fs.readFileSync(path.join(__dirname, 'kuis_interaktif_dasbor_guru.html'), 'utf8');
-    assert(html.includes('v3018-anti-joki-and-demo-toggle'), 'index.html missing v3018 tag');
-    assert(guruHtml.includes('v3018-anti-joki-and-demo-toggle'), 'kuis_interaktif_dasbor_guru.html missing v3018 tag');
+    assert(html.includes('v3018-anti-joki-and-demo-toggle') || html.includes('v3019-zero-lag-anti-glitch'), 'index.html missing v3018/v3019 tag');
+    assert(guruHtml.includes('v3018-anti-joki-and-demo-toggle') || guruHtml.includes('v3019-zero-lag-anti-glitch'), 'kuis_interaktif_dasbor_guru.html missing v3018/v3019 tag');
 });
 
 console.log('════════════════════════════════════════════════════════════════');

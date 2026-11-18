@@ -8,16 +8,70 @@ let isCheatingTriggered = false;
 // Menyimpan kunci jawaban & pembahasan di closure privat agar tidak bisa diintip via Console/window.quizData
 // ============================================================
 const _secureAnswerVault = new Map();
+const _masterBuiltinVault = new Map();
+
+function backupMasterBuiltinQuestions() {
+    if (typeof window === 'undefined') return;
+    try {
+        const moduleSources = [
+            { list: window.DEFAULT_BUILTIN_QUESTIONS, prefix: 'def_' },
+            { list: window.NETWORK_SECURITY_BUILTIN_QUESTIONS, prefix: 'net_' },
+            { list: window.HKI_CULTURE_BUILTIN_QUESTIONS, prefix: 'hki_' },
+            { list: window.ETIKA_PRIVASI_BUILTIN_QUESTIONS, prefix: 'etika_' }
+        ];
+
+        moduleSources.forEach(src => {
+            if (Array.isArray(src.list)) {
+                src.list.forEach((q, idx) => {
+                    if (q && q.answer !== undefined) {
+                        const entry = { answer: q.answer, explanation: q.explanation || '' };
+                        if (q.id) {
+                            _masterBuiltinVault.set(q.id, entry);
+                            _masterBuiltinVault.set(String(q.id), entry);
+                        }
+                        _masterBuiltinVault.set(`${src.prefix}${idx}`, entry);
+                        _masterBuiltinVault.set(`idx_${idx}`, entry);
+                    }
+                    delete q.answer;
+                    delete q.explanation;
+                });
+            }
+        });
+    } catch(e) {}
+}
 
 function vaultAnswers(questions) {
     if (!Array.isArray(questions)) return [];
-    _secureAnswerVault.clear();
+    
+    // Simpan salinan cadangan master modul agar tidak pernah hilang pada pengulangan/remedial
+    backupMasterBuiltinQuestions();
+
     const sanitizedList = questions.map((q, idx) => {
         const qId = q.id || `q_${idx}`;
-        _secureAnswerVault.set(qId, {
-            answer: q.answer,
-            explanation: q.explanation
-        });
+        let ans = q.answer;
+        let exp = q.explanation;
+
+        // Pulihkan kunci dari vault jika sudah terhapus di sesi kuis sebelumnya
+        if (ans === undefined) {
+            const cached = _secureAnswerVault.get(qId) || 
+                           _secureAnswerVault.get(String(qId)) || 
+                           _masterBuiltinVault.get(qId) || 
+                           _masterBuiltinVault.get(String(qId)) ||
+                           _secureAnswerVault.get(`idx_${idx}`) ||
+                           _masterBuiltinVault.get(`idx_${idx}`);
+            if (cached) {
+                ans = cached.answer;
+                exp = cached.explanation;
+            }
+        }
+
+        if (ans !== undefined) {
+            const record = { answer: ans, explanation: exp || '' };
+            _secureAnswerVault.set(qId, record);
+            _secureAnswerVault.set(String(qId), record);
+            _secureAnswerVault.set(`q_${idx}`, record);
+            _secureAnswerVault.set(`idx_${idx}`, record);
+        }
 
         // Buat salinan aman tanpa kunci jawaban dan pembahasan langsung
         const sanitized = { ...q, id: qId };
@@ -26,51 +80,53 @@ function vaultAnswers(questions) {
         return sanitized;
     });
 
-    // 🛡️ SECURITY: Bersihkan kunci mentah dari SEMUA 4 MODUL PEMBELAJARAN
-    // Mencegah siswa membuka Console DevTools dan membaca kunci jawaban langsung
-    try {
-        if (typeof window !== 'undefined') {
-            const moduleSources = [
-                { list: window.DEFAULT_BUILTIN_QUESTIONS, prefix: 'q_' },
-                { list: window.NETWORK_SECURITY_BUILTIN_QUESTIONS, prefix: 'net_q_' },
-                { list: window.HKI_CULTURE_BUILTIN_QUESTIONS, prefix: 'hki_q_' },
-                { list: window.ETIKA_PRIVASI_BUILTIN_QUESTIONS, prefix: 'etika_q_' }
-            ];
-
-            moduleSources.forEach(src => {
-                if (Array.isArray(src.list)) {
-                    src.list.forEach((q, idx) => {
-                        const qId = q.id || `${src.prefix}${idx}`;
-                        if (!_secureAnswerVault.has(qId) && q.answer !== undefined) {
-                            _secureAnswerVault.set(qId, { answer: q.answer, explanation: q.explanation });
-                        }
-                        delete q.answer;
-                        delete q.explanation;
-                    });
-                }
-            });
-        }
-    } catch(e) {}
-
     return sanitizedList;
 }
 
 function getAnswerFromVault(q, origQIdx) {
-    const qId = (q && q.id) || `q_${origQIdx}`;
-    const entry = _secureAnswerVault.get(qId);
-    if (entry && entry.answer !== undefined) {
-        return entry.answer;
+    if (!q) return null;
+    const candidates = [
+        q.id,
+        String(q.id),
+        `q_${origQIdx}`,
+        `idx_${origQIdx}`
+    ];
+    for (const key of candidates) {
+        if (key !== undefined && key !== null) {
+            if (_secureAnswerVault.has(key)) {
+                const entry = _secureAnswerVault.get(key);
+                if (entry && entry.answer !== undefined) return entry.answer;
+            }
+            if (_masterBuiltinVault.has(key)) {
+                const entry = _masterBuiltinVault.get(key);
+                if (entry && entry.answer !== undefined) return entry.answer;
+            }
+        }
     }
-    return (q && q.answer !== undefined) ? q.answer : null;
+    return (q.answer !== undefined) ? q.answer : null;
 }
 
 function getExplanationFromVault(q, origQIdx) {
-    const qId = (q && q.id) || `q_${origQIdx}`;
-    const entry = _secureAnswerVault.get(qId);
-    if (entry && entry.explanation !== undefined) {
-        return entry.explanation;
+    if (!q) return '';
+    const candidates = [
+        q.id,
+        String(q.id),
+        `q_${origQIdx}`,
+        `idx_${origQIdx}`
+    ];
+    for (const key of candidates) {
+        if (key !== undefined && key !== null) {
+            if (_secureAnswerVault.has(key)) {
+                const entry = _secureAnswerVault.get(key);
+                if (entry && entry.explanation !== undefined) return entry.explanation;
+            }
+            if (_masterBuiltinVault.has(key)) {
+                const entry = _masterBuiltinVault.get(key);
+                if (entry && entry.explanation !== undefined) return entry.explanation;
+            }
+        }
     }
-    return (q && q.explanation) ? q.explanation : '';
+    return (q.explanation) ? q.explanation : '';
 }
 
 // 🛡️ PEMBERSIH TEKS SOAL & OPSI (HAPUS PREFIX "SOAL NO...", "PERTANYAAN 1:", "**1.**", "1)", "A.", DLL)
@@ -789,6 +845,7 @@ async function initiateQuiz() {
     const moduleId = moduleSelect ? moduleSelect.value : (window.QuizManager ? QuizManager.getActiveModuleId() : 'modul_detektif_fakta');
 
     if (!cls) {
+        if (typeof switchScreen === 'function') switchScreen('home');
         if (typeof sfxWrong === 'function') sfxWrong();
         if (clsSelect) {
             clsSelect.style.borderColor = 'var(--danger)';
@@ -800,6 +857,7 @@ async function initiateQuiz() {
     }
 
     if (!name) {
+        if (typeof switchScreen === 'function') switchScreen('home');
         if (typeof sfxWrong === 'function') sfxWrong();
         if (nameSelect) {
             nameSelect.style.borderColor = 'var(--danger)';
@@ -1121,6 +1179,8 @@ let questionStartTime = 0;
 let questionDuration = 0;
 let questionRemainingSec = 0;
 let lastWarnedSec = -1;
+let timerInterval = (typeof window !== 'undefined' && window.timerInterval) ? window.timerInterval : null;
+let timerVal = (typeof window !== 'undefined' && window.timerVal) ? window.timerVal : 0;
 
 let questionStartPerf = 0;
 
@@ -1719,6 +1779,27 @@ function loadQuestion(index) {
                 }
             });
 
+            // 🛡️ MOBILE TOUCH & TAP ZERO-LAG DISPATCHER:
+            // Pastikan event tap/click pada label langsung mengaktifkan radio input tanpa jeda & tanpa drop di HP
+            label.addEventListener('click', (e) => {
+                if (input.disabled) return;
+                if (data.type === 'mcq' || data.type === 'tf') {
+                    if (!input.checked) {
+                        input.checked = true;
+                    }
+                    grid.querySelectorAll('.opt-label').forEach(l => l.classList.remove('selected-opt'));
+                    label.classList.add('selected-opt');
+                    if (typeof sfxClick === 'function') sfxClick();
+                } else if (data.type === 'checkbox') {
+                    if (e.target !== input) {
+                        input.checked = !input.checked;
+                    }
+                    label.classList.toggle('selected-opt', input.checked);
+                    if (typeof updateCheckboxCounter === 'function') updateCheckboxCounter();
+                    if (typeof sfxClick === 'function') sfxClick();
+                }
+            });
+
             const checkMark = document.createElement('span');
             checkMark.className = 'check-indicator';
 
@@ -1752,6 +1833,7 @@ window.handleMatrixRadioSelect = function(rowIdx, val) {
 
 function checkAnswer(isAutoTimeout = false) {
     stopTimer();
+    const isExamLive = !isRemedialSession;
     const origQIdx = shuffledQuizOrder[currentQ];
     const data = quizData[origQIdx];
     const grid = document.getElementById('options-grid');
@@ -1766,7 +1848,19 @@ function checkAnswer(isAutoTimeout = false) {
         let allChosen = true;
         let userAnswers = []; // 0 = Benar, 1 = Salah, null = belum
         rows.forEach((row, rIdx) => {
-            const checked = row.querySelector(`input[name="matrix_row_${currentQ}_${rIdx}"]:checked`);
+            let checked = row.querySelector(`input[name="matrix_row_${currentQ}_${rIdx}"]:checked`);
+            // 🛡️ RECOVERY FALLBACK: Jika browser touch tidak memicu checked namun label bertanda active
+            if (!checked) {
+                const lblTrue = document.getElementById(`matrix-lbl-${rIdx}-0`);
+                const lblFalse = document.getElementById(`matrix-lbl-${rIdx}-1`);
+                if (lblTrue && lblTrue.classList.contains('active')) {
+                    const inp = lblTrue.querySelector('input');
+                    if (inp) { inp.checked = true; checked = inp; }
+                } else if (lblFalse && lblFalse.classList.contains('active')) {
+                    const inp = lblFalse.querySelector('input');
+                    if (inp) { inp.checked = true; checked = inp; }
+                }
+            }
             if (!checked) {
                 allChosen = false;
                 userAnswers.push(null);
@@ -1834,6 +1928,22 @@ function checkAnswer(isAutoTimeout = false) {
             if (inp.checked) selectedShuffleIdxs.push(parseInt(inp.value));
         });
 
+        // 🛡️ RECOVERY FALLBACK: Jika radio checked tidak terdeteksi oleh browser touch tetapi ada label yang dipilih secara visual
+        if (selectedShuffleIdxs.length === 0) {
+            labels.forEach((lbl) => {
+                if (lbl.classList.contains('selected-opt')) {
+                    const inp = lbl.querySelector('input[name="q-opt"]');
+                    if (inp) {
+                        inp.checked = true;
+                        const val = parseInt(inp.value);
+                        if (!isNaN(val) && !selectedShuffleIdxs.includes(val)) {
+                            selectedShuffleIdxs.push(val);
+                        }
+                    }
+                }
+            });
+        }
+
         if (selectedShuffleIdxs.length === 0 && !isAutoTimeout) {
             sfxWrong();
             showToast('Silakan pilih jawaban terlebih dahulu!', '⚠️');
@@ -1856,8 +1966,6 @@ function checkAnswer(isAutoTimeout = false) {
         selectedOriginals = selectedShuffleIdxs.map(si => currentShuffleMap[si]);
         const answerKey = getAnswerFromVault(data, origQIdx);
         correctOriginals = Array.isArray(answerKey) ? answerKey : (answerKey !== null && answerKey !== undefined ? [answerKey] : []);
-
-        const isExamLive = !isRemedialSession;
 
         if (data.type === 'mcq' || data.type === 'tf') {
             isCorrect = selectedOriginals.length > 0 && selectedOriginals[0] === correctOriginals[0];
