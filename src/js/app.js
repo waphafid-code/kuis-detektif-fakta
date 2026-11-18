@@ -1,4 +1,26 @@
 // ============================================================
+// 🛡️ GLOBAL ERROR & PROMISE REJECTION SHIELD (ANTI-FORCE CLOSE & ANTI-FREEZE)
+// ============================================================
+if (typeof window !== 'undefined') {
+    window.addEventListener('unhandledrejection', (event) => {
+        console.warn('⚠️ [Global Promise Shield Intercepted]:', event.reason);
+        if (event && event.preventDefault) event.preventDefault();
+    });
+
+    window.addEventListener('error', (event) => {
+        if (event && event.message && (
+            event.message.includes('ResizeObserver') ||
+            event.message.includes('Script error') ||
+            event.message.includes('AudioContext')
+        )) {
+            if (event.preventDefault) event.preventDefault();
+            return;
+        }
+        console.warn('⚠️ [Global Error Shield Intercepted]:', event ? event.message : event);
+    });
+}
+
+// ============================================================
 //  🌓 MODERN THEME SYSTEM (LIGHT & DARK MODE)
 // ============================================================
 function initTheme() {

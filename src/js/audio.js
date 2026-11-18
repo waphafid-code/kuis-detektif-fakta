@@ -717,13 +717,17 @@ function applyCloudSharedStateToLocal(state) {
             targetActiveId = 'modul_jaringan_keamanan';
         }
 
-        if (window.QuizManager) {
-            const curActive = window.QuizManager.getActiveModuleId();
-            if (curActive !== targetActiveId) {
-                window.QuizManager.setActiveModuleId(targetActiveId, false);
+        const inQuiz = (typeof isQuizActive === 'function' && isQuizActive()) ||
+                       (document.getElementById('screen-quiz') && document.getElementById('screen-quiz').classList.contains('active'));
+        if (!inQuiz) {
+            if (window.QuizManager) {
+                const curActive = window.QuizManager.getActiveModuleId();
+                if (curActive !== targetActiveId) {
+                    window.QuizManager.setActiveModuleId(targetActiveId, false);
+                }
             }
+            if (typeof initModulesCatalog === 'function') initModulesCatalog();
         }
-        if (typeof initModulesCatalog === 'function') initModulesCatalog();
 
         // 4b. Sinkronisasi Visibilitas Akun & Kelas Demo Siswa
         if (state.demoVisibility !== undefined) {
@@ -796,6 +800,14 @@ function initSupabaseRealtime() {
 window.initSupabaseRealtime = initSupabaseRealtime;
 
 async function syncWithBackend(showFeedback = false) {
+    // 🛡️ QUIZ FOCUS PROTECTION: Jika siswa sedang aktif di tengah ujian kuis,
+    // tunda sinkronisasi riwayat nilai orang lain agar thread CPU & memori HP siswa 100% lancar tanpa lag/freeze
+    if (!showFeedback) {
+        if (typeof isQuizActive === 'function' && isQuizActive()) return;
+        const quizEl = (typeof document !== 'undefined') ? document.getElementById('screen-quiz') : null;
+        if (quizEl && quizEl.classList && quizEl.classList.contains('active')) return;
+    }
+
     const cfg = (typeof getSupabaseConfig === 'function') ? getSupabaseConfig() : { url: DEFAULT_SUPABASE_URL, key: DEFAULT_SUPABASE_ANON_KEY, table: 'quiz_results' };
     const tableName = cfg.table || 'quiz_results';
 

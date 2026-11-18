@@ -181,7 +181,11 @@ function saveCurrentQuizSession() {
         const jsonStr = JSON.stringify(sessionData);
         sessionStorage.setItem(SESSION_QUIZ_ACTIVE_KEY, jsonStr);
         // 🛡️ DUAL STORAGE PERSISTENCE: Lindungi dari RAM eviction Android HP Kentang
-        localStorage.setItem('quizmaster_active_exam_session_backup', jsonStr);
+        if (typeof safeLocalStorageSet === 'function') {
+            safeLocalStorageSet('quizmaster_active_exam_session_backup', jsonStr);
+        } else {
+            localStorage.setItem('quizmaster_active_exam_session_backup', jsonStr);
+        }
     } catch(e) {}
 }
 
@@ -302,6 +306,7 @@ window.isQuizFinishing = isQuizFinishing;
 function isQuizActive() {
     return screens.quiz && screens.quiz.classList.contains('active') && !isCheatingTriggered && !isQuizFinishing;
 }
+window.isQuizActive = isQuizActive;
 
 // 🖥️ FULLSCREEN LOCKDOWN UTILITIES & CONTROLLERS
 let fullscreenWarningTimer = null;
@@ -1768,35 +1773,23 @@ function loadQuestion(index) {
             input.value = shuffIdx;
 
             input.addEventListener('change', () => {
-                sfxClick();
+                if (typeof sfxClick === 'function') sfxClick();
                 if (data.type === 'mcq' || data.type === 'tf') {
-                    // Garansi: Hapus seleksi visual dari semua baris lain
                     grid.querySelectorAll('.opt-label').forEach(l => l.classList.remove('selected-opt'));
                     label.classList.add('selected-opt');
                 } else if (data.type === 'checkbox') {
                     label.classList.toggle('selected-opt', input.checked);
-                    updateCheckboxCounter();
+                    if (typeof updateCheckboxCounter === 'function') updateCheckboxCounter();
                 }
             });
 
-            // 🛡️ MOBILE TOUCH & TAP ZERO-LAG DISPATCHER:
-            // Pastikan event tap/click pada label langsung mengaktifkan radio input tanpa jeda & tanpa drop di HP
+            // 🛡️ MOBILE TOUCH ZERO-LAG DISPATCHER:
+            // Fallback aman untuk browser ponsel jika sentuhan label belum memicu change event pada radio
             label.addEventListener('click', (e) => {
                 if (input.disabled) return;
-                if (data.type === 'mcq' || data.type === 'tf') {
-                    if (!input.checked) {
-                        input.checked = true;
-                    }
-                    grid.querySelectorAll('.opt-label').forEach(l => l.classList.remove('selected-opt'));
-                    label.classList.add('selected-opt');
-                    if (typeof sfxClick === 'function') sfxClick();
-                } else if (data.type === 'checkbox') {
-                    if (e.target !== input) {
-                        input.checked = !input.checked;
-                    }
-                    label.classList.toggle('selected-opt', input.checked);
-                    if (typeof updateCheckboxCounter === 'function') updateCheckboxCounter();
-                    if (typeof sfxClick === 'function') sfxClick();
+                if ((data.type === 'mcq' || data.type === 'tf') && !input.checked) {
+                    input.checked = true;
+                    input.dispatchEvent(new Event('change'));
                 }
             });
 

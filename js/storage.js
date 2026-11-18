@@ -534,12 +534,22 @@ let sharedNoiseBuffer = null;
 
 function initAudio() {
     try {
-        if (!actx && ACConstructor) {
-            actx = new ACConstructor();
-            window.actx = actx;
+        if (!actx) {
+            if (window.actx && window.actx.state !== 'closed') {
+                actx = window.actx;
+            } else if (window.audioCtx && window.audioCtx.state !== 'closed') {
+                actx = window.audioCtx;
+            } else if (ACConstructor) {
+                actx = new ACConstructor();
+            }
+            if (actx) {
+                window.actx = actx;
+                window.audioCtx = actx;
+            }
         }
         if (actx) {
             window.actx = actx;
+            window.audioCtx = actx;
             if (!masterGain) {
                 masterGain = actx.createGain();
                 masterGain.gain.setValueAtTime(isMuted ? 0 : 1.0, actx.currentTime);
@@ -1026,11 +1036,17 @@ function scheduleBgmStep(stepIndex, noteTime) {
 const POTATO_SCHEDULE_AHEAD = 0.22;
 function bgmScheduler() {
     if (!bgmRunning || !actx) return;
+    // 🛡️ ANTI-SPIRAL & LAG GUARD: Jika audio tertinggal (misal layar mati, tab blur, atau GC pause), reset langsung ke waktu sekarang
+    if (nextNoteTime < actx.currentTime) {
+        nextNoteTime = actx.currentTime + 0.05;
+    }
     const aheadTime = isPotatoDevice ? POTATO_SCHEDULE_AHEAD : SCHEDULE_AHEAD_TIME;
-    while (nextNoteTime < actx.currentTime + aheadTime) {
+    let maxSteps = 4; // Batasi per-tick maksimal 4 step agar thread audio tetap ringan 0ms tanpa freeze/lag
+    while (nextNoteTime < actx.currentTime + aheadTime && maxSteps > 0) {
         scheduleBgmStep(bgmStep, nextNoteTime);
         nextNoteTime += BGM_STEP_DURATION;
         bgmStep++;
+        maxSteps--;
     }
 }
 
@@ -1189,7 +1205,38 @@ function runManualStorageCleanup() {
     }
 }
 
+// 🛡️ SAFE STORAGE SETTER (ANTI-QUOTA EXCEEDED CRASH / CACHE MANAGEMENT)
+function safeLocalStorageSet(key, val) {
+    try {
+        localStorage.setItem(key, val);
+        return true;
+    } catch (e) {
+        console.warn('⚠️ [Storage Quota Guard]: Menjalankan pembersihan darurat cache sementara...');
+        try {
+            cleanupExpiredStorageFiles();
+            const nonEssentialPrefixes = ['quizmaster_cached_file_', 'detektif_extracted_doc_', 'qm_temp_upload_'];
+            for (let i = localStorage.length - 1; i >= 0; i--) {
+                const k = localStorage.key(i);
+                if (k && nonEssentialPrefixes.some(p => k.startsWith(p))) {
+                    localStorage.removeItem(k);
+                }
+            }
+            localStorage.setItem(key, val);
+            return true;
+        } catch (retryErr) {
+            console.error('❌ [Storage Quota Critical]: Gagal menyimpan ke localStorage:', retryErr);
+            if (typeof window !== 'undefined') {
+                if (!window._memStorageFallback) window._memStorageFallback = {};
+                window._memStorageFallback[key] = val;
+            }
+            return false;
+        }
+    }
+}
+
+window.safeLocalStorageSet = safeLocalStorageSet;
 window.cleanupExpiredStorageFiles = cleanupExpiredStorageFiles;
 window.runManualStorageCleanup = runManualStorageCleanup;
+
 
 

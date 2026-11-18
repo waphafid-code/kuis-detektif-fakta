@@ -38,6 +38,11 @@ window.setActiveExamModuleSetting = setActiveExamModuleSetting;
 
 async function initModulesCatalog() {
     if (!window.QuizManager) return;
+    // 🛡️ QUIZ SESSION IMMUNITY: Jangan sentuh katalog atau modul aktif saat siswa sedang berada di tengah ujian
+    if (typeof isQuizActive === 'function' && isQuizActive()) return;
+    const quizEl = (typeof document !== 'undefined') ? document.getElementById('screen-quiz') : null;
+    if (quizEl && quizEl.classList && quizEl.classList.contains('active')) return;
+
     const modules = await QuizManager.getAllModules();
     const homeSelect = document.getElementById('input-module');
     const filterSelect = document.getElementById('filter-module');

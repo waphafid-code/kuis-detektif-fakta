@@ -66,13 +66,17 @@ function drawParticles(timestamp) {
         return;
     }
 
-    // 🛑 Matikan rendering di HP/Tablet (< 992px) atau perangkat kentang agar 60 FPS stabil & hemat baterai
+    // 🛑 Matikan rendering di HP/Tablet (< 992px), perangkat kentang, atau saat siswa sedang aktif di ruang ujian
     const isMobileOrTablet = window.innerWidth < 992;
     const isPotato = (typeof document !== 'undefined') && (
         document.documentElement.classList.contains('hp-kentang') ||
         (typeof DeviceTier !== 'undefined' && DeviceTier.isModeRingan && DeviceTier.isModeRingan())
     );
-    if (isMobileOrTablet || isPotato) {
+    const quizScreen = (typeof document !== 'undefined') ? document.getElementById('screen-quiz') : null;
+    const isQuizActiveNow = (typeof isQuizActive === 'function' && isQuizActive()) ||
+                            (quizScreen && quizScreen.classList.contains('active'));
+
+    if (isMobileOrTablet || isPotato || isQuizActiveNow) {
         particleAnimFrameId = null;
         return;
     }
