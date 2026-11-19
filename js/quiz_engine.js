@@ -2296,7 +2296,8 @@ async function finishQuiz() {
         timestamp: now.getTime(),
         tabSwitchCount: cheatStrikes || 0,
         isCheated: false,
-        hintsUsedCount: sessionHintsUsedCount || 0
+        hintsUsedCount: sessionHintsUsedCount || 0,
+        maxStreak: maxStreak || 0
     };
 
     // 🛡️ BUKTI OTENTIKASI & VERIFIKASI RESMI DIHASILKAN SEGERA
@@ -2304,6 +2305,11 @@ async function finishQuiz() {
     const proofCode = `SMAN4-${safeCls}-${displayScore}-${Date.now().toString(36).toUpperCase()}`;
     record.submissionProofId = proofCode;
     window.lastSubmittedProofId = proofCode;
+    // Simpan satu snapshot final yang dipakai layar hasil, PDF, dan Excel.
+    window.lastQuizScore = displayScore;
+    window.lastQuizPointsEarned = earnedPointsTotal;
+    window.lastQuizTotalPoints = totalPossiblePoints;
+    window.lastQuizResult = { ...record, submissionProofId: proofCode };
 
     // Hapus sesi aktif lokal kuis
     try {
