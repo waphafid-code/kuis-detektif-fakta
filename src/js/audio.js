@@ -737,17 +737,7 @@ function applyCloudSharedStateToLocal(state) {
             }
         }
 
-        // 4c. Sinkronisasi Pengaturan Anti-Joki (Kunci HP & Token Ujian)
-        if (state.deviceBindingMode !== undefined) {
-            localStorage.setItem('quizmaster_device_binding_mode', state.deviceBindingMode);
-            const devBindSel = document.getElementById('setting-device-binding');
-            if (devBindSel) devBindSel.value = state.deviceBindingMode;
-        }
-        if (state.resetDeviceBindingsTimestamp) {
-            if (typeof resetAllDeviceBindings === 'function') {
-                resetAllDeviceBindings(false);
-            }
-        }
+        // 4c. Sinkronisasi Pengaturan Anti-Joki (Token Ujian)
         if (state.examTokenMode !== undefined || state.examTokenCode !== undefined) {
             if (state.examTokenMode !== undefined) localStorage.setItem('quizmaster_exam_token_mode', state.examTokenMode);
             if (state.examTokenCode !== undefined) localStorage.setItem('quizmaster_exam_token_code', state.examTokenCode);

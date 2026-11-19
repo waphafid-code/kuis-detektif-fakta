@@ -1340,85 +1340,6 @@ function initDemoVisibilitySettingUi() {
 }
 window.initDemoVisibilitySettingUi = initDemoVisibilitySettingUi;
 
-// 📱 ANTI-JOKI: KUNCI 1 SISWA PER HP (DEVICE BINDING)
-const DEVICE_BINDING_SETTING_KEY = 'quizmaster_device_binding_mode';
-
-function loadDeviceBindingSetting() {
-    try {
-        const v = localStorage.getItem(DEVICE_BINDING_SETTING_KEY);
-        if (v) return v;
-    } catch(e) {}
-    return 'enabled'; // Default: Aktif (1 HP hanya boleh dipakai 1 nama siswa)
-}
-window.loadDeviceBindingSetting = loadDeviceBindingSetting;
-
-function isDeviceBindingEnabled() {
-    return loadDeviceBindingSetting() === 'enabled';
-}
-window.isDeviceBindingEnabled = isDeviceBindingEnabled;
-
-function saveDeviceBindingSetting(val, broadcast = true) {
-    const mode = val || 'enabled';
-    try {
-        localStorage.setItem(DEVICE_BINDING_SETTING_KEY, mode);
-    } catch(e) {}
-
-    const sel = document.getElementById('setting-device-binding');
-    if (sel) sel.value = mode;
-
-    const msg = document.getElementById('device-binding-saved-msg');
-    if (msg) {
-        msg.style.display = 'inline';
-        setTimeout(() => { if (msg) msg.style.display = 'none'; }, 2500);
-    }
-    if (typeof sfxCorrect === 'function') sfxCorrect();
-
-    if (broadcast && typeof saveCloudSharedState === 'function') {
-        saveCloudSharedState({ deviceBindingMode: mode });
-    }
-
-    if (typeof showToast === 'function') {
-        showToast(
-            mode === 'enabled'
-                ? '📱 Kunci Perangkat AKTIF: 1 HP hanya boleh dipakai 1 nama siswa (Anti-Joki).'
-                : '⚪ Kunci Perangkat NONAKTIF: Perangkat bebas dipakai bergantian.',
-            mode === 'enabled' ? '🔒' : '⚪'
-        );
-    }
-}
-window.saveDeviceBindingSetting = saveDeviceBindingSetting;
-
-function resetAllDeviceBindings(broadcast = true) {
-    try {
-        const keysToRemove = [];
-        for (let i = 0; i < localStorage.length; i++) {
-            const k = localStorage.key(i);
-            if (k && k.startsWith('quizmaster_bound_device_')) {
-                keysToRemove.push(k);
-            }
-        }
-        keysToRemove.forEach(k => localStorage.removeItem(k));
-    } catch(e) {}
-
-    if (typeof sfxCorrect === 'function') sfxCorrect();
-    if (typeof showToast === 'function') {
-        showToast('🔄 Kunci perangkat siswa di HP ini berhasil direset!', '✅');
-    }
-
-    if (broadcast && typeof saveCloudSharedState === 'function') {
-        saveCloudSharedState({ resetDeviceBindingsTimestamp: Date.now() });
-    }
-}
-window.resetAllDeviceBindings = resetAllDeviceBindings;
-
-function initDeviceBindingSettingUi() {
-    const sel = document.getElementById('setting-device-binding');
-    if (sel) {
-        sel.value = loadDeviceBindingSetting();
-    }
-}
-window.initDeviceBindingSettingUi = initDeviceBindingSettingUi;
-
 // 🔑 ANTI-JOKI: TOKEN UJIAN KELAS DINAMIS
 const EXAM_TOKEN_MODE_KEY = 'quizmaster_exam_token_mode';
 const EXAM_TOKEN_CODE_KEY = 'quizmaster_exam_token_code';
@@ -3135,7 +3056,6 @@ function renderDashboard() {
     initFullscreenSettingUi();
     initReviewReleaseSettingUi();
     initDemoVisibilitySettingUi();
-    initDeviceBindingSettingUi();
     initExamTokenSettingUi();
     initActiveExamModuleUi();
     if (typeof updateApplyButtonState === 'function') updateApplyButtonState();
