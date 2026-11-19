@@ -32,7 +32,7 @@ test('1. index.html contains optgroup-demo-class, group-exam-token, and Dasbor G
         assert(content.includes('id="group-exam-token"'), 'Missing id="group-exam-token"');
         assert(content.includes('id="input-exam-token"'), 'Missing id="input-exam-token"');
         assert(content.includes('id="setting-demo-visibility"'), 'Missing id="setting-demo-visibility"');
-        assert(content.includes('id="setting-device-binding"'), 'Missing id="setting-device-binding"');
+        assert(!content.includes('id="setting-device-binding"'), 'Pengaturan Kunci HP seharusnya sudah dihapus');
         assert(content.includes('id="setting-exam-token-mode"'), 'Missing id="setting-exam-token-mode"');
         assert(content.includes('id="setting-exam-token-code"'), 'Missing id="setting-exam-token-code"');
     });
@@ -83,10 +83,6 @@ test('2. Demo Visibility defaults to hide and toggles accurately', () => {
             isDemoAccountsVisible,
             applyDemoVisibilitySetting,
             saveDemoVisibilitySetting,
-            loadDeviceBindingSetting,
-            isDeviceBindingEnabled,
-            saveDeviceBindingSetting,
-            resetAllDeviceBindings,
             loadExamTokenSetting,
             isExamTokenRequired,
             getExpectedExamToken,
@@ -118,62 +114,13 @@ test('2. Demo Visibility defaults to hide and toggles accurately', () => {
     assert.strictEqual(elements['optgroup-demo-class'].style.display, 'none');
 });
 
-// 3. Verify Anti-Joki Device Binding Logic
-test('3. Device binding locks one student per phone and resets cleanly', () => {
-    let store = {};
-    const mockStorage = {
-        getItem: k => store[k] || null,
-        setItem: (k, v) => { store[k] = String(v); },
-        removeItem: k => { delete store[k]; },
-        key: i => Object.keys(store)[i],
-        get length() { return Object.keys(store).length; }
-    };
-    
-    const elements = {};
-    const mockDoc = {
-        getElementById: id => {
-            if (!elements[id]) elements[id] = { id, style: {}, classList: { add() {}, remove() {} }, value: '' };
-            return elements[id];
-        },
-        addEventListener: () => {}
-    };
-    
-    const mockWin = {
-        addEventListener: () => {}
-    };
-    mockWin.window = mockWin;
-    
-    const dashCode = fs.readFileSync(path.join(__dirname, 'js/dashboard.js'), 'utf8');
-    const fn = new Function('localStorage', 'document', 'window', 'showToast', 'sfxCorrect', 'sfxWrong', 'saveCloudSharedState', 'onHomeClassChanged', 
-        dashCode + `
-        return {
-            loadDeviceBindingSetting,
-            isDeviceBindingEnabled,
-            saveDeviceBindingSetting,
-            resetAllDeviceBindings
-        };
-        `);
-    
-    const dash = fn(mockStorage, mockDoc, mockWin, () => {}, () => {}, () => {}, () => {}, () => {});
-
-    // Default is enabled
-    assert.strictEqual(dash.loadDeviceBindingSetting(), 'enabled');
-    assert.strictEqual(dash.isDeviceBindingEnabled(), true);
-
-    // Simulate binding student 1
-    const modId = 'modul_jaringan_keamanan';
-    const boundKey = 'quizmaster_bound_device_' + modId;
-    mockStorage.setItem(boundKey, 'MUHAMMAD HAFIDH');
-
-    // Simulate student 2 attempting to use same device
-    const boundStudent = mockStorage.getItem(boundKey);
-    assert.strictEqual(boundStudent, 'MUHAMMAD HAFIDH');
-    const student2 = 'AHMAD FAUZAN';
-    assert.notStrictEqual(boundStudent, student2); // Will be rejected by initiateQuiz!
-
-    // Teacher resets all device bindings
-    dash.resetAllDeviceBindings(false);
-    assert.strictEqual(mockStorage.getItem(boundKey), null); // Cleaned!
+// 3. Fitur Kunci 1 Siswa per HP sudah dihapus: siswa bebas berganti nama di HP yang sama
+test('3. Device Binding (Kunci 1 Siswa per HP) fully removed from code and UI', () => {
+    ['js/dashboard.js', 'js/quiz_engine.js', 'js/audio.js', 'src/js/dashboard.js', 'src/js/quiz_engine.js', 'src/js/audio.js'].forEach(f => {
+        const code = fs.readFileSync(path.join(__dirname, f), 'utf8');
+        ['isDeviceBindingEnabled', 'resetAllDeviceBindings', 'saveDeviceBindingSetting', 'quizmaster_bound_device_', 'deviceBindingMode', 'resetDeviceBindingsTimestamp']
+            .forEach(k => assert(!code.includes(k), `${f} masih memuat sisa fitur kunci perangkat: ${k}`));
+    });
 });
 
 // 4. Verify Dynamic Classroom Token Anti-Joki
@@ -236,14 +183,12 @@ test('4. Dynamic Classroom Token generates, persists, and validates properly', (
 });
 
 // 5. Verify initiateQuiz Anti-Joki guards in js/quiz_engine.js
-test('5. initiateQuiz contains both Exam Token and Device Binding validations', () => {
+test('5. initiateQuiz keeps Exam Token validation and has no Device Binding', () => {
     const qeCode = fs.readFileSync(path.join(__dirname, 'js/quiz_engine.js'), 'utf8');
     const srcQeCode = fs.readFileSync(path.join(__dirname, 'src/js/quiz_engine.js'), 'utf8');
     
     [qeCode, srcQeCode].forEach(code => {
         assert(code.includes('isExamTokenRequired'), 'Missing isExamTokenRequired check in initiateQuiz');
-        assert(code.includes('isDeviceBindingEnabled'), 'Missing isDeviceBindingEnabled check in initiateQuiz');
-        assert(code.includes('quizmaster_bound_device_'), 'Missing quizmaster_bound_device_ key check');
         assert(code.includes('input-exam-token'), 'Missing input-exam-token lookup in initiateQuiz');
     });
 });
@@ -261,19 +206,17 @@ test('6. All 4 official modules are permanently guaranteed in initModulesCatalog
 });
 
 // 7. Verify Cloud Sync in audio.js
-test('7. audio.js syncs demoVisibility, deviceBindingMode, and examToken settings', () => {
+test('7. audio.js syncs demoVisibility and examToken settings', () => {
     const audioCode = fs.readFileSync(path.join(__dirname, 'js/audio.js'), 'utf8');
     assert(audioCode.includes('demoVisibility'), 'Missing demoVisibility in audio.js');
-    assert(audioCode.includes('deviceBindingMode'), 'Missing deviceBindingMode in audio.js');
-    assert(audioCode.includes('resetDeviceBindingsTimestamp'), 'Missing resetDeviceBindingsTimestamp in audio.js');
     assert(audioCode.includes('examTokenMode'), 'Missing examTokenMode in audio.js');
 });
 
 // 8. Verify cache-busting version tags updated
-test('8. Cache-busting version tag updated to v3018, v3019, or v3020 in HTML files', () => {
+test('8. Cache-busting version tag updated to v3018 - v3021 in HTML files', () => {
     const html = fs.readFileSync(path.join(__dirname, 'index.html'), 'utf8');
     const guruHtml = fs.readFileSync(path.join(__dirname, 'kuis_interaktif_dasbor_guru.html'), 'utf8');
-    const hasValidTag = (str) => str.includes('v3018-anti-joki-and-demo-toggle') || str.includes('v3019-zero-lag-anti-glitch') || str.includes('v3020-zero-lag-cache-optimized');
+    const hasValidTag = (str) => str.includes('v3018-anti-joki-and-demo-toggle') || str.includes('v3019-zero-lag-anti-glitch') || str.includes('v3020-zero-lag-cache-optimized') || str.includes('v3021-fix-dropdown-no-device-lock');
     assert(hasValidTag(html), 'index.html missing cache-busting version tag');
     assert(hasValidTag(guruHtml), 'kuis_interaktif_dasbor_guru.html missing cache-busting version tag');
 });

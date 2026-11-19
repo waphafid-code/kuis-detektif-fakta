@@ -915,26 +915,6 @@ async function initiateQuiz() {
         // 📦 Tentukan Modul Pembelajaran Terpilih terlebih dahulu
         const targetModId = moduleId || (currentActiveModule ? currentActiveModule.id : (window.QuizManager ? QuizManager.getActiveModuleId() : 'modul_detektif_fakta'));
 
-        // 📱 ANTI-JOKI 2: Kunci 1 Siswa per HP (Cegah satu siswa mengerjakan ujian milik siswa lain di HP yang sama)
-        if (cls !== 'KELAS DEMO' && typeof isDeviceBindingEnabled === 'function' && isDeviceBindingEnabled()) {
-            const boundKey = 'quizmaster_bound_device_' + targetModId;
-            const boundStudent = localStorage.getItem(boundKey);
-            if (boundStudent && boundStudent !== name) {
-                if (typeof sfxWrong === 'function') sfxWrong();
-                showToast(`⛔ ANTI-JOKI: Perangkat ini sudah terkunci atas nama "${boundStudent}" untuk modul ujian ini. 1 HP hanya boleh digunakan oleh 1 siswa! Hubungi Guru jika HP Anda rusak/berganti.`, '⚠️');
-                if (startBtn) {
-                    startBtn.disabled = false;
-                    startBtn.innerHTML = origBtnHtml;
-                }
-                isInitiatingQuiz = false;
-                return;
-            }
-            // Kunci perangkat ini ke nama siswa tersebut
-            try {
-                localStorage.setItem(boundKey, name);
-            } catch(e) {}
-        }
-
         // 🔒 Verifikasi Akses Jadwal Guru Muhammad Hafidh Putra Roshadi, S.Pd. & Pengaturan Akses
         const access = checkClassAccess(cls, targetModId);
         if (!access.allowed) {
@@ -1186,8 +1166,9 @@ let questionStartTime = 0;
 let questionDuration = 0;
 let questionRemainingSec = 0;
 let lastWarnedSec = -1;
-let timerInterval = (typeof window !== 'undefined' && window.timerInterval) ? window.timerInterval : null;
-let timerVal = (typeof window !== 'undefined' && window.timerVal) ? window.timerVal : 0;
+// ⚠️ timerInterval & timerVal sudah dideklarasikan di js/storage.js (scope global bersama).
+// Jangan dideklarasikan ulang di sini: redeklarasi `let` lintas-skrip memicu
+// "SyntaxError: Identifier has already been declared" dan membuat SELURUH file ini tidak berjalan.
 
 let questionStartPerf = 0;
 
