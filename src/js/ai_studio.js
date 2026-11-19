@@ -64,6 +64,13 @@ async function initModulesCatalog() {
 
     const activeExamMode = loadActiveExamModuleSetting(); // 'modul_jaringan_keamanan', 'all', 'modul_detektif_fakta'
     
+    // Filter modul yang tampil ke siswa jika guru memilih mengunci satu modul
+    const visibleModules = (activeExamMode && activeExamMode !== 'all')
+        ? mergedModules.filter(m => m.id === activeExamMode)
+        : mergedModules;
+
+    const listToRender = (visibleModules && visibleModules.length > 0) ? visibleModules : mergedModules;
+
     let activeId;
     if (activeExamMode && activeExamMode !== 'all') {
         activeId = activeExamMode;
@@ -71,16 +78,10 @@ async function initModulesCatalog() {
         try { sessionStorage.removeItem('user_chosen_module_id'); } catch(e) {}
     } else {
         const sessionChosenId = sessionStorage.getItem('user_chosen_module_id');
-        activeId = sessionChosenId || QuizManager.getActiveModuleId() || 'modul_jaringan_keamanan';
+        const currentHomeVal = (homeSelect && homeSelect.value && listToRender.some(m => m.id === homeSelect.value)) ? homeSelect.value : null;
+        activeId = sessionChosenId || currentHomeVal || QuizManager.getActiveModuleId() || 'modul_jaringan_keamanan';
         QuizManager.setActiveModuleId(activeId, false);
     }
-
-    // Filter modul yang tampil ke siswa jika guru memilih mengunci satu modul
-    const visibleModules = (activeExamMode && activeExamMode !== 'all')
-        ? mergedModules.filter(m => m.id === activeExamMode)
-        : mergedModules;
-
-    const listToRender = (visibleModules && visibleModules.length > 0) ? visibleModules : mergedModules;
 
     if (homeSelect) {
         const existingValues = Array.from(homeSelect.options || []).map(o => o.value);
@@ -89,7 +90,9 @@ async function initModulesCatalog() {
             existingValues.every((val, idx) => val === targetValues[idx]);
 
         // 🛡️ ANTI-GLITCH: Jangan wipe innerHTML jika opsi sudah sama persis (mencegah dropdown berkedip/menutup sendiri)
-        if (!isIdentical) {
+        // Dan jangan sentuh dropdown jika siswa sedang aktif fokus/membuka menu
+        const isUserFocusedOnSelect = (typeof document !== 'undefined' && document.activeElement === homeSelect);
+        if (!isIdentical && !isUserFocusedOnSelect) {
             homeSelect.innerHTML = '';
             listToRender.forEach(m => {
                 const opt = document.createElement('option');
@@ -100,7 +103,7 @@ async function initModulesCatalog() {
             });
         }
 
-        if (homeSelect.value !== activeId) {
+        if (!isUserFocusedOnSelect && homeSelect.value !== activeId) {
             homeSelect.value = activeId;
         }
 

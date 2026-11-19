@@ -17,11 +17,11 @@
       "points": 5,
       "q": "Apa yang dimaksud dengan ekosistem periksa fakta?",
       "options": [
-        "Kumpulan berita yang sedang ramai",
-        "Jaringan pihak yang bekerja sama memverifikasi informasi",
-        "Aplikasi untuk membuat berita",
-        "Kelompok yang membagikan pesan",
-        "Situs untuk menyimpan artikel"
+        "Kumpulan portal berita viral yang menyajikan informasi hiburan populer",
+        "Jaringan pihak yang bekerja sama memverifikasi kebenaran informasi",
+        "Aplikasi perangkat lunak untuk memproduksi konten publikasi digital",
+        "Kelompok daring yang bertugas menyebarluaskan pesan siaran instan",
+        "Situs web repositori arsip untuk menyimpan salinan dokumen artikel"
       ],
       "answer": 1,
       "explanation": "Ekosistem periksa fakta bukan hanya satu aplikasi atau satu organisasi. Ekosistem ini terdiri dari berbagai pihak yang saling bekerja sama, seperti organisasi periksa fakta, platform media sosial, komunitas, dan individu. Tujuannya adalah memeriksa kebenaran informasi yang beredar.",
@@ -34,11 +34,11 @@
       "points": 5,
       "q": "Tujuan utama ekosistem periksa fakta adalah ...",
       "options": [
-        "Meningkatkan jumlah berita viral",
-        "Menghapus semua informasi lama",
-        "Membatasi penggunaan media sosial",
-        "Membantu masyarakat memperoleh informasi terpercaya",
-        "Menggantikan seluruh tugas media"
+        "Meningkatkan jumlah berita viral di berbagai kanal percakapan digital",
+        "Menghapus semua arsip berita dan dokumentasi informasi digital lama",
+        "Membatasi dan melarang akses media sosial bagi seluruh kalangan publik",
+        "Membantu masyarakat memperoleh informasi terpercaya dan akurat",
+        "Menggantikan seluruh peran redaksi jurnalisme di berbagai media cetak"
       ],
       "answer": 3,
       "explanation": "Periksa fakta membantu masyarakat mengetahui informasi yang akurat dan dapat dipercaya. Dengan kemampuan tersebut, seseorang tidak mudah mempercayai atau menyebarkan berita yang belum jelas kebenarannya.",
@@ -51,11 +51,11 @@
       "points": 5,
       "q": "Tugas utama organisasi periksa fakta adalah ...",
       "options": [
-        "Menyelidiki dan memverifikasi klaim",
-        "Membuat berita menjadi populer",
-        "Menghapus semua akun pengguna",
-        "Menyebarkan informasi terbaru",
-        "Mengubah isi berita yang salah"
+        "Menyelidiki bukti dan memverifikasi keabsahan klaim informasi",
+        "Membuat berita sensasional menjadi viral dan populer di linimasa",
+        "Menghapus seluruh akun media sosial yang dilaporkan oleh warganet",
+        "Menyebarkan informasi terbaru sesegera mungkin tanpa penyaringan",
+        "Mengubah naskah artikel yang keliru sesuai opini pribadi pemeriksa"
       ],
       "answer": 0,
       "explanation": "Organisasi periksa fakta bekerja dengan menyelidiki klaim atau informasi yang beredar. Mereka memeriksa sumber, membandingkan informasi, dan mencari bukti sebelum menyampaikan kesimpulan.",
@@ -68,11 +68,11 @@
       "points": 5,
       "q": "Mengapa organisasi periksa fakta perlu menjelaskan metodologi pemeriksaannya?",
       "options": [
-        "Agar mendapatkan banyak pengikut",
-        "Agar berita lebih cepat menyebar",
-        "Agar masyarakat memahami proses verifikasi",
-        "Agar semua informasi terlihat menarik",
-        "Agar pengguna tidak bertanya lagi"
+        "Agar akun pemeriksa mendapatkan banyak interaksi dan pengikut baru",
+        "Agar berita dan artikel sanggahan dapat lebih cepat viral di media",
+        "Agar masyarakat memahami dasar dan langkah validasi proses verifikasi",
+        "Agar kemasan seluruh informasi tampak lebih menarik perhatian publik",
+        "Agar masyarakat pengguna internet tidak banyak bertanya mengenai isu"
       ],
       "answer": 2,
       "explanation": "Metodologi menjelaskan bagaimana sebuah informasi diperiksa. Jika prosesnya dijelaskan secara terbuka, masyarakat dapat memahami alasan suatu informasi dinilai benar, palsu, atau menyesatkan.",
@@ -162,11 +162,11 @@
       "points": 5,
       "q": "Literasi media membantu seseorang untuk ...",
       "options": [
-        "Mempercayai informasi populer",
-        "Membagikan berita dengan cepat",
-        "Menilai informasi secara kritis",
-        "Menghapus semua media sosial",
-        "Mengikuti pendapat terbanyak"
+        "Mempercayai informasi populer tanpa ragu",
+        "Membagikan pesan berita secara kilat ke grup",
+        "Menilai kredibilitas informasi secara kritis",
+        "Menghapus akun seluruh media sosial pribadi",
+        "Mengikuti opini mayoritas yang sedang viral"
       ],
       "answer": 2,
       "explanation": "Literasi media mengajarkan seseorang untuk berpikir kritis ketika menerima informasi. Seseorang perlu melihat sumber, isi, waktu publikasi, dan tanda-tanda informasi palsu sebelum mengambil keputusan.",
@@ -194,11 +194,11 @@
       "caseStudy": "Sebuah komunitas menerima informasi yang belum jelas kebenarannya.",
       "q": "Tindakan yang paling tepat adalah ...",
       "options": [
-        "Meneruskannya kepada semua anggota",
-        "Menghapus semua akun pengirim",
-        "Mengubah isi informasi",
+        "Meneruskan informasi ke seluruh grup obrolan agar segera viral",
+        "Menghapus akun pengirim pesan tanpa menyelidiki kebenaran isi",
+        "Mengubah narasi pesan agar terdengar lebih meyakinkan pembaca",
         "Memeriksa informasi lalu membagikan hasil yang terverifikasi",
-        "Membiarkan informasi tanpa pemeriksaan"
+        "Membiarkan pesan hoaks terus beredar tanpa upaya klarifikasi"
       ],
       "answer": 3,
       "explanation": "Komunitas memiliki peran dalam membantu menyaring informasi yang beredar. Informasi sebaiknya diperiksa terlebih dahulu. Setelah kebenarannya lebih jelas, hasil pemeriksaan dapat dibagikan dan anggota lain dapat diperingatkan jika terdapat hoaks.",
@@ -211,11 +211,11 @@
       "points": 5,
       "q": "Bukti yang perlu disiapkan saat melaporkan konten hoaks melalui Kominfo adalah ...",
       "options": [
-        "Tangkapan layar dan URL konten",
-        "Foto pribadi pelapor",
-        "Jumlah pengikut akun",
-        "Pendapat dari teman",
-        "Komentar pengguna lain"
+        "Tangkapan layar bukti dan URL konten",
+        "Dokumen foto identitas diri pelapor",
+        "Statistik jumlah pengikut akun pembuat",
+        "Rangkuman opini dan komentar rekan lain",
+        "Daftar nama akun yang menyukai unggahan"
       ],
       "answer": 0,
       "explanation": "Tangkapan layar menunjukkan isi konten yang dilaporkan. URL membantu pihak yang menerima laporan menemukan lokasi konten tersebut sehingga pemeriksaan dapat dilakukan dengan lebih tepat.",
@@ -242,11 +242,11 @@
       "points": 5,
       "q": "Alamat email untuk mengirim aduan konten melalui Kominfo adalah ...",
       "options": [
-        "cybercrime@polri.go.id",
-        "polisionline.net@gmail.com",
+        "cybercrime.polri.go.id@polri.go.id",
+        "polisi.indonesia.resmi@gmail.com",
         "aduankonten@mail.kominfo.go.id",
-        "info@mediaonline.id",
-        "laporberita@gmail.com"
+        "pusatbantuan.mediaonline@yahoo.com",
+        "laporankontenberita@hotmail.com"
       ],
       "answer": 2,
       "explanation": "Alamat aduankonten@mail.kominfo.go.id digunakan untuk menyampaikan aduan konten kepada Kominfo. Laporan akan lebih mudah diperiksa jika disertai tangkapan layar dan tautan konten yang jelas.",
@@ -318,11 +318,11 @@
       "caseStudy": "Sebuah platform media sosial menemukan konten yang telah diperiksa oleh organisasi periksa fakta dan dinilai tidak akurat.",
       "q": "Tindakan yang paling sesuai adalah ...",
       "options": [
-        "Membiarkan konten tanpa tanda",
-        "Menyebarkan konten ke lebih banyak pengguna",
-        "Menghapus semua unggahan pengguna",
+        "Membiarkan konten beredar luas tanpa label peringatan konteks",
+        "Mempromosikan konten ke lebih banyak algoritma beranda pengguna",
+        "Menghapus seluruh postingan riwayat akun pengunggah secara sepihak",
         "Memberi tanda atau mengarahkan pengguna ke informasi terverifikasi",
-        "Mengubah nama pembuat konten"
+        "Mengganti nama profil dan identitas akun pembuat konten otomatis"
       ],
       "answer": 3,
       "explanation": "Platform dapat membantu pengguna memahami bahwa suatu konten bermasalah dengan memberikan tanda atau peringatan. Platform juga dapat mengarahkan pengguna kepada informasi yang sudah diverifikasi sehingga penyebaran informasi yang tidak akurat dapat dikurangi.",
@@ -391,11 +391,11 @@
       "caseStudy": "Sebuah sekolah ingin memperkuat kegiatan periksa fakta di lingkungan siswa.",
       "q": "Bentuk dukungan yang paling tepat adalah ...",
       "options": [
-        "Membatasi semua akses berita",
-        "Membiarkan siswa memeriksa informasi sendiri",
-        "Menyediakan dana, sumber daya, dan dukungan hukum",
-        "Menghapus semua akun media sosial siswa",
-        "Mengajarkan siswa untuk mengikuti informasi populer"
+        "Memutus seluruh akses jaringan internet warga sekolah",
+        "Membiarkan siswa menginvestigasi tanpa panduan literasi",
+        "Menyediakan dana, sumber daya, dan pendampingan resmi",
+        "Menghapus seluruh akun media sosial peserta didik di sekolah",
+        "Menganjurkan siswa mengikuti tren opini publik yang viral"
       ],
       "answer": 2,
       "explanation": "Kegiatan periksa fakta membutuhkan dukungan agar dapat dilakukan secara berkelanjutan. Dana, sumber daya, dan dukungan hukum dapat membantu organisasi atau lembaga menjalankan pemeriksaan informasi dengan lebih baik.",
@@ -409,11 +409,11 @@
       "caseStudy": "Fajar menerima pesan berantai yang belum jelas kebenarannya. Ia ingin melakukan pemeriksaan secara bertanggung jawab.",
       "q": "Urutan tindakan yang paling tepat adalah ...",
       "options": [
-        "Membagikan pesan, lalu menunggu komentar",
-        "Menghapus pesan, kemudian melupakan isinya",
-        "Membaca judul, lalu langsung menentukan kesimpulan",
-        "Menyimpan bukti, memeriksa sumber, membandingkan informasi, lalu melaporkan jika diperlukan",
-        "Mengubah isi pesan agar lebih mudah dipercaya"
+        "Meneruskan pesan ke linimasa lalu menunggu sanggahan dari netizen",
+        "Menghapus pesan seketika kemudian mengabaikan dampak bagi publik",
+        "Membaca judul sekilas lalu langsung menarik kesimpulan sepihak",
+        "Menyimpan bukti, memeriksa sumber, membandingkan informasi, lalu melapor",
+        "Mengubah narasi pesan agar terlihat lebih meyakinkan dan dramatis"
       ],
       "answer": 3,
       "explanation": "Pemeriksaan informasi harus dilakukan secara bertahap. Fajar perlu menyimpan bukti terlebih dahulu, memeriksa sumber dan waktu publikasi, membandingkan informasi dengan sumber lain, kemudian menentukan tindakan yang sesuai. Jika konten terbukti bermasalah, ia dapat melaporkannya kepada platform atau organisasi periksa fakta.",

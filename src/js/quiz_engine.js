@@ -2233,6 +2233,7 @@ function nextQuestion() {
             nextBtn.innerHTML = '⚡ Mengirim Nilai...';
         }
         sfxClick();
+        isTransitioningQuestion = false;
         finishQuiz();
         return;
     }
@@ -2956,13 +2957,7 @@ async function startRemedialExam(name, cls, moduleId, prevRecord) {
             enterExamFullscreen();
         }
 
-        runCountdown(() => {
-            switchScreen('quiz');
-            renderQuestion();
-            quizStartTime = Date.now();
-            lastQuestionTime = Date.now();
-            if (TIMER_MAX > 0) startTimer();
-        });
+        runCountdown();
     } finally {
         isInitiatingQuiz = false;
     }
