@@ -4459,197 +4459,174 @@ function downloadExcelWorkbook(wb, fileName) {
 }
 
 function exportStudentExcel() {
-    sfxClick();
+    if (typeof sfxClick === 'function') sfxClick();
+
     try {
-        const finalScore = (typeof window.lastQuizScore === 'number')
-            ? window.lastQuizScore
-            : ((typeof score !== 'undefined' && quizData && quizData.length) ? Math.round((score / quizData.length) * 100) : 0);
-        const sName = studentName || 'Siswa';
-        const sClass = studentClass || 'Kelas';
-        const safeClass = sClass.replace(/[/\\?%*:|"<> ]/g, '_');
-        const safeName = sName.replace(/[/\\?%*:|"<> ]/g, '_');
-        const nowStr = new Date().toLocaleString('id-ID');
-        const isLulus = finalScore >= 80;
+        // Single source of truth: nilai resmi yang sama dengan layar hasil dan record tersimpan.
+        const records = (typeof loadRecords === 'function' ? loadRecords() : []);
+        const lastResult = window.lastQuizResult && typeof window.lastQuizResult === 'object'
+            ? window.lastQuizResult
+            : null;
+        const proofId = (lastResult && lastResult.submissionProofId) || window.lastSubmittedProofId || '';
+        const matchedRecord = lastResult || (Array.isArray(records)
+            ? records.find(r => proofId && r.submissionProofId === proofId)
+            : null);
 
-        const modTitle = (typeof currentActiveModule !== 'undefined' && currentActiveModule && currentActiveModule.title) || (window.QuizManager && QuizManager.getActiveModule() ? QuizManager.getActiveModule().title : 'Evaluasi Kuis Pembelajaran Informatika');
-        const proofId = window.lastSubmittedProofId || `SMAN4-${(studentClass||'XE').replace(/[^A-Za-z0-9]/g,'')}-${finalScore}-${Date.now().toString(36).toUpperCase()}`;
-
-        const isPostponed = (typeof isReviewPostponed === 'function') 
-            ? isReviewPostponed() 
-            : (localStorage.getItem('quizmaster_review_release_mode') !== 'open');
-
-        // Opsi 1: Jika Pustaka XLSX Tersedia di Browser Siswa
-        if (typeof XLSX !== 'undefined') {
-            try {
-                const sheetData = [
-                    ['RAPOR HASIL EVALUASI PEMBELAJARAN SISWA'],
-                    [`${modTitle.toUpperCase()} (BATAS KELULUSAN KKM: 80)`],
-                    [],
-                    ['Nama Siswa', sanitizeSpreadsheetValue(sName)],
-                    ['Kelas', sanitizeSpreadsheetValue(sClass)],
-                    ['Modul Kuis', modTitle],
-                    ['Nomor Bukti Verifikasi', proofId],
-                    ['Status Bukti', 'TERVERIFIKASI CLOUD SUPABASE & DASBOR GURU'],
-                    ['Nilai Akhir', finalScore],
-                    ['Jawaban Benar', `${score} dari ${quizData.length} Soal`],
-                    ['Status Kelulusan', isLulus ? 'LULUS (KOMPETEN)' : 'BELUM LULUS (REMEDIAL)'],
-                    ['Max Streak', `${maxStreak}x Jawaban Benar Beruntun`],
-                    ['Waktu Pengerjaan', nowStr],
-                    []
-                ];
-
-                if (isPostponed) {
-                    sheetData.push(
-                        ['Keterangan Rapor', '🔒 Rapor butir soal & pembahasan dirahasiakan oleh Guru selama sesi ujian bersama berlangsung'],
-                        ['Guru Pengampu', 'Bpk. MUHAMMAD HAFIDH PUTRA ROSHADI, S.Pd.']
-                    );
-                } else {
-                    sheetData.push(
-                        ['No', 'Tingkat Kesulitan', 'Pertanyaan Soal', 'Hasil Analisis', 'Kunci Jawaban Valid', 'Pembahasan & Logika Edukatif']
-                    );
-
-                    shuffledQuizOrder.forEach((origIdx, playIdx) => {
-                        const qData = quizData[origIdx];
-                        const isRight = answeredCorrectly[origIdx];
-                        const ansKey = (typeof getAnswerFromVault === 'function') ? getAnswerFromVault(qData, origIdx) : qData.answer;
-                        const expReview = (typeof getExplanationFromVault === 'function') ? getExplanationFromVault(qData, origIdx) : (qData.explanation || '-');
-
-                        let correctAns = '-';
-                        if (window.isAnswersLocked) {
-                            correctAns = '🔒 Dikunci oleh Guru';
-                        } else if (qData.type === 'matrix_tf') {
-                            correctAns = (Array.isArray(ansKey) ? ansKey : []).map((ans, i) => `[#${i+1}] ${ans === 0 ? 'Benar' : 'Salah'}`).join(' • ');
-                        } else if (Array.isArray(ansKey)) {
-                            correctAns = ansKey.map(a => (qData.options && qData.options[a]) || a).join(' | ');
-                        } else if (ansKey !== null && ansKey !== undefined) {
-                            correctAns = (qData.options && qData.options[ansKey]) || ansKey;
-                        }
-                        const diffStr = qData.difficulty === 'Easy' ? 'Mudah' : (qData.difficulty === 'Hard' ? 'Sulit' : 'Sedang');
-                        const safeExp = window.isAnswersLocked ? '🔒 Pembahasan dikunci selama mode ujian' : expReview;
-
-                        sheetData.push([
-                            playIdx + 1,
-                            diffStr,
-                            qData.q,
-                            isRight ? 'BENAR' : 'SALAH',
-                            correctAns,
-                            safeExp
-                        ]);
-                    });
-                }
-
-                const ws = XLSX.utils.aoa_to_sheet(sheetData);
-                ws['!cols'] = [{ wch: 6 }, { wch: 18 }, { wch: 55 }, { wch: 16 }, { wch: 40 }, { wch: 60 }];
-
-                const wb = XLSX.utils.book_new();
-                XLSX.utils.book_append_sheet(wb, ws, 'Rapor Siswa');
-
-                const fileName = `Rapor_Kuis_${safeClass}_${safeName}.xlsx`;
-                downloadExcelWorkbook(wb, fileName);
-                sfxCorrect();
-                showToast('Rapor Excel (.xlsx) berhasil diunduh!', '📊');
-                return;
-            } catch (xlsxErr) {
-                console.warn('XLSX write error, using native fallback:', xlsxErr);
-            }
+        const scoreCandidate = matchedRecord && matchedRecord.score !== undefined
+            ? matchedRecord.score
+            : window.lastQuizScore;
+        const finalScore = Number(scoreCandidate);
+        if (!Number.isFinite(finalScore) || finalScore < 0 || finalScore > 100) {
+            throw new Error('Nilai akhir resmi tidak ditemukan atau tidak valid. Silakan muat ulang hasil ujian dan coba kembali.');
         }
 
-        // Opsi 2: NATIVE ZERO-DEPENDENCY EXCEL (.XLS / HTML TABLE FORMAT)
-        // 100% Berhasil di SEMUA Smartphone Android & iPhone tanpa butuh pustaka eksternal!
-        let htmlContent = `
-        <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
-        <head>
-            <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-            <!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet><x:Name>Rapor Siswa</x:Name><x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions></x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]-->
-            <style>
-                body { font-family: Arial, sans-serif; font-size: 10pt; }
-                table { border-collapse: collapse; width: 100%; }
-                th { background-color: #4f46e5; color: #ffffff; font-weight: bold; border: 1px solid #cbd5e1; padding: 8px; text-align: center; }
-                td { border: 1px solid #cbd5e1; padding: 6px 8px; vertical-align: top; }
-                .title { background-color: #0f172a; color: #22d3ee; font-size: 13pt; font-weight: bold; padding: 10px; }
-                .subtitle { background-color: #1e293b; color: #f8fafc; font-size: 10pt; padding: 6px; }
-                .info-label { font-weight: bold; background-color: #f1f5f9; width: 180px; }
-                .status-lulus { color: #16a34a; font-weight: bold; }
-                .status-remedial { color: #dc2626; font-weight: bold; }
-            </style>
-        </head>
-        <body>
-            <table>
-                <tr><td colspan="6" class="title">RAPOR HASIL EVALUASI PEMBELAJARAN SISWA</td></tr>
-                <tr><td colspan="6" class="subtitle">${modTitle} (Standar Kelulusan KKM: 80)</td></tr>
-                <tr><td colspan="6" style="height: 10px;"></td></tr>
-                <tr><td class="info-label">Nama Siswa</td><td colspan="5">${sName}</td></tr>
-                <tr><td class="info-label">Kelas</td><td colspan="5">${sClass}</td></tr>
-                <tr><td class="info-label">Skor Nilai</td><td colspan="5" class="${isLulus ? 'status-lulus' : 'status-remedial'}">${finalScore} (${isLulus ? 'STATUS: LULUS KKM' : 'STATUS: PERLU REMEDIAL'})</td></tr>
-                <tr><td class="info-label">Jawaban Benar</td><td colspan="5">${score} dari ${quizData.length} Soal</td></tr>
-                <tr><td class="info-label">Max Streak</td><td colspan="5">${maxStreak}x Jawaban Benar Beruntun</td></tr>
-                <tr><td class="info-label">Waktu Pengerjaan</td><td colspan="5">${nowStr}</td></tr>
-                <tr><td colspan="6" style="height: 14px;"></td></tr>
-                <tr>
-                    <th style="width: 40px;">No</th>
-                    <th style="width: 100px;">Tingkat</th>
-                    <th style="width: 300px;">Pertanyaan Soal</th>
-                    <th style="width: 100px;">Hasil Analisis</th>
-                    <th style="width: 250px;">Kunci Jawaban Valid</th>
-                    <th style="width: 350px;">Pembahasan & Logika Edukatif</th>
-                </tr>
-        `;
+        const questions = Array.isArray(quizData) ? quizData : [];
+        const correctCount = Number.isFinite(Number(matchedRecord && matchedRecord.correct))
+            ? Number(matchedRecord.correct)
+            : (Array.isArray(answeredCorrectly) ? answeredCorrectly.filter(v => v === true).length : 0);
+        const totalQuestions = Number(matchedRecord && matchedRecord.total) || questions.length;
+        const pointsEarned = matchedRecord && matchedRecord.pointsEarned !== undefined
+            ? Number(matchedRecord.pointsEarned) : Number(window.lastQuizPointsEarned || 0);
+        const totalPoints = matchedRecord && matchedRecord.totalPoints !== undefined
+            ? Number(matchedRecord.totalPoints) : Number(window.lastQuizTotalPoints || 0);
+        const sName = (matchedRecord && matchedRecord.name) || studentName || 'Siswa';
+        const sClass = (matchedRecord && matchedRecord.class) || studentClass || 'Kelas';
+        const safeName = String(sName).replace(/[/\\?%*:|"<>]/g, '_');
+        const safeClass = String(sClass).replace(/[/\\?%*:|"<> ]/g, '_');
+        const modTitle = (matchedRecord && matchedRecord.moduleTitle)
+            || (typeof currentActiveModule !== 'undefined' && currentActiveModule && currentActiveModule.title)
+            || (window.QuizManager && QuizManager.getActiveModule() && QuizManager.getActiveModule().title)
+            || 'Evaluasi Kuis Pembelajaran Informatika';
+        const completedAt = (matchedRecord && matchedRecord.timestamp)
+            ? new Date(matchedRecord.timestamp).toLocaleString('id-ID')
+            : new Date().toLocaleString('id-ID');
+        const duration = (matchedRecord && matchedRecord.duration) || '-';
+        const streakValue = Number(matchedRecord && matchedRecord.maxStreak !== undefined
+            ? matchedRecord.maxStreak : (typeof maxStreak !== 'undefined' ? maxStreak : 0));
+        const kkm = Number((window.QuizManager && QuizManager.getActiveModule() && QuizManager.getActiveModule().kkm) || 80);
+        const isPassed = finalScore >= kkm;
+        const isPostponed = (typeof isReviewPostponed === 'function')
+            ? isReviewPostponed()
+            : localStorage.getItem('quizmaster_review_release_mode') !== 'open';
 
-        shuffledQuizOrder.forEach((origIdx, playIdx) => {
-            const qData = quizData[origIdx];
-            const isRight = answeredCorrectly[origIdx];
-            const ansKey = (typeof getAnswerFromVault === 'function') ? getAnswerFromVault(qData, origIdx) : qData.answer;
-            const expReview = (typeof getExplanationFromVault === 'function') ? getExplanationFromVault(qData, origIdx) : (qData.explanation || '-');
+        const cleanCell = value => (typeof sanitizeSpreadsheetValue === 'function'
+            ? sanitizeSpreadsheetValue(value) : String(value == null ? '' : value));
+        const answerRows = [];
+        if (!isPostponed && questions.length) {
+            const order = Array.isArray(shuffledQuizOrder) && shuffledQuizOrder.length === questions.length
+                ? shuffledQuizOrder : questions.map((_, i) => i);
+            order.forEach((origIdx, playIdx) => {
+                const q = questions[origIdx];
+                if (!q) return;
+                const right = Array.isArray(answeredCorrectly) && answeredCorrectly[origIdx] === true;
+                const answerKey = (typeof getAnswerFromVault === 'function')
+                    ? getAnswerFromVault(q, origIdx) : q.answer;
+                const explanation = (typeof getExplanationFromVault === 'function')
+                    ? getExplanationFromVault(q, origIdx) : (q.explanation || '-');
+                let correctAnswer = '-';
+                if (window.isAnswersLocked) {
+                    correctAnswer = 'Dikunci oleh Guru';
+                } else if (q.type === 'matrix_tf') {
+                    correctAnswer = (Array.isArray(answerKey) ? answerKey : [])
+                        .map((v, i) => '[#' + (i + 1) + '] ' + (v === 0 ? 'Benar' : 'Salah')).join(' • ');
+                } else if (Array.isArray(answerKey)) {
+                    correctAnswer = answerKey.map(v => (q.options && q.options[v]) || v).join(' | ');
+                } else if (answerKey !== null && answerKey !== undefined) {
+                    correctAnswer = (q.options && q.options[answerKey]) || answerKey;
+                }
+                answerRows.push([
+                    playIdx + 1,
+                    q.difficulty === 'Easy' ? 'Mudah' : (q.difficulty === 'Hard' ? 'Sulit' : 'Sedang'),
+                    cleanCell(q.q || ''),
+                    right ? 'BENAR' : 'SALAH',
+                    cleanCell(correctAnswer),
+                    cleanCell(window.isAnswersLocked ? 'Pembahasan dikunci oleh Guru' : explanation)
+                ]);
+            });
+        }
 
-            let correctAns = '-';
-            if (window.isAnswersLocked) {
-                correctAns = '🔒 Dikunci oleh Guru';
-            } else if (qData.type === 'matrix_tf') {
-                correctAns = (Array.isArray(ansKey) ? ansKey : []).map((ans, i) => `[#${i+1}] ${ans === 0 ? 'Benar' : 'Salah'}`).join(' • ');
-            } else if (Array.isArray(ansKey)) {
-                correctAns = ansKey.map(a => (qData.options && qData.options[a]) || a).join(' | ');
-            } else if (ansKey !== null && ansKey !== undefined) {
-                correctAns = (qData.options && qData.options[ansKey]) || ansKey;
+        const summaryRows = [
+            ['RAPOR HASIL EVALUASI PEMBELAJARAN SISWA'],
+            [String(modTitle).toUpperCase()],
+            [],
+            ['IDENTITAS', 'KETERANGAN'],
+            ['Nama Siswa', cleanCell(sName)],
+            ['Kelas', cleanCell(sClass)],
+            ['Modul', cleanCell(modTitle)],
+            ['Nomor Bukti', cleanCell(proofId || '-')],
+            ['Tanggal & Waktu', completedAt],
+            [],
+            ['REKAP HASIL', 'NILAI'],
+            ['NILAI AKHIR RESMI (0–100)', finalScore],
+            ['Status Ketuntasan', isPassed ? 'TUNTAS' : 'BELUM TUNTAS / REMEDIAL'],
+            ['KKM', kkm],
+            ['Jawaban Benar', correctCount],
+            ['Jumlah Soal', totalQuestions],
+            ['Persentase Jawaban Benar', totalQuestions ? Math.round(correctCount / totalQuestions * 10000) / 100 : 0],
+            ['Poin Diperoleh', Number.isFinite(pointsEarned) ? pointsEarned : '-'],
+            ['Total Poin Maksimal', Number.isFinite(totalPoints) && totalPoints > 0 ? totalPoints : '-'],
+            ['Durasi Pengerjaan', duration],
+            ['Max Streak', streakValue],
+            [],
+            ['Keterangan', isPostponed
+                ? 'Rincian soal, kunci jawaban, dan pembahasan ditahan sesuai pengaturan Guru.'
+                : 'Rincian jawaban tersedia pada sheet Analisis Butir Soal.'],
+            ['Catatan Integritas', 'Nilai akhir pada rapor ini diambil langsung dari hasil resmi yang tersimpan; tidak dihitung ulang dari jumlah jawaban benar.']
+        ];
+
+        if (typeof XLSX !== 'undefined' && XLSX.utils && typeof XLSX.write === 'function') {
+            const wb = XLSX.utils.book_new();
+            const summary = XLSX.utils.aoa_to_sheet(summaryRows);
+            summary['!cols'] = [{ wch: 34 }, { wch: 72 }];
+            summary['!merges'] = [
+                { s: { r: 0, c: 0 }, e: { r: 0, c: 1 } },
+                { s: { r: 1, c: 0 }, e: { r: 1, c: 1 } }
+            ];
+            summary['!freeze'] = { xSplit: 0, ySplit: 4 };
+            if (summary['B11']) summary['B11'].z = '0.##';
+            if (summary['B16']) summary['B16'].z = '0.00"%"';
+            XLSX.utils.book_append_sheet(wb, summary, 'Ringkasan Rapor');
+
+            if (!isPostponed) {
+                const detail = XLSX.utils.aoa_to_sheet([
+                    ['No', 'Tingkat Kesulitan', 'Pertanyaan', 'Hasil', 'Kunci Jawaban', 'Pembahasan'],
+                    ...answerRows
+                ]);
+                detail['!cols'] = [{ wch: 7 }, { wch: 20 }, { wch: 65 }, { wch: 14 }, { wch: 42 }, { wch: 65 }];
+                detail['!autofilter'] = { ref: 'A1:F' + Math.max(1, answerRows.length + 1) };
+                detail['!freeze'] = { xSplit: 0, ySplit: 1 };
+                XLSX.utils.book_append_sheet(wb, detail, 'Analisis Butir Soal');
             }
-            const statusClass = isRight ? 'status-lulus' : 'status-remedial';
-            const statusText = isRight ? 'BENAR' : 'SALAH';
-            const diffStr = qData.difficulty === 'Easy' ? 'Mudah' : (qData.difficulty === 'Hard' ? 'Sulit' : 'Sedang');
-            const safeExp = window.isAnswersLocked ? '🔒 Pembahasan dikunci selama mode ujian' : expReview;
+            downloadExcelWorkbook(wb, 'Rapor_Kuis_' + safeClass + '_' + safeName + '.xlsx');
+        } else {
+            // Fallback HTML Spreadsheet tetap memakai nilai resmi dan escaping untuk mencegah injeksi HTML/formula.
+            const esc = value => (typeof escapeHtml === 'function'
+                ? escapeHtml(cleanCell(value)) : String(cleanCell(value)).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch])));
+            let rows = summaryRows.map((row, i) => '<tr>' + row.map((cell, j) =>
+                (i === 0 || i === 1 || (i === 3 && j < 2) || (i === 10 && j < 2))
+                    ? '<th>' + esc(cell) + '</th>' : '<td>' + esc(cell) + '</td>'
+            ).join('') + '</tr>').join('');
+            if (!isPostponed) {
+                rows += '<tr><th>No</th><th>Tingkat Kesulitan</th><th>Pertanyaan</th><th>Hasil</th><th>Kunci Jawaban</th><th>Pembahasan</th></tr>';
+                rows += answerRows.map(row => '<tr>' + row.map(cell => '<td>' + esc(cell) + '</td>').join('') + '</tr>').join('');
+            }
+            const html = '<!doctype html><html><head><meta charset="utf-8"><style>body{font-family:Arial}table{border-collapse:collapse;width:100%}td,th{border:1px solid #cbd5e1;padding:8px;vertical-align:top}th{background:#1e3a8a;color:#fff}tr:nth-child(even){background:#f1f5f9}</style></head><body><table>' + rows + '</table></body></html>';
+            const blob = new Blob(['\\uFEFF', html], { type: 'application/vnd.ms-excel;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'Rapor_Kuis_' + safeClass + '_' + safeName + '.xls';
+            document.body.appendChild(a);
+            a.click();
+            setTimeout(() => { if (a.parentNode) a.parentNode.removeChild(a); URL.revokeObjectURL(url); }, 1500);
+        }
 
-            htmlContent += `
-                <tr>
-                    <td align="center">${playIdx + 1}</td>
-                    <td align="center"><strong>${diffStr}</strong></td>
-                    <td>${qData.q}</td>
-                    <td align="center" class="${statusClass}">${statusText}</td>
-                    <td>${correctAns}</td>
-                    <td>${safeExp}</td>
-                </tr>
-            `;
-        });
-
-        htmlContent += `
-            </table>
-        </body>
-        </html>`;
-
-        const blob = new Blob(['\uFEFF' + htmlContent], { type: 'application/vnd.ms-excel;charset=utf-8' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `Rapor_Kuis_${safeClass}_${safeName}.xls`;
-        document.body.appendChild(a);
-        a.click();
-        setTimeout(() => {
-            if (a.parentNode) document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-        }, 1500);
-
-        sfxCorrect();
-        showToast('Rapor Excel (.xls) berhasil diunduh!', '📊');
+        if (typeof sfxCorrect === 'function') sfxCorrect();
+        if (typeof showToast === 'function') showToast('Rapor Excel berhasil diunduh. Nilai akhir mengikuti hasil resmi.', '📊');
     } catch (err) {
-        sfxWrong();
-        showToast('Gagal mengekspor: ' + err.message, '❌');
+        if (typeof sfxWrong === 'function') sfxWrong();
+        if (typeof showToast === 'function') showToast('Gagal mengekspor rapor: ' + err.message, '❌');
+        console.error('exportStudentExcel failed:', err);
     }
 }
 
