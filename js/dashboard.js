@@ -4510,7 +4510,7 @@ function exportStudentExcel() {
         if (!moduleMeta) {
             try {
                 const storedModules = JSON.parse(localStorage.getItem(manager && manager.MODULES_STORAGE_KEY
-                    ? manager.MODULES_STORAGE_KEY : 'quizmaster_modules') || '[]');
+                    ? manager.MODULES_STORAGE_KEY : 'detektif_fakta_all_modules_v2') || '[]');
                 if (Array.isArray(storedModules)) moduleMeta = storedModules.find(m => m && m.id === activeModuleId) || null;
             } catch (_) { moduleMeta = null; }
         }
