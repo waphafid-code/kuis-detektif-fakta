@@ -4493,9 +4493,29 @@ function exportStudentExcel() {
         const sClass = (matchedRecord && matchedRecord.class) || studentClass || 'Kelas';
         const safeName = String(sName).replace(/[/\\?%*:|"<>]/g, '_');
         const safeClass = String(sClass).replace(/[/\\?%*:|"<> ]/g, '_');
-        const modTitle = (matchedRecord && matchedRecord.moduleTitle)
-            || (typeof currentActiveModule !== 'undefined' && currentActiveModule && currentActiveModule.title)
-            || (window.QuizManager && QuizManager.getActiveModule() && QuizManager.getActiveModule().title)
+        // Jangan mengasumsikan getActiveModule tersedia: versi QuizManager lama hanya
+        // menyediakan getActiveModuleId/getAllModules. Prioritaskan metadata hasil ujian.
+        const manager = window.QuizManager || null;
+        const activeModuleId = (matchedRecord && matchedRecord.moduleId)
+            || (manager && typeof manager.getActiveModuleId === 'function' ? manager.getActiveModuleId() : '');
+        let moduleMeta = (typeof currentActiveModule !== 'undefined' && currentActiveModule) ? currentActiveModule : null;
+        if (!moduleMeta && manager && typeof manager.getActiveModule === 'function') {
+            try { moduleMeta = manager.getActiveModule(); } catch (_) { moduleMeta = null; }
+        }
+        if (!moduleMeta && manager) {
+            moduleMeta = [manager.NETWORK_SECURITY_MODULE, manager.DEFAULT_MODULE,
+                manager.HKI_CULTURE_MODULE, manager.ETIKA_PRIVASI_MODULE]
+                .filter(Boolean).find(m => m.id === activeModuleId) || null;
+        }
+        if (!moduleMeta) {
+            try {
+                const storedModules = JSON.parse(localStorage.getItem(manager && manager.MODULES_STORAGE_KEY
+                    ? manager.MODULES_STORAGE_KEY : 'quizmaster_modules') || '[]');
+                if (Array.isArray(storedModules)) moduleMeta = storedModules.find(m => m && m.id === activeModuleId) || null;
+            } catch (_) { moduleMeta = null; }
+        }
+        const modTitle = (matchedRecord && (matchedRecord.moduleTitle || matchedRecord.module))
+            || (moduleMeta && moduleMeta.title)
             || 'Evaluasi Kuis Pembelajaran Informatika';
         const completedAt = (matchedRecord && matchedRecord.timestamp)
             ? new Date(matchedRecord.timestamp).toLocaleString('id-ID')
@@ -4503,7 +4523,9 @@ function exportStudentExcel() {
         const duration = (matchedRecord && matchedRecord.duration) || '-';
         const streakValue = Number(matchedRecord && matchedRecord.maxStreak !== undefined
             ? matchedRecord.maxStreak : (typeof maxStreak !== 'undefined' ? maxStreak : 0));
-        const kkm = Number((window.QuizManager && QuizManager.getActiveModule() && QuizManager.getActiveModule().kkm) || 80);
+        const kkmCandidate = matchedRecord && matchedRecord.kkm !== undefined
+            ? matchedRecord.kkm : (moduleMeta && moduleMeta.kkm !== undefined ? moduleMeta.kkm : 80);
+        const kkm = Number(kkmCandidate) || 80;
         const isPassed = finalScore >= kkm;
         const isPostponed = (typeof isReviewPostponed === 'function')
             ? isReviewPostponed()
@@ -4594,6 +4616,24 @@ function exportStudentExcel() {
                 { s: { r: 22, c: 0 }, e: { r: 22, c: 1 } }
             ];
             summary['!freeze'] = { xSplit: 0, ySplit: 4 };
+            summary['!sheetViews'] = [{ showGridLines: false }];
+            summary['!pageSetup'] = { orientation: 'portrait', fitToWidth: 1, fitToHeight: 0 };
+            summary['!margins'] = { left: 0.35, right: 0.35, top: 0.5, bottom: 0.5, header: 0.2, footer: 0.2 };
+            // Gaya sel untuk renderer Excel yang mendukung cell styles.
+            const paint = (ref, style) => { if (summary[ref]) summary[ref].s = style; };
+            const titleStyle = { font: { name: 'Aptos Display', sz: 16, bold: true, color: { rgb: 'FFFFFF' } }, fill: { patternType: 'solid', fgColor: { rgb: '243B75' } }, alignment: { vertical: 'center', horizontal: 'center' } };
+            const subtitleStyle = { font: { name: 'Aptos', sz: 11, bold: true, color: { rgb: 'FFFFFF' } }, fill: { patternType: 'solid', fgColor: { rgb: '4F46E5' } }, alignment: { vertical: 'center', horizontal: 'center', wrapText: true } };
+            const sectionStyle = { font: { name: 'Aptos', sz: 11, bold: true, color: { rgb: 'FFFFFF' } }, fill: { patternType: 'solid', fgColor: { rgb: '334155' } }, alignment: { vertical: 'center' } };
+            const labelStyle = { font: { name: 'Aptos', sz: 10, bold: true, color: { rgb: '334155' } }, fill: { patternType: 'solid', fgColor: { rgb: 'EAF0FA' } }, alignment: { vertical: 'center', wrapText: true } };
+            const valueStyle = { font: { name: 'Aptos', sz: 10, color: { rgb: '0F172A' } }, alignment: { vertical: 'center', wrapText: true } };
+            paint('A1', titleStyle); paint('A2', subtitleStyle);
+            ['A4','A11','A23'].forEach(ref => paint(ref, sectionStyle));
+            for (let row = 5; row <= 25; row++) {
+                if ([11, 23].includes(row)) continue;
+                paint('A' + row, labelStyle); paint('B' + row, valueStyle);
+            }
+            paint('B12', { font: { name: 'Aptos Display', sz: 22, bold: true, color: { rgb: '1D4ED8' } }, fill: { patternType: 'solid', fgColor: { rgb: 'DBEAFE' } }, alignment: { horizontal: 'center', vertical: 'center' }, numFmt: '0.##' });
+            paint('B13', { font: { name: 'Aptos', sz: 11, bold: true, color: { rgb: isPassed ? '047857' : 'B91C1C' } }, fill: { patternType: 'solid', fgColor: { rgb: isPassed ? 'D1FAE5' : 'FEE2E2' } }, alignment: { horizontal: 'center', vertical: 'center', wrapText: true } });
             if (summary['B11']) summary['B11'].z = '0.##';
             if (summary['B16']) summary['B16'].z = '0.00"%"';
             XLSX.utils.book_append_sheet(wb, summary, 'Ringkasan Rapor');
@@ -4607,6 +4647,22 @@ function exportStudentExcel() {
                 detail['!rows'] = [{ hpt: 30 }, ...answerRows.map(() => ({ hpt: 58 }))];
                 detail['!autofilter'] = { ref: 'A1:F' + Math.max(1, answerRows.length + 1) };
                 detail['!freeze'] = { xSplit: 0, ySplit: 1 };
+                detail['!sheetViews'] = [{ showGridLines: false }];
+                detail['!pageSetup'] = { orientation: 'landscape', fitToWidth: 1, fitToHeight: 0 };
+                detail['!margins'] = { left: 0.25, right: 0.25, top: 0.4, bottom: 0.4, header: 0.2, footer: 0.2 };
+                const headerStyle = { font: { name: 'Aptos', sz: 10, bold: true, color: { rgb: 'FFFFFF' } }, fill: { patternType: 'solid', fgColor: { rgb: '243B75' } }, alignment: { horizontal: 'center', vertical: 'center', wrapText: true } };
+                for (let col = 0; col < 6; col++) {
+                    const cell = XLSX.utils.encode_cell({ r: 0, c: col });
+                    if (detail[cell]) detail[cell].s = headerStyle;
+                }
+                for (let row = 1; row <= answerRows.length; row++) {
+                    for (let col = 0; col < 6; col++) {
+                        const cell = XLSX.utils.encode_cell({ r: row, c: col });
+                        if (detail[cell]) detail[cell].s = { font: { name: 'Aptos', sz: 9, color: { rgb: '1E293B' } }, alignment: { vertical: 'top', wrapText: true } };
+                    }
+                    const resultCell = 'D' + (row + 1);
+                    if (detail[resultCell]) detail[resultCell].s = { font: { bold: true, color: { rgb: answerRows[row - 1][3] === 'BENAR' ? '047857' : 'B91C1C' } }, alignment: { horizontal: 'center', vertical: 'center' } };
+                }
                 XLSX.utils.book_append_sheet(wb, detail, 'Analisis Butir Soal');
             }
             downloadExcelWorkbook(wb, 'Rapor_Kuis_' + safeClass + '_' + safeName + '.xlsx');
