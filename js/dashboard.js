@@ -4549,16 +4549,16 @@ function exportStudentExcel() {
             ['RAPOR HASIL EVALUASI PEMBELAJARAN SISWA'],
             [String(modTitle).toUpperCase()],
             [],
-            ['IDENTITAS', 'KETERANGAN'],
+            ['IDENTITAS SISWA'],
             ['Nama Siswa', cleanCell(sName)],
             ['Kelas', cleanCell(sClass)],
-            ['Modul', cleanCell(modTitle)],
+            ['Modul Pembelajaran', cleanCell(modTitle)],
             ['Nomor Bukti', cleanCell(proofId || '-')],
             ['Tanggal & Waktu', completedAt],
             [],
-            ['REKAP HASIL', 'NILAI'],
+            ['RINGKASAN HASIL EVALUASI'],
             ['NILAI AKHIR RESMI (0–100)', finalScore],
-            ['Status Ketuntasan', isPassed ? 'TUNTAS' : 'BELUM TUNTAS / REMEDIAL'],
+            ['STATUS KETUNTASAN', isPassed ? 'TUNTAS' : 'BELUM TUNTAS / REMEDIAL'],
             ['KKM', kkm],
             ['Jawaban Benar', correctCount],
             ['Jumlah Soal', totalQuestions],
@@ -4566,21 +4566,32 @@ function exportStudentExcel() {
             ['Poin Diperoleh', Number.isFinite(pointsEarned) ? pointsEarned : '-'],
             ['Total Poin Maksimal', Number.isFinite(totalPoints) && totalPoints > 0 ? totalPoints : '-'],
             ['Durasi Pengerjaan', duration],
-            ['Max Streak', streakValue],
+            ['Streak Terbaik', streakValue],
             [],
-            ['Keterangan', isPostponed
+            ['CATATAN RAPOR'],
+            ['Ketersediaan analisis soal', isPostponed
                 ? 'Rincian soal, kunci jawaban, dan pembahasan ditahan sesuai pengaturan Guru.'
                 : 'Rincian jawaban tersedia pada sheet Analisis Butir Soal.'],
-            ['Catatan Integritas', 'Nilai akhir pada rapor ini diambil langsung dari hasil resmi yang tersimpan; tidak dihitung ulang dari jumlah jawaban benar.']
+            ['Integritas nilai', 'Nilai akhir diambil langsung dari hasil resmi yang tersimpan; tidak dihitung ulang dari jumlah jawaban benar.']
         ];
 
         if (typeof XLSX !== 'undefined' && XLSX.utils && typeof XLSX.write === 'function') {
             const wb = XLSX.utils.book_new();
             const summary = XLSX.utils.aoa_to_sheet(summaryRows);
-            summary['!cols'] = [{ wch: 34 }, { wch: 72 }];
+            summary['!cols'] = [{ wch: 38 }, { wch: 76 }];
+            summary['!rows'] = [
+                { hpt: 30 }, { hpt: 22 }, { hpt: 9 }, { hpt: 23 },
+                { hpt: 21 }, { hpt: 21 }, { hpt: 21 }, { hpt: 21 }, { hpt: 21 },
+                { hpt: 9 }, { hpt: 23 }, { hpt: 28 }, { hpt: 23 }, { hpt: 21 },
+                { hpt: 21 }, { hpt: 21 }, { hpt: 21 }, { hpt: 21 }, { hpt: 21 },
+                { hpt: 21 }, { hpt: 21 }, { hpt: 9 }, { hpt: 23 }, { hpt: 36 }, { hpt: 36 }
+            ];
             summary['!merges'] = [
                 { s: { r: 0, c: 0 }, e: { r: 0, c: 1 } },
-                { s: { r: 1, c: 0 }, e: { r: 1, c: 1 } }
+                { s: { r: 1, c: 0 }, e: { r: 1, c: 1 } },
+                { s: { r: 3, c: 0 }, e: { r: 3, c: 1 } },
+                { s: { r: 10, c: 0 }, e: { r: 10, c: 1 } },
+                { s: { r: 22, c: 0 }, e: { r: 22, c: 1 } }
             ];
             summary['!freeze'] = { xSplit: 0, ySplit: 4 };
             if (summary['B11']) summary['B11'].z = '0.##';
@@ -4593,6 +4604,7 @@ function exportStudentExcel() {
                     ...answerRows
                 ]);
                 detail['!cols'] = [{ wch: 7 }, { wch: 20 }, { wch: 65 }, { wch: 14 }, { wch: 42 }, { wch: 65 }];
+                detail['!rows'] = [{ hpt: 30 }, ...answerRows.map(() => ({ hpt: 58 }))];
                 detail['!autofilter'] = { ref: 'A1:F' + Math.max(1, answerRows.length + 1) };
                 detail['!freeze'] = { xSplit: 0, ySplit: 1 };
                 XLSX.utils.book_append_sheet(wb, detail, 'Analisis Butir Soal');
