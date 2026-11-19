@@ -1202,6 +1202,7 @@ function startQuizActual() {
     isTransitioningQuestion = false;
     cheatStrikes = 0;
     sessionHintsUsedCount = 0;
+    currentQ = 0;
     initialQuizWidth = window.innerWidth;
     initialQuizHeight = window.innerHeight;
     const dispName = document.getElementById('display-name');
@@ -1591,6 +1592,7 @@ async function submitStudentReflection() {
 window.submitStudentReflection = submitStudentReflection;
 
 function loadQuestion(index) {
+    currentQ = typeof index === 'number' ? index : 0;
     if (!quizData || quizData.length === 0 || !shuffledQuizOrder || shuffledQuizOrder.length === 0) {
         console.error('Data kuis belum siap saat memuat soal:', index);
         return;
@@ -1770,13 +1772,13 @@ function loadQuestion(index) {
                         ${typeof escapeHtml === 'function' ? escapeHtml(stmt) : stmt}
                     </td>
                     <td class="matrix-opt-col">
-                        <label class="matrix-btn-label true-btn" id="matrix-lbl-${rowIdx}-0">
+                        <label class="matrix-btn-label true-btn" id="matrix-lbl-${rowIdx}-0" onclick="window.handleMatrixRadioSelect(${rowIdx}, 0)">
                             <input type="radio" name="${rowName}" value="0" onchange="window.handleMatrixRadioSelect(${rowIdx}, 0)">
                             <span>✓ Benar</span>
                         </label>
                     </td>
                     <td class="matrix-opt-col">
-                        <label class="matrix-btn-label false-btn" id="matrix-lbl-${rowIdx}-1">
+                        <label class="matrix-btn-label false-btn" id="matrix-lbl-${rowIdx}-1" onclick="window.handleMatrixRadioSelect(${rowIdx}, 1)">
                             <input type="radio" name="${rowName}" value="1" onchange="window.handleMatrixRadioSelect(${rowIdx}, 1)">
                             <span>✕ Salah</span>
                         </label>
@@ -1855,12 +1857,16 @@ function loadQuestion(index) {
 }
 
 window.handleMatrixRadioSelect = function(rowIdx, val) {
-    sfxClick();
+    if (typeof sfxClick === 'function') sfxClick();
     const lblTrue = document.getElementById(`matrix-lbl-${rowIdx}-0`);
     const lblFalse = document.getElementById(`matrix-lbl-${rowIdx}-1`);
     if (lblTrue && lblFalse) {
         lblTrue.classList.toggle('active', val === 0);
         lblFalse.classList.toggle('active', val === 1);
+        const inpTrue = lblTrue.querySelector('input');
+        const inpFalse = lblFalse.querySelector('input');
+        if (inpTrue && val === 0) inpTrue.checked = true;
+        if (inpFalse && val === 1) inpFalse.checked = true;
     }
 };
 
@@ -1889,11 +1895,11 @@ function checkAnswer(isAutoTimeout = false) {
             let allChosen = true;
             let userAnswers = []; // 0 = Benar, 1 = Salah, null = belum
             rows.forEach((row, rIdx) => {
-                let checked = row.querySelector(`input[name="matrix_row_${currentQ}_${rIdx}"]:checked`);
-                // 🛡️ RECOVERY FALLBACK: Jika browser touch tidak memicu checked namun label bertanda active
+                let checked = row.querySelector('input[type="radio"]:checked');
+                // 🛡️ ZERO-LAG TOUCH RECOVERY: Jika radio checked tidak terdeteksi namun label bertanda active
                 if (!checked) {
-                    const lblTrue = document.getElementById(`matrix-lbl-${rIdx}-0`);
-                    const lblFalse = document.getElementById(`matrix-lbl-${rIdx}-1`);
+                    const lblTrue = row.querySelector('.true-btn') || document.getElementById(`matrix-lbl-${rIdx}-0`);
+                    const lblFalse = row.querySelector('.false-btn') || document.getElementById(`matrix-lbl-${rIdx}-1`);
                     if (lblTrue && lblTrue.classList.contains('active')) {
                         const inp = lblTrue.querySelector('input');
                         if (inp) { inp.checked = true; checked = inp; }

@@ -205,8 +205,8 @@ document.addEventListener('keydown', (e) => {
     }
 
     if (!screens.quiz || !screens.quiz.classList.contains('active')) return;
-    // Abaikan jika fokus sedang berada pada input/textarea/select
-    if (e.target && (['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName) || e.target.isContentEditable)) return;
+    // Abaikan jika fokus sedang berada pada input teks/textarea/select
+    if (e.target && (['TEXTAREA', 'SELECT'].includes(e.target.tagName) || (e.target.tagName === 'INPUT' && !['radio', 'checkbox'].includes(e.target.type)) || e.target.isContentEditable)) return;
 
     if (e.key === 'Enter') {
         const checkBtn = document.getElementById('btn-check');
