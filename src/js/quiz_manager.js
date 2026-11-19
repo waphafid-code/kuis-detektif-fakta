@@ -1177,6 +1177,29 @@ const QuizManager = {
         return localStorage.getItem(this.ACTIVE_MODULE_KEY) || this.NETWORK_SECURITY_MODULE.id;
     },
 
+    /**
+     * Mengambil metadata modul aktif secara sinkron.
+     * Kompatibilitas untuk komponen laporan/kuis yang membutuhkan title dan KKM.
+     */
+    getActiveModule() {
+        const activeId = this.getActiveModuleId();
+        const builtInModules = [
+            this.NETWORK_SECURITY_MODULE,
+            this.DEFAULT_MODULE,
+            this.HKI_CULTURE_MODULE,
+            this.ETIKA_PRIVASI_MODULE
+        ];
+        let customModules = [];
+        try {
+            const stored = JSON.parse(localStorage.getItem(this.MODULES_STORAGE_KEY) || '[]');
+            if (Array.isArray(stored)) customModules = stored;
+        } catch (e) {
+            customModules = [];
+        }
+        return [...builtInModules, ...customModules].find(module => module && module.id === activeId)
+            || this.DEFAULT_MODULE;
+    },
+
     setActiveModuleId(id, broadcast = false) {
         if (!id) return;
         localStorage.setItem(this.ACTIVE_MODULE_KEY, id);
