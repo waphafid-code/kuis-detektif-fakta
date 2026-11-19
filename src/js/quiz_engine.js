@@ -975,67 +975,122 @@ async function initiateQuiz() {
             }
         }
 
-        const isRemedialAllowed = (typeof loadRemedialSetting === 'function') ? loadRemedialSetting() : false;
-        const bestScore = previousAttempts.length > 0 ? Math.max(...previousAttempts.map(r => Number(r.score) || 0)) : 0;
+        const isRemedialAllowed = (typeof loadRemedialSetting === 'function') ? loadRemedialSetting() : true;
+        const validAttempts = previousAttempts.filter(r => !r.isCheated || Number(r.score) > 0);
+        const bestScore = validAttempts.length > 0 ? Math.max(...validAttempts.map(r => Number(r.score) || 0)) : (previousAttempts.length > 0 ? Math.max(...previousAttempts.map(r => Number(r.score) || 0)) : 0);
         const attemptCount = previousAttempts.length;
 
-        let canProceed = true;
-        let blockMessage = '';
+        // 🔄 LOGIKA PENGERJAAN KUIS / REMEDIAL SESUAI KEBIJAKAN GURU & STANDAR KKM 80
+        if (validAttempts.length > 0) {
+            if (policy === 'allow_twice_highest' && attemptCount < 2) {
+                // Percobaan ke-2 di bawah mode allow_twice_highest diizinkan langsung
+                showToast(`Percobaan ke-2 Kuis Aktif! Nilai tertinggi dari kedua percobaan yang akan diambil sebagai nilai akhir (${bestScore}/100 vs nilai baru). Selamat berjuang! ✌️⭐`, 'ℹ️');
+            } else if (policy === 'allow_multiple') {
+                // Ujian bebas tanpa batas pengulangan
+            } else if (bestScore >= 80) {
+                // 🛡️ SISWA SUDAH TUNTAS KKM (>= 80): Tidak boleh remedial lagi karena sudah lulus
+                if (typeof sfxWrong === 'function') sfxWrong();
+                const prev = validAttempts[0] || previousAttempts[0] || {};
+                const dupModal = document.getElementById('already-submitted-modal');
+                const blockMsg = `Ananda ${name} telah dinyatakan TUNTAS KKM pada modul ini dengan perolehan nilai ${bestScore}/100. Sesi pengerjaan ulang/remedial hanya dibuka khusus bagi siswa yang nilainya belum mencapai standar KKM (< 80).`;
+                if (dupModal) {
+                    const elName = document.getElementById('dup-student-name');
+                    const elClass = document.getElementById('dup-student-class');
+                    const elScore = document.getElementById('dup-student-score');
+                    const elMeta = document.getElementById('dup-student-meta');
+                    const pDesc = dupModal.querySelector('p');
+                    if (elName) elName.textContent = name;
+                    if (elClass) elClass.textContent = `Kelas: ${cls}`;
+                    if (elScore) elScore.textContent = `Nilai Terbaik: ${bestScore} / 100 (Tuntas KKM)`;
+                    if (elMeta) elMeta.textContent = `Waktu Submit: ${prev.time || '-'}, ${prev.date || ''} · Durasi: ${prev.duration || '-'}`;
+                    if (pDesc) pDesc.textContent = blockMsg;
+                    dupModal.classList.add('active');
+                } else {
+                    showToast(blockMsg, '⚠️');
+                }
+                if (startBtn) {
+                    startBtn.disabled = false;
+                    startBtn.innerHTML = origBtnHtml;
+                }
+                isInitiatingQuiz = false;
+                return;
+            } else if (bestScore < 80) {
+                // ⭐ SISWA DI BAWAH KKM (< 80): Memerlukan Remedial
+                if (!isRemedialAllowed) {
+                    // Remedial dinonaktifkan oleh guru di portal guru
+                    if (typeof sfxWrong === 'function') sfxWrong();
+                    const prev = validAttempts[0] || previousAttempts[0] || {};
+                    const dupModal = document.getElementById('already-submitted-modal');
+                    const blockMsg = `Nilai Ananda ${name} tercatat ${bestScore}/100 (Di Bawah KKM 80 / Perlu Remedial). Namun saat ini sesi remedial belum diaktifkan oleh Guru di portal guru. Silakan konfirmasi ke Guru Anda.`;
+                    if (dupModal) {
+                        const elName = document.getElementById('dup-student-name');
+                        const elClass = document.getElementById('dup-student-class');
+                        const elScore = document.getElementById('dup-student-score');
+                        const elMeta = document.getElementById('dup-student-meta');
+                        const pDesc = dupModal.querySelector('p');
+                        if (elName) elName.textContent = name;
+                        if (elClass) elClass.textContent = `Kelas: ${cls}`;
+                        if (elScore) elScore.textContent = `Nilai Sebelumnya: ${bestScore} / 100 (Perlu Remedial)`;
+                        if (elMeta) elMeta.textContent = `Waktu Submit: ${prev.time || '-'}, ${prev.date || ''} · Durasi: ${prev.duration || '-'}`;
+                        if (pDesc) pDesc.textContent = blockMsg;
+                        dupModal.classList.add('active');
+                    } else {
+                        showToast(blockMsg, '⚠️');
+                    }
+                    if (startBtn) {
+                        startBtn.disabled = false;
+                        startBtn.innerHTML = origBtnHtml;
+                    }
+                    isInitiatingQuiz = false;
+                    return;
+                }
 
-        if (policy === 'allow_twice_highest') {
-            // ✌️ OPSI GURU: Dapat dikumpulkan 2 kali dan ambil nilai tertinggi
-            // Tidak peduli apakah anak sudah atau belum kumpulkan jawaban (attempt 0 atau 1), TETAP BISA!
-            if (attemptCount >= 2) {
-                canProceed = false;
-                blockMessage = `Batas Pengumpulan Tercapai: Anda telah mengirimkan jawaban sebanyak 2 kali untuk modul ini. Nilai tertinggi Anda (${bestScore}/100) telah tersimpan permanen di dasbor guru.`;
-            }
-        } else if (policy === 'allow_multiple') {
-            // ♾️ Ujian bebas tanpa batas pengulangan
-            canProceed = true;
-        } else if (policy === 'allow_remedy') {
-            // ⭐ Boleh remedi jika belum tuntas KKM 80
-            if (attemptCount > 0 && bestScore >= 80 && !isRemedialAllowed) {
-                canProceed = false;
-                blockMessage = `Anda sudah lulus KKM pada modul ini dengan nilai ${bestScore}/100. Pengerjaan ulang hanya dibuka untuk siswa remedial.`;
-            }
-        } else {
-            // 1️⃣ single_only: Hanya 1 kali pengerjaan
-            // Abaikan attempt yang hanya berupa diskualifikasi sistem tanpa nilai / skor 0 akibat kendala teknis lama
-            const validAttempts = previousAttempts.filter(r => !r.isCheated || Number(r.score) > 0);
-            if (validAttempts.length > 0 && !(isRemedialAllowed && bestScore < 80)) {
-                canProceed = false;
-                blockMessage = `Siswa ${name} sudah pernah mengirimkan jawaban kuis untuk modul ini (Nilai: ${bestScore}/100). Sesuai pengaturan guru, kuis hanya dapat dikerjakan 1 kali.`;
-            }
-        }
+                // 🚀 IZIN REMEDIAL AKTIF: Tampilkan Dialog Konfirmasi Remedial Siswa
+                let targetModTitle = 'Modul Penilaian';
+                if (window.QuizManager) {
+                    const allMods = QuizManager.getAllModulesSync ? QuizManager.getAllModulesSync() : [];
+                    const targetMod = (allMods && allMods.find) ? allMods.find(m => m.id === targetModId) : null;
+                    if (targetMod && targetMod.title) targetModTitle = targetMod.title;
+                }
+                if (targetModTitle === 'Modul Penilaian' && targetModId === 'modul_jaringan_keamanan') {
+                    targetModTitle = 'Penilaian Harian: Infrastruktur Jaringan & Keamanan Digital';
+                } else if (targetModTitle === 'Modul Penilaian' && targetModId === 'modul_detektif_fakta') {
+                    targetModTitle = 'Misi Detektif Fakta (Literasi Digital & AI)';
+                }
 
-        if (!canProceed) {
-            if (typeof sfxWrong === 'function') sfxWrong();
-            const prev = previousAttempts[0] || {};
-            const dupModal = document.getElementById('already-submitted-modal');
-            if (dupModal) {
-                const elName = document.getElementById('dup-student-name');
-                const elClass = document.getElementById('dup-student-class');
-                const elScore = document.getElementById('dup-student-score');
-                const elMeta = document.getElementById('dup-student-meta');
-                const pDesc = dupModal.querySelector('p');
-                if (elName) elName.textContent = name;
-                if (elClass) elClass.textContent = `Kelas: ${cls}`;
-                if (elScore) elScore.textContent = `Nilai Terbaik: ${bestScore} / 100 (${attemptCount}x Pengumpulan)`;
-                if (elMeta) elMeta.textContent = `Waktu Submit: ${prev.time || '-'}, ${prev.date || ''} · Durasi: ${prev.duration || '-'}`;
-                if (pDesc && blockMessage) pDesc.textContent = blockMessage;
-                dupModal.classList.add('active');
-            } else {
-                showToast(blockMessage, '⚠️');
-            }
-            return;
-        }
+                const elRemName = document.getElementById('rem-conf-name');
+                const elRemClass = document.getElementById('rem-conf-class');
+                const elRemScore = document.getElementById('rem-conf-score');
+                const elRemModule = document.getElementById('rem-conf-module');
+                const elRemGreeting = document.getElementById('rem-conf-greeting');
+                if (elRemName) elRemName.textContent = name;
+                if (elRemClass) elRemClass.textContent = `Kelas: ${cls}`;
+                if (elRemScore) elRemScore.textContent = `${bestScore} / 100`;
+                if (elRemModule) elRemModule.textContent = targetModTitle;
+                if (elRemGreeting) elRemGreeting.textContent = name;
 
-        if (policy === 'allow_twice_highest' && attemptCount === 1) {
-            showToast(`Percobaan ke-2 Kuis Aktif! Nilai tertinggi dari kedua percobaan yang akan diambil sebagai nilai akhir (${bestScore}/100 vs nilai baru). Selamat berjuang! ✌️⭐`, 'ℹ️');
-        } else if (previousAttempts.length > 0 && isRemedialAllowed && bestScore < 80) {
-            showToast(`Sesi Remedial Terarah: Nilai terbaik Anda (${bestScore}/100) tetap dipertahankan jika nilai baru lebih rendah! ⭐`, 'ℹ️');
-        } else if (policy === 'allow_remedy' && previousAttempts.length > 0) {
-            showToast(`Sesi Remedi: Nilai tertinggi Anda (${bestScore}/100) akan dipertahankan! ⭐`, 'ℹ️');
+                window.pendingRemedialSession = {
+                    name: name,
+                    cls: cls,
+                    moduleId: targetModId,
+                    moduleTitle: targetModTitle,
+                    previousRecord: validAttempts[0] || previousAttempts[0],
+                    bestScore: bestScore
+                };
+
+                if (startBtn) {
+                    startBtn.disabled = false;
+                    startBtn.innerHTML = origBtnHtml;
+                }
+                isInitiatingQuiz = false;
+
+                const remModal = document.getElementById('remedial-confirm-modal');
+                if (remModal) {
+                    remModal.classList.add('active');
+                    if (typeof sfxNotification === 'function') sfxNotification();
+                }
+                return;
+            }
         }
 
         // 📦 Muat Soal Sesuai Modul Pembelajaran Terpilih
@@ -2812,6 +2867,110 @@ async function executeRemedialSession() {
 window.openRemedialBriefing = openRemedialBriefing;
 window.closeRemedialBriefing = closeRemedialBriefing;
 window.executeRemedialSession = executeRemedialSession;
+
+// ============================================================
+// 🔁 MODAL KONFIRMASI REMEDIAL SISWA & PELAKSANAAN EXAM
+// ============================================================
+function closeRemedialConfirmModal() {
+    if (typeof sfxClick === 'function') sfxClick();
+    const modal = document.getElementById('remedial-confirm-modal');
+    if (modal) modal.classList.remove('active');
+    window.pendingRemedialSession = null;
+}
+
+async function proceedWithRemedialQuiz() {
+    if (typeof sfxClick === 'function') sfxClick();
+    const session = window.pendingRemedialSession;
+    const modal = document.getElementById('remedial-confirm-modal');
+    if (modal) modal.classList.remove('active');
+    if (!session) return;
+    await startRemedialExam(session.name, session.cls, session.moduleId, session.previousRecord);
+}
+
+async function startRemedialExam(name, cls, moduleId, prevRecord) {
+    if (isInitiatingQuiz) return;
+    isInitiatingQuiz = true;
+
+    try {
+        isQuizFinishing = false;
+        const targetModId = moduleId || (window.QuizManager ? QuizManager.getActiveModuleId() : 'modul_detektif_fakta');
+
+        // Muat seluruh bank soal resmi modul terpilih untuk ujian remedial
+        if (window.QuizManager) {
+            QuizManager.setActiveModuleId(targetModId);
+            const allMods = await QuizManager.getAllModules();
+            currentActiveModule = allMods.find(m => m.id === targetModId) || QuizManager.DEFAULT_MODULE;
+            const loadedQuestions = await QuizManager.loadQuestionsForModule(targetModId);
+            if (loadedQuestions && loadedQuestions.length > 0) {
+                quizData = loadedQuestions;
+            }
+        }
+
+        initAudio();
+        studentName = name;
+        studentClass = cls;
+        currentQ = 0;
+        score = 0;
+        earnedPointsTotal = 0;
+
+        // Tandai sesi sebagai remedial adaptif
+        isRemedialSession = true;
+        window.isRemedialSession = true;
+        remedialSourceRecord = prevRecord || { score: 0 };
+        window.remedialSourceRecord = remedialSourceRecord;
+        remedialOriginalQuestions = [...quizData];
+        window.remedialOriginalQuestions = remedialOriginalQuestions;
+
+        // Tampilkan banner indikator remedial di atas kuis
+        const remInd = document.getElementById('quiz-remedial-indicator');
+        const remText = document.getElementById('quiz-remedial-text');
+        if (remInd) remInd.style.display = 'flex';
+        if (remText) {
+            const origScore = prevRecord ? Number(prevRecord.score) || 0 : 0;
+            remText.textContent = `Sesi Remedial Modul • Plafon Maksimal KKM (80) • Nilai Awal: ${origScore}/100`;
+        }
+
+        // Vault kunci jawaban agar tidak tampak di console / DOM
+        quizData = vaultAnswers(quizData);
+        window.quizData = quizData;
+
+        totalPossiblePoints = quizData.reduce((acc, q) => acc + (q.points || 5), 0);
+        if (totalPossiblePoints === 0) totalPossiblePoints = quizData.length * 5;
+        streak = 0;
+        maxStreak = 0;
+        isCheatingTriggered = false;
+        cheatStrikes = 0;
+        isCheatWarningActive = false;
+
+        const indices = Array.from({ length: quizData.length }, (_, i) => i);
+        shuffledQuizOrder = shuffleArray(indices).map(item => item.val);
+
+        answeredCorrectly = new Array(quizData.length).fill(null);
+        detailedAnswers = new Array(quizData.length).fill(null);
+        TIMER_MAX = loadTimerSetting();
+
+        const isWajib = (typeof isEnforcedFullscreen === 'function') 
+            ? isEnforcedFullscreen() 
+            : (localStorage.getItem('quizmaster_fullscreen_mode') !== 'opsional');
+        if (isWajib && !isMobileOrTouchDevice()) {
+            enterExamFullscreen();
+        }
+
+        runCountdown(() => {
+            switchScreen('quiz');
+            renderQuestion();
+            quizStartTime = Date.now();
+            lastQuestionTime = Date.now();
+            if (TIMER_MAX > 0) startTimer();
+        });
+    } finally {
+        isInitiatingQuiz = false;
+    }
+}
+
+window.closeRemedialConfirmModal = closeRemedialConfirmModal;
+window.proceedWithRemedialQuiz = proceedWithRemedialQuiz;
+window.startRemedialExam = startRemedialExam;
 
 
 

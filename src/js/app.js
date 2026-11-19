@@ -198,6 +198,7 @@ document.addEventListener('keydown', (e) => {
             else if (m.id === 'delete-single-modal' && typeof closeDeleteSingleModal === 'function') closeDeleteSingleModal();
             else if (m.id === 'access-locked-modal' && typeof closeAccessLockedModal === 'function') closeAccessLockedModal();
             else if (m.id === 'already-submitted-modal' && typeof closeAlreadySubmittedModal === 'function') closeAlreadySubmittedModal();
+            else if (m.id === 'remedial-confirm-modal' && typeof closeRemedialConfirmModal === 'function') closeRemedialConfirmModal();
             else if (m.id === 'remedial-briefing-modal' && typeof closeRemedialBriefing === 'function') closeRemedialBriefing();
         });
         return;
@@ -232,6 +233,7 @@ document.addEventListener('click', (e) => {
         else if (m.id === 'delete-single-modal' && typeof closeDeleteSingleModal === 'function') closeDeleteSingleModal();
         else if (m.id === 'access-locked-modal' && typeof closeAccessLockedModal === 'function') closeAccessLockedModal();
         else if (m.id === 'already-submitted-modal' && typeof closeAlreadySubmittedModal === 'function') closeAlreadySubmittedModal();
+        else if (m.id === 'remedial-confirm-modal' && typeof closeRemedialConfirmModal === 'function') closeRemedialConfirmModal();
         else if (m.id === 'remedial-briefing-modal' && typeof closeRemedialBriefing === 'function') closeRemedialBriefing();
     }
 });

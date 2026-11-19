@@ -496,6 +496,67 @@
     </div>
 </div>
 
+<!-- 🔁 Modal Pilihan Konfirmasi Remedial Mandiri Siswa -->
+<div class="modal-overlay" id="remedial-confirm-modal" style="z-index: 99999; padding: 16px;">
+    <div class="modal-box" style="max-width: 520px; width: 95%; text-align: left; border-color: rgba(245, 158, 11, 0.55); box-shadow: 0 0 50px rgba(245, 158, 11, 0.3);">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--glass-border); padding-bottom: 12px; margin-bottom: 14px;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <div style="font-size: 2rem;">🔁</div>
+                <div>
+                    <h3 style="margin: 0; color: #f59e0b; font-size: 1.15rem; font-weight: 800;">Konfirmasi Ujian Remedial</h3>
+                    <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 2px;">Kurikulum Merdeka • Standar KKM 80</div>
+                </div>
+            </div>
+            <button type="button" class="btn btn-secondary" onclick="closeRemedialConfirmModal()" style="padding: 6px 12px; font-size: 0.85rem;" title="Tutup Modal">✕</button>
+        </div>
+
+        <div style="background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.35); border-radius: 12px; padding: 14px 16px; margin-bottom: 16px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+                <div>
+                    <span style="font-size: 0.82rem; color: var(--text-secondary);">Nama Siswa:</span>
+                    <strong style="color: var(--text); font-size: 0.95rem; display: block;" id="rem-conf-name">-</strong>
+                    <span style="font-size: 0.8rem; color: var(--accent);" id="rem-conf-class">Kelas: -</span>
+                </div>
+                <div style="text-align: right;">
+                    <span style="font-size: 0.78rem; color: var(--text-muted); display: block;">Nilai Sebelumnya:</span>
+                    <span class="score-pill low" id="rem-conf-score" style="font-size: 1rem; font-weight: 800; padding: 4px 12px;">0 / 100</span>
+                    <div style="font-size: 0.72rem; color: #f43f5e; font-weight: 700; margin-top: 3px;">⚠️ Di Bawah KKM (80)</div>
+                </div>
+            </div>
+            <div style="margin-top: 10px; padding-top: 8px; border-top: 1px dashed rgba(245,158,11,0.25); font-size: 0.82rem; color: var(--text-secondary);">
+                Modul: <strong id="rem-conf-module" style="color: var(--text);">-</strong>
+            </div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px;">
+            <p style="font-size: 0.88rem; color: var(--text); line-height: 1.5; margin: 0;">
+                Halo <strong id="rem-conf-greeting" style="color: var(--accent);">Ananda</strong>, nilai Ananda pada modul ini belum mencapai standar ketuntasan KKM (80). Guru mata pelajaran mengizinkan Ananda mengikuti <strong>Ujian Remedial</strong> untuk memperbaiki capaian belajar.
+            </p>
+
+            <div style="background: rgba(255,255,255,0.03); border-left: 3px solid #f59e0b; padding: 10px 14px; border-radius: 8px;">
+                <div style="font-weight: 700; font-size: 0.85rem; color: #fbbf24; margin-bottom: 4px;">⚖️ Ketentuan Nilai Ujian Remedial:</div>
+                <ul style="margin: 0; padding-left: 18px; font-size: 0.8rem; color: var(--text-secondary); line-height: 1.45;">
+                    <li><strong>Batas Maksimal Nilai:</strong> Nilai hasil remedial dipatok maksimal <strong>80 (KKM)</strong> demi asas keadilan akademik bagi siswa yang lulus pada kesempatan pertama.</li>
+                    <li><strong>Jaminan Nilai Terbaik:</strong> Jika nilai remedial tidak mencapai 80 (misal lebih rendah dari nilai awal), sistem otomatis mengambil <strong>nilai tertinggi</strong> yang pernah Ananda raih.</li>
+                </ul>
+            </div>
+
+            <p style="font-size: 0.86rem; color: var(--text-muted); margin: 0; font-style: italic;">
+                Apakah Ananda ingin memulai ujian remedial untuk modul ini sekarang?
+            </p>
+        </div>
+
+        <div class="modal-actions" style="display: flex; justify-content: flex-end; gap: 12px; flex-wrap: wrap;">
+            <button type="button" class="btn btn-secondary" onclick="closeRemedialConfirmModal()" style="padding: 10px 20px; font-weight: 700;">
+                Kembali 🔙
+            </button>
+            <button type="button" class="btn btn-warning pulse-glow" id="btn-proceed-remedial" onclick="proceedWithRemedialQuiz()" style="padding: 10px 24px; font-weight: 800; background: linear-gradient(135deg, #f59e0b, #d97706); color: #fff; border: none; box-shadow: 0 4px 14px rgba(245, 158, 11, 0.4);">
+                Lanjutkan Remedial 🚀
+            </button>
+        </div>
+    </div>
+</div>
+
 <!-- Anti-Cheat Warning Modal (Toleransi 3-Strike Warning System) -->
 <div class="modal-overlay" id="cheat-warning-modal" style="background: rgba(10, 5, 20, 0.95); z-index: 99998;">
     <div class="modal-box" style="border-color: #ef4444; box-shadow: 0 0 60px rgba(239,68,68,0.3); max-width: 520px; animation: popIn 0.3s ease;">
@@ -1423,8 +1484,8 @@
                     <div class="setting-row">
                         <label for="setting-remedial-toggle" style="font-weight: 700; font-size: 0.88rem; color: var(--text);">🔁 Mode Remedial:</label>
                         <select id="setting-remedial-toggle" onchange="saveRemedialSetting()" class="form-select-modern" style="font-size: 0.85rem;">
-                            <option value="disabled" selected>🔴 Nonaktif (Matikan Fitur Remedial Saat Ujian)</option>
-                            <option value="enabled">🟢 Aktif (Izinkan Remedial Terarah)</option>
+                            <option value="enabled" selected>🟢 Aktif (Izinkan Remedial Siswa &lt; 80)</option>
+                            <option value="disabled">🔴 Nonaktif (Matikan Fitur Remedial Saat Ujian)</option>
                         </select>
                         <span class="setting-saved" id="remedial-toggle-saved-msg" style="display:none; color:var(--success); font-weight:700; font-size:0.8rem;">✅ Tersimpan!</span>
                     </div>

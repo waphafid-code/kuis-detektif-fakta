@@ -1124,7 +1124,7 @@ function loadRemedialSetting() {
         if (v === 'enabled') return true;
         if (v === 'disabled') return false;
     } catch(e) {}
-    return false; // Default: Terkunci selama ujian, hanya aktif jika dibuka oleh Guru
+    return true; // Default: Aktif (Izinkan Remedial Siswa < 80)
 }
 window.loadRemedialSetting = loadRemedialSetting;
 
@@ -1140,8 +1140,8 @@ function saveRemedialSetting() {
     }
     if (typeof sfxCorrect === 'function') sfxCorrect();
     showToast(val === 'enabled' 
-        ? 'Mode Remedial Cerdas: DIAKTIFKAN 🟢 (Siswa dapat mengulang butir salah)' 
-        : 'Mode Remedial Cerdas: DINONAKTIFKAN 🔴 (Fitur remedial disembunyikan)', 
+        ? 'Mode Remedial: DIAKTIFKAN 🟢 (Siswa dengan nilai < 80 dapat mengikuti ujian remedial)' 
+        : 'Mode Remedial: DINONAKTIFKAN 🔴 (Siswa tidak dapat mengulang kuis)', 
         val === 'enabled' ? '✅' : 'ℹ️'
     );
 
@@ -3282,6 +3282,9 @@ function renderDashboard() {
     const highestScore = validScores.length > 0 ? Math.max(...validScores) : 0;
     const lowestScore = validScores.length > 0 ? Math.min(...validScores) : '-';
     const lulusCount = submittedItems.filter(item => item.score >= 80 && !(item.record && item.record.isCheated)).length;
+    const remedialDoneCount = submittedItems.filter(item => item.record && item.record.isRemedial).length;
+    const purePassCount = submittedItems.filter(item => item.score >= 80 && !(item.record && item.record.isRemedial) && !(item.record && item.record.isCheated)).length;
+    const perluRemediCount = submittedItems.filter(item => item.score < 80 && !(item.record && item.record.isCheated)).length;
 
     // Perbarui Tab Counter (Cross-Quiz Counters)
     const cntAll = document.getElementById('cnt-roster-all');
@@ -3319,7 +3322,7 @@ function renderDashboard() {
     if (elHighest) elHighest.textContent = highestScore;
     if (elLowest) elLowest.textContent = lowestScore;
     if (elLulus) {
-        elLulus.innerHTML = `${lulusCount} <span style="font-size: 0.95rem; color: var(--text-muted); font-weight: 500;">(${doneCount > 0 ? Math.round((lulusCount/doneCount)*100) : 0}%)</span>`;
+        elLulus.innerHTML = `${lulusCount} <span style="font-size: 0.82rem; color: var(--text-muted); font-weight: 500;">(${purePassCount} Murni • ${remedialDoneCount} Remedi)</span>`;
     }
 
     // 3. Render Badges Rekap Kelas (X E 1 s.d X E 6)
@@ -3492,11 +3495,19 @@ function renderDashboard() {
                     if (item.hasFakta && item.recordFakta) {
                         const rec1 = item.recordFakta;
                         const isPass1 = rec1.score >= 80;
+                        const isRem1 = !!rec1.isRemedial;
                         const rIdx1 = window.currentRenderedRecords.length;
                         window.currentRenderedRecords.push(rec1);
+                        const subpillClass = isPass1 ? 'pass' : 'remedy';
+                        const tagText = isRem1 
+                            ? `🔁 ${rec1.score} (${rec1.score >= 80 ? 'Remedi 80' : 'Remedi <80'})` 
+                            : (isPass1 ? `🟢 ${rec1.score} (Murni)` : `⚠️ ${rec1.score} (Remedi)`);
+                        const subpillStyle = isRem1 
+                            ? 'style="background: rgba(245, 158, 11, 0.18); border-color: #f59e0b; color: #d97706; font-weight: 700;"' 
+                            : '';
                         kuis1Html = `
                             <div style="display: flex; align-items: center; justify-content: center; gap: 4px; flex-wrap: wrap;">
-                                <span class="quiz-score-subpill ${isPass1 ? 'pass' : 'remedy'}">${rec1.score} (${isPass1 ? 'Lulus' : 'Remedi'})</span>
+                                <span class="quiz-score-subpill ${subpillClass}" ${subpillStyle} title="${isRem1 ? `Nilai Remedial (Awal: ${rec1.originalScore !== null && rec1.originalScore !== undefined ? rec1.originalScore : '-'} ➔ Akhir: ${rec1.score})` : (isPass1 ? 'Lulus Ujian Murni' : 'Perlu Remedial')}">${tagText}</span>
                                 <button type="button" class="btn-detail-row" style="padding: 2px 7px; font-size: 0.7rem;" onclick="openStudentDetailModal(window.currentRenderedRecords[${rIdx1}])" title="Periksa Lembar Kuis 1">🔍</button>
                                 <button type="button" class="btn-delete-row" style="padding: 2px 6px; font-size: 0.7rem; border-radius: 4px;" onclick="openDeleteStudentModuleModal('${escapeHtml(item.name)}', '${escapeHtml(item.class)}', 'modul_detektif_fakta', ${rec1.score})" title="Hapus Nilai Kuis 1 (Detektif Fakta) saja">🗑️</button>
                             </div>
@@ -3509,11 +3520,19 @@ function renderDashboard() {
                     if (item.hasJaringan && item.recordJaringan) {
                         const rec2 = item.recordJaringan;
                         const isPass2 = rec2.score >= 80;
+                        const isRem2 = !!rec2.isRemedial;
                         const rIdx2 = window.currentRenderedRecords.length;
                         window.currentRenderedRecords.push(rec2);
+                        const subpillClass = isPass2 ? 'pass' : 'remedy';
+                        const tagText = isRem2 
+                            ? `🔁 ${rec2.score} (${rec2.score >= 80 ? 'Remedi 80' : 'Remedi <80'})` 
+                            : (isPass2 ? `🟢 ${rec2.score} (Murni)` : `⚠️ ${rec2.score} (Remedi)`);
+                        const subpillStyle = isRem2 
+                            ? 'style="background: rgba(245, 158, 11, 0.18); border-color: #f59e0b; color: #d97706; font-weight: 700;"' 
+                            : '';
                         kuis2Html = `
                             <div style="display: flex; align-items: center; justify-content: center; gap: 4px; flex-wrap: wrap;">
-                                <span class="quiz-score-subpill ${isPass2 ? 'pass' : 'remedy'}">${rec2.score} (${isPass2 ? 'Lulus' : 'Remedi'})</span>
+                                <span class="quiz-score-subpill ${subpillClass}" ${subpillStyle} title="${isRem2 ? `Nilai Remedial (Awal: ${rec2.originalScore !== null && rec2.originalScore !== undefined ? rec2.originalScore : '-'} ➔ Akhir: ${rec2.score})` : (isPass2 ? 'Lulus Ujian Murni' : 'Perlu Remedial')}">${tagText}</span>
                                 <button type="button" class="btn-detail-row" style="padding: 2px 7px; font-size: 0.7rem;" onclick="openStudentDetailModal(window.currentRenderedRecords[${rIdx2}])" title="Periksa Lembar Kuis 2">🔍</button>
                                 <button type="button" class="btn-delete-row" style="padding: 2px 6px; font-size: 0.7rem; border-radius: 4px;" onclick="openDeleteStudentModuleModal('${escapeHtml(item.name)}', '${escapeHtml(item.class)}', 'modul_jaringan_keamanan', ${rec2.score})" title="Hapus Nilai Kuis 2 (Keamanan Jaringan) saja">🗑️</button>
                             </div>
@@ -3589,9 +3608,15 @@ function renderDashboard() {
                         const isRemedial = !!r.isRemedial;
                         let remedialBadge = '';
                         if (isRemedial) {
-                            remedialBadge = `<span class="badge-remedial-tuntas" title="Tuntas Remedial. Nilai Awal: ${r.originalScore !== null && r.originalScore !== undefined ? r.originalScore : '-'}">🔁 Remedi (${r.originalScore !== null && r.originalScore !== undefined ? r.originalScore : 0}➔${r.score})</span>`;
+                            if (r.score >= 80) {
+                                remedialBadge = `<span class="badge-remedial-tuntas" title="Tuntas Remedial (Maksimal KKM 80). Nilai Awal: ${r.originalScore !== null && r.originalScore !== undefined ? r.originalScore : '-'}">🔁 Remedi (${r.originalScore !== null && r.originalScore !== undefined ? r.originalScore : 0}➔${r.score})</span>`;
+                            } else {
+                                remedialBadge = `<span class="badge-remedial-needed" style="background: rgba(245, 158, 11, 0.15); border-color: #f59e0b; color: #d97706;" title="Sudah Remedial tapi belum mencapai KKM 80. Nilai Awal: ${r.originalScore !== null && r.originalScore !== undefined ? r.originalScore : '-'}">🔁 Remedi (${r.originalScore !== null && r.originalScore !== undefined ? r.originalScore : 0}➔${r.score})</span>`;
+                            }
                         } else if (r.score < 80 && !r.isCheated) {
                             remedialBadge = `<span class="badge-remedial-needed" title="Nilai belum mencapai KKM 80">⚠️ Perlu Remedi</span>`;
+                        } else if (r.score >= 80 && !r.isCheated) {
+                            remedialBadge = `<span class="badge-murni" style="display:inline-flex; align-items:center; gap:3px; background:rgba(16,185,129,0.15); border:1px solid rgba(16,185,129,0.4); border-radius:6px; padding:2px 7px; font-size:0.72rem; font-weight:700; color:#10b981;" title="Lulus Ujian Pertama (Murni)">🟢 Murni</span>`;
                         }
 
                         const scoreDisplay = r.isCheated 
@@ -3601,8 +3626,12 @@ function renderDashboard() {
                         const statusDisplay = r.isCheated
                             ? `<span class="kkm-pill remedial" style="background: var(--danger); color: white; font-weight: 800;" title="${escapeHtml(r.statusNote || 'Kecurangan')}">🚨 DISKUALIFIKASI</span>`
                             : (isRemedial 
-                                ? `<span class="kkm-pill passed" style="background: rgba(16,185,129,0.18); border-color: #10b981; color: #10b981; font-weight: 800;" title="Tuntas melalui program remedial adaptif">TUNTAS REMEDI</span>`
-                                : `<span class="kkm-pill ${isPass ? 'passed' : 'remedial'}">${isPass ? 'LULUS' : 'REMEDIAL'}</span>`);
+                                ? (r.score >= 80 
+                                    ? `<span class="kkm-pill passed" style="background: rgba(245, 158, 11, 0.15); border-color: #f59e0b; color: #d97706; font-weight: 800;" title="Tuntas Melalui Ujian Remedial (Nilai Maksimal KKM 80)">🔁 TUNTAS REMEDI (80)</span>`
+                                    : `<span class="kkm-pill remedial" style="background: rgba(239, 68, 68, 0.15); border-color: #ef4444; color: #ef4444; font-weight: 800;" title="Sudah Remedial tapi nilai belum mencapai KKM 80">🔁 REMEDI BELUM TUNTAS (${r.score})</span>`)
+                                : (isPass 
+                                    ? `<span class="kkm-pill passed" style="background: rgba(16,185,129,0.15); border-color: #10b981; color: #10b981; font-weight: 800;" title="Lulus Ujian Pertama (Murni)">🟢 LULUS MURNI</span>`
+                                    : `<span class="kkm-pill remedial" style="background: rgba(239, 68, 68, 0.15); border-color: #ef4444; color: #ef4444; font-weight: 800;" title="Belum Tuntas - Perlu Remedial">⚠️ PERLU REMEDIAL</span>`));
 
                         const attemptsBadge = item.attemptsCount > 1 
                             ? `<span class="badge-attempts" title="Siswa ini telah mengerjakan ${item.attemptsCount} kali (Menampilkan nilai terbaik)">${item.attemptsCount}x Percobaan</span>` 

@@ -70,6 +70,9 @@ function mergeRecordsList(existingList, incomingList) {
                 ...cur,
                 ...item,
                 score: bestScore,
+                isRemedial: !!(cur.isRemedial || item.isRemedial),
+                originalScore: item.originalScore !== undefined && item.originalScore !== null ? item.originalScore : cur.originalScore,
+                remedialScore: item.remedialScore !== undefined && item.remedialScore !== null ? item.remedialScore : cur.remedialScore,
                 correct: higher.correct !== undefined ? higher.correct : (item.correct !== undefined ? item.correct : cur.correct),
                 wrongQuestions: higher.wrongQuestions || item.wrongQuestions || cur.wrongQuestions,
                 detailedAnswers: higher.detailedAnswers || item.detailedAnswers || cur.detailedAnswers
