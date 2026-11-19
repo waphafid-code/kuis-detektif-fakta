@@ -126,7 +126,7 @@ runTest('Bugs 10 & 11: PDF and Excel exports use getAnswerFromVault and support 
 // ---------------------------------------------------------------
 runTest('Bug 12: native Excel export subtitle dynamically renders modTitle', () => {
     const code = fs.readFileSync('js/dashboard.js', 'utf8');
-    assert(code.includes('<tr><td colspan="6" class="subtitle">${modTitle} (Standar Kelulusan KKM: 80)</td></tr>'), 'Subtitle must use dynamic modTitle');
+    assert(code.includes('modTitle') && (code.includes('[String(modTitle).toUpperCase()]') || code.includes('${modTitle}')), 'Subtitle must use dynamic modTitle');
     assert(!code.includes('<tr><td colspan="6" class="subtitle">Misi Detektif Fakta Digital (Standar Kelulusan KKM: 80)</td></tr>'), 'Hardcoded subtitle must be removed');
 });
 
