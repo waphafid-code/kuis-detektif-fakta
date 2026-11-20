@@ -152,7 +152,9 @@ test('Test 7: quiz_engine.js suppresses review list and remedial when isReviewPo
 test('Test 8: exportStudentPDF & exportStudentExcel do not leak question table when postponed', () => {
     const dashCode = fs.readFileSync(path.join(__dirname, 'js', 'dashboard.js'), 'utf8');
     assert(dashCode.includes('BUKTI TANDA TERIMA PENGUMPULAN UJIAN RESMI'), 'PDF must generate submission certificate instead of question breakdown');
-    assert(dashCode.includes('Rapor butir soal & pembahasan dirahasiakan'), 'Excel must hide question breakdown when postponed');
+    const rap = fs.readFileSync(path.join(__dirname, 'js', 'rapor_excel.js'), 'utf8');
+    assert(rap.includes('snap.postponed') && rap.includes('dirahasiakan oleh Guru'), 'Excel must hide question breakdown when postponed');
+    assert(dashCode.includes('snap.postponed'), 'Fallback .xls must also hide breakdown when postponed');
 });
 
 console.log('════════════════════════════════════════════════════════════════');

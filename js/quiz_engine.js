@@ -10,14 +10,29 @@ let isCheatingTriggered = false;
 const _secureAnswerVault = new Map();
 const _masterBuiltinVault = new Map();
 
+// 🔑 KUNCI VAULT PER MODUL: bank soal bawaan semua modul memakai id 1..20 yang SAMA.
+// Tanpa pemisahan per modul, kunci modul satu bisa menimpa/terpakai di modul lain (kunci salah saat remedial).
+function _activeVaultModuleId() {
+    try {
+        if (window.QuizManager && typeof QuizManager.getActiveModuleId === 'function') {
+            const id = QuizManager.getActiveModuleId();
+            if (id) return id;
+        }
+    } catch (e) {}
+    return 'modul_detektif_fakta';
+}
+function _vaultKey(modId, key) { return `${modId}::${key}`; }
+function _vaultModuleOf(q) { return (q && q.__vaultMod) || _activeVaultModuleId(); }
+
 function backupMasterBuiltinQuestions() {
     if (typeof window === 'undefined') return;
     try {
+        const QM = window.QuizManager || {};
         const moduleSources = [
-            { list: window.DEFAULT_BUILTIN_QUESTIONS, prefix: 'def_' },
-            { list: window.NETWORK_SECURITY_BUILTIN_QUESTIONS, prefix: 'net_' },
-            { list: window.HKI_CULTURE_BUILTIN_QUESTIONS, prefix: 'hki_' },
-            { list: window.ETIKA_PRIVASI_BUILTIN_QUESTIONS, prefix: 'etika_' }
+            { list: window.DEFAULT_BUILTIN_QUESTIONS, mod: (QM.DEFAULT_MODULE && QM.DEFAULT_MODULE.id) || 'modul_detektif_fakta' },
+            { list: window.NETWORK_SECURITY_BUILTIN_QUESTIONS, mod: (QM.NETWORK_SECURITY_MODULE && QM.NETWORK_SECURITY_MODULE.id) || 'modul_jaringan_keamanan' },
+            { list: window.HKI_CULTURE_BUILTIN_QUESTIONS, mod: (QM.HKI_CULTURE_MODULE && QM.HKI_CULTURE_MODULE.id) || 'modul_hki_profesi_budaya' },
+            { list: window.ETIKA_PRIVASI_BUILTIN_QUESTIONS, mod: (QM.ETIKA_PRIVASI_MODULE && QM.ETIKA_PRIVASI_MODULE.id) || 'modul_etika_privasi_keamanan' }
         ];
 
         moduleSources.forEach(src => {
@@ -25,12 +40,11 @@ function backupMasterBuiltinQuestions() {
                 src.list.forEach((q, idx) => {
                     if (q && q.answer !== undefined) {
                         const entry = { answer: q.answer, explanation: q.explanation || '' };
-                        if (q.id) {
-                            _masterBuiltinVault.set(q.id, entry);
-                            _masterBuiltinVault.set(String(q.id), entry);
+                        if (q.id !== undefined && q.id !== null) {
+                            _masterBuiltinVault.set(_vaultKey(src.mod, q.id), entry);
+                            _masterBuiltinVault.set(_vaultKey(src.mod, String(q.id)), entry);
                         }
-                        _masterBuiltinVault.set(`${src.prefix}${idx}`, entry);
-                        _masterBuiltinVault.set(`idx_${idx}`, entry);
+                        _masterBuiltinVault.set(_vaultKey(src.mod, `idx_${idx}`), entry);
                     }
                     delete q.answer;
                     delete q.explanation;
@@ -40,25 +54,26 @@ function backupMasterBuiltinQuestions() {
     } catch(e) {}
 }
 
-function vaultAnswers(questions) {
+function vaultAnswers(questions, moduleId) {
     if (!Array.isArray(questions)) return [];
-    
+    const modId = moduleId || _activeVaultModuleId();
+
     // Simpan salinan cadangan master modul agar tidak pernah hilang pada pengulangan/remedial
     backupMasterBuiltinQuestions();
 
     const sanitizedList = questions.map((q, idx) => {
-        const qId = q.id || `q_${idx}`;
+        const qId = (q.id !== undefined && q.id !== null) ? q.id : `q_${idx}`;
         let ans = q.answer;
         let exp = q.explanation;
 
-        // Pulihkan kunci dari vault jika sudah terhapus di sesi kuis sebelumnya
+        // Pulihkan kunci dari vault MODUL YANG SAMA jika sudah terhapus di sesi sebelumnya
         if (ans === undefined) {
-            const cached = _secureAnswerVault.get(qId) || 
-                           _secureAnswerVault.get(String(qId)) || 
-                           _masterBuiltinVault.get(qId) || 
-                           _masterBuiltinVault.get(String(qId)) ||
-                           _secureAnswerVault.get(`idx_${idx}`) ||
-                           _masterBuiltinVault.get(`idx_${idx}`);
+            const cached = _secureAnswerVault.get(_vaultKey(modId, qId)) ||
+                           _secureAnswerVault.get(_vaultKey(modId, String(qId))) ||
+                           _masterBuiltinVault.get(_vaultKey(modId, qId)) ||
+                           _masterBuiltinVault.get(_vaultKey(modId, String(qId))) ||
+                           _secureAnswerVault.get(_vaultKey(modId, `idx_${idx}`)) ||
+                           _masterBuiltinVault.get(_vaultKey(modId, `idx_${idx}`));
             if (cached) {
                 ans = cached.answer;
                 exp = cached.explanation;
@@ -67,65 +82,49 @@ function vaultAnswers(questions) {
 
         if (ans !== undefined) {
             const record = { answer: ans, explanation: exp || '' };
-            _secureAnswerVault.set(qId, record);
-            _secureAnswerVault.set(String(qId), record);
-            _secureAnswerVault.set(`q_${idx}`, record);
-            _secureAnswerVault.set(`idx_${idx}`, record);
+            _secureAnswerVault.set(_vaultKey(modId, qId), record);
+            _secureAnswerVault.set(_vaultKey(modId, String(qId)), record);
+            _secureAnswerVault.set(_vaultKey(modId, `q_${idx}`), record);
+            _secureAnswerVault.set(_vaultKey(modId, `idx_${idx}`), record);
         }
 
         // Buat salinan aman tanpa kunci jawaban dan pembahasan langsung
         const sanitized = { ...q, id: qId };
         delete sanitized.answer;
         delete sanitized.explanation;
+        Object.defineProperty(sanitized, '__vaultMod', { value: modId, enumerable: false, writable: true, configurable: true });
         return sanitized;
     });
 
     return sanitizedList;
 }
 
+function _vaultLookup(q, origQIdx, field) {
+    if (!q) return undefined;
+    const modId = _vaultModuleOf(q);
+    const candidates = [q.id, String(q.id), `q_${origQIdx}`, `idx_${origQIdx}`];
+    for (const key of candidates) {
+        if (key === undefined || key === null) continue;
+        const k = _vaultKey(modId, key);
+        const e1 = _secureAnswerVault.get(k);
+        if (e1 && e1[field] !== undefined) return e1[field];
+        const e2 = _masterBuiltinVault.get(k);
+        if (e2 && e2[field] !== undefined) return e2[field];
+    }
+    return undefined;
+}
+
 function getAnswerFromVault(q, origQIdx) {
     if (!q) return null;
-    const candidates = [
-        q.id,
-        String(q.id),
-        `q_${origQIdx}`,
-        `idx_${origQIdx}`
-    ];
-    for (const key of candidates) {
-        if (key !== undefined && key !== null) {
-            if (_secureAnswerVault.has(key)) {
-                const entry = _secureAnswerVault.get(key);
-                if (entry && entry.answer !== undefined) return entry.answer;
-            }
-            if (_masterBuiltinVault.has(key)) {
-                const entry = _masterBuiltinVault.get(key);
-                if (entry && entry.answer !== undefined) return entry.answer;
-            }
-        }
-    }
+    const v = _vaultLookup(q, origQIdx, 'answer');
+    if (v !== undefined) return v;
     return (q.answer !== undefined) ? q.answer : null;
 }
 
 function getExplanationFromVault(q, origQIdx) {
     if (!q) return '';
-    const candidates = [
-        q.id,
-        String(q.id),
-        `q_${origQIdx}`,
-        `idx_${origQIdx}`
-    ];
-    for (const key of candidates) {
-        if (key !== undefined && key !== null) {
-            if (_secureAnswerVault.has(key)) {
-                const entry = _secureAnswerVault.get(key);
-                if (entry && entry.explanation !== undefined) return entry.explanation;
-            }
-            if (_masterBuiltinVault.has(key)) {
-                const entry = _masterBuiltinVault.get(key);
-                if (entry && entry.explanation !== undefined) return entry.explanation;
-            }
-        }
-    }
+    const v = _vaultLookup(q, origQIdx, 'explanation');
+    if (v !== undefined) return v;
     return (q.explanation) ? q.explanation : '';
 }
 
@@ -242,7 +241,7 @@ async function restoreQuizSession() {
 
         // 🛡️ SECURITY: Pindahkan kunci jawaban ke vault privat & bersihkan window.quizData
         if (window.quizData && window.quizData.length > 0) {
-            quizData = vaultAnswers(window.quizData);
+            quizData = vaultAnswers(window.quizData, modId);
             window.quizData = quizData;
         }
 
@@ -982,7 +981,38 @@ async function initiateQuiz() {
         let canProceed = true;
         let blockMessage = '';
 
-        if (policy === 'allow_twice_highest') {
+        // 🔁 ALUR REMEDIAL BARU: siswa bernilai tercatat < KKM + remedial dibuka guru => tawarkan remedial
+        // (bukan popup "nilai sudah tercatat"). Hanya 1x remedial per modul; nilai akhir = tertinggi, maks KKM.
+        const REMEDIAL_KKM = 80;
+        const lastRecordsForRem = previousAttempts.filter(r => !r.isCheated || Number(r.score) > 0);
+        const alreadyRemedialed = lastRecordsForRem.some(r => r.isRemedial);
+        const remedialEligible = isRemedialAllowed && policy !== 'allow_multiple'
+            && lastRecordsForRem.length > 0 && bestScore < REMEDIAL_KKM && !alreadyRemedialed;
+        const remedialConfirmed = window.__remedialConfirmed === true;
+        window.__remedialConfirmed = false;
+        let pendingRemedialSource = null;
+
+        if (remedialEligible) {
+            const sorted = [...lastRecordsForRem].sort((a, b) => (Number(b.score) || 0) - (Number(a.score) || 0) || (Number(b.timestamp) || 0) - (Number(a.timestamp) || 0));
+            if (!remedialConfirmed) {
+                if (typeof sfxClick === 'function') sfxClick();
+                let offerTitle = sorted[0].moduleTitle || '';
+                try {
+                    if (!offerTitle && window.QuizManager) {
+                        const mods = await QuizManager.getAllModules();
+                        const fm = mods.find(m => m.id === targetModId);
+                        if (fm && fm.title) offerTitle = fm.title;
+                    }
+                } catch (e) {}
+                openRemedialOffer(name, cls, offerTitle, sorted[0]);
+                return;
+            }
+            pendingRemedialSource = sorted[0];
+        }
+
+        if (pendingRemedialSource) {
+            canProceed = true; // jalur remedial: lewati pemblokiran "sudah tercatat"
+        } else if (policy === 'allow_twice_highest') {
             // ✌️ OPSI GURU: Dapat dikumpulkan 2 kali dan ambil nilai tertinggi
             // Tidak peduli apakah anak sudah atau belum kumpulkan jawaban (attempt 0 atau 1), TETAP BISA!
             if (attemptCount >= 2) {
@@ -1002,9 +1032,11 @@ async function initiateQuiz() {
             // 1️⃣ single_only: Hanya 1 kali pengerjaan
             // Abaikan attempt yang hanya berupa diskualifikasi sistem tanpa nilai / skor 0 akibat kendala teknis lama
             const validAttempts = previousAttempts.filter(r => !r.isCheated || Number(r.score) > 0);
-            if (validAttempts.length > 0 && !(isRemedialAllowed && bestScore < 80)) {
+            if (validAttempts.length > 0) {
                 canProceed = false;
-                blockMessage = `Siswa ${name} sudah pernah mengirimkan jawaban kuis untuk modul ini (Nilai: ${bestScore}/100). Sesuai pengaturan guru, kuis hanya dapat dikerjakan 1 kali.`;
+                blockMessage = alreadyRemedialed
+                    ? `Siswa ${name} sudah menggunakan kesempatan remedial untuk modul ini (Nilai akhir: ${bestScore}/100). Remedial hanya dapat dilakukan 1 kali.`
+                    : `Siswa ${name} sudah pernah mengirimkan jawaban kuis untuk modul ini (Nilai: ${bestScore}/100). Sesuai pengaturan guru, kuis hanya dapat dikerjakan 1 kali.`;
             }
         }
 
@@ -1030,10 +1062,10 @@ async function initiateQuiz() {
             return;
         }
 
-        if (policy === 'allow_twice_highest' && attemptCount === 1) {
+        if (pendingRemedialSource) {
+            showToast(`Sesi Remedial: Nilai sebelumnya ${bestScore}/100. Nilai tertinggi dipertahankan, maksimal ${REMEDIAL_KKM} bila tuntas. Semangat! ⭐`, 'ℹ️');
+        } else if (policy === 'allow_twice_highest' && attemptCount === 1) {
             showToast(`Percobaan ke-2 Kuis Aktif! Nilai tertinggi dari kedua percobaan yang akan diambil sebagai nilai akhir (${bestScore}/100 vs nilai baru). Selamat berjuang! ✌️⭐`, 'ℹ️');
-        } else if (previousAttempts.length > 0 && isRemedialAllowed && bestScore < 80) {
-            showToast(`Sesi Remedial Terarah: Nilai terbaik Anda (${bestScore}/100) tetap dipertahankan jika nilai baru lebih rendah! ⭐`, 'ℹ️');
         } else if (policy === 'allow_remedy' && previousAttempts.length > 0) {
             showToast(`Sesi Remedi: Nilai tertinggi Anda (${bestScore}/100) akan dipertahankan! ⭐`, 'ℹ️');
         }
@@ -1059,15 +1091,18 @@ async function initiateQuiz() {
         // Reset dan simpan bank soal master untuk kebutuhan sesi remedial adaptif
         isRemedialSession = false;
         window.isRemedialSession = false;
-        remedialSourceRecord = null;
-        window.remedialSourceRecord = null;
+        remedialSourceRecord = pendingRemedialSource || null;
+        window.remedialSourceRecord = remedialSourceRecord;
+        if (pendingRemedialSource) { isRemedialSession = true; window.isRemedialSession = true; }
         remedialOriginalQuestions = [...quizData];
         window.remedialOriginalQuestions = remedialOriginalQuestions;
         const remInd = document.getElementById('quiz-remedial-indicator');
-        if (remInd) remInd.style.display = 'none';
+        const remTxt = document.getElementById('quiz-remedial-text');
+        if (remInd) remInd.style.display = pendingRemedialSource ? 'flex' : 'none';
+        if (remTxt && pendingRemedialSource) remTxt.textContent = `Remedial modul: ${quizData.length} soal (nilai sebelumnya ${bestScore}, target KKM ${REMEDIAL_KKM})`;
 
         // 🛡️ SECURITY: Pindahkan kunci jawaban ke vault privat & bersihkan window.quizData
-        quizData = vaultAnswers(quizData);
+        quizData = vaultAnswers(quizData, targetModId);
         window.quizData = quizData;
 
         totalPossiblePoints = quizData.reduce((acc, q) => acc + (q.points || 5), 0);
@@ -2285,7 +2320,9 @@ async function finishQuiz() {
         remedialScore: isRemedialSession ? finalScore : null,
         pointsEarned: earnedPointsTotal,
         totalPoints: totalPossiblePoints,
-        correct: numCorrect,
+        correct: numCorrect, // benar penuh + benar sebagian (agar benar + salah = total soal)
+        fullCorrect: detailedAnswers.filter(d => d && d.isCorrect && !d.isPartial && Number(d.pointsEarned) >= Number(d.maxPoints)).length,
+        partialCount: detailedAnswers.filter(d => d && d.isPartial).length,
         total: quizData.length,
         wrongQuestions: quizData.map((_, i) => answeredCorrectly[i] === false ? i : -1).filter(i => i >= 0),
         detailedAnswers: detailedAnswers,
@@ -2304,6 +2341,21 @@ async function finishQuiz() {
     const proofCode = `SMAN4-${safeCls}-${displayScore}-${Date.now().toString(36).toUpperCase()}`;
     record.submissionProofId = proofCode;
     window.lastSubmittedProofId = proofCode;
+
+    // 📌 SUMBER KEBENARAN TUNGGAL NILAI: layar hasil, rapor PDF & rapor Excel membaca snapshot yang SAMA.
+    // (Bug lama: rapor memakai window.lastQuizScore yang tidak pernah diisi, lalu menghitung ulang
+    //  dari `score` = jumlah soal benar PENUH saja, sehingga nilai layar 35 bisa terunduh sebagai 5.)
+    window.lastQuizResult = {
+        record: record,
+        displayScore: displayScore,
+        attemptScore: finalScore,
+        kkm: KKM,
+        isPassed: isPassed,
+        isRemedial: !!isRemedialSession,
+        maxStreak: maxStreak,
+        completedAt: now.getTime()
+    };
+    window.lastQuizScore = displayScore;
 
     // Hapus sesi aktif lokal kuis
     try {
@@ -2338,8 +2390,8 @@ async function finishQuiz() {
     const failsafeTimer = setTimeout(() => {
         if (!proofPillFinalized && proofPill) {
             proofPillFinalized = true;
-            proofPill.innerHTML = '🟢 TERSIMPAN AMAN & TERHUBUNG GURU';
-            proofPill.style.background = '#10b981';
+            proofPill.innerHTML = '⏳ TERSIMPAN DI HP — MASIH MENGIRIM KE GURU...';
+            proofPill.style.background = '#f59e0b';
             if (proofDetail) {
                 proofDetail.innerHTML = `Jawaban berhasil diamankan di perangkat & terhubung ke Dasbor Guru (Bpk. Muhammad Hafidh Putra Roshadi, S.Pd.) • No. Bukti: <strong style="color:var(--accent); font-family:monospace;">${proofCode}</strong>`;
             }
@@ -2363,8 +2415,10 @@ async function finishQuiz() {
                     proofPill.innerHTML = '🟢 100% TERKIRIM KE CLOUD';
                     proofPill.style.background = '#10b981';
                 } else {
-                    proofPill.innerHTML = '🟢 TERSIMPAN AMAN DI PERANGKAT';
-                    proofPill.style.background = '#10b981';
+                    proofPill.innerHTML = '🟠 BELUM TERKIRIM KE GURU — mengirim ulang otomatis (ketuk untuk coba sekarang)';
+                    proofPill.style.background = '#f59e0b';
+                    proofPill.style.cursor = 'pointer';
+                    startDeliveryRetry(record, proofPill, proofDetail);
                 }
             }
             if (proofDetail) {
@@ -2698,6 +2752,59 @@ window.closeExamGuide = closeExamGuide;
 // ============================================================
 // 🔁 MODAL & KONTROL SESI REMEDIAL ADAPTIF
 // ============================================================
+
+// 📤 Kirim ulang otomatis bila pengiriman ke cloud gagal (sinyal HP lemah). Berhenti saat sukses.
+function startDeliveryRetry(record, pill, detailEl) {
+    if (window.__deliveryRetryTimer) clearInterval(window.__deliveryRetryTimer);
+    let tries = 0, busy = false;
+    const markSent = () => {
+        clearInterval(window.__deliveryRetryTimer); window.__deliveryRetryTimer = null;
+        if (pill) { pill.innerHTML = '🟢 100% TERKIRIM KE CLOUD'; pill.style.background = '#10b981'; pill.style.cursor = ''; pill.onclick = null; }
+        if (detailEl) detailEl.innerHTML = `Nilai berhasil terkirim ke Dasbor Guru • No. Bukti: <strong style="color:var(--accent); font-family:monospace;">${record.submissionProofId || ''}</strong>`;
+    };
+    const attempt = async () => {
+        if (busy) return; busy = true; tries++;
+        try {
+            let ok = false;
+            if (typeof saveRecordToFirebase === 'function') { try { ok = !!(await saveRecordToFirebase(record, record.submissionProofId)); } catch (e) {} }
+            if (!ok && typeof flushPendingRecords === 'function') { try { ok = (await flushPendingRecords()) > 0; } catch (e) {} }
+            if (ok) { markSent(); if (typeof flushPendingRecords === 'function') flushPendingRecords(); }
+            else if (tries >= 20) { clearInterval(window.__deliveryRetryTimer); window.__deliveryRetryTimer = null; if (pill) pill.innerHTML = '🟠 TERSIMPAN DI HP — ketuk untuk kirim ulang'; }
+        } finally { busy = false; }
+    };
+    if (pill) pill.onclick = attempt;
+    window.__deliveryRetryTimer = setInterval(attempt, 10000);
+}
+window.startDeliveryRetry = startDeliveryRetry;
+
+function openRemedialOffer(name, cls, moduleTitle, rec) {
+    const modal = document.getElementById('remedial-offer-modal');
+    if (!modal) { showToast('Remedial tersedia, namun jendela pilihan tidak ditemukan.', '⚠️'); return; }
+    const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+    set('rem-offer-name', name);
+    set('rem-offer-class', `Kelas: ${cls}`);
+    set('rem-offer-module', moduleTitle || '-');
+    set('rem-offer-score', `Nilai Tercatat: ${Number(rec && rec.score) || 0} / 100`);
+    set('rem-offer-kkm', 'KKM 80');
+    modal.classList.add('active');
+}
+
+function closeRemedialOffer() {
+    if (typeof sfxClick === 'function') sfxClick();
+    const modal = document.getElementById('remedial-offer-modal');
+    if (modal) modal.classList.remove('active');
+}
+
+function confirmRemedialStart() {
+    const modal = document.getElementById('remedial-offer-modal');
+    if (modal) modal.classList.remove('active');
+    window.__remedialConfirmed = true;
+    initiateQuiz();
+}
+window.openRemedialOffer = openRemedialOffer;
+window.closeRemedialOffer = closeRemedialOffer;
+window.confirmRemedialStart = confirmRemedialStart;
+
 function openRemedialBriefing() {
     if (typeof sfxClick === 'function') sfxClick();
     const modal = document.getElementById('remedial-briefing-modal');

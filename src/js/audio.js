@@ -155,7 +155,7 @@ async function checkCloudStudentSubmission(name, cls, targetModId) {
         if (client) {
             const { data, error } = await client
                 .from(cfg.table || 'quiz_results')
-                .select('id, student_name, student_class, score, quiz_date, time_str, duration, module_id')
+                .select('id, student_name, student_class, score, quiz_date, time_str, duration, wrong_questions')
                 .ilike('student_name', name.trim())
                 .limit(10);
 
@@ -163,7 +163,8 @@ async function checkCloudStudentSubmission(name, cls, targetModId) {
                 data.forEach(r => {
                     const cMatch = (typeof isClassEquivalent === 'function') ? isClassEquivalent(r.student_class, cls) : (r.student_class || '').replace(/\s+/g,'').toUpperCase() === cls.replace(/\s+/g,'').toUpperCase();
                     const nMatch = (typeof isNameEquivalent === 'function') ? isNameEquivalent(r.student_name, name) : (r.student_name || '').trim().toLowerCase() === name.trim().toLowerCase();
-                    const rMod = (typeof normalizeModuleId === 'function') ? normalizeModuleId(r.module_id, r.id, r.quiz_date) : r.module_id;
+                    const wq = (r.wrong_questions && typeof r.wrong_questions === 'object' && !Array.isArray(r.wrong_questions)) ? r.wrong_questions : {};
+                    const rMod = (typeof normalizeModuleId === 'function') ? normalizeModuleId(wq.moduleId || r.module_id, r.id, r.quiz_date) : (wq.moduleId || r.module_id);
                     if (cMatch && nMatch && rMod === targetModId) {
                         results.push({
                             name: r.student_name,
@@ -172,7 +173,10 @@ async function checkCloudStudentSubmission(name, cls, targetModId) {
                             date: r.quiz_date,
                             time: r.time_str,
                             duration: r.duration,
-                            moduleId: rMod
+                            moduleId: rMod,
+                            isRemedial: !!wq.isRemedial,
+                            originalScore: wq.originalScore,
+                            remedialScore: wq.remedialScore
                         });
                     }
                 });
@@ -382,7 +386,10 @@ async function saveRecord(record) {
             list: Array.isArray(record.wrongQuestions) ? record.wrongQuestions : [],
             moduleId: modId,
             moduleTitle: record.moduleTitle,
-            proofId: proofCode
+            proofId: proofCode,
+            isRemedial: !!record.isRemedial,
+            originalScore: record.isRemedial ? (record.originalScore ?? null) : null,
+            remedialScore: record.isRemedial ? (record.remedialScore ?? null) : null
         },
         duration: record.duration,
         time_str: record.time,
@@ -397,7 +404,7 @@ async function saveRecord(record) {
     if (typeof saveRecordToFirebase === 'function') {
         const fbTask = (async () => {
             const fbPromise = saveRecordToFirebase(record, proofCode);
-            const fbTimeout = new Promise((_, reject) => setTimeout(() => reject(new Error('Firebase timeout')), 2500));
+            const fbTimeout = new Promise((_, reject) => setTimeout(() => reject(new Error('Firebase timeout')), 8000));
             const ok = await Promise.race([fbPromise, fbTimeout]);
             if (ok) {
                 savedToFirebase = true;
@@ -413,7 +420,7 @@ async function saveRecord(record) {
     if (supabaseClient) {
         const spTask = (async () => {
             const spPromise = supabaseClient.from(cfg.table || 'quiz_results').insert([rowPayload]);
-            const spTimeout = new Promise((_, reject) => setTimeout(() => reject(new Error('Supabase timeout')), 2000));
+            const spTimeout = new Promise((_, reject) => setTimeout(() => reject(new Error('Supabase timeout')), 8000));
             const { error } = await Promise.race([spPromise, spTimeout]);
             if (!error) {
                 savedToSupabase = true;
@@ -876,8 +883,10 @@ async function syncWithBackend(showFeedback = false) {
             let extractedModId = null;
             let extractedModTitle = null;
             let extractedWrong = [];
+            let remFlags = {};
 
             if (r.wrong_questions && typeof r.wrong_questions === 'object' && !Array.isArray(r.wrong_questions)) {
+                if (r.wrong_questions.isRemedial) remFlags = { isRemedial: true, originalScore: r.wrong_questions.originalScore, remedialScore: r.wrong_questions.remedialScore };
                 extractedModId = r.wrong_questions.moduleId;
                 extractedModTitle = r.wrong_questions.moduleTitle;
                 extractedWrong = Array.isArray(r.wrong_questions.list) ? r.wrong_questions.list : [];
@@ -903,7 +912,8 @@ async function syncWithBackend(showFeedback = false) {
                 date: r.quiz_date || r.date || '-',
                 timestamp: r.created_at ? new Date(r.created_at).getTime() : (r.timestamp || Date.now()),
                 tabSwitchCount: r.tab_switch_count !== undefined ? r.tab_switch_count : (r.tabSwitchCount || 0),
-                isCheated: r.is_cheated !== undefined ? r.is_cheated : !!r.isCheated
+                isCheated: r.is_cheated !== undefined ? r.is_cheated : !!r.isCheated,
+                ...remFlags
             };
         });
     }

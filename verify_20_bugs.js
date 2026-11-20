@@ -108,7 +108,9 @@ runTest('Bug 8: export_reports.js dynamically derives total questions and includ
 // ---------------------------------------------------------------
 runTest('Bugs 9 & 18: exportStudentPDF and exportStudentExcel use window.lastQuizScore', () => {
     const code = fs.readFileSync('js/dashboard.js', 'utf8');
-    assert(code.includes("typeof window.lastQuizScore === 'number'"), 'Must check window.lastQuizScore in PDF & Excel export');
+    const eng = fs.readFileSync('js/quiz_engine.js', 'utf8');
+    assert(eng.includes('window.lastQuizScore = displayScore') && eng.includes('window.lastQuizResult'), 'finishQuiz must publish the single-source result snapshot');
+    assert(code.includes('RaporExcel.buildSnapshot') || code.includes('buildStudentResultSnapshot'), 'PDF & Excel export must read the shared snapshot');
 });
 
 // ---------------------------------------------------------------
@@ -116,8 +118,8 @@ runTest('Bugs 9 & 18: exportStudentPDF and exportStudentExcel use window.lastQui
 // ---------------------------------------------------------------
 runTest('Bugs 10 & 11: PDF and Excel exports use getAnswerFromVault and support matrix_tf', () => {
     const code = fs.readFileSync('js/dashboard.js', 'utf8');
-    assert(code.includes("getAnswerFromVault(qData, origIdx)"), 'Must use getAnswerFromVault');
-    assert(code.includes("qData.type === 'matrix_tf'"), 'Must handle matrix_tf in exports');
+    const rap = fs.readFileSync('js/rapor_excel.js', 'utf8');
+    assert(rap.includes('correctText') && rap.includes('detailedAnswers'), 'Snapshot must take the key from graded detailedAnswers (vault-evaluated)');
     assert(!code.includes("correctAns = qData.options[qData.answer];"), 'Unsafe direct options[answer] must be replaced');
 });
 
@@ -126,7 +128,7 @@ runTest('Bugs 10 & 11: PDF and Excel exports use getAnswerFromVault and support 
 // ---------------------------------------------------------------
 runTest('Bug 12: native Excel export subtitle dynamically renders modTitle', () => {
     const code = fs.readFileSync('js/dashboard.js', 'utf8');
-    assert(code.includes('<tr><td colspan="6" class="subtitle">${modTitle} (Standar Kelulusan KKM: 80)</td></tr>'), 'Subtitle must use dynamic modTitle');
+    assert(code.includes('snap.moduleTitle'), 'Export must render module title from the snapshot');
     assert(!code.includes('<tr><td colspan="6" class="subtitle">Misi Detektif Fakta Digital (Standar Kelulusan KKM: 80)</td></tr>'), 'Hardcoded subtitle must be removed');
 });
 
@@ -134,8 +136,8 @@ runTest('Bug 12: native Excel export subtitle dynamically renders modTitle', () 
 // Bug 13: exam lockdown hides answers in PDF & Excel exports
 // ---------------------------------------------------------------
 runTest('Bug 13: PDF and Excel exports respect window.isAnswersLocked', () => {
-    const code = fs.readFileSync('js/dashboard.js', 'utf8');
-    assert(code.includes("if (window.isAnswersLocked) {\n                correctAns = '🔒 Dikunci oleh Guru';"), 'Must lock answers in PDF/Excel export when isAnswersLocked');
+    const code = fs.readFileSync('js/rapor_excel.js', 'utf8');
+    assert(code.includes('isAnswersLocked') && code.includes('🔒 Dikunci oleh Guru'), 'Must lock answers in PDF/Excel export when isAnswersLocked');
 });
 
 // ---------------------------------------------------------------

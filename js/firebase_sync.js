@@ -160,7 +160,10 @@ async function saveRecordToFirebase(record, proofCode) {
             list: Array.isArray(record.wrongQuestions) ? record.wrongQuestions : [],
             moduleId: modId,
             moduleTitle: record.moduleTitle || (modId === 'modul_jaringan_keamanan' ? 'Penilaian Harian: Infrastruktur Jaringan & Keamanan Digital' : 'Misi Detektif Fakta'),
-            proofId: proofCode || record.submissionProofId || ''
+            proofId: proofCode || record.submissionProofId || '',
+            isRemedial: !!record.isRemedial,
+            originalScore: record.isRemedial ? (record.originalScore ?? null) : null,
+            remedialScore: record.isRemedial ? (record.remedialScore ?? null) : null
         },
         duration: record.duration || '0m',
         time_str: record.time || '00:00',
@@ -174,7 +177,7 @@ async function saveRecordToFirebase(record, proofCode) {
     // 1. Simpan ke Firebase Realtime Database via REST API (Ultra-cepat, sub-millisecond)
     try {
         const controller = new AbortController();
-        const tId = setTimeout(() => controller.abort(), 2500);
+        const tId = setTimeout(() => controller.abort(), 8000);
         const res = await fetch(`${dbUrl}/quiz_results/${encodeURIComponent(key)}.json`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
@@ -280,7 +283,8 @@ async function fetchFirebaseRecords() {
                         date: r.quiz_date || '',
                         moduleId: modId,
                         moduleTitle: extractedModTitle || (modId === 'modul_jaringan_keamanan' ? 'Penilaian Harian: Infrastruktur Jaringan & Keamanan Digital' : 'Misi Detektif Fakta'),
-                        submissionProofId: r.submission_proof_id || (r.wrong_questions ? r.wrong_questions.proofId : '') || key
+                        submissionProofId: r.submission_proof_id || (r.wrong_questions ? r.wrong_questions.proofId : '') || key,
+                        ...((r.wrong_questions && r.wrong_questions.isRemedial) ? { isRemedial: true, originalScore: r.wrong_questions.originalScore, remedialScore: r.wrong_questions.remedialScore } : {})
                     });
                 });
 
@@ -316,7 +320,8 @@ async function fetchFirebaseRecords() {
                     date: r.quiz_date || '',
                     moduleId: r.wrong_questions?.moduleId || 'modul_detektif_fakta',
                     moduleTitle: r.wrong_questions?.moduleTitle || 'Misi Detektif Fakta',
-                    submissionProofId: r.submission_proof_id || doc.id
+                    submissionProofId: r.submission_proof_id || doc.id,
+                    ...((r.wrong_questions && r.wrong_questions.isRemedial) ? { isRemedial: true, originalScore: r.wrong_questions.originalScore, remedialScore: r.wrong_questions.remedialScore } : {})
                 });
             });
             return records;
