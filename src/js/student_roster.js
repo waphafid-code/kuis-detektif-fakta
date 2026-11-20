@@ -265,15 +265,28 @@ const isClassEquivalent = (c1, c2) => {
     return false;
 };
 
+const ROSTER_NAME_ALIASES = {
+    'aisahputrikarlina yenti': 'aisah putri karlina yenti',
+    'serunj putri': 'seruni putri',
+    'keysa putrievi': 'keysa putri mevi',
+    'khansaa alexandra ft': 'khansaa alexandra falka tri jata',
+    'muhammad rifky': 'muhamad rifky',
+    'rydho putra novinada': 'rydho putra novianda',
+    'deffid fathahillah sevli': 'deffid fathahilah sevli',
+    'muhammad rizky as shidiq': 'muhammad rizky as shidiq'
+};
+
 const isNameEquivalent = (name1, name2) => {
     if (!name1 || !name2) return false;
-    const clean1 = String(name1).trim().toLowerCase().replace(/[^a-z0-9\s]/g, '');
-    const clean2 = String(name2).trim().toLowerCase().replace(/[^a-z0-9\s]/g, '');
+    let clean1 = String(name1).trim().toLowerCase().replace(/[^a-z0-9]+/g, ' ').replace(/\s+/g, ' ').trim();
+    let clean2 = String(name2).trim().toLowerCase().replace(/[^a-z0-9]+/g, ' ').replace(/\s+/g, ' ').trim();
+    if (ROSTER_NAME_ALIASES[clean1]) clean1 = ROSTER_NAME_ALIASES[clean1];
+    if (ROSTER_NAME_ALIASES[clean2]) clean2 = ROSTER_NAME_ALIASES[clean2];
     if (clean1 === clean2) return true;
     if (clean1.length >= 3 && clean2.length >= 3 && (clean1.includes(clean2) || clean2.includes(clean1))) return true;
     
-    const words1 = clean1.split(/\s+/).filter(w => w.length > 0);
-    const words2 = clean2.split(/\s+/).filter(w => w.length > 0);
+    const words1 = clean1.split(/\s+/).filter(Boolean);
+    const words2 = clean2.split(/\s+/).filter(Boolean);
     if (words1.length === 0 || words2.length === 0) return false;
 
     if (words1[0] === words2[0] && (words1.length === 1 || words2.length === 1)) return true;
