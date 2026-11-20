@@ -1120,11 +1120,12 @@ function getRemedialMeta(r) {
     if (!r || r.isCheated) return { state: 'none', label: '', short: '' };
     const score = Number(r.score) || 0;
     const orig = (r.originalScore !== null && r.originalScore !== undefined) ? r.originalScore : '-';
-    const attempt = (r.remedialScore !== null && r.remedialScore !== undefined) ? r.remedialScore : '-';
+    const attempt = (r.remedialScore !== null && r.remedialScore !== undefined) ? r.remedialScore : score;
     if (r.isRemedial) {
+        const attemptDisplay = (attempt !== '-' && attempt !== undefined) ? `${attempt}` : `${score}`;
         return score >= 80
-            ? { state: 'tuntas', label: `🔁 Sudah Remedial · Tuntas (${orig}➔${score})`, short: 'Remedial: Tuntas', title: `Mengikuti remedial. Nilai awal ${orig}, nilai remedial ${attempt}, nilai akhir ${score}` }
-            : { state: 'belum', label: `🔁 Sudah Remedial · Belum Tuntas (${orig}➔${score})`, short: 'Remedial: Belum Tuntas', title: `Mengikuti remedial. Nilai awal ${orig}, nilai remedial ${attempt}; nilai tertinggi ${score} dipakai` };
+            ? { state: 'tuntas', label: `🔁 Sudah Remedial · Tuntas (${orig}➔${attemptDisplay}➔${score})`, short: `Remedial: Tuntas (${orig}➔${attemptDisplay}➔${score})`, title: `Mengikuti remedial. Nilai awal ${orig}, capaian remedial ${attemptDisplay}, nilai akhir resmi disesuaikan batas KKM ${score}` }
+            : { state: 'belum', label: `🔁 Sudah Remedial · Belum Tuntas (${orig}➔${score})`, short: `Remedial: Belum Tuntas (${orig}➔${score})`, title: `Mengikuti remedial. Nilai awal ${orig}, capaian remedial ${attempt}; nilai tertinggi ${score} dipakai` };
     }
     if (score < 80) return { state: 'perlu', label: '⚠️ Perlu Remedial (belum remedial)', short: 'Belum Remedial', title: 'Nilai di bawah KKM 80 dan belum mengikuti remedial' };
     return { state: 'none', label: '', short: 'Tidak Remedial', title: 'Lulus tanpa remedial' };
@@ -3747,7 +3748,8 @@ function pickBestRecord(list) {
 function remedialExcelLabel(r) {
     if (!r) return '-';
     const m = getRemedialMeta(r);
-    if (m.state === 'tuntas') return `SUDAH REMEDIAL - TUNTAS (${r.originalScore}➔${r.score})`;
+    const attempt = (r.remedialScore !== null && r.remedialScore !== undefined) ? r.remedialScore : r.score;
+    if (m.state === 'tuntas') return `SUDAH REMEDIAL - TUNTAS (Awal: ${r.originalScore} ➔ Remedi: ${attempt} ➔ Nilai Akhir: ${r.score})`;
     if (m.state === 'belum') return `SUDAH REMEDIAL - BELUM TUNTAS (${r.originalScore}➔${r.score})`;
     if (m.state === 'perlu') return 'PERLU REMEDIAL (BELUM REMEDIAL)';
     return 'TIDAK REMEDIAL';
@@ -4209,17 +4211,24 @@ function exportTeacherPDF() {
                 doc.text(`Terendah: ${lowest}`, 155, 46);
                 doc.text(`Tingkat Kelulusan (Nilai ≥ 80): ${lulusCount} dari ${total} Siswa (${lulusPct}%)`, 20, 52);
 
-                const tableBody = sorted.map((r, i) => [
-                    i + 1,
-                    r.name,
-                    r.class || clsTitle,
-                    r.score,
-                    `${r.correct !== undefined ? r.correct : 0} / ${r.total || (typeof getActiveQuizData === 'function' ? getActiveQuizData().length : 20)}`,
-                    r.score >= 80 ? 'LULUS' : 'REMEDIAL',
-                    r.duration || '-',
-                    r.time || '-',
-                    r.date || '-'
-                ]);
+                const tableBody = sorted.map((r, i) => {
+                    let statusLabel = r.score >= 80 ? 'LULUS' : 'REMEDIAL';
+                    if (r.isRemedial) {
+                        const attempt = r.remedialScore != null ? r.remedialScore : r.score;
+                        statusLabel = r.score >= 80 ? `LULUS (Remedi: ${attempt} ➔ Akhir: ${r.score})` : `REMEDIAL (${r.originalScore}➔${r.score})`;
+                    }
+                    return [
+                        i + 1,
+                        r.name,
+                        r.class || clsTitle,
+                        r.score,
+                        `${r.correct !== undefined ? r.correct : 0} / ${r.total || (typeof getActiveQuizData === 'function' ? getActiveQuizData().length : 20)}`,
+                        statusLabel,
+                        r.duration || '-',
+                        r.time || '-',
+                        r.date || '-'
+                    ];
+                });
 
                 doc.autoTable({
                     startY: 61,

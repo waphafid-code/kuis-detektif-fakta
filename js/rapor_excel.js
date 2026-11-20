@@ -353,6 +353,10 @@
             ['Durasi Pengerjaan', snap.duration || '-', st.value],
             ['No. Bukti Verifikasi', snap.proofId, st.valueMono]
         ];
+        if (snap.isRemedial) {
+            const att = snap.attemptScore !== undefined && snap.attemptScore !== null ? snap.attemptScore : snap.score;
+            idRows.push(['Status Remedial', `Sudah Remedial · Tuntas (Capaian: ${att} ➔ Nilai Akhir KKM: ${snap.score})`, st.value]);
+        }
         idRows.forEach((row, i) => {
             const rr = idTop + i;
             s1.set(rr, 1, row[0], st.label);

@@ -64,17 +64,27 @@ function mergeRecordsList(existingList, incomingList) {
         } else {
             const cur = map.get(k);
             // 🏆 AMBIL NILAI TERTINGGI: Selalu pertahankan skor tertinggi dari seluruh percobaan
-            const isRem = !!(cur.isRemedial || item.isRemedial);
+            const origScore = (cur.originalScore !== undefined && cur.originalScore !== null)
+                ? Number(cur.originalScore)
+                : ((item.originalScore !== undefined && item.originalScore !== null)
+                    ? Number(item.originalScore)
+                    : Math.min(Number(cur.score) || 0, Number(item.score) || 0));
+            const isRem = !!(cur.isRemedial || item.isRemedial) && (origScore < 80);
             const bestScore = Math.max(Number(cur.score) || 0, Number(item.score) || 0);
-            const finalScore = isRem ? Math.min(80, bestScore) : bestScore;
+            const bestRemScore = Math.max(
+                (cur.remedialScore !== undefined && cur.remedialScore !== null) ? Number(cur.remedialScore) : 0,
+                (item.remedialScore !== undefined && item.remedialScore !== null) ? Number(item.remedialScore) : 0,
+                isRem ? bestScore : 0
+            );
+            const finalScore = isRem ? Math.min(80, Math.max(origScore, bestRemScore)) : bestScore;
             const higher = (Number(item.score) || 0) >= (Number(cur.score) || 0) ? item : cur;
             map.set(k, {
                 ...cur,
                 ...item,
                 score: finalScore,
                 isRemedial: isRem,
-                originalScore: cur.originalScore !== undefined && cur.originalScore !== null ? cur.originalScore : (item.originalScore !== undefined && item.originalScore !== null ? item.originalScore : cur.score),
-                remedialScore: item.remedialScore !== undefined && item.remedialScore !== null ? item.remedialScore : (cur.remedialScore !== undefined && cur.remedialScore !== null ? cur.remedialScore : item.score),
+                originalScore: isRem ? origScore : (cur.originalScore ?? item.originalScore ?? null),
+                remedialScore: isRem ? (bestRemScore || finalScore) : null,
                 correct: higher.correct !== undefined ? higher.correct : (item.correct !== undefined ? item.correct : cur.correct),
                 wrongQuestions: higher.wrongQuestions || item.wrongQuestions || cur.wrongQuestions,
                 detailedAnswers: higher.detailedAnswers || item.detailedAnswers || cur.detailedAnswers
@@ -132,7 +142,7 @@ function filterDeletedRecords(list) {
 window.filterDeletedRecords = filterDeletedRecords;
 
 const OFFICIAL_DATA_SYNC_KEY = 'quizmaster_official_pdf_sync_ver';
-const CURRENT_OFFICIAL_VERSION = '20261120_official_all_classes_pdf_v7';
+const CURRENT_OFFICIAL_VERSION = '20261120_official_remedial_adjusted_v8';
 
 function getCleanOfficialBaseline() {
     const raw = (typeof OFFICIAL_EXAM_RESULTS !== 'undefined' && Array.isArray(OFFICIAL_EXAM_RESULTS))

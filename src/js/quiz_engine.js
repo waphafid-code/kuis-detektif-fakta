@@ -2475,10 +2475,10 @@ async function finishQuiz() {
         if (isRemedialSession) {
             if (isPassed) {
                 kkmBanner.className = 'kkm-status-banner passed';
-                kkmBanner.innerHTML = `🎉 STATUS: TUNTAS REMEDIAL (Skor Awal: ${remedialSourceRecord ? remedialSourceRecord.score : 0} ➔ Skor Baru: ${displayScore} / 100 • KKM: ${KKM})`;
+                kkmBanner.innerHTML = `🎉 STATUS: TUNTAS REMEDIAL (Skor Awal: ${remedialSourceRecord ? remedialSourceRecord.score : 0} ➔ Capaian Remedial: ${finalScore} ➔ Nilai Akhir: ${displayScore} / 100 • KKM: ${KKM})`;
             } else {
                 kkmBanner.className = 'kkm-status-banner remedial';
-                kkmBanner.innerHTML = `⚠️ STATUS: REMEDIAL BELUM TUNTAS (Skor: ${displayScore} / 100 • KKM: ${KKM})`;
+                kkmBanner.innerHTML = `⚠️ STATUS: REMEDIAL BELUM TUNTAS (Skor Awal: ${remedialSourceRecord ? remedialSourceRecord.score : 0} ➔ Capaian Remedial: ${finalScore} ➔ Nilai Akhir: ${displayScore} / 100 • KKM: ${KKM})`;
             }
         } else if (submissionPolicy === 'allow_twice_highest' && isSecondAttempt) {
             kkmBanner.className = 'kkm-status-banner ' + (isPassed ? 'passed' : 'remedial');
@@ -2501,7 +2501,7 @@ async function finishQuiz() {
         if (isPassed) {
             titleEl.textContent = '🎉 Selamat! Remedial Berhasil Tuntas!';
             titleEl.style.color = 'var(--success)';
-            descEl.textContent = `Luar biasa ${studentName}! Anda berhasil memperbaiki pemahaman konsep dengan nilai tuntas ${displayScore} dari 100 (Standar KKM ${KKM}). Nilai perbaikan telah resmi dikirim ke Dasbor Guru.`;
+            descEl.textContent = `Luar biasa ${studentName}! Anda berhasil memperbaiki pemahaman konsep dengan capaian ujian ${finalScore} dari 100. Sesuai ketentuan akademik, nilai akhir remedial disesuaikan menjadi batas KKM ${displayScore} (Standar KKM: ${KKM}). Nilai perbaikan telah resmi tercatat di Dasbor Guru.`;
             if (typeof sfxVictory === 'function') sfxVictory();
             if (typeof shootConfetti === 'function') shootConfetti();
             if (typeof spawnRandomEmojis === 'function') spawnRandomEmojis('🎉', 4);
