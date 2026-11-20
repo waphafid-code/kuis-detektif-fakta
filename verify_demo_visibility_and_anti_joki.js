@@ -216,7 +216,7 @@ test('7. audio.js syncs demoVisibility and examToken settings', () => {
 test('8. Cache-busting version tag updated to v3018 - v3021 in HTML files', () => {
     const html = fs.readFileSync(path.join(__dirname, 'index.html'), 'utf8');
     const guruHtml = fs.readFileSync(path.join(__dirname, 'kuis_interaktif_dasbor_guru.html'), 'utf8');
-    const hasValidTag = (str) => str.includes('v3018-anti-joki-and-demo-toggle') || str.includes('v3019-zero-lag-anti-glitch') || str.includes('v3020-zero-lag-cache-optimized') || str.includes('v3021-fix-dropdown-no-device-lock') || str.includes('v3030-remedial-qc');
+    const hasValidTag = (str) => str.includes('v3018-anti-joki-and-demo-toggle') || str.includes('v3019-zero-lag-anti-glitch') || str.includes('v3020-zero-lag-cache-optimized') || str.includes('v3021-fix-dropdown-no-device-lock') || str.includes('v3030-remedial-qc') || str.includes('v3023-remedial-kunci-kirim');
     assert(hasValidTag(html), 'index.html missing cache-busting version tag');
     assert(hasValidTag(guruHtml), 'kuis_interaktif_dasbor_guru.html missing cache-busting version tag');
 });

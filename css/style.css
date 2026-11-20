@@ -8649,3 +8649,47 @@ body.dark-theme .modal-cheat-desc {
 }
 
 
+
+/* 🔁 Penanda remedial: sudah remedial tetapi belum tuntas */
+.badge-remedial-gagal {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 0.7rem;
+    font-weight: 800;
+    color: #b45309;
+    background: rgba(245, 158, 11, 0.18);
+    border: 1px solid rgba(245, 158, 11, 0.55);
+    white-space: nowrap;
+}
+[data-theme="dark"] .badge-remedial-gagal { color: #fcd34d; }
+
+/* 📱 Modal selalu bisa di-scroll & tombol aksi mudah dijangkau di HP (tanpa perlu situs desktop) */
+.modal-box {
+    max-height: calc(100vh - 32px);
+    max-height: calc(100dvh - 32px);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+}
+#remedial-offer-modal .modal-box { max-width: 520px; }
+#remedial-offer-modal .modal-actions {
+    position: sticky;
+    bottom: -32px;
+    margin: 0 -8px -8px;
+    padding: 12px 8px 8px;
+    background: linear-gradient(to top, var(--bg-card, #151D30) 80%, transparent);
+}
+#remedial-offer-modal .modal-actions .btn {
+    min-height: 52px;
+    font-size: 1rem;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+}
+@media (max-width: 640px) {
+    .modal-overlay { padding: 10px; align-items: flex-end; }
+    .modal-box { padding: 20px 16px; border-radius: 20px; }
+    #remedial-offer-modal { z-index: 100000 !important; }
+    #remedial-offer-modal .modal-actions { flex-direction: column-reverse; gap: 10px !important; bottom: -20px; }
+    #remedial-offer-modal .modal-actions .btn { width: 100%; min-width: 0 !important; }
+}

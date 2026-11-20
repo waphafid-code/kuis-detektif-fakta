@@ -1115,6 +1115,22 @@ function saveSubmissionPolicySetting() {
 }
 window.saveSubmissionPolicySetting = saveSubmissionPolicySetting;
 
+// 🔁 Penanda status remedial untuk rekap guru: 'tuntas' | 'belum' | 'perlu' | 'none'
+function getRemedialMeta(r) {
+    if (!r || r.isCheated) return { state: 'none', label: '', short: '' };
+    const score = Number(r.score) || 0;
+    const orig = (r.originalScore !== null && r.originalScore !== undefined) ? r.originalScore : '-';
+    const attempt = (r.remedialScore !== null && r.remedialScore !== undefined) ? r.remedialScore : '-';
+    if (r.isRemedial) {
+        return score >= 80
+            ? { state: 'tuntas', label: `🔁 Sudah Remedial · Tuntas (${orig}➔${score})`, short: 'Remedial: Tuntas', title: `Mengikuti remedial. Nilai awal ${orig}, nilai remedial ${attempt}, nilai akhir ${score}` }
+            : { state: 'belum', label: `🔁 Sudah Remedial · Belum Tuntas (${orig}➔${score})`, short: 'Remedial: Belum Tuntas', title: `Mengikuti remedial. Nilai awal ${orig}, nilai remedial ${attempt}; nilai tertinggi ${score} dipakai` };
+    }
+    if (score < 80) return { state: 'perlu', label: '⚠️ Perlu Remedial (belum remedial)', short: 'Belum Remedial', title: 'Nilai di bawah KKM 80 dan belum mengikuti remedial' };
+    return { state: 'none', label: '', short: 'Tidak Remedial', title: 'Lulus tanpa remedial' };
+}
+window.getRemedialMeta = getRemedialMeta;
+
 // 🔁 KONTROL ON/OFF MODE REMEDIAL
 const REMEDIAL_SETTING_KEY = 'quizmaster_remedial_enabled';
 
@@ -1124,7 +1140,7 @@ function loadRemedialSetting() {
         if (v === 'enabled') return true;
         if (v === 'disabled') return false;
     } catch(e) {}
-    return true; // Default: Aktif (Izinkan Remedial Siswa < 80)
+    return false; // Default: Terkunci selama ujian, hanya aktif jika dibuka oleh Guru
 }
 window.loadRemedialSetting = loadRemedialSetting;
 
@@ -1140,8 +1156,8 @@ function saveRemedialSetting() {
     }
     if (typeof sfxCorrect === 'function') sfxCorrect();
     showToast(val === 'enabled' 
-        ? 'Mode Remedial: DIAKTIFKAN 🟢 (Siswa dengan nilai < 80 dapat mengikuti ujian remedial)' 
-        : 'Mode Remedial: DINONAKTIFKAN 🔴 (Siswa tidak dapat mengulang kuis)', 
+        ? 'Mode Remedial Cerdas: DIAKTIFKAN 🟢 (Siswa dapat mengulang butir salah)' 
+        : 'Mode Remedial Cerdas: DINONAKTIFKAN 🔴 (Fitur remedial disembunyikan)', 
         val === 'enabled' ? '✅' : 'ℹ️'
     );
 
@@ -2215,7 +2231,7 @@ function openStudentDetailModal(recordOrIdx) {
         <div>
             <div style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase;">Jawaban Benar / Salah</div>
             <div style="font-weight: 700; font-size: 0.9rem;">
-                <span style="color: var(--success);">✔️ ${record.correct !== undefined ? Number(record.correct) : ((getActiveQuizData().length || 20) - (record.wrongQuestions ? record.wrongQuestions.length : 0))}</span> / 
+                <span style="color: var(--success);">✔️ ${record.correct !== undefined ? Number(record.correct) : ((getActiveQuizData().length || 20) - (record.wrongQuestions ? record.wrongQuestions.length : 0))}</span>${Number(record.partialCount) > 0 ? ` <small style="color: var(--warning, #d97706); font-weight: 600;">(${Number(record.partialCount)} sebagian)</small>` : ''} / 
                 <span style="color: var(--danger);">❌ ${record.wrongQuestions ? record.wrongQuestions.length : ((getActiveQuizData().length || 20) - (Number(record.correct) || 0))}</span>
             </div>
         </div>
@@ -3282,9 +3298,6 @@ function renderDashboard() {
     const highestScore = validScores.length > 0 ? Math.max(...validScores) : 0;
     const lowestScore = validScores.length > 0 ? Math.min(...validScores) : '-';
     const lulusCount = submittedItems.filter(item => item.score >= 80 && !(item.record && item.record.isCheated)).length;
-    const remedialDoneCount = submittedItems.filter(item => item.record && item.record.isRemedial).length;
-    const purePassCount = submittedItems.filter(item => item.score >= 80 && !(item.record && item.record.isRemedial) && !(item.record && item.record.isCheated)).length;
-    const perluRemediCount = submittedItems.filter(item => item.score < 80 && !(item.record && item.record.isCheated)).length;
 
     // Perbarui Tab Counter (Cross-Quiz Counters)
     const cntAll = document.getElementById('cnt-roster-all');
@@ -3322,7 +3335,7 @@ function renderDashboard() {
     if (elHighest) elHighest.textContent = highestScore;
     if (elLowest) elLowest.textContent = lowestScore;
     if (elLulus) {
-        elLulus.innerHTML = `${lulusCount} <span style="font-size: 0.82rem; color: var(--text-muted); font-weight: 500;">(${purePassCount} Murni • ${remedialDoneCount} Remedi)</span>`;
+        elLulus.innerHTML = `${lulusCount} <span style="font-size: 0.95rem; color: var(--text-muted); font-weight: 500;">(${doneCount > 0 ? Math.round((lulusCount/doneCount)*100) : 0}%)</span>`;
     }
 
     // 3. Render Badges Rekap Kelas (X E 1 s.d X E 6)
@@ -3495,19 +3508,11 @@ function renderDashboard() {
                     if (item.hasFakta && item.recordFakta) {
                         const rec1 = item.recordFakta;
                         const isPass1 = rec1.score >= 80;
-                        const isRem1 = !!rec1.isRemedial;
                         const rIdx1 = window.currentRenderedRecords.length;
                         window.currentRenderedRecords.push(rec1);
-                        const subpillClass = isPass1 ? 'pass' : 'remedy';
-                        const tagText = isRem1 
-                            ? `🔁 ${rec1.score} (${rec1.score >= 80 ? 'Remedi 80' : 'Remedi <80'})` 
-                            : (isPass1 ? `🟢 ${rec1.score} (Murni)` : `⚠️ ${rec1.score} (Remedi)`);
-                        const subpillStyle = isRem1 
-                            ? 'style="background: rgba(245, 158, 11, 0.18); border-color: #f59e0b; color: #d97706; font-weight: 700;"' 
-                            : '';
                         kuis1Html = `
                             <div style="display: flex; align-items: center; justify-content: center; gap: 4px; flex-wrap: wrap;">
-                                <span class="quiz-score-subpill ${subpillClass}" ${subpillStyle} title="${isRem1 ? `Nilai Remedial (Awal: ${rec1.originalScore !== null && rec1.originalScore !== undefined ? rec1.originalScore : '-'} ➔ Akhir: ${rec1.score})` : (isPass1 ? 'Lulus Ujian Murni' : 'Perlu Remedial')}">${tagText}</span>
+                                <span class="quiz-score-subpill ${isPass1 ? 'pass' : 'remedy'}" title="${escapeHtml(getRemedialMeta(rec1).title || '')}">${rec1.score} (${isPass1 ? 'Lulus' : 'Remedi'})${rec1.isRemedial ? ' 🔁' : ''}</span>${getRemedialMeta(rec1).state === 'perlu' ? '<span class="badge-remedial-needed" style="font-size:0.62rem;">Perlu Remedial</span>' : (getRemedialMeta(rec1).state === 'none' ? '' : '<span class="' + (getRemedialMeta(rec1).state === 'tuntas' ? 'badge-remedial-tuntas' : 'badge-remedial-gagal') + '" style="font-size:0.62rem;">' + getRemedialMeta(rec1).short + '</span>')}
                                 <button type="button" class="btn-detail-row" style="padding: 2px 7px; font-size: 0.7rem;" onclick="openStudentDetailModal(window.currentRenderedRecords[${rIdx1}])" title="Periksa Lembar Kuis 1">🔍</button>
                                 <button type="button" class="btn-delete-row" style="padding: 2px 6px; font-size: 0.7rem; border-radius: 4px;" onclick="openDeleteStudentModuleModal('${escapeHtml(item.name)}', '${escapeHtml(item.class)}', 'modul_detektif_fakta', ${rec1.score})" title="Hapus Nilai Kuis 1 (Detektif Fakta) saja">🗑️</button>
                             </div>
@@ -3520,19 +3525,11 @@ function renderDashboard() {
                     if (item.hasJaringan && item.recordJaringan) {
                         const rec2 = item.recordJaringan;
                         const isPass2 = rec2.score >= 80;
-                        const isRem2 = !!rec2.isRemedial;
                         const rIdx2 = window.currentRenderedRecords.length;
                         window.currentRenderedRecords.push(rec2);
-                        const subpillClass = isPass2 ? 'pass' : 'remedy';
-                        const tagText = isRem2 
-                            ? `🔁 ${rec2.score} (${rec2.score >= 80 ? 'Remedi 80' : 'Remedi <80'})` 
-                            : (isPass2 ? `🟢 ${rec2.score} (Murni)` : `⚠️ ${rec2.score} (Remedi)`);
-                        const subpillStyle = isRem2 
-                            ? 'style="background: rgba(245, 158, 11, 0.18); border-color: #f59e0b; color: #d97706; font-weight: 700;"' 
-                            : '';
                         kuis2Html = `
                             <div style="display: flex; align-items: center; justify-content: center; gap: 4px; flex-wrap: wrap;">
-                                <span class="quiz-score-subpill ${subpillClass}" ${subpillStyle} title="${isRem2 ? `Nilai Remedial (Awal: ${rec2.originalScore !== null && rec2.originalScore !== undefined ? rec2.originalScore : '-'} ➔ Akhir: ${rec2.score})` : (isPass2 ? 'Lulus Ujian Murni' : 'Perlu Remedial')}">${tagText}</span>
+                                <span class="quiz-score-subpill ${isPass2 ? 'pass' : 'remedy'}" title="${escapeHtml(getRemedialMeta(rec2).title || '')}">${rec2.score} (${isPass2 ? 'Lulus' : 'Remedi'})${rec2.isRemedial ? ' 🔁' : ''}</span>${getRemedialMeta(rec2).state === 'perlu' ? '<span class="badge-remedial-needed" style="font-size:0.62rem;">Perlu Remedial</span>' : (getRemedialMeta(rec2).state === 'none' ? '' : '<span class="' + (getRemedialMeta(rec2).state === 'tuntas' ? 'badge-remedial-tuntas' : 'badge-remedial-gagal') + '" style="font-size:0.62rem;">' + getRemedialMeta(rec2).short + '</span>')}
                                 <button type="button" class="btn-detail-row" style="padding: 2px 7px; font-size: 0.7rem;" onclick="openStudentDetailModal(window.currentRenderedRecords[${rIdx2}])" title="Periksa Lembar Kuis 2">🔍</button>
                                 <button type="button" class="btn-delete-row" style="padding: 2px 6px; font-size: 0.7rem; border-radius: 4px;" onclick="openDeleteStudentModuleModal('${escapeHtml(item.name)}', '${escapeHtml(item.class)}', 'modul_jaringan_keamanan', ${rec2.score})" title="Hapus Nilai Kuis 2 (Keamanan Jaringan) saja">🗑️</button>
                             </div>
@@ -3605,19 +3602,12 @@ function renderDashboard() {
                         else if (r.score >= 60) pillClass = 'mid';
 
                         const isPass = r.score >= 80 && !r.isCheated;
+                        const remMeta = getRemedialMeta(r);
                         const isRemedial = !!r.isRemedial;
-                        let remedialBadge = '';
-                        if (isRemedial) {
-                            if (r.score >= 80) {
-                                remedialBadge = `<span class="badge-remedial-tuntas" title="Tuntas Remedial (Maksimal KKM 80). Nilai Awal: ${r.originalScore !== null && r.originalScore !== undefined ? r.originalScore : '-'}">🔁 Remedi (${r.originalScore !== null && r.originalScore !== undefined ? r.originalScore : 0}➔${r.score})</span>`;
-                            } else {
-                                remedialBadge = `<span class="badge-remedial-needed" style="background: rgba(245, 158, 11, 0.15); border-color: #f59e0b; color: #d97706;" title="Sudah Remedial tapi belum mencapai KKM 80. Nilai Awal: ${r.originalScore !== null && r.originalScore !== undefined ? r.originalScore : '-'}">🔁 Remedi (${r.originalScore !== null && r.originalScore !== undefined ? r.originalScore : 0}➔${r.score})</span>`;
-                            }
-                        } else if (r.score < 80 && !r.isCheated) {
-                            remedialBadge = `<span class="badge-remedial-needed" title="Nilai belum mencapai KKM 80">⚠️ Perlu Remedi</span>`;
-                        } else if (r.score >= 80 && !r.isCheated) {
-                            remedialBadge = `<span class="badge-murni" style="display:inline-flex; align-items:center; gap:3px; background:rgba(16,185,129,0.15); border:1px solid rgba(16,185,129,0.4); border-radius:6px; padding:2px 7px; font-size:0.72rem; font-weight:700; color:#10b981;" title="Lulus Ujian Pertama (Murni)">🟢 Murni</span>`;
-                        }
+                        const badgeCls = remMeta.state === 'tuntas' ? 'badge-remedial-tuntas' : (remMeta.state === 'belum' ? 'badge-remedial-gagal' : 'badge-remedial-needed');
+                        const remedialBadge = remMeta.label
+                            ? `<span class="${badgeCls}" title="${escapeHtml(remMeta.title || '')}">${remMeta.label}</span>`
+                            : '';
 
                         const scoreDisplay = r.isCheated 
                             ? `<span class="score-pill low" style="background: rgba(244,63,94,0.25); border-color: var(--danger); color: #fff;">0 🚨</span>` 
@@ -3625,13 +3615,11 @@ function renderDashboard() {
 
                         const statusDisplay = r.isCheated
                             ? `<span class="kkm-pill remedial" style="background: var(--danger); color: white; font-weight: 800;" title="${escapeHtml(r.statusNote || 'Kecurangan')}">🚨 DISKUALIFIKASI</span>`
-                            : (isRemedial 
-                                ? (r.score >= 80 
-                                    ? `<span class="kkm-pill passed" style="background: rgba(245, 158, 11, 0.15); border-color: #f59e0b; color: #d97706; font-weight: 800;" title="Tuntas Melalui Ujian Remedial (Nilai Maksimal KKM 80)">🔁 TUNTAS REMEDI (80)</span>`
-                                    : `<span class="kkm-pill remedial" style="background: rgba(239, 68, 68, 0.15); border-color: #ef4444; color: #ef4444; font-weight: 800;" title="Sudah Remedial tapi nilai belum mencapai KKM 80">🔁 REMEDI BELUM TUNTAS (${r.score})</span>`)
-                                : (isPass 
-                                    ? `<span class="kkm-pill passed" style="background: rgba(16,185,129,0.15); border-color: #10b981; color: #10b981; font-weight: 800;" title="Lulus Ujian Pertama (Murni)">🟢 LULUS MURNI</span>`
-                                    : `<span class="kkm-pill remedial" style="background: rgba(239, 68, 68, 0.15); border-color: #ef4444; color: #ef4444; font-weight: 800;" title="Belum Tuntas - Perlu Remedial">⚠️ PERLU REMEDIAL</span>`));
+                            : (remMeta.state === 'tuntas'
+                                ? `<span class="kkm-pill passed" style="background: rgba(16,185,129,0.18); border-color: #10b981; color: #10b981; font-weight: 800;" title="${escapeHtml(remMeta.title)}">TUNTAS REMEDIAL</span>`
+                                : (remMeta.state === 'belum'
+                                    ? `<span class="kkm-pill remedial" style="font-weight: 800;" title="${escapeHtml(remMeta.title)}">BELUM TUNTAS (SUDAH REMEDIAL)</span>`
+                                    : `<span class="kkm-pill ${isPass ? 'passed' : 'remedial'}">${isPass ? 'LULUS' : 'PERLU REMEDIAL'}</span>`));
 
                         const attemptsBadge = item.attemptsCount > 1 
                             ? `<span class="badge-attempts" title="Siswa ini telah mengerjakan ${item.attemptsCount} kali (Menampilkan nilai terbaik)">${item.attemptsCount}x Percobaan</span>` 
@@ -3751,6 +3739,20 @@ function renderQuestionAnalytics(records) {
     });
 }
 
+function pickBestRecord(list) {
+    if (!list || !list.length) return undefined;
+    return [...list].sort((a, b) => (Number(b.score) || 0) - (Number(a.score) || 0) || (Number(b.timestamp) || 0) - (Number(a.timestamp) || 0))[0];
+}
+
+function remedialExcelLabel(r) {
+    if (!r) return '-';
+    const m = getRemedialMeta(r);
+    if (m.state === 'tuntas') return `SUDAH REMEDIAL - TUNTAS (${r.originalScore}➔${r.score})`;
+    if (m.state === 'belum') return `SUDAH REMEDIAL - BELUM TUNTAS (${r.originalScore}➔${r.score})`;
+    if (m.state === 'perlu') return 'PERLU REMEDIAL (BELUM REMEDIAL)';
+    return 'TIDAK REMEDIAL';
+}
+
 function exportExcel() {
     if (typeof sfxClick === 'function') sfxClick();
     const allRecords = loadRecords();
@@ -3776,7 +3778,7 @@ function exportExcel() {
                 [`Kelas: ${clsTitle}  |  Standar KKM: 80  |  Guru Pengampu: MUHAMMAD HAFIDH PUTRA ROSHADI, S.Pd.`],
                 [`Waktu Unduh: ${new Date().toLocaleString('id-ID')}`],
                 [],
-                ['No', 'Nama Siswa', 'Kelas', 'Nilai Kuis 1 (Fakta)', 'Status K1', 'Nilai Kuis 2 (Jaringan)', 'Status K2', 'Rata-Rata', 'Status Pengerjaan', 'Hasil Akhir']
+                ['No', 'Nama Siswa', 'Kelas', 'Nilai Kuis 1 (Fakta)', 'Status K1', 'Nilai Kuis 2 (Jaringan)', 'Status K2', 'Rata-Rata', 'Status Pengerjaan', 'Hasil Akhir', 'Remedial Kuis 1', 'Remedial Kuis 2']
             ];
 
             let counter = 1;
@@ -3791,14 +3793,14 @@ function exportExcel() {
                         ? (recClass) => isClassEquivalent(recClass, c)
                         : (recClass) => (recClass || '').replace(/\s+/g, '').toUpperCase() === c.replace(/\s+/g, '').toUpperCase();
 
-                    const recFakta = allRecords.find(r => {
+                    const recFakta = pickBestRecord(allRecords.filter(r => {
                         const mod = (typeof normalizeModuleId === 'function') ? normalizeModuleId(r.moduleId, r.id, r.date) : (r.moduleId || modFaktaId);
                         return nameMatches(r.name) && classMatches(r.class) && mod === modFaktaId;
-                    });
-                    const recJaringan = allRecords.find(r => {
+                    }));
+                    const recJaringan = pickBestRecord(allRecords.filter(r => {
                         const mod = (typeof normalizeModuleId === 'function') ? normalizeModuleId(r.moduleId, r.id, r.date) : (r.moduleId || modFaktaId);
                         return nameMatches(r.name) && classMatches(r.class) && mod === modJaringanId;
-                    });
+                    }));
 
                     const s1 = recFakta ? recFakta.score : null;
                     const s2 = recJaringan ? recJaringan.score : null;
@@ -3832,7 +3834,9 @@ function exportExcel() {
                         s2 !== null ? (s2 >= 80 ? 'Lulus' : 'Remedial') : 'Belum Ujian',
                         avg,
                         statusPengerjaan,
-                        kelulusan
+                        kelulusan,
+                        remedialExcelLabel(recFakta),
+                        remedialExcelLabel(recJaringan)
                     ]);
                 });
             });
@@ -3842,7 +3846,7 @@ function exportExcel() {
         const compColWidths = [
             { wch: 6 }, { wch: 32 }, { wch: 10 }, { wch: 20 },
             { wch: 14 }, { wch: 24 }, { wch: 14 }, { wch: 14 },
-            { wch: 20 }, { wch: 20 }
+            { wch: 20 }, { wch: 20 }, { wch: 34 }, { wch: 34 }
         ];
 
         if (filterClass === 'all') {
@@ -3873,7 +3877,15 @@ function exportExcel() {
         });
 
         const generateSingleModSheet = (clsTitle, classRecords) => {
-            const sorted = [...classRecords].sort((a, b) => b.score - a.score || (a.name || '').localeCompare(b.name || ''));
+            const bestByStudent = new Map();
+            classRecords.forEach(r => {
+                const key = `${(r.name || '').trim().toLowerCase()}|${(r.class || '').replace(/\s+/g, '').toUpperCase()}`;
+                const cur = bestByStudent.get(key);
+                if (!cur || pickBestRecord([cur, r]) === r) bestByStudent.set(key, r);
+            });
+            const sorted = [...bestByStudent.values()].sort((a, b) => b.score - a.score || (a.name || '').localeCompare(b.name || ''));
+            const jmlRemedial = sorted.filter(r => r.isRemedial).length;
+            const jmlPerlu = sorted.filter(r => getRemedialMeta(r).state === 'perlu').length;
             const total = sorted.length;
             const sum = sorted.reduce((acc, r) => acc + (r.score || 0), 0);
             const avg = total > 0 ? (sum / total).toFixed(1) : '0';
@@ -3884,10 +3896,10 @@ function exportExcel() {
             const sheetData = [
                 [`SMAN 4 PADANG — REKAP NILAI ${modTitle}`],
                 [`Laporan Kelas: ${clsTitle} (Standar KKM: 80) — Guru: MUHAMMAD HAFIDH PUTRA ROSHADI, S.Pd.`],
-                [`Total Responden: ${total} Siswa | Rata-Rata: ${avg} | Tertinggi: ${highest} | Terendah: ${lowest} | Lulus KKM: ${lulus} Siswa`],
+                [`Total Responden: ${total} Siswa | Rata-Rata: ${avg} | Tertinggi: ${highest} | Terendah: ${lowest} | Lulus KKM: ${lulus} Siswa | Sudah Remedial: ${jmlRemedial} | Perlu Remedial (belum): ${jmlPerlu}`],
                 [`Waktu Unduh: ${new Date().toLocaleString('id-ID')}`],
                 [],
-                ['No', 'Nama Siswa', 'Kelas', 'Nilai Akhir', 'Status KKM (≥80)', 'Jawaban Benar', 'Total Soal', 'Durasi', 'Waktu Selesai', 'Tanggal']
+                ['No', 'Nama Siswa', 'Kelas', 'Nilai Akhir', 'Status KKM (≥80)', 'Jawaban Benar', 'Total Soal', 'Durasi', 'Waktu Selesai', 'Tanggal', 'Status Remedial', 'Nilai Awal', 'Nilai Remedial']
             ];
 
             sorted.forEach((r, i) => {
@@ -3901,7 +3913,10 @@ function exportExcel() {
                     r.total || (typeof getActiveQuizData === 'function' ? getActiveQuizData().length : 20),
                     r.duration || '-',
                     r.time || '-',
-                    r.date || '-'
+                    r.date || '-',
+                    remedialExcelLabel(r),
+                    r.isRemedial && r.originalScore != null ? r.originalScore : '-',
+                    r.isRemedial && r.remedialScore != null ? r.remedialScore : '-'
                 ]);
             });
             return sheetData;
@@ -3910,7 +3925,7 @@ function exportExcel() {
         const singleColWidths = [
             { wch: 6 }, { wch: 32 }, { wch: 12 }, { wch: 14 },
             { wch: 18 }, { wch: 15 }, { wch: 12 }, { wch: 15 },
-            { wch: 15 }, { wch: 15 }
+            { wch: 15 }, { wch: 15 }, { wch: 38 }, { wch: 12 }, { wch: 14 }
         ];
 
         if (filterClass === 'all') {
@@ -4287,14 +4302,17 @@ function exportStudentPDF() {
     try {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF('p', 'mm', 'a4');
-        const finalScore = (typeof window.lastQuizScore === 'number')
-            ? window.lastQuizScore
-            : ((typeof score !== 'undefined' && quizData && quizData.length) ? Math.round((score / quizData.length) * 100) : 0);
+        const snap = (window.RaporExcel && window.RaporExcel.buildSnapshot) ? window.RaporExcel.buildSnapshot() : null;
+        if (!snap) throw new Error('Data hasil kuis belum tersedia');
+        const finalScore = snap.score;
+        const studentName = snap.name, studentClass = snap.cls;
         const nowStr = new Date().toLocaleString('id-ID');
-        const isLulus = finalScore >= 80;
+        const isLulus = snap.isPassed;
+        const KKM_PDF = snap.kkm;
+        const maxStreak = snap.maxStreak;
 
-        const modTitle = (typeof currentActiveModule !== 'undefined' && currentActiveModule && currentActiveModule.title) || (window.QuizManager && QuizManager.getActiveModule() ? QuizManager.getActiveModule().title : 'Evaluasi Kuis Pembelajaran Informatika');
-        const proofId = window.lastSubmittedProofId || `SMAN4-${(studentClass||'XE').replace(/[^A-Za-z0-9]/g,'')}-${finalScore}-${Date.now().toString(36).toUpperCase()}`;
+        const modTitle = snap.moduleTitle;
+        const proofId = snap.proofId;
 
         // 1. Header Banner
         doc.setFillColor(15, 23, 42); // Dark Navy
@@ -4310,7 +4328,7 @@ function exportStudentPDF() {
         doc.setTextColor(226, 232, 240);
         doc.setFontSize(9);
         doc.setFont('helvetica', 'normal');
-        doc.text(`${modTitle} (Standar KKM: 80)`, 14, 21);
+        doc.text(`${modTitle} (Standar KKM: ${KKM_PDF})`, 14, 21);
         doc.text(`Waktu: ${nowStr} • No. Verifikasi: ${proofId}`, 14, 28);
 
         // 2. Student Info & Score Badge Box
@@ -4347,7 +4365,7 @@ function exportStudentPDF() {
         doc.setFontSize(16);
         doc.text(`SKOR: ${finalScore}`, 163, 55, { align: 'center' });
         doc.setFontSize(8.5);
-        doc.text(isLulus ? 'STATUS: LULUS (≥80)' : 'STATUS: REMEDIAL (<80)', 163, 63, { align: 'center' });
+        doc.text(isLulus ? `STATUS: LULUS (≥${KKM_PDF})` : `STATUS: REMEDIAL (<${KKM_PDF})`, 163, 63, { align: 'center' });
 
         const isPostponed = (typeof isReviewPostponed === 'function') 
             ? isReviewPostponed() 
@@ -4381,33 +4399,13 @@ function exportStudentPDF() {
         }
 
         // 3. Question Details Table (Dengan Pembahasan, Penjelasan Edukatif & Tingkat Kesulitan)
-        const tableBody = shuffledQuizOrder.map((origIdx, playIdx) => {
-            const qData = quizData[origIdx];
-            const isRight = answeredCorrectly[origIdx];
-            const ansKey = (typeof getAnswerFromVault === 'function') ? getAnswerFromVault(qData, origIdx) : qData.answer;
-            const expReview = (typeof getExplanationFromVault === 'function') ? getExplanationFromVault(qData, origIdx) : (qData.explanation || '-');
-
-            let correctAns = '-';
-            if (window.isAnswersLocked) {
-                correctAns = '🔒 Dikunci oleh Guru';
-            } else if (qData.type === 'matrix_tf') {
-                correctAns = (Array.isArray(ansKey) ? ansKey : []).map((ans, i) => `[#${i+1}] ${ans === 0 ? 'Benar' : 'Salah'}`).join(' • ');
-            } else if (Array.isArray(ansKey)) {
-                correctAns = ansKey.map(a => (qData.options && qData.options[a]) || a).join(' | ');
-            } else if (ansKey !== null && ansKey !== undefined) {
-                correctAns = (qData.options && qData.options[ansKey]) || ansKey;
-            }
-            const diffStr = qData.difficulty === 'Easy' ? 'Mudah' : (qData.difficulty === 'Hard' ? 'Sulit' : 'Sedang');
-            const safeExp = window.isAnswersLocked ? '🔒 Pembahasan dikunci selama mode ujian' : expReview;
-
-            return [
-                playIdx + 1,
-                `[${diffStr}] ${qData.q}`,
-                isRight ? 'BENAR' : 'SALAH',
-                correctAns,
-                safeExp
-            ];
-        });
+        const tableBody = snap.rows.map(r => [
+            r.no,
+            `[${r.difficulty}] ${r.question}`,
+            r.result === 'BENAR' ? 'BENAR' : (r.result === 'SEBAGIAN' ? `SEBAGIAN (${r.points}/${r.maxPoints})` : 'SALAH'),
+            r.key,
+            r.explanation
+        ]);
 
         doc.autoTable({
             startY: 80,
@@ -4439,6 +4437,8 @@ function exportStudentPDF() {
                 if (data.section === 'body' && data.column.index === 2) {
                     if (data.cell.raw === 'BENAR') {
                         data.cell.styles.textColor = [16, 185, 129]; // Green
+                    } else if (String(data.cell.raw).indexOf('SEBAGIAN') === 0) {
+                        data.cell.styles.textColor = [217, 119, 6]; // Amber
                     } else {
                         data.cell.styles.textColor = [239, 68, 68]; // Red
                     }
@@ -4488,243 +4488,67 @@ function downloadExcelWorkbook(wb, fileName) {
 }
 
 function exportStudentExcel() {
-    if (typeof sfxClick === 'function') sfxClick();
+    sfxClick();
+    (async () => {
+        let snap = null;
+        try {
+            snap = (window.RaporExcel && typeof window.RaporExcel.buildSnapshot === 'function')
+                ? window.RaporExcel.buildSnapshot()
+                : null;
+            if (!snap) throw new Error('Modul rapor Excel belum dimuat');
 
-    try {
-        // Single source of truth: nilai resmi yang sama dengan layar hasil dan record tersimpan.
-        const records = (typeof loadRecords === 'function' ? loadRecords() : []);
-        const lastResult = window.lastQuizResult && typeof window.lastQuizResult === 'object'
-            ? window.lastQuizResult
-            : null;
-        const proofId = (lastResult && lastResult.submissionProofId) || window.lastSubmittedProofId || '';
-        const matchedRecord = lastResult || (Array.isArray(records)
-            ? records.find(r => proofId && r.submissionProofId === proofId)
-            : null);
+            const safeClass = String(snap.cls).replace(/[/\\?%*:|"<> ]/g, '_');
+            const safeName = String(snap.name).replace(/[/\\?%*:|"<> ]/g, '_');
 
-        const scoreCandidate = matchedRecord && matchedRecord.score !== undefined
-            ? matchedRecord.score
-            : window.lastQuizScore;
-        const finalScore = Number(scoreCandidate);
-        if (!Number.isFinite(finalScore) || finalScore < 0 || finalScore > 100) {
-            throw new Error('Nilai akhir resmi tidak ditemukan atau tidak valid. Silakan muat ulang hasil ujian dan coba kembali.');
-        }
-
-        const questions = Array.isArray(quizData) ? quizData : [];
-        const correctCount = Number.isFinite(Number(matchedRecord && matchedRecord.correct))
-            ? Number(matchedRecord.correct)
-            : (Array.isArray(answeredCorrectly) ? answeredCorrectly.filter(v => v === true).length : 0);
-        const totalQuestions = Number(matchedRecord && matchedRecord.total) || questions.length;
-        const pointsEarned = matchedRecord && matchedRecord.pointsEarned !== undefined
-            ? Number(matchedRecord.pointsEarned) : Number(window.lastQuizPointsEarned || 0);
-        const totalPoints = matchedRecord && matchedRecord.totalPoints !== undefined
-            ? Number(matchedRecord.totalPoints) : Number(window.lastQuizTotalPoints || 0);
-        const sName = (matchedRecord && matchedRecord.name) || studentName || 'Siswa';
-        const sClass = (matchedRecord && matchedRecord.class) || studentClass || 'Kelas';
-        const safeName = String(sName).replace(/[/\\?%*:|"<>]/g, '_');
-        const safeClass = String(sClass).replace(/[/\\?%*:|"<> ]/g, '_');
-        // Jangan mengasumsikan getActiveModule tersedia: versi QuizManager lama hanya
-        // menyediakan getActiveModuleId/getAllModules. Prioritaskan metadata hasil ujian.
-        const manager = window.QuizManager || null;
-        const activeModuleId = (matchedRecord && matchedRecord.moduleId)
-            || (manager && typeof manager.getActiveModuleId === 'function' ? manager.getActiveModuleId() : '');
-        let moduleMeta = (typeof currentActiveModule !== 'undefined' && currentActiveModule) ? currentActiveModule : null;
-        if (!moduleMeta && manager && typeof manager.getActiveModule === 'function') {
-            try { moduleMeta = manager.getActiveModule(); } catch (_) { moduleMeta = null; }
-        }
-        if (!moduleMeta && manager) {
-            moduleMeta = [manager.NETWORK_SECURITY_MODULE, manager.DEFAULT_MODULE,
-                manager.HKI_CULTURE_MODULE, manager.ETIKA_PRIVASI_MODULE]
-                .filter(Boolean).find(m => m.id === activeModuleId) || null;
-        }
-        if (!moduleMeta) {
-            try {
-                const storedModules = JSON.parse(localStorage.getItem(manager && manager.MODULES_STORAGE_KEY
-                    ? manager.MODULES_STORAGE_KEY : 'detektif_fakta_all_modules_v2') || '[]');
-                if (Array.isArray(storedModules)) moduleMeta = storedModules.find(m => m && m.id === activeModuleId) || null;
-            } catch (_) { moduleMeta = null; }
-        }
-        const modTitle = (matchedRecord && (matchedRecord.moduleTitle || matchedRecord.module))
-            || (moduleMeta && moduleMeta.title)
-            || 'Evaluasi Kuis Pembelajaran Informatika';
-        const completedAt = (matchedRecord && matchedRecord.timestamp)
-            ? new Date(matchedRecord.timestamp).toLocaleString('id-ID')
-            : new Date().toLocaleString('id-ID');
-        const duration = (matchedRecord && matchedRecord.duration) || '-';
-        const streakValue = Number(matchedRecord && matchedRecord.maxStreak !== undefined
-            ? matchedRecord.maxStreak : (typeof maxStreak !== 'undefined' ? maxStreak : 0));
-        const kkmCandidate = matchedRecord && matchedRecord.kkm !== undefined
-            ? matchedRecord.kkm : (moduleMeta && moduleMeta.kkm !== undefined ? moduleMeta.kkm : 80);
-        const kkm = Number(kkmCandidate) || 80;
-        const isPassed = finalScore >= kkm;
-        const isPostponed = (typeof isReviewPostponed === 'function')
-            ? isReviewPostponed()
-            : localStorage.getItem('quizmaster_review_release_mode') !== 'open';
-
-        const cleanCell = value => (typeof sanitizeSpreadsheetValue === 'function'
-            ? sanitizeSpreadsheetValue(value) : String(value == null ? '' : value));
-        const answerRows = [];
-        if (!isPostponed && questions.length) {
-            const order = Array.isArray(shuffledQuizOrder) && shuffledQuizOrder.length === questions.length
-                ? shuffledQuizOrder : questions.map((_, i) => i);
-            order.forEach((origIdx, playIdx) => {
-                const q = questions[origIdx];
-                if (!q) return;
-                const right = Array.isArray(answeredCorrectly) && answeredCorrectly[origIdx] === true;
-                const answerKey = (typeof getAnswerFromVault === 'function')
-                    ? getAnswerFromVault(q, origIdx) : q.answer;
-                const explanation = (typeof getExplanationFromVault === 'function')
-                    ? getExplanationFromVault(q, origIdx) : (q.explanation || '-');
-                let correctAnswer = '-';
-                if (window.isAnswersLocked) {
-                    correctAnswer = 'Dikunci oleh Guru';
-                } else if (q.type === 'matrix_tf') {
-                    correctAnswer = (Array.isArray(answerKey) ? answerKey : [])
-                        .map((v, i) => '[#' + (i + 1) + '] ' + (v === 0 ? 'Benar' : 'Salah')).join(' • ');
-                } else if (Array.isArray(answerKey)) {
-                    correctAnswer = answerKey.map(v => (q.options && q.options[v]) || v).join(' | ');
-                } else if (answerKey !== null && answerKey !== undefined) {
-                    correctAnswer = (q.options && q.options[answerKey]) || answerKey;
+            // Opsi 1: .xlsx bergaya penuh (warna, rumus, filter, freeze pane) — tanpa pustaka tambahan selain JSZip
+            if (typeof JSZip !== 'undefined') {
+                try {
+                    const blob = await window.RaporExcel.buildXlsxBlob(snap);
+                    window.RaporExcel.downloadBlob(blob, `Rapor_Kuis_${safeClass}_${safeName}.xlsx`);
+                    sfxCorrect();
+                    showToast('Rapor Excel (.xlsx) berhasil diunduh!', '📊');
+                    return;
+                } catch (xlsxErr) {
+                    console.warn('Rapor XLSX gagal, memakai cadangan .xls:', xlsxErr);
                 }
-                answerRows.push([
-                    playIdx + 1,
-                    q.difficulty === 'Easy' ? 'Mudah' : (q.difficulty === 'Hard' ? 'Sulit' : 'Sedang'),
-                    cleanCell(q.q || ''),
-                    right ? 'BENAR' : 'SALAH',
-                    cleanCell(correctAnswer),
-                    cleanCell(window.isAnswersLocked ? 'Pembahasan dikunci oleh Guru' : explanation)
-                ]);
-            });
+            }
+
+            // Opsi 2: cadangan .xls (tabel HTML) — nilai tetap bersumber dari snapshot yang sama
+            const esc = (v) => (typeof escapeHtml === 'function' ? escapeHtml(String(v == null ? '' : v)) : String(v == null ? '' : v));
+            let html = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40"><head>' +
+                '<meta http-equiv="Content-Type" content="text/html; charset=utf-8">' +
+                '<style>body{font-family:Calibri,Arial,sans-serif;font-size:10pt}table{border-collapse:collapse}' +
+                'th{background:#4f46e5;color:#fff;font-weight:bold;border:1px solid #cbd5e1;padding:6px;text-align:center}' +
+                'td{border:1px solid #cbd5e1;padding:5px 7px;vertical-align:top}' +
+                '.title{background:#0f172a;color:#22d3ee;font-size:14pt;font-weight:bold;padding:10px}' +
+                '.lbl{font-weight:bold;background:#f1f5f9}.ok{color:#166534;font-weight:bold}.bad{color:#991b1b;font-weight:bold}.mid{color:#92400e;font-weight:bold}</style></head><body><table>' +
+                '<tr><td colspan="8" class="title">RAPOR HASIL EVALUASI PEMBELAJARAN SISWA</td></tr>' +
+                '<tr><td colspan="8">' + esc(snap.moduleTitle) + ' (KKM: ' + snap.kkm + ')</td></tr>' +
+                '<tr><td class="lbl">Nama Siswa</td><td colspan="7">' + esc(snap.name) + '</td></tr>' +
+                '<tr><td class="lbl">Kelas</td><td colspan="7">' + esc(snap.cls) + '</td></tr>' +
+                '<tr><td class="lbl">Nilai Akhir</td><td colspan="7" class="' + (snap.isPassed ? 'ok' : 'bad') + '">' + snap.score + ' — ' + (snap.isPassed ? 'LULUS (KOMPETEN)' : 'BELUM LULUS (REMEDIAL)') + '</td></tr>' +
+                '<tr><td class="lbl">Poin</td><td colspan="7">' + snap.pointsEarned + ' / ' + snap.totalPoints + '</td></tr>' +
+                '<tr><td class="lbl">Ketepatan</td><td colspan="7">Benar penuh ' + snap.counts.full + ', sebagian ' + snap.counts.partial + ', salah ' + snap.counts.wrong + ' dari ' + snap.counts.total + ' soal</td></tr>' +
+                '<tr><td class="lbl">No. Bukti</td><td colspan="7">' + esc(snap.proofId) + '</td></tr>';
+            if (snap.postponed || !snap.rows.length) {
+                html += '<tr><td colspan="8">🔒 Rincian butir soal &amp; pembahasan dirahasiakan oleh Guru selama sesi ujian berlangsung.</td></tr>';
+            } else {
+                html += '<tr><th>No</th><th>Tingkat</th><th>Pertanyaan</th><th>Jawaban Anda</th><th>Kunci</th><th>Hasil</th><th>Poin</th><th>Pembahasan</th></tr>';
+                snap.rows.forEach(r => {
+                    const cls = r.result === 'BENAR' ? 'ok' : (r.result === 'SEBAGIAN' ? 'mid' : 'bad');
+                    html += '<tr><td align="center">' + r.no + '</td><td align="center">' + esc(r.difficulty) + '</td><td>' + esc(r.question) + '</td><td>' + esc(r.selected) + '</td><td>' + esc(r.key) + '</td><td align="center" class="' + cls + '">' + r.result + '</td><td align="center">' + r.points + '/' + r.maxPoints + '</td><td>' + esc(r.explanation) + '</td></tr>';
+                });
+            }
+            html += '</table></body></html>';
+            const blob = new Blob(['﻿' + html], { type: 'application/vnd.ms-excel;charset=utf-8' });
+            window.RaporExcel.downloadBlob(blob, `Rapor_Kuis_${safeClass}_${safeName}.xls`);
+            sfxCorrect();
+            showToast('Rapor Excel (.xls) berhasil diunduh!', '📊');
+        } catch (err) {
+            if (typeof sfxWrong === 'function') sfxWrong();
+            showToast('Gagal mengekspor: ' + err.message, '❌');
         }
-
-        const summaryRows = [
-            ['RAPOR HASIL EVALUASI PEMBELAJARAN SISWA'],
-            [String(modTitle).toUpperCase()],
-            [],
-            ['IDENTITAS SISWA'],
-            ['Nama Siswa', cleanCell(sName)],
-            ['Kelas', cleanCell(sClass)],
-            ['Modul Pembelajaran', cleanCell(modTitle)],
-            ['Nomor Bukti', cleanCell(proofId || '-')],
-            ['Tanggal & Waktu', completedAt],
-            [],
-            ['RINGKASAN HASIL EVALUASI'],
-            ['NILAI AKHIR RESMI (0–100)', finalScore],
-            ['STATUS KETUNTASAN', isPassed ? 'TUNTAS' : 'BELUM TUNTAS / REMEDIAL'],
-            ['KKM', kkm],
-            ['Jawaban Benar', correctCount],
-            ['Jumlah Soal', totalQuestions],
-            ['Persentase Jawaban Benar', totalQuestions ? Math.round(correctCount / totalQuestions * 10000) / 100 : 0],
-            ['Poin Diperoleh', Number.isFinite(pointsEarned) ? pointsEarned : '-'],
-            ['Total Poin Maksimal', Number.isFinite(totalPoints) && totalPoints > 0 ? totalPoints : '-'],
-            ['Durasi Pengerjaan', duration],
-            ['Streak Terbaik', streakValue],
-            [],
-            ['CATATAN RAPOR'],
-            ['Ketersediaan analisis soal', isPostponed
-                ? 'Rincian soal, kunci jawaban, dan pembahasan ditahan sesuai pengaturan Guru.'
-                : 'Rincian jawaban tersedia pada sheet Analisis Butir Soal.'],
-            ['Integritas nilai', 'Nilai akhir diambil langsung dari hasil resmi yang tersimpan; tidak dihitung ulang dari jumlah jawaban benar.']
-        ];
-
-        if (typeof XLSX !== 'undefined' && XLSX.utils && typeof XLSX.write === 'function') {
-            const wb = XLSX.utils.book_new();
-            const summary = XLSX.utils.aoa_to_sheet(summaryRows);
-            summary['!cols'] = [{ wch: 38 }, { wch: 76 }];
-            summary['!rows'] = [
-                { hpt: 30 }, { hpt: 22 }, { hpt: 9 }, { hpt: 23 },
-                { hpt: 21 }, { hpt: 21 }, { hpt: 21 }, { hpt: 21 }, { hpt: 21 },
-                { hpt: 9 }, { hpt: 23 }, { hpt: 28 }, { hpt: 23 }, { hpt: 21 },
-                { hpt: 21 }, { hpt: 21 }, { hpt: 21 }, { hpt: 21 }, { hpt: 21 },
-                { hpt: 21 }, { hpt: 21 }, { hpt: 9 }, { hpt: 23 }, { hpt: 36 }, { hpt: 36 }
-            ];
-            summary['!merges'] = [
-                { s: { r: 0, c: 0 }, e: { r: 0, c: 1 } },
-                { s: { r: 1, c: 0 }, e: { r: 1, c: 1 } },
-                { s: { r: 3, c: 0 }, e: { r: 3, c: 1 } },
-                { s: { r: 10, c: 0 }, e: { r: 10, c: 1 } },
-                { s: { r: 22, c: 0 }, e: { r: 22, c: 1 } }
-            ];
-            summary['!freeze'] = { xSplit: 0, ySplit: 4 };
-            summary['!sheetViews'] = [{ showGridLines: false }];
-            summary['!pageSetup'] = { orientation: 'portrait', fitToWidth: 1, fitToHeight: 0 };
-            summary['!margins'] = { left: 0.35, right: 0.35, top: 0.5, bottom: 0.5, header: 0.2, footer: 0.2 };
-            // Gaya sel untuk renderer Excel yang mendukung cell styles.
-            const paint = (ref, style) => { if (summary[ref]) summary[ref].s = style; };
-            const titleStyle = { font: { name: 'Aptos Display', sz: 16, bold: true, color: { rgb: 'FFFFFF' } }, fill: { patternType: 'solid', fgColor: { rgb: '243B75' } }, alignment: { vertical: 'center', horizontal: 'center' } };
-            const subtitleStyle = { font: { name: 'Aptos', sz: 11, bold: true, color: { rgb: 'FFFFFF' } }, fill: { patternType: 'solid', fgColor: { rgb: '4F46E5' } }, alignment: { vertical: 'center', horizontal: 'center', wrapText: true } };
-            const sectionStyle = { font: { name: 'Aptos', sz: 11, bold: true, color: { rgb: 'FFFFFF' } }, fill: { patternType: 'solid', fgColor: { rgb: '334155' } }, alignment: { vertical: 'center' } };
-            const labelStyle = { font: { name: 'Aptos', sz: 10, bold: true, color: { rgb: '334155' } }, fill: { patternType: 'solid', fgColor: { rgb: 'EAF0FA' } }, alignment: { vertical: 'center', wrapText: true } };
-            const valueStyle = { font: { name: 'Aptos', sz: 10, color: { rgb: '0F172A' } }, alignment: { vertical: 'center', wrapText: true } };
-            paint('A1', titleStyle); paint('A2', subtitleStyle);
-            ['A4','A11','A23'].forEach(ref => paint(ref, sectionStyle));
-            for (let row = 5; row <= 25; row++) {
-                if ([11, 23].includes(row)) continue;
-                paint('A' + row, labelStyle); paint('B' + row, valueStyle);
-            }
-            paint('B12', { font: { name: 'Aptos Display', sz: 22, bold: true, color: { rgb: '1D4ED8' } }, fill: { patternType: 'solid', fgColor: { rgb: 'DBEAFE' } }, alignment: { horizontal: 'center', vertical: 'center' }, numFmt: '0.##' });
-            paint('B13', { font: { name: 'Aptos', sz: 11, bold: true, color: { rgb: isPassed ? '047857' : 'B91C1C' } }, fill: { patternType: 'solid', fgColor: { rgb: isPassed ? 'D1FAE5' : 'FEE2E2' } }, alignment: { horizontal: 'center', vertical: 'center', wrapText: true } });
-            if (summary['B11']) summary['B11'].z = '0.##';
-            if (summary['B16']) summary['B16'].z = '0.00"%"';
-            XLSX.utils.book_append_sheet(wb, summary, 'Ringkasan Rapor');
-
-            if (!isPostponed) {
-                const detail = XLSX.utils.aoa_to_sheet([
-                    ['No', 'Tingkat Kesulitan', 'Pertanyaan', 'Hasil', 'Kunci Jawaban', 'Pembahasan'],
-                    ...answerRows
-                ]);
-                detail['!cols'] = [{ wch: 7 }, { wch: 20 }, { wch: 65 }, { wch: 14 }, { wch: 42 }, { wch: 65 }];
-                detail['!rows'] = [{ hpt: 30 }, ...answerRows.map(() => ({ hpt: 58 }))];
-                detail['!autofilter'] = { ref: 'A1:F' + Math.max(1, answerRows.length + 1) };
-                detail['!freeze'] = { xSplit: 0, ySplit: 1 };
-                detail['!sheetViews'] = [{ showGridLines: false }];
-                detail['!pageSetup'] = { orientation: 'landscape', fitToWidth: 1, fitToHeight: 0 };
-                detail['!margins'] = { left: 0.25, right: 0.25, top: 0.4, bottom: 0.4, header: 0.2, footer: 0.2 };
-                const headerStyle = { font: { name: 'Aptos', sz: 10, bold: true, color: { rgb: 'FFFFFF' } }, fill: { patternType: 'solid', fgColor: { rgb: '243B75' } }, alignment: { horizontal: 'center', vertical: 'center', wrapText: true } };
-                for (let col = 0; col < 6; col++) {
-                    const cell = XLSX.utils.encode_cell({ r: 0, c: col });
-                    if (detail[cell]) detail[cell].s = headerStyle;
-                }
-                for (let row = 1; row <= answerRows.length; row++) {
-                    for (let col = 0; col < 6; col++) {
-                        const cell = XLSX.utils.encode_cell({ r: row, c: col });
-                        if (detail[cell]) detail[cell].s = { font: { name: 'Aptos', sz: 9, color: { rgb: '1E293B' } }, alignment: { vertical: 'top', wrapText: true } };
-                    }
-                    const resultCell = 'D' + (row + 1);
-                    if (detail[resultCell]) detail[resultCell].s = { font: { bold: true, color: { rgb: answerRows[row - 1][3] === 'BENAR' ? '047857' : 'B91C1C' } }, alignment: { horizontal: 'center', vertical: 'center' } };
-                }
-                XLSX.utils.book_append_sheet(wb, detail, 'Analisis Butir Soal');
-            }
-            downloadExcelWorkbook(wb, 'Rapor_Kuis_' + safeClass + '_' + safeName + '.xlsx');
-        } else {
-            // Fallback HTML Spreadsheet tetap memakai nilai resmi dan escaping untuk mencegah injeksi HTML/formula.
-            const esc = value => (typeof escapeHtml === 'function'
-                ? escapeHtml(cleanCell(value)) : String(cleanCell(value)).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch])));
-            let rows = summaryRows.map((row, i) => '<tr>' + row.map((cell, j) =>
-                (i === 0 || i === 1 || (i === 3 && j < 2) || (i === 10 && j < 2))
-                    ? '<th>' + esc(cell) + '</th>' : '<td>' + esc(cell) + '</td>'
-            ).join('') + '</tr>').join('');
-            if (!isPostponed) {
-                rows += '<tr><th>No</th><th>Tingkat Kesulitan</th><th>Pertanyaan</th><th>Hasil</th><th>Kunci Jawaban</th><th>Pembahasan</th></tr>';
-                rows += answerRows.map(row => '<tr>' + row.map(cell => '<td>' + esc(cell) + '</td>').join('') + '</tr>').join('');
-            }
-            const html = '<!doctype html><html><head><meta charset="utf-8"><style>body{font-family:Arial}table{border-collapse:collapse;width:100%}td,th{border:1px solid #cbd5e1;padding:8px;vertical-align:top}th{background:#1e3a8a;color:#fff}tr:nth-child(even){background:#f1f5f9}</style></head><body><table>' + rows + '</table></body></html>';
-            const blob = new Blob(['\\uFEFF', html], { type: 'application/vnd.ms-excel;charset=utf-8' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'Rapor_Kuis_' + safeClass + '_' + safeName + '.xls';
-            document.body.appendChild(a);
-            a.click();
-            setTimeout(() => { if (a.parentNode) a.parentNode.removeChild(a); URL.revokeObjectURL(url); }, 1500);
-        }
-
-        if (typeof sfxCorrect === 'function') sfxCorrect();
-        if (typeof showToast === 'function') showToast('Rapor Excel berhasil diunduh. Nilai akhir mengikuti hasil resmi.', '📊');
-    } catch (err) {
-        if (typeof sfxWrong === 'function') sfxWrong();
-        if (typeof showToast === 'function') showToast('Gagal mengekspor rapor: ' + err.message, '❌');
-        console.error('exportStudentExcel failed:', err);
-    }
+    })();
 }
 
 function exportCSV() {

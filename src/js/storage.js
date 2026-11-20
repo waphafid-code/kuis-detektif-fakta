@@ -247,6 +247,10 @@ async function flushPendingRecords() {
             wrong_questions: {
                 list: Array.isArray(r.wrongQuestions) ? r.wrongQuestions : [],
                 moduleId: modId,
+                proofId: r.submissionProofId || '',
+                isRemedial: !!r.isRemedial,
+                originalScore: r.isRemedial ? (r.originalScore ?? null) : null,
+                remedialScore: r.isRemedial ? (r.remedialScore ?? null) : null,
                 moduleTitle: r.moduleTitle || (modId === 'modul_jaringan_keamanan' ? 'Penilaian Harian: Infrastruktur Jaringan & Keamanan Digital' : 'Misi Detektif Fakta')
             },
             duration: r.duration || '0m',
@@ -254,8 +258,13 @@ async function flushPendingRecords() {
             quiz_date: r.date || new Date().toLocaleDateString('id-ID')
         };
 
+        // Firebase RTDB (penyimpanan utama dasbor guru) — dicoba juga agar nilai antrean benar-benar sampai
+        if (typeof saveRecordToFirebase === 'function') {
+            try { if (await saveRecordToFirebase(r, r.submissionProofId)) uploaded = true; } catch (e) { }
+        }
+
         // Coba via SDK
-        if (supabaseClient) {
+        if (!uploaded && supabaseClient) {
             try {
                 const { error } = await supabaseClient.from(cfg.table || 'quiz_results').insert([uploadPayload]);
                 if (!error) uploaded = true;
