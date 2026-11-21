@@ -20,7 +20,7 @@ global.DEFAULT_BUILTIN_QUESTIONS = Array.from({ length: 20 }, (_, i) => ({
 global.getActiveQuizData = () => global.DEFAULT_BUILTIN_QUESTIONS;
 
 // Load dashboard code
-const dashCode = fs.readFileSync('e:/KUIS/js/dashboard.js', 'utf8');
+const dashCode = fs.readFileSync(require('path').join(__dirname, 'js/dashboard.js'), 'utf8');
 
 // Mock DOM elements
 const elements = {};
@@ -62,7 +62,7 @@ global.document = {
 eval(dashCode);
 
 // Load records
-const recCode = fs.readFileSync('e:/KUIS/js/default_records.js', 'utf8');
+const recCode = fs.readFileSync(require('path').join(__dirname, 'js/default_records.js'), 'utf8');
 const match = recCode.match(/const OFFICIAL_EXAM_RESULTS = (\[[\s\S]*?\n\]);/);
 const records = eval(match[1]);
 
