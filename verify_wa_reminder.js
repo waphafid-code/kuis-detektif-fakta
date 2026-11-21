@@ -209,15 +209,15 @@ test('Test 4: WhatsApp Message Content - Includes Teacher Name, Class, Module, K
     sandbox.window.updateWaReminderPreview();
 
     const previewText = sandbox.document.getElementById('wa-remind-preview-text').value;
-    assert(previewText.includes('MUHAMMAD HAFIDH PUTRA ROSHADI, S.Pd.'), 'Must include official teacher name');
+    assert(previewText.toUpperCase().includes('MUHAMMAD HAFIDH PUTRA ROSHADI, S.PD.'), 'Must include official teacher name');
     assert(previewText.includes('SMAN 4 PADANG'), 'Must include school name');
     assert(previewText.includes('X E 1'), 'Must include target class');
     assert(previewText.includes('80'), 'Must mention KKM 80');
     assert(previewText.includes('https://waphafid-code.github.io/kuis-detektif-fakta/'), 'Must include valid platform link');
-    assert(previewText.includes('DAFTAR SISWA BELUM MENGERJAKAN'), 'Must have unsubmitted section');
-    assert(previewText.includes('DAFTAR SISWA PERLU REMEDIAL MANDIRI'), 'Must have remedial section');
+    assert(previewText.includes('Daftar Siswa Belum Mengikuti Kuis'), 'Must have unsubmitted section');
+    assert(previewText.includes('Daftar Siswa Mengikuti Remedial'), 'Must have remedial section');
     assert(previewText.includes('AISAH PUTRI KARLINA YENTI'), 'Must list remedial student Aisah Putri');
-    assert(previewText.includes('70'), 'Must show Aisah score 70');
+    assert(!previewText.includes('Skor') && !/\(70\)/.test(previewText), 'Nilai individu tidak boleh dibocorkan di pesan grup');
 });
 
 test('Test 5: Filter Modes - "unsubmitted" only lists unsubmitted, "remedial" only lists remedial', () => {
@@ -233,14 +233,14 @@ test('Test 5: Filter Modes - "unsubmitted" only lists unsubmitted, "remedial" on
     // Mode: unsubmitted
     sandbox.window.setWaReminderCategory('unsubmitted');
     const unsubText = sandbox.document.getElementById('wa-remind-preview-text').value;
-    assert(unsubText.includes('DAFTAR SISWA BELUM MENGERJAKAN'), 'Must list unsubmitted');
-    assert(!unsubText.includes('DAFTAR SISWA PERLU REMEDIAL MANDIRI'), 'Should NOT list remedial section');
+    assert(unsubText.includes('Daftar Siswa Belum Mengikuti Kuis'), 'Must list unsubmitted');
+    assert(!unsubText.includes('Daftar Siswa Mengikuti Remedial'), 'Should NOT list remedial section');
 
     // Mode: remedial
     sandbox.window.setWaReminderCategory('remedial');
     const remedialText = sandbox.document.getElementById('wa-remind-preview-text').value;
-    assert(remedialText.includes('DAFTAR SISWA PERLU REMEDIAL MANDIRI'), 'Must list remedial');
-    assert(!remedialText.includes('DAFTAR SISWA BELUM MENGERJAKAN'), 'Should NOT list unsubmitted section');
+    assert(remedialText.includes('Daftar Siswa Mengikuti Remedial'), 'Must list remedial');
+    assert(!remedialText.includes('Daftar Siswa Belum Mengikuti Kuis'), 'Should NOT list unsubmitted section');
     assert(remedialText.includes('AISAH PUTRI KARLINA YENTI'), 'Must list remedial student');
 });
 
@@ -259,7 +259,7 @@ test('Test 6: openWhatsAppWithReminder copies to clipboard AND triggers WhatsApp
     const expectedText = sandbox.document.getElementById('wa-remind-preview-text').value;
     assert.strictEqual(sandbox.navigator.clipboard._lastCopied, expectedText, 'Text must be copied to clipboard');
     assert(sandbox._lastOpenedUrl.startsWith('https://api.whatsapp.com/send?text='), 'Must target api.whatsapp.com');
-    assert(sandbox._lastOpenedUrl.includes(encodeURIComponent('MUHAMMAD HAFIDH PUTRA ROSHADI, S.Pd.')), 'Encoded URL must contain teacher name');
+    assert(sandbox._lastOpenedUrl.includes(encodeURIComponent('Muhammad Hafidh Putra Roshadi, S.Pd.')), 'Encoded URL must contain teacher name');
 });
 
 test('Test 7: Target class "all" spans across all 6 classes (216 official students total)', () => {
@@ -279,7 +279,7 @@ test('Test 7: Target class "all" spans across all 6 classes (216 official studen
     assert.strictEqual(badgeRemedial, 0, '0 remedial students');
 
     const previewText = sandbox.document.getElementById('wa-remind-preview-text').value;
-    assert(previewText.includes('Semua Kelas Resmi (X E 1 - X E 6)'));
+    assert(previewText.includes('Semua Kelas (X E 1 - X E 6)'));
 });
 
 test('Test 8: All Passed Case produces celebratory message with no remedial or unsubmitted list', () => {
@@ -309,9 +309,9 @@ test('Test 8: All Passed Case produces celebratory message with no remedial or u
     assert.strictEqual(badgePassed, 36, 'All 36 passed');
 
     const previewText = sandbox.document.getElementById('wa-remind-preview-text').value;
-    assert(previewText.includes('Luar Biasa! Seluruh siswa kelas X E 1 telah menuntaskan kuis'));
-    assert(!previewText.includes('DAFTAR SISWA BELUM MENGERJAKAN'));
-    assert(!previewText.includes('DAFTAR SISWA PERLU REMEDIAL MANDIRI'));
+    assert(previewText.includes('Seluruh siswa kelas X E 1 telah menyelesaikan kuis dan mencapai batas KKM'));
+    assert(!previewText.includes('Daftar Siswa Belum Mengikuti Kuis'));
+    assert(!previewText.includes('Daftar Siswa Mengikuti Remedial'));
 });
 
 console.log('\n════════════════════════════════════════════════════════════════');
