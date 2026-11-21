@@ -273,7 +273,10 @@ const ROSTER_NAME_ALIASES = {
     'muhammad rifky': 'muhamad rifky',
     'rydho putra novinada': 'rydho putra novianda',
     'deffid fathahillah sevli': 'deffid fathahilah sevli',
-    'muhammad rizky as shidiq': 'muhammad rizky as shidiq'
+    'muhammad rizky as shidiq': 'muhammad rizky as shidiq',
+    'nadi': 'nadinka makaila zeta',
+    'nailah aditha haya p': 'nailah aditha haya pratistha',
+    'khalifah cahaya r': 'khalifah cahaya ramadhan'
 };
 
 const isNameEquivalent = (name1, name2) => {
@@ -283,7 +286,6 @@ const isNameEquivalent = (name1, name2) => {
     if (ROSTER_NAME_ALIASES[clean1]) clean1 = ROSTER_NAME_ALIASES[clean1];
     if (ROSTER_NAME_ALIASES[clean2]) clean2 = ROSTER_NAME_ALIASES[clean2];
     if (clean1 === clean2) return true;
-    if (clean1.length >= 3 && clean2.length >= 3 && (clean1.includes(clean2) || clean2.includes(clean1))) return true;
     
     const words1 = clean1.split(/\s+/).filter(Boolean);
     const words2 = clean2.split(/\s+/).filter(Boolean);
