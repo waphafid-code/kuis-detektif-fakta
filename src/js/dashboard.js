@@ -1121,6 +1121,9 @@ function getRemedialMeta(r) {
     const score = Number(r.score) || 0;
     const orig = (r.originalScore !== null && r.originalScore !== undefined) ? r.originalScore : '-';
     const attempt = (r.remedialScore !== null && r.remedialScore !== undefined) ? r.remedialScore : score;
+    if (r.adjustedByTeacher) {
+        return { state: 'tuntas', label: '🔁 Sudah Remedial · Tuntas (Disesuaikan Guru)', short: 'Remedial: Tuntas (Disesuaikan Guru)', title: r.adjustmentNote || 'Nilai disesuaikan guru' };
+    }
     if (r.isRemedial) {
         const attemptDisplay = (attempt !== '-' && attempt !== undefined) ? `${attempt}` : `${score}`;
         return score >= 80
@@ -3871,6 +3874,7 @@ function remedialExcelLabel(r) {
     if (!r) return '-';
     const m = getRemedialMeta(r);
     const attempt = (r.remedialScore !== null && r.remedialScore !== undefined) ? r.remedialScore : r.score;
+    if (r.adjustedByTeacher) return `SUDAH REMEDIAL - TUNTAS (DISESUAIKAN GURU: ${r.score})`;
     if (m.state === 'tuntas') return `SUDAH REMEDIAL - TUNTAS (Awal: ${r.originalScore} ➔ Remedi: ${attempt} ➔ Nilai Akhir: ${r.score})`;
     if (m.state === 'belum') return `SUDAH REMEDIAL - BELUM TUNTAS (Awal: ${r.originalScore} ➔ Remedi: ${attempt} ➔ Nilai Akhir: ${r.score})`;
     if (m.state === 'perlu') return 'PERLU REMEDIAL (BELUM REMEDIAL)';

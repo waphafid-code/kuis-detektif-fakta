@@ -107,15 +107,18 @@ function mergeRecordsList(existingList, incomingList) {
                     (item.remedialScore !== undefined && item.remedialScore !== null) ? Number(item.remedialScore) : 0,
                     isRem ? bestScore : 0
                 );
-            const finalScore = isRem ? Math.min(80, Math.max(origScore, bestRemScore || 0)) : bestScore;
+            // 🧑‍🏫 Penyesuaian resmi guru (mis. koreksi kesalahan sistem) selalu menang atas hitungan otomatis
+            const adj = [cur, item].find(x => x && x.adjustedByTeacher && x.adjustedScore != null);
+            const finalScore = adj ? Number(adj.adjustedScore) : (isRem ? Math.min(80, Math.max(origScore, bestRemScore || 0)) : bestScore);
             const higher = (Number(item.score) || 0) >= (Number(cur.score) || 0) ? item : cur;
             map.set(k, {
                 ...cur,
                 ...item,
                 score: finalScore,
-                isRemedial: isRem,
-                originalScore: isRem ? origScore : (cur.originalScore ?? item.originalScore ?? null),
-                remedialScore: isRem ? (bestRemScore || finalScore) : null,
+                isRemedial: isRem || !!adj,
+                ...(adj ? { adjustedByTeacher: true, adjustedScore: Number(adj.adjustedScore), adjustmentNote: adj.adjustmentNote || '' } : {}),
+                originalScore: (isRem || adj) ? origScore : (cur.originalScore ?? item.originalScore ?? null),
+                remedialScore: (isRem || adj) ? (bestRemScore || finalScore) : null,
                 correct: higher.correct !== undefined ? higher.correct : (item.correct !== undefined ? item.correct : cur.correct),
                 wrongQuestions: higher.wrongQuestions || item.wrongQuestions || cur.wrongQuestions,
                 detailedAnswers: higher.detailedAnswers || item.detailedAnswers || cur.detailedAnswers

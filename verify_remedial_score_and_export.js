@@ -19,7 +19,8 @@ assert(xe2Remedial.length >= 14, 'Must have at least 14 remedial students in X E
 
 xe2Remedial.forEach(r => {
     assert(r.score <= 80, `Final score for remedial student ${r.name} must never exceed KKM 80`);
-    assert.strictEqual(r.score, Math.min(80, Math.max(r.originalScore || 0, r.remedialScore)), `Final score for ${r.name} must be max(original, remedial) capped at 80`);
+    if (r.adjustedByTeacher) { assert.strictEqual(r.score, r.adjustedScore, `Teacher-adjusted score for ${r.name} must equal adjustedScore`); assert(r.adjustmentNote, 'Adjustment must carry a note'); }
+    else assert.strictEqual(r.score, Math.min(80, Math.max(r.originalScore || 0, r.remedialScore)), `Final score for ${r.name} must be max(original, remedial) capped at 80`);
     assert(r.remedialScore !== undefined && r.remedialScore !== null, `Remedial achieved score for ${r.name} must be recorded`);
     assert.strictEqual(r.isRemedial, true, `isRemedial must be true for ${r.name}`);
 });
