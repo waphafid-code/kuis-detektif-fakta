@@ -173,7 +173,7 @@ function filterDeletedRecords(list) {
 window.filterDeletedRecords = filterDeletedRecords;
 
 const OFFICIAL_DATA_SYNC_KEY = 'quizmaster_official_pdf_sync_ver';
-const CURRENT_OFFICIAL_VERSION = '20261122_official_remedial_authentic_v12'; 7ec763c (fix: pulihkan 122 data nilai siswa dari Supabase, perbaiki rekonstruksi lembar jawaban remedial, dan sematkan switcher sesi riwayat ujian)
+const CURRENT_OFFICIAL_VERSION = '20261122_official_remedial_authentic_v12';
 
 function getCleanOfficialBaseline() {
     const raw = (typeof OFFICIAL_EXAM_RESULTS !== 'undefined' && Array.isArray(OFFICIAL_EXAM_RESULTS))
