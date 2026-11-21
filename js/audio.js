@@ -170,7 +170,7 @@ function filterDeletedRecords(list) {
 window.filterDeletedRecords = filterDeletedRecords;
 
 const OFFICIAL_DATA_SYNC_KEY = 'quizmaster_official_pdf_sync_ver';
-const CURRENT_OFFICIAL_VERSION = '20261121_official_remedial_restored_v10';
+const CURRENT_OFFICIAL_VERSION = '20261121_official_remedial_xe2_pdf_v11';
 
 function getCleanOfficialBaseline() {
     const raw = (typeof OFFICIAL_EXAM_RESULTS !== 'undefined' && Array.isArray(OFFICIAL_EXAM_RESULTS))
