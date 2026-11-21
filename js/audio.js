@@ -142,7 +142,7 @@ function filterDeletedRecords(list) {
 window.filterDeletedRecords = filterDeletedRecords;
 
 const OFFICIAL_DATA_SYNC_KEY = 'quizmaster_official_pdf_sync_ver';
-const CURRENT_OFFICIAL_VERSION = '20261120_official_remedial_adjusted_v8';
+const CURRENT_OFFICIAL_VERSION = '20261121_official_remedial_restored_v9';
 
 function getCleanOfficialBaseline() {
     const raw = (typeof OFFICIAL_EXAM_RESULTS !== 'undefined' && Array.isArray(OFFICIAL_EXAM_RESULTS))
@@ -229,6 +229,26 @@ function safeLocalStorageSet(key, value) {
 }
 window.safeLocalStorageSet = safeLocalStorageSet;
 
+// 🩹 Koreksi data resmi: catatan yang pernah tertimpa angka seragam (remedial 90) dipulihkan ke nilai tercatat asli,
+// termasuk pada salinan localStorage perangkat yang sudah terlanjur menyimpan angka keliru (merge "nilai tertinggi" tidak bisa menurunkannya).
+function applyOfficialCorrections(list) {
+    try {
+        const ids = (typeof window !== 'undefined' && Array.isArray(window.OFFICIAL_CORRECTED_RECORD_IDS)) ? window.OFFICIAL_CORRECTED_RECORD_IDS : [];
+        if (!ids.length || !Array.isArray(list)) return list;
+        const fix = new Map(getCleanOfficialBaseline().filter(r => ids.includes(r.id)).map(r => {
+            const modId = normalizeModuleId(r.moduleId, r.id, r.date);
+            return [`${(r.name || '').toLowerCase().trim()}|${(r.class || '').replace(/\s+/g, '').toUpperCase()}|${modId}`, r];
+        }));
+        return list.map(r => {
+            if (!r) return r;
+            const modId = normalizeModuleId(r.moduleId || r.module_id, r.id, r.date || r.quiz_date);
+            const k = `${(r.name || r.student_name || '').toLowerCase().trim()}|${(r.class || r.student_class || '').replace(/\s+/g, '').toUpperCase()}|${modId}`;
+            return fix.has(k) ? { ...fix.get(k), moduleId: modId } : r;
+        });
+    } catch (e) { return list; }
+}
+window.applyOfficialCorrections = applyOfficialCorrections;
+
 function loadRecords() {
     try {
         const syncVer = localStorage.getItem(OFFICIAL_DATA_SYNC_KEY);
@@ -251,7 +271,7 @@ function loadRecords() {
 
         // Jika versi sinkronisasi belum versi bersih terbaru, paksa pembersihan localStorage
         if (syncVer !== CURRENT_OFFICIAL_VERSION) {
-            const mergedClean = filterDeletedRecords(mergeRecordsList(combinedBaseline, saved));
+            const mergedClean = applyOfficialCorrections(filterDeletedRecords(mergeRecordsList(combinedBaseline, saved)));
             safeLocalStorageSet(STORAGE_KEY, JSON.stringify(mergedClean));
             safeLocalStorageSet('quizmaster_emergency_backup_records', JSON.stringify(filterDeletedRecords(emergency)));
             safeLocalStorageSet(OFFICIAL_DATA_SYNC_KEY, CURRENT_OFFICIAL_VERSION);

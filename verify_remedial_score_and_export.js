@@ -18,11 +18,16 @@ const xe2Remedial = allRecs.filter(r => r.class === 'X E 2' && r.isRemedial);
 assert(xe2Remedial.length >= 14, 'Must have at least 14 remedial students in X E 2');
 
 xe2Remedial.forEach(r => {
-    assert.strictEqual(r.score, 80, `Final score for remedial student ${r.name} must be capped at 80`);
-    assert(r.remedialScore >= 80, `Remedial achieved score for ${r.name} must be recorded (e.g. >=80)`);
+    assert(r.score <= 80, `Final score for remedial student ${r.name} must never exceed KKM 80`);
+    assert.strictEqual(r.score, Math.min(80, Math.max(r.originalScore || 0, r.remedialScore)), `Final score for ${r.name} must be max(original, remedial) capped at 80`);
+    assert(r.remedialScore !== undefined && r.remedialScore !== null, `Remedial achieved score for ${r.name} must be recorded`);
     assert.strictEqual(r.isRemedial, true, `isRemedial must be true for ${r.name}`);
 });
-console.log('✅ 1. All X E 2 remedial records have score capped at 80 and remedialScore recorded.');
+const distinct = new Set(xe2Remedial.map(r => r.remedialScore));
+assert(distinct.size > 3, 'Remedial scores must reflect real recorded values, not one uniform number');
+const noFake = xe2Remedial.every(r => JSON.stringify(r.wrongQuestions) !== '[5,17]' || r.remedialScore !== 90);
+assert(noFake, 'No uniform fabricated 90/[5,17] pattern allowed');
+console.log('✅ 1. X E 2 remedial records keep their real recorded scores (capped at 80, not uniform).');
 
 // 2. Check students with original score >= 80 (Seruni Putri, Keysa Putri Mevi, Khansaa)
 const seruni = allRecs.find(r => r.name.toLowerCase().includes('serun') && r.class === 'X E 2' && r.moduleId === 'modul_detektif_fakta');
