@@ -21,4 +21,7 @@ for (const base of ['js', 'src/js']) {
 for (const h of ['index.html', 'src/index.html']) t(`${h}: modal remedial-offer ada`, () => {
   const s = rd(h); assert(/id="remedial-offer-modal"/.test(s) && /confirmRemedialStart\(\)/.test(s) && /closeRemedialOffer\(\)/.test(s));
 });
+for (const base of ['js', 'src/js']) t(`${base}: catatan remedial 90 palsu diblokir saat merge`, () => {
+  const a = rd(base + '/audio.js'); assert(/function isPoisonedRemedialRecord/.test(a) && (a.match(/isPoisonedRemedialRecord\(r\)/g) || []).length >= 3);
+});
 console.log(`🎉 ALL ${n} TESTS PASSED`); process.exit(0);
