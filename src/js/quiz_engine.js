@@ -985,7 +985,14 @@ async function initiateQuiz() {
         // (bukan popup "nilai sudah tercatat"). Hanya 1x remedial per modul; nilai akhir = tertinggi, maks KKM.
         const REMEDIAL_KKM = 80;
         const lastRecordsForRem = previousAttempts.filter(r => !r.isCheated || Number(r.score) > 0);
-        const alreadyRemedialed = lastRecordsForRem.some(r => r.isRemedial);
+        // Remedial yang dikerjakan sebelum 21/11/2026 dinilai dengan kunci jawaban lama yang keliru,
+        // sehingga TIDAK menghabiskan jatah remedial (hanya berlaku bila nilai masih < KKM).
+        const isPreFixRemedial = (r) => {
+            const m = String((r && r.date) || '').match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+            if (!m) return false;
+            return Date.UTC(+m[3], +m[2] - 1, +m[1]) < Date.UTC(2026, 10, 21);
+        };
+        const alreadyRemedialed = lastRecordsForRem.some(r => r.isRemedial && !isPreFixRemedial(r));
         const remedialEligible = isRemedialAllowed && policy !== 'allow_multiple'
             && lastRecordsForRem.length > 0 && bestScore < REMEDIAL_KKM && !alreadyRemedialed;
         const remedialConfirmed = window.__remedialConfirmed === true;
@@ -2378,6 +2385,18 @@ async function finishQuiz() {
     const proofPill = document.getElementById('proof-status-pill');
     const proofTime = document.getElementById('proof-timestamp-badge');
     const proofDetail = document.getElementById('proof-details-text');
+
+    // 🔁 Label tegas bahwa pengiriman ini adalah REMEDIAL
+    const proofTitleEl = document.getElementById('proof-title-text');
+    const remBadgeEl = document.getElementById('proof-remedial-badge');
+    if (proofTitleEl) proofTitleEl.textContent = isRemedialSession ? 'BUKTI RESMI: HASIL REMEDIAL TERVERIFIKASI' : 'BUKTI RESMI: HASIL UJIAN TERVERIFIKASI';
+    if (remBadgeEl) {
+        if (isRemedialSession) {
+            const beforeScore = remedialSourceRecord ? remedialSourceRecord.score : 0;
+            remBadgeEl.style.display = 'inline-block';
+            remBadgeEl.textContent = `🔁 REMEDIAL • Nilai awal ${beforeScore} ➔ Nilai akhir ${displayScore} (tes remedial: ${finalScore})`;
+        } else { remBadgeEl.style.display = 'none'; }
+    }
 
     if (proofCodeEl) proofCodeEl.textContent = proofCode;
     if (proofTime) proofTime.textContent = `Waktu: ${clockStr} • ${record.date}`;

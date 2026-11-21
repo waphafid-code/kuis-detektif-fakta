@@ -3,7 +3,7 @@
  * GURU MATA PELAJARAN: MUHAMMAD HAFIDH PUTRA ROSHADI, S.Pd.
  * - Modul 1: Misi Detektif Fakta (Literasi Digital & Komputasional)
  * - Modul 2: Penilaian Harian: Infrastruktur Jaringan & Keamanan Digital (JKI)
- * Termasuk data remedial resmi terkini (20/11/2026).
+ * Termasuk data remedial resmi terkini (20/11/2026) — nilai remedial = nilai TERCATAT sistem, bukan angka seragam.
  */
 
 const OFFICIAL_EXAM_RESULTS = [
@@ -2657,13 +2657,14 @@ const OFFICIAL_EXAM_RESULTS = [
     "name": "lathifah Jumanah Rezki",
     "class": "X E 2",
     "score": 80,
-    "pointsEarned": 90,
+    "pointsEarned": 75,
     "totalPoints": 100,
-    "correct": 18,
+    "correct": 15,
     "total": 20,
     "wrongQuestions": [
-      5,
-      17
+      6,
+      13,
+      15
     ],
     "time": "15:10 WIB",
     "duration": "10m 14s",
@@ -2674,7 +2675,7 @@ const OFFICIAL_EXAM_RESULTS = [
     "statusNote": null,
     "isRemedial": true,
     "originalScore": 75,
-    "remedialScore": 90,
+    "remedialScore": 80,
     "submissionProofId": "SMAN4-XE2-80-MWOP8PZP"
   },
   {
@@ -2970,12 +2971,11 @@ const OFFICIAL_EXAM_RESULTS = [
     "name": "NURUL NAJMI NADIRAH",
     "class": "X E 2",
     "score": 80,
-    "pointsEarned": 90,
+    "pointsEarned": 75,
     "totalPoints": 100,
-    "correct": 18,
+    "correct": 15,
     "total": 20,
     "wrongQuestions": [
-      5,
       17
     ],
     "time": "15:13 WIB",
@@ -2987,7 +2987,7 @@ const OFFICIAL_EXAM_RESULTS = [
     "statusNote": null,
     "isRemedial": true,
     "originalScore": 75,
-    "remedialScore": 90,
+    "remedialScore": 80,
     "submissionProofId": "SMAN4-XE2-80-MWOPC3K9"
   },
   {
@@ -3051,12 +3051,12 @@ const OFFICIAL_EXAM_RESULTS = [
     "name": "Melisa Syahruni",
     "class": "X E 2",
     "score": 80,
-    "pointsEarned": 90,
+    "pointsEarned": 70,
     "totalPoints": 100,
-    "correct": 18,
+    "correct": 14,
     "total": 20,
     "wrongQuestions": [
-      5,
+      0,
       17
     ],
     "time": "15:11 WIB",
@@ -3068,7 +3068,7 @@ const OFFICIAL_EXAM_RESULTS = [
     "statusNote": null,
     "isRemedial": true,
     "originalScore": 70,
-    "remedialScore": 90,
+    "remedialScore": 80,
     "submissionProofId": "SMAN4-XE2-80-MWOPA57H"
   },
   {
@@ -3104,14 +3104,14 @@ const OFFICIAL_EXAM_RESULTS = [
     "moduleTitle": "Misi Detektif Fakta",
     "name": "nadya fitricya",
     "class": "X E 2",
-    "score": 80,
-    "pointsEarned": 90,
+    "score": 70,
+    "pointsEarned": 70,
     "totalPoints": 100,
-    "correct": 18,
+    "correct": 14,
     "total": 20,
     "wrongQuestions": [
       5,
-      17
+      18
     ],
     "time": "15:15 WIB",
     "duration": "16m 20s",
@@ -3122,7 +3122,7 @@ const OFFICIAL_EXAM_RESULTS = [
     "statusNote": null,
     "isRemedial": true,
     "originalScore": 70,
-    "remedialScore": 90,
+    "remedialScore": 70,
     "submissionProofId": "SMAN4-XE2-70-MWOPERP6"
   },
   {
@@ -3158,13 +3158,17 @@ const OFFICIAL_EXAM_RESULTS = [
     "moduleTitle": "Misi Detektif Fakta",
     "name": "Fathan khalif izzadin",
     "class": "X E 2",
-    "score": 80,
-    "pointsEarned": 90,
+    "score": 70,
+    "pointsEarned": 70,
     "totalPoints": 100,
-    "correct": 18,
+    "correct": 14,
     "total": 20,
     "wrongQuestions": [
+      3,
       5,
+      6,
+      10,
+      12,
       17
     ],
     "time": "15:11 WIB",
@@ -3176,7 +3180,7 @@ const OFFICIAL_EXAM_RESULTS = [
     "statusNote": null,
     "isRemedial": true,
     "originalScore": 70,
-    "remedialScore": 90,
+    "remedialScore": 70,
     "submissionProofId": "SMAN4-XE2-70-MWOPADAP"
   },
   {
@@ -3440,14 +3444,13 @@ const OFFICIAL_EXAM_RESULTS = [
     "moduleTitle": "Misi Detektif Fakta",
     "name": "Karina Ahmad",
     "class": "X E 2",
-    "score": 80,
-    "pointsEarned": 90,
+    "score": 71,
+    "pointsEarned": 60,
     "totalPoints": 100,
-    "correct": 18,
+    "correct": 12,
     "total": 20,
     "wrongQuestions": [
-      5,
-      17
+      15
     ],
     "time": "15:11 WIB",
     "duration": "11m 42s",
@@ -3458,7 +3461,7 @@ const OFFICIAL_EXAM_RESULTS = [
     "statusNote": null,
     "isRemedial": true,
     "originalScore": 60,
-    "remedialScore": 90,
+    "remedialScore": 71,
     "submissionProofId": "SMAN4-XE2-71-MWOP9EUN"
   },
   {
@@ -3467,13 +3470,16 @@ const OFFICIAL_EXAM_RESULTS = [
     "moduleTitle": "Misi Detektif Fakta",
     "name": "Havit isra al ashari",
     "class": "X E 2",
-    "score": 80,
-    "pointsEarned": 90,
+    "score": 75,
+    "pointsEarned": 60,
     "totalPoints": 100,
-    "correct": 18,
+    "correct": 12,
     "total": 20,
     "wrongQuestions": [
-      5,
+      4,
+      7,
+      10,
+      13,
       17
     ],
     "time": "15:17 WIB",
@@ -3485,7 +3491,7 @@ const OFFICIAL_EXAM_RESULTS = [
     "statusNote": null,
     "isRemedial": true,
     "originalScore": 60,
-    "remedialScore": 90,
+    "remedialScore": 75,
     "submissionProofId": "SMAN4-XE2-75-MWOPHL50"
   },
   {
@@ -3495,13 +3501,13 @@ const OFFICIAL_EXAM_RESULTS = [
     "name": "Nafla Aprillia nengsih",
     "class": "X E 2",
     "score": 80,
-    "pointsEarned": 90,
+    "pointsEarned": 60,
     "totalPoints": 100,
-    "correct": 18,
+    "correct": 12,
     "total": 20,
     "wrongQuestions": [
-      5,
-      17
+      4,
+      15
     ],
     "time": "15:15 WIB",
     "duration": "15m 15s",
@@ -3512,7 +3518,7 @@ const OFFICIAL_EXAM_RESULTS = [
     "statusNote": null,
     "isRemedial": true,
     "originalScore": 60,
-    "remedialScore": 90,
+    "remedialScore": 80,
     "submissionProofId": "SMAN4-XE2-80-MWOPFQ7V"
   },
   {
@@ -3522,12 +3528,13 @@ const OFFICIAL_EXAM_RESULTS = [
     "name": "PUTRI NAJLA ANDRIKA",
     "class": "X E 2",
     "score": 80,
-    "pointsEarned": 90,
+    "pointsEarned": 60,
     "totalPoints": 100,
-    "correct": 18,
+    "correct": 12,
     "total": 20,
     "wrongQuestions": [
       5,
+      6,
       17
     ],
     "time": "15:16 WIB",
@@ -3539,7 +3546,7 @@ const OFFICIAL_EXAM_RESULTS = [
     "statusNote": null,
     "isRemedial": true,
     "originalScore": 60,
-    "remedialScore": 90,
+    "remedialScore": 85,
     "submissionProofId": "SMAN4-XE2-85-MWOPGTVP"
   },
   {
@@ -3608,14 +3615,13 @@ const OFFICIAL_EXAM_RESULTS = [
     "moduleTitle": "Misi Detektif Fakta",
     "name": "Rahmat Farel Erika",
     "class": "X E 2",
-    "score": 80,
-    "pointsEarned": 90,
+    "score": 55,
+    "pointsEarned": 55,
     "totalPoints": 100,
-    "correct": 18,
+    "correct": 11,
     "total": 20,
     "wrongQuestions": [
-      5,
-      17
+      0
     ],
     "time": "15:12 WIB",
     "duration": "10m 0s",
@@ -3626,7 +3632,7 @@ const OFFICIAL_EXAM_RESULTS = [
     "statusNote": null,
     "isRemedial": true,
     "originalScore": 0,
-    "remedialScore": 90,
+    "remedialScore": 55,
     "submissionProofId": "SMAN4-XE2-55-MWOPBL3F"
   },
   {
@@ -5459,19 +5465,23 @@ const OFFICIAL_EXAM_RESULTS = [
     "moduleTitle": "Misi Detektif Fakta",
     "name": "HARLAN RADO KURNIAWAN",
     "class": "X E 2",
-    "score": 80,
+    "score": 55,
     "isRemedial": true,
     "originalScore": 0,
-    "remedialScore": 90,
+    "remedialScore": 55,
     "date": "20/11/2026",
     "time": "15:10 WIB",
     "duration": "12m 15s",
-    "pointsEarned": 90,
+    "pointsEarned": 55,
     "totalPoints": 100,
-    "correct": 18,
+    "correct": 11,
     "total": 20,
     "wrongQuestions": [
-      5,
+      3,
+      4,
+      7,
+      13,
+      16,
       17
     ],
     "submissionProofId": "SMAN4-XE2-55-MWOP94MD",
@@ -5485,21 +5495,18 @@ const OFFICIAL_EXAM_RESULTS = [
     "moduleTitle": "Misi Detektif Fakta",
     "name": "FABIO SHERIDAN FATHIN",
     "class": "X E 2",
-    "score": 80,
+    "score": 33,
     "isRemedial": true,
     "originalScore": 0,
-    "remedialScore": 90,
+    "remedialScore": 33,
     "date": "20/11/2026",
     "time": "15:10 WIB",
     "duration": "8m 2s",
-    "pointsEarned": 90,
+    "pointsEarned": 33,
     "totalPoints": 100,
-    "correct": 18,
+    "correct": 7,
     "total": 20,
-    "wrongQuestions": [
-      5,
-      17
-    ],
+    "wrongQuestions": [],
     "submissionProofId": "SMAN4-XE2-33-MWOP8BEU",
     "timestamp": 1795180107013,
     "tabSwitchCount": 0,
@@ -5511,20 +5518,19 @@ const OFFICIAL_EXAM_RESULTS = [
     "moduleTitle": "Misi Detektif Fakta",
     "name": "FATHURRAHMAN ARRIZQ",
     "class": "X E 2",
-    "score": 80,
+    "score": 25,
     "isRemedial": true,
     "originalScore": 0,
-    "remedialScore": 90,
+    "remedialScore": 25,
     "date": "20/11/2026",
     "time": "15:12 WIB",
     "duration": "11m 12s",
-    "pointsEarned": 90,
+    "pointsEarned": 25,
     "totalPoints": 100,
-    "correct": 18,
+    "correct": 5,
     "total": 20,
     "wrongQuestions": [
-      5,
-      17
+      4
     ],
     "submissionProofId": "SMAN4-XE2-25-MWOPAXXD",
     "timestamp": 1795180107013,
@@ -5537,21 +5543,18 @@ const OFFICIAL_EXAM_RESULTS = [
     "moduleTitle": "Misi Detektif Fakta",
     "name": "JENNIFER SEPTHIA PUTRI",
     "class": "X E 2",
-    "score": 80,
+    "score": 5,
     "isRemedial": true,
     "originalScore": 0,
-    "remedialScore": 90,
+    "remedialScore": 5,
     "date": "20/11/2026",
     "time": "15:07 WIB",
     "duration": "9m 13s",
-    "pointsEarned": 90,
+    "pointsEarned": 5,
     "totalPoints": 100,
-    "correct": 18,
+    "correct": 1,
     "total": 20,
-    "wrongQuestions": [
-      5,
-      17
-    ],
+    "wrongQuestions": [],
     "submissionProofId": "SMAN4-XE2-5-MWOP570M",
     "timestamp": 1795180107013,
     "tabSwitchCount": 0,
@@ -6622,8 +6625,12 @@ const OFFICIAL_EXAM_RESULTS = [
   }
 ];
 
+// Catatan yang pernah tertimpa angka seragam 90 (commit c7b74fc) lalu dipulihkan ke nilai tercatat asli.
+const OFFICIAL_CORRECTED_RECORD_IDS = ["pdf-rec-112", "pdf-rec-124", "pdf-rec-127", "pdf-rec-129", "pdf-rec-131", "pdf-rec-141", "pdf-rec-142", "pdf-rec-143", "pdf-rec-144", "pdf-rec-147", "rem-rec-1795180107013-6tp014", "rem-rec-1795180107013-bsbeoi", "rem-rec-1795180107013-guj3pp", "rem-rec-1795180107013-ija09d"];
+
 if (typeof window !== 'undefined') {
     window.OFFICIAL_EXAM_RESULTS = OFFICIAL_EXAM_RESULTS;
+    window.OFFICIAL_CORRECTED_RECORD_IDS = OFFICIAL_CORRECTED_RECORD_IDS;
 }
 
 if (typeof module !== 'undefined' && module.exports) {

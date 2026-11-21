@@ -114,6 +114,7 @@
             score: score,
             attemptScore: res && typeof res.attemptScore === 'number' ? res.attemptScore : score,
             isRemedial: !!(res && res.isRemedial),
+            originalScore: (rec && rec.originalScore != null) ? rec.originalScore : null,
             isPassed: score >= kkm,
             pointsEarned: pointsEarned,
             totalPoints: totalPoints,
@@ -351,6 +352,9 @@
             ['Modul Kuis', snap.moduleTitle, st.value],
             ['Tanggal & Waktu', (snap.date || '-') + (snap.time ? '  •  ' + snap.time : ''), st.value],
             ['Durasi Pengerjaan', snap.duration || '-', st.value],
+            ['Jenis Pengerjaan', snap.isRemedial
+                ? 'REMEDIAL (nilai awal ' + (snap.originalScore != null ? snap.originalScore : '-') + ' ➔ nilai akhir ' + snap.score + ')'
+                : 'Pengerjaan Reguler', st.value],
             ['No. Bukti Verifikasi', snap.proofId, st.valueMono]
         ];
         if (snap.isRemedial) {

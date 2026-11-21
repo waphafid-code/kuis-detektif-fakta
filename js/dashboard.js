@@ -4374,7 +4374,7 @@ function exportStudentPDF() {
         doc.setFontSize(16);
         doc.text(`SKOR: ${finalScore}`, 163, 55, { align: 'center' });
         doc.setFontSize(8.5);
-        doc.text(isLulus ? `STATUS: LULUS (≥${KKM_PDF})` : `STATUS: REMEDIAL (<${KKM_PDF})`, 163, 63, { align: 'center' });
+        doc.text(snap.isRemedial ? (isLulus ? `REMEDIAL: TUNTAS (≥${KKM_PDF})` : `REMEDIAL: BELUM TUNTAS (<${KKM_PDF})`) : (isLulus ? `STATUS: LULUS (≥${KKM_PDF})` : `STATUS: REMEDIAL (<${KKM_PDF})`), 163, 63, { align: 'center' });
 
         const isPostponed = (typeof isReviewPostponed === 'function') 
             ? isReviewPostponed() 
