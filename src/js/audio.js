@@ -29,6 +29,34 @@ function normalizeModuleId(modId, id, date) {
 }
 window.normalizeModuleId = normalizeModuleId;
 
+// 🚫 Catatan "remedial 90" karangan (commit c7b74fc) yang mungkin sudah terlanjur tersimpan di cloud / perangkat lain.
+// Dikenali dari tanda tangannya: siswa-modul yang dikoreksi + remedialScore 90 + 18 benar. Selalu diabaikan saat penggabungan.
+let _poisonKeyCache = null;
+function _poisonedKeys() {
+    if (_poisonKeyCache) return _poisonKeyCache;
+    const set = new Set();
+    try {
+        const ids = (typeof window !== 'undefined' && Array.isArray(window.OFFICIAL_CORRECTED_RECORD_IDS)) ? window.OFFICIAL_CORRECTED_RECORD_IDS : [];
+        getCleanOfficialBaseline().filter(r => ids.includes(r.id)).forEach(r => {
+            const modId = normalizeModuleId(r.moduleId, r.id, r.date);
+            set.add(`${(r.name || '').toLowerCase().trim()}|${(r.class || '').replace(/\s+/g, '').toUpperCase()}|${modId}`);
+        });
+    } catch (e) {}
+    if (set.size) _poisonKeyCache = set;
+    return set;
+}
+function isPoisonedRemedialRecord(r) {
+    if (!r) return false;
+    const rs = (r.remedialScore !== undefined && r.remedialScore !== null) ? Number(r.remedialScore) : null;
+    if (rs !== 90 || Number(r.correct) !== 18) return false;
+    const dt = String(r.date || r.quiz_date || '');
+    if (!(dt.includes('20/11/2026') || dt.includes('2026-11-20'))) return false; // remedial ulang sah (>= 21/11) tidak ikut diblokir
+    const modId = normalizeModuleId(r.moduleId || r.module_id, r.id, r.date || r.quiz_date);
+    const k = `${(r.name || r.student_name || '').toLowerCase().trim()}|${(r.class || r.student_class || '').replace(/\s+/g, '').toUpperCase()}|${modId}`;
+    return _poisonedKeys().has(k);
+}
+window.isPoisonedRemedialRecord = isPoisonedRemedialRecord;
+
 function mergeRecordsList(existingList, incomingList) {
     const map = new Map();
     const makeKey = (r) => {
@@ -39,7 +67,7 @@ function mergeRecordsList(existingList, incomingList) {
     };
     
     (existingList || []).forEach(r => {
-        if (r && (r.name || r.student_name)) {
+        if (r && (r.name || r.student_name) && !isPoisonedRemedialRecord(r)) {
             const modId = normalizeModuleId(r.moduleId || r.module_id, r.id, r.date || r.quiz_date);
             const item = {
                 ...r,
@@ -51,7 +79,7 @@ function mergeRecordsList(existingList, incomingList) {
     });
 
     (incomingList || []).forEach(r => {
-        if (!r || (!r.name && !r.student_name)) return;
+        if (!r || (!r.name && !r.student_name) || isPoisonedRemedialRecord(r)) return;
         const modId = normalizeModuleId(r.moduleId || r.module_id, r.id, r.date || r.quiz_date);
         const item = {
             ...r,
@@ -142,7 +170,7 @@ function filterDeletedRecords(list) {
 window.filterDeletedRecords = filterDeletedRecords;
 
 const OFFICIAL_DATA_SYNC_KEY = 'quizmaster_official_pdf_sync_ver';
-const CURRENT_OFFICIAL_VERSION = '20261121_official_remedial_restored_v9';
+const CURRENT_OFFICIAL_VERSION = '20261121_official_remedial_restored_v10';
 
 function getCleanOfficialBaseline() {
     const raw = (typeof OFFICIAL_EXAM_RESULTS !== 'undefined' && Array.isArray(OFFICIAL_EXAM_RESULTS))
