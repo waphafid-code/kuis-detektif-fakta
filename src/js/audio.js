@@ -99,12 +99,15 @@ function mergeRecordsList(existingList, incomingList) {
                     : Math.min(Number(cur.score) || 0, Number(item.score) || 0));
             const isRem = !!(cur.isRemedial || item.isRemedial) && (origScore < 80);
             const bestScore = Math.max(Number(cur.score) || 0, Number(item.score) || 0);
-            const bestRemScore = Math.max(
-                (cur.remedialScore !== undefined && cur.remedialScore !== null) ? Number(cur.remedialScore) : 0,
-                (item.remedialScore !== undefined && item.remedialScore !== null) ? Number(item.remedialScore) : 0,
-                isRem ? bestScore : 0
-            );
-            const finalScore = isRem ? Math.min(80, Math.max(origScore, bestRemScore)) : bestScore;
+            const isSameSubmission = (cur.submissionProofId && item.submissionProofId && cur.submissionProofId === item.submissionProofId) || (cur.id && item.id && cur.id === item.id);
+            const bestRemScore = isSameSubmission
+                ? ((cur.remedialScore !== undefined && cur.remedialScore !== null) ? Number(cur.remedialScore) : ((item.remedialScore !== undefined && item.remedialScore !== null) ? Number(item.remedialScore) : null))
+                : Math.max(
+                    (cur.remedialScore !== undefined && cur.remedialScore !== null) ? Number(cur.remedialScore) : 0,
+                    (item.remedialScore !== undefined && item.remedialScore !== null) ? Number(item.remedialScore) : 0,
+                    isRem ? bestScore : 0
+                );
+            const finalScore = isRem ? Math.min(80, Math.max(origScore, bestRemScore || 0)) : bestScore;
             const higher = (Number(item.score) || 0) >= (Number(cur.score) || 0) ? item : cur;
             map.set(k, {
                 ...cur,
@@ -170,7 +173,7 @@ function filterDeletedRecords(list) {
 window.filterDeletedRecords = filterDeletedRecords;
 
 const OFFICIAL_DATA_SYNC_KEY = 'quizmaster_official_pdf_sync_ver';
-const CURRENT_OFFICIAL_VERSION = '20261121_official_remedial_xe2_pdf_v11';
+const CURRENT_OFFICIAL_VERSION = '20261122_official_remedial_authentic_v12'; 7ec763c (fix: pulihkan 122 data nilai siswa dari Supabase, perbaiki rekonstruksi lembar jawaban remedial, dan sematkan switcher sesi riwayat ujian)
 
 function getCleanOfficialBaseline() {
     const raw = (typeof OFFICIAL_EXAM_RESULTS !== 'undefined' && Array.isArray(OFFICIAL_EXAM_RESULTS))

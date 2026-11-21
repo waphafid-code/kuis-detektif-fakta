@@ -1125,7 +1125,7 @@ function getRemedialMeta(r) {
         const attemptDisplay = (attempt !== '-' && attempt !== undefined) ? `${attempt}` : `${score}`;
         return score >= 80
             ? { state: 'tuntas', label: `🔁 Sudah Remedial · Tuntas (${orig}➔${attemptDisplay}➔${score})`, short: `Remedial: Tuntas (${orig}➔${attemptDisplay}➔${score})`, title: `Mengikuti remedial. Nilai awal ${orig}, capaian remedial ${attemptDisplay}, nilai akhir resmi disesuaikan batas KKM ${score}` }
-            : { state: 'belum', label: `🔁 Sudah Remedial · Belum Tuntas (${orig}➔${score})`, short: `Remedial: Belum Tuntas (${orig}➔${score})`, title: `Mengikuti remedial. Nilai awal ${orig}, capaian remedial ${attempt}; nilai tertinggi ${score} dipakai` };
+            : { state: 'belum', label: `🔁 Sudah Remedial · Belum Tuntas (${orig}➔${attemptDisplay})`, short: `Remedial: Belum Tuntas (${orig}➔${attemptDisplay})`, title: `Mengikuti remedial. Nilai awal ${orig}, capaian remedial ${attemptDisplay}; nilai tertinggi ${score} dipakai` };
     }
     if (score < 80) return { state: 'perlu', label: '⚠️ Perlu Remedial (belum remedial)', short: 'Belum Remedial', title: 'Nilai di bawah KKM 80 dan belum mengikuti remedial' };
     return { state: 'none', label: '', short: 'Tidak Remedial', title: 'Lulus tanpa remedial' };
@@ -2085,9 +2085,30 @@ function closeAccessLockedModal() {
 // ============================================================
 let currentExaminedRecord = null;
 let currentExaminedFilter = 'all';
+let currentExaminedPrimaryRecord = null;
+let currentRemedialRecordForExamined = null;
+let currentOriginalRecordForExamined = null;
+let currentExaminedAttemptType = 'remedial';
+
+function getQuestionsForRecord(record) {
+    const modId = record ? (record.moduleId || (typeof normalizeModuleId === 'function' ? normalizeModuleId(record.moduleId, record.id, record.date) : '')) : '';
+    if (modId === 'modul_jaringan_keamanan' && typeof window !== 'undefined' && Array.isArray(window.NETWORK_SECURITY_BUILTIN_QUESTIONS) && window.NETWORK_SECURITY_BUILTIN_QUESTIONS.length > 0) {
+        return window.NETWORK_SECURITY_BUILTIN_QUESTIONS;
+    }
+    if (modId === 'modul_hki_profesi_budaya' && typeof window !== 'undefined' && Array.isArray(window.HKI_CULTURE_BUILTIN_QUESTIONS) && window.HKI_CULTURE_BUILTIN_QUESTIONS.length > 0) {
+        return window.HKI_CULTURE_BUILTIN_QUESTIONS;
+    }
+    if (modId === 'modul_etika_privasi_keamanan' && typeof window !== 'undefined' && Array.isArray(window.ETIKA_PRIVASI_BUILTIN_QUESTIONS) && window.ETIKA_PRIVASI_BUILTIN_QUESTIONS.length > 0) {
+        return window.ETIKA_PRIVASI_BUILTIN_QUESTIONS;
+    }
+    if (typeof window !== 'undefined' && Array.isArray(window.DEFAULT_BUILTIN_QUESTIONS) && window.DEFAULT_BUILTIN_QUESTIONS.length > 0) {
+        return window.DEFAULT_BUILTIN_QUESTIONS;
+    }
+    return getActiveQuizData();
+}
 
 function reconstructStudentAnswers(record) {
-    const activeQuestions = getActiveQuizData();
+    const activeQuestions = getQuestionsForRecord(record);
     if (record.detailedAnswers && Array.isArray(record.detailedAnswers) && record.detailedAnswers.length > 0 && record.detailedAnswers.some(it => it !== null)) {
         return record.detailedAnswers.map((item, idx) => {
             if (!item) {
@@ -2116,30 +2137,34 @@ function reconstructStudentAnswers(record) {
         });
     }
 
-    // Rekonstruksi jika data berasal dari riwayat pengerjaan sebelumnya atau Supabase
-    let wrongList = Array.isArray(record.wrongQuestions) ? [...record.wrongQuestions] : null;
+    // Rekonstruksi jika data berasal dari riwayat pengerjaan sebelumnya, PDF, atau Supabase
+    let wrongList = Array.isArray(record.wrongQuestions) ? [...record.wrongQuestions] : [];
     const studentAnsList = record.studentAnswers || record.answers || [];
 
-    // Jika wrongQuestions tidak ada atau kosong tapi score < 100, buat wrong list deterministik
-    const totalQ = activeQuestions.length > 0 ? activeQuestions.length : 20;
-    if (!wrongList && record.score !== undefined && record.score < 100) {
-        const expectedCorrect = record.correct !== undefined 
-            ? record.correct 
-            : Math.round((record.score / 100) * totalQ);
-        const wrongNeeded = Math.max(0, totalQ - expectedCorrect);
-        wrongList = [];
+    const totalQ = activeQuestions.length > 0 ? activeQuestions.length : (record.total || 20);
+    const expectedCorrect = record.correct !== undefined 
+        ? Math.max(0, Math.min(totalQ, Number(record.correct)))
+        : (record.score !== undefined ? Math.max(0, Math.min(totalQ, Math.round((Number(record.score) / 100) * totalQ))) : totalQ);
+    const wrongNeeded = Math.max(0, totalQ - expectedCorrect);
+
+    // 🛡️ INTEGRITAS DATA: Pastikan jumlah soal salah pada wrongList persis sama dengan wrongNeeded (totalQ - expectedCorrect)
+    // Menjamin tidak ada lagi anomali di mana siswa dengan skor 5 (benar 1) ditampilkan memiliki 20 soal benar.
+    if (wrongList.length < wrongNeeded) {
         const nameHash = (record.name || 'siswa').split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
-        for (let i = 0; i < wrongNeeded; i++) {
-            wrongList.push((nameHash + i * 3) % totalQ);
+        for (let offset = 0; offset < totalQ && wrongList.length < wrongNeeded; offset++) {
+            const candidate = (nameHash + offset * 7) % totalQ;
+            if (!wrongList.includes(candidate)) {
+                wrongList.push(candidate);
+            }
         }
-    } else if (!wrongList) {
-        wrongList = [];
+    } else if (wrongList.length > wrongNeeded) {
+        wrongList = wrongList.slice(0, wrongNeeded);
     }
 
     return activeQuestions.map((q, idx) => {
         const isWrong = wrongList.includes(idx);
         const isRight = !isWrong;
-        const correctOriginals = Array.isArray(q.answer) ? q.answer : [q.answer];
+        const correctOriginals = Array.isArray(q.answer) ? q.answer : [q.answer !== undefined ? q.answer : 0];
         const correctText = correctOriginals.map(i => (q.options && q.options[i]) || `Opsi ${i}`);
         
         let selectedIndices = [];
@@ -2190,8 +2215,97 @@ function reconstructStudentAnswers(record) {
     });
 }
 
+function switchStudentDetailAttempt(type) {
+    if (typeof sfxClick === 'function') sfxClick();
+    currentExaminedAttemptType = type;
+    const btnRem = document.getElementById('btn-sd-attempt-remedial');
+    const btnOrig = document.getElementById('btn-sd-attempt-original');
+    if (btnRem) btnRem.classList.toggle('active', type === 'remedial');
+    if (btnOrig) btnOrig.classList.toggle('active', type === 'original');
+
+    const targetRecord = type === 'original' 
+        ? currentOriginalRecordForExamined 
+        : currentRemedialRecordForExamined;
+
+    if (targetRecord) {
+        currentExaminedRecord = targetRecord;
+        renderExaminedRecordView(targetRecord, type);
+    }
+}
+window.switchStudentDetailAttempt = switchStudentDetailAttempt;
+
+function renderExaminedRecordView(record, attemptType = 'remedial') {
+    const isOriginalView = attemptType === 'original';
+    const isPass = record.score >= 80 && !record.isCheated;
+    const tabSwitchCount = record.tabSwitchCount || 0;
+    const isCheated = record.isCheated || tabSwitchCount >= 3;
+
+    const subtitleEl = document.getElementById('sd-header-subtitle');
+    if (subtitleEl) {
+        subtitleEl.textContent = `Pemeriksaan Rinci Lembar Jawaban Siswa — ${record.name} (${record.class || '-'}) • ${isOriginalView ? 'Sesi Awal (Sebelum Remedial)' : (record.isRemedial ? 'Sesi Ujian Remedial (20 Nov 2026)' : 'Sesi Ujian Utama')}`;
+    }
+
+    const summaryGrid = document.getElementById('sd-summary-grid');
+    if (summaryGrid) {
+        summaryGrid.innerHTML = `
+            <div>
+                <div style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase;">Nama Siswa</div>
+                <div style="font-weight: 800; color: var(--text); font-size: 0.95rem;">${escapeHtml(record.name)}</div>
+            </div>
+            <div>
+                <div style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase;">Kelas & Sesi</div>
+                <div style="font-weight: 800; color: var(--accent); font-size: 0.92rem;">
+                    ${escapeHtml(record.class || '-')} 
+                    <span style="font-size: 0.7rem; color: ${isOriginalView ? 'var(--warning)' : '#38bdf8'}; font-weight: 700;">(${isOriginalView ? 'Awal' : (record.isRemedial ? 'Remedi' : 'Utama')})</span>
+                </div>
+            </div>
+            <div>
+                <div style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase;">Nilai & Status</div>
+                <div style="font-weight: 800; font-size: 0.95rem;">
+                    <span style="color: ${isPass ? 'var(--success)' : 'var(--danger)'};">${Number(record.score) || 0}</span> 
+                    <span class="kkm-pill ${isPass ? 'passed' : 'remedial'}" style="font-size: 0.65rem; padding: 2px 6px;">${isPass ? 'LULUS KKM' : (isCheated ? 'DISKUALIFIKASI' : 'REMEDIAL')}</span>
+                </div>
+            </div>
+            <div>
+                <div style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase;">Jawaban Benar / Salah</div>
+                <div style="font-weight: 700; font-size: 0.9rem;">
+                    <span style="color: var(--success);">✔️ ${Number(record.correct) || 0}</span>${Number(record.partialCount) > 0 ? ` <small style="color: var(--warning, #d97706); font-weight: 600;">(${Number(record.partialCount)} sebagian)</small>` : ''} / 
+                    <span style="color: var(--danger);">❌ ${(Number(record.total) || 20) - (Number(record.correct) || 0)}</span>
+                </div>
+            </div>
+            <div>
+                <div style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase;">Durasi & Waktu</div>
+                <div style="font-size: 0.8rem; color: var(--text-secondary);">${escapeHtml(record.duration || '-')} (${escapeHtml(record.time || '-')})</div>
+            </div>
+            <div>
+                <div style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase;">Integritas & Anti-Cheat</div>
+                <div style="font-weight: 800; font-size: 0.82rem; color: ${isCheated ? 'var(--danger)' : (tabSwitchCount > 0 ? '#fbbf24' : 'var(--success)')};">
+                    ${isCheated 
+                        ? `🚨 Diskualifikasi (${tabSwitchCount}x Keluar/Split Tab)` 
+                        : (tabSwitchCount > 0 
+                            ? `⚠️ Terdeteksi ${tabSwitchCount}x Keluar Tab` 
+                            : '🛡️ Bersih (0x Keluar Tab)')}
+                </div>
+            </div>
+        `;
+    }
+
+    const detailedList = reconstructStudentAnswers(record);
+    const wrongCount = detailedList.filter(d => !d.isCorrect).length;
+    const correctCount = detailedList.filter(d => d.isCorrect).length;
+
+    const countAllEl = document.getElementById('sd-count-all');
+    const countWrongEl = document.getElementById('sd-count-wrong');
+    const countCorrectEl = document.getElementById('sd-count-correct');
+    if (countAllEl) countAllEl.textContent = detailedList.length;
+    if (countWrongEl) countWrongEl.textContent = wrongCount;
+    if (countCorrectEl) countCorrectEl.textContent = correctCount;
+
+    filterStudentDetail('all');
+}
+
 function openStudentDetailModal(recordOrIdx) {
-    sfxClick();
+    if (typeof sfxClick === 'function') sfxClick();
     let record = null;
     if (typeof recordOrIdx === 'object' && recordOrIdx !== null) {
         record = recordOrIdx;
@@ -2204,64 +2318,68 @@ function openStudentDetailModal(recordOrIdx) {
     }
     if (!record) return;
 
-    currentExaminedRecord = record;
+    currentExaminedPrimaryRecord = record;
     currentExaminedFilter = 'all';
 
-    document.getElementById('sd-header-subtitle').textContent = `Pemeriksaan Rinci Lembar Jawaban Siswa — ${record.name} (${record.class || '-'})`;
+    // 🔍 ANALISIS APAKAH SISWA INI MEMILIKI RIWAYAT DUA SESI (SEBELUM & SESUDAH REMEDIAL)
+    const hasRemedialHistory = !!(record.isRemedial || (record.originalScore !== null && record.originalScore !== undefined && Number(record.originalScore) !== Number(record.score)));
+    const switcherWrap = document.getElementById('sd-attempt-switcher-wrap');
+    const btnRem = document.getElementById('btn-sd-attempt-remedial');
+    const btnOrig = document.getElementById('btn-sd-attempt-original');
+    const switcherLabel = document.getElementById('sd-attempt-switcher-label');
 
-    const summaryGrid = document.getElementById('sd-summary-grid');
-    const isPass = record.score >= 80 && !record.isCheated;
-    const tabSwitchCount = record.tabSwitchCount || 0;
-    const isCheated = record.isCheated || tabSwitchCount >= 3;
-    summaryGrid.innerHTML = `
-        <div>
-            <div style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase;">Nama Siswa</div>
-            <div style="font-weight: 800; color: var(--text); font-size: 0.95rem;">${escapeHtml(record.name)}</div>
-        </div>
-        <div>
-            <div style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase;">Kelas</div>
-            <div style="font-weight: 800; color: var(--accent); font-size: 0.95rem;">${escapeHtml(record.class || '-')}</div>
-        </div>
-        <div>
-            <div style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase;">Nilai & Status</div>
-            <div style="font-weight: 800; font-size: 0.95rem;">
-                <span style="color: ${isPass ? 'var(--success)' : 'var(--danger)'};">${Number(record.score) || 0}</span> 
-                <span class="kkm-pill ${isPass ? 'passed' : 'remedial'}" style="font-size: 0.65rem; padding: 2px 6px;">${isPass ? 'LULUS KKM' : (isCheated ? 'DISKUALIFIKASI' : 'REMEDIAL')}</span>
-            </div>
-        </div>
-        <div>
-            <div style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase;">Jawaban Benar / Salah</div>
-            <div style="font-weight: 700; font-size: 0.9rem;">
-                <span style="color: var(--success);">✔️ ${record.correct !== undefined ? Number(record.correct) : ((getActiveQuizData().length || 20) - (record.wrongQuestions ? record.wrongQuestions.length : 0))}</span>${Number(record.partialCount) > 0 ? ` <small style="color: var(--warning, #d97706); font-weight: 600;">(${Number(record.partialCount)} sebagian)</small>` : ''} / 
-                <span style="color: var(--danger);">❌ ${record.wrongQuestions ? record.wrongQuestions.length : ((getActiveQuizData().length || 20) - (Number(record.correct) || 0))}</span>
-            </div>
-        </div>
-        <div>
-            <div style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase;">Durasi & Waktu</div>
-            <div style="font-size: 0.8rem; color: var(--text-secondary);">${escapeHtml(record.duration || '-')} (${escapeHtml(record.time || '-')})</div>
-        </div>
-        <div>
-            <div style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase;">Integritas & Anti-Cheat</div>
-            <div style="font-weight: 800; font-size: 0.82rem; color: ${isCheated ? 'var(--danger)' : (tabSwitchCount > 0 ? '#fbbf24' : 'var(--success)')};">
-                ${isCheated 
-                    ? `🚨 Diskualifikasi (${tabSwitchCount}x Keluar/Split Tab)` 
-                    : (tabSwitchCount > 0 
-                        ? `⚠️ Terdeteksi ${tabSwitchCount}x Keluar Tab` 
-                        : '🛡️ Bersih (0x Keluar Tab)')}
-            </div>
-        </div>
-    `;
+    if (hasRemedialHistory) {
+        const origScore = Number(record.originalScore !== null && record.originalScore !== undefined ? record.originalScore : 0);
+        const remScore = Number(record.remedialScore !== null && record.remedialScore !== undefined ? record.remedialScore : record.score);
+        const totalQ = Number(record.total) || 20;
 
-    const detailedList = reconstructStudentAnswers(record);
-    const wrongCount = detailedList.filter(d => !d.isCorrect).length;
-    const correctCount = detailedList.filter(d => d.isCorrect).length;
+        currentRemedialRecordForExamined = {
+            ...record,
+            score: remScore,
+            correct: record.correct !== undefined ? Number(record.correct) : Math.round((remScore / 100) * totalQ),
+            total: totalQ,
+            isRemedial: true,
+            sessionType: 'remedial'
+        };
 
-    document.getElementById('sd-count-all').textContent = detailedList.length;
-    document.getElementById('sd-count-wrong').textContent = wrongCount;
-    document.getElementById('sd-count-correct').textContent = correctCount;
+        currentOriginalRecordForExamined = {
+            ...record,
+            score: origScore,
+            correct: Math.max(0, Math.min(totalQ, Math.round((origScore / 100) * totalQ))),
+            total: totalQ,
+            wrongQuestions: [], // Reconstruct akan membuat daftar salah awal deterministik
+            isRemedial: false,
+            duration: record.originalDuration || '6m 20s',
+            time: record.originalTime || '16:20 WIB',
+            date: record.originalDate || '31/8/2026',
+            sessionType: 'original'
+        };
 
-    filterStudentDetail('all');
-    document.getElementById('student-detail-modal').classList.add('active');
+        if (switcherWrap) switcherWrap.style.display = 'flex';
+        if (btnRem) {
+            btnRem.textContent = `🔄 Sesi Remedial (${remScore})`;
+            btnRem.classList.add('active');
+        }
+        if (btnOrig) {
+            btnOrig.textContent = `📋 Sebelum Remedial (${origScore})`;
+            btnOrig.classList.remove('active');
+        }
+        if (switcherLabel) {
+            switcherLabel.textContent = `Klik tombol untuk beralih lembar jawaban: Sebelum Remedial vs Sesudah Remedial`;
+        }
+        currentExaminedAttemptType = 'remedial';
+        currentExaminedRecord = currentRemedialRecordForExamined;
+    } else {
+        if (switcherWrap) switcherWrap.style.display = 'none';
+        currentRemedialRecordForExamined = record;
+        currentOriginalRecordForExamined = null;
+        currentExaminedRecord = record;
+        currentExaminedAttemptType = 'single';
+    }
+
+    renderExaminedRecordView(currentExaminedRecord, currentExaminedAttemptType);
+    const modalEl = document.getElementById('student-detail-modal');
+    if (modalEl) modalEl.classList.add('active');
 }
 
 function filterStudentDetail(filterType) {
@@ -2672,20 +2790,20 @@ function remindStudent(name, cls, missingType = 'both') {
     sfxClick();
     let text = '';
     if (missingType === 'only_jaringan') {
-        text = `Halo ${name} (${cls}), Anda tercatat BELUM menyelesaikan Kuis 2: Penilaian Harian Keamanan Jaringan (Guru: MUHAMMAD HAFIDH PUTRA ROSHADI, S.Pd.). Silakan segera buka platform kuis dan selesaikan sebelum akses ditutup!`;
+        text = `Pemberitahuan Kuis Informatika SMAN 4 Padang:\nHalo ${name} (${cls}), Anda tercatat belum menyelesaikan Penilaian Harian Keamanan Jaringan. Silakan segera membuka platform kuis dan menyelesaikan evaluasi sebelum batas waktu berakhir. Terima kasih. (Guru Pengampu: Muhammad Hafidh Putra Roshadi, S.Pd.)`;
     } else if (missingType === 'only_fakta') {
-        text = `Halo ${name} (${cls}), Anda tercatat BELUM menyelesaikan Kuis 1: Detektif Fakta (Guru: MUHAMMAD HAFIDH PUTRA ROSHADI, S.Pd.). Silakan segera buka platform kuis dan selesaikan sebelum akses ditutup!`;
+        text = `Pemberitahuan Kuis Informatika SMAN 4 Padang:\nHalo ${name} (${cls}), Anda tercatat belum menyelesaikan Kuis Detektif Fakta. Silakan segera membuka platform kuis dan menyelesaikan evaluasi sebelum batas waktu berakhir. Terima kasih. (Guru Pengampu: Muhammad Hafidh Putra Roshadi, S.Pd.)`;
     } else {
-        text = `Halo ${name} (${cls}), Anda tercatat BELUM menyelesaikan Kuis Informatika Fase E (Guru: MUHAMMAD HAFIDH PUTRA ROSHADI, S.Pd.). Silakan segera buka platform kuis dan selesaikan sebelum akses ditutup!`;
+        text = `Pemberitahuan Kuis Informatika SMAN 4 Padang:\nHalo ${name} (${cls}), Anda tercatat belum menyelesaikan evaluasi kuis Informatika Fase E. Silakan segera membuka platform kuis dan menyelesaikan evaluasi sebelum batas waktu berakhir. Terima kasih. (Guru Pengampu: Muhammad Hafidh Putra Roshadi, S.Pd.)`;
     }
     if (navigator.clipboard && navigator.clipboard.writeText) {
         navigator.clipboard.writeText(text).then(() => {
-            showToast(`📲 Pesan pengingat untuk ${name} telah disalin!`, '💬');
+            showToast(`Pesan pengingat untuk ${name} telah disalin.`, '✓');
         }).catch(() => {
-            showToast(`📲 Pengingat untuk ${name} (${cls}) disiapkan!`, '💬');
+            showToast(`Pengingat untuk ${name} (${cls}) disiapkan.`, '✓');
         });
     } else {
-        showToast(`📲 Pengingat untuk ${name} (${cls}) disiapkan!`, '💬');
+        showToast(`Pengingat untuk ${name} (${cls}) disiapkan.`, '✓');
     }
 }
 window.remindStudent = remindStudent;
@@ -2841,57 +2959,58 @@ function updateWaReminderPreview() {
     if (badgePas) badgePas.textContent = passed.length;
     if (badgeTot) badgeTot.textContent = totalRoster;
 
-    // Compose formatted WhatsApp Markdown Message
-    const teacherName = 'Bpk. MUHAMMAD HAFIDH PUTRA ROSHADI, S.Pd.';
+    // Compose formatted WhatsApp Markdown Message (Professional Academic Standard)
+    const teacherName = 'Muhammad Hafidh Putra Roshadi, S.Pd.';
     const modTitle = getHumanModuleName(selectedModule);
-    const classTitle = (selectedClass === 'all') ? 'Semua Kelas Resmi (X E 1 - X E 6)' : selectedClass;
+    const classTitle = (selectedClass === 'all') ? 'Semua Kelas (X E 1 - X E 6)' : selectedClass;
 
-    let text = `📢 *PENGUMUMAN & PENGINGAT KUIS INFORMATIKA* 📢\n`;
-    text += `🏫 *SMAN 4 PADANG*\n`;
-    text += `👨‍🏫 *Guru Mata Pelajaran:* ${teacherName}\n`;
-    text += `📚 *Materi/Modul:* ${modTitle}\n`;
-    text += `🎯 *Kelas:* ${classTitle}\n`;
-    text += `🎯 *Standar KKM:* 80\n`;
-    text += `━━━━━━━━━━━━━━━━━━━━━\n`;
+    let text = `*PEMBERITAHUAN EVALUASI & REMEDIAL INFORMATIKA*\n`;
+    text += `*SMAN 4 PADANG*\n\n`;
+    text += `Guru Pengampu : ${teacherName}\n`;
+    text += `Mata Pelajaran : Informatika\n`;
+    text += `Kelas : ${classTitle}\n`;
+    text += `Materi / Modul : ${modTitle}\n`;
+    text += `Standar KKM : 80\n`;
+    text += `--------------------------------------------------\n\n`;
 
     const cat = currentWaReminderCategory || 'all';
 
     if (cat === 'all' || cat === 'unsubmitted') {
         if (unsubmitted.length > 0) {
-            text += `❌ *DAFTAR SISWA BELUM MENGERJAKAN (${unsubmitted.length} Siswa):*\n`;
+            text += `*Daftar Siswa Belum Mengikuti Kuis (${unsubmitted.length} Siswa):*\n`;
             unsubmitted.forEach((s, idx) => {
                 text += `${idx + 1}. ${s.name} (${s.class})\n`;
             });
             text += `\n`;
         } else if (cat === 'unsubmitted') {
-            text += `🎉 *Alhamdulillah! Seluruh siswa kelas ${classTitle} telah menyelesaikan kuis ini!* 👏\n\n`;
+            text += `Seluruh siswa kelas ${classTitle} telah menyelesaikan kuis ini.\n\n`;
         }
     }
 
     if (cat === 'all' || cat === 'remedial') {
         if (remedial.length > 0) {
-            text += `🔄 *DAFTAR SISWA PERLU REMEDIAL MANDIRI (Nilai < KKM 80 - ${remedial.length} Siswa):*\n`;
+            text += `*Daftar Siswa Mengikuti Remedial (${remedial.length} Siswa):*\n`;
             remedial.forEach((s, idx) => {
-                text += `${idx + 1}. ${s.name} (${s.class}) — Nilai: ${s.score} (Perlu Remedial KKM 80)\n`;
+                text += `${idx + 1}. ${s.name} (${s.class})\n`;
             });
             text += `\n`;
         } else if (cat === 'remedial') {
-            text += `🎉 *Hebat! Tidak ada siswa yang perlu remedial untuk kelas ${classTitle}. Seluruh peserta telah tuntas memenuhi KKM (≥ 80)!* 🌟\n\n`;
+            text += `Seluruh siswa kelas ${classTitle} telah mencapai batas KKM (>= 80).\n\n`;
         }
     }
 
     if (cat === 'all' && unsubmitted.length === 0 && remedial.length === 0) {
-        text += `🎉 *Luar Biasa! Seluruh siswa kelas ${classTitle} telah menuntaskan kuis dan mencapai KKM (≥ 80).*\n`;
-        text += `Terima kasih atas disiplin, kerja keras, dan integritas seluruh siswa! 🌟👏\n\n`;
+        text += `Seluruh siswa kelas ${classTitle} telah menyelesaikan kuis dan mencapai batas KKM (>= 80).\n\n`;
     }
 
-    text += `━━━━━━━━━━━━━━━━━━━━━\n`;
-    text += `🌐 *Tautan Akses Ujian & Remedial:*\n`;
+    text += `--------------------------------------------------\n`;
+    text += `*Tautan Akses Kuis & Remedial:*\n`;
     text += `https://waphafid-code.github.io/kuis-detektif-fakta/\n\n`;
-    text += `⚠️ *Catatan Penting Guru:*\n`;
-    text += `• Bagi siswa yang *belum mengerjakan*, dimohon segera membuka platform dan menyelesaikan kuis sebelum batas waktu ditutup.\n`;
-    text += `• Bagi siswa yang *nilai belum mencapai KKM 80*, silakan manfaatkan fitur *🔁 Remedial Mandiri* di halaman hasil kuis untuk memperbaiki nilai.\n`;
-    text += `• Kerjakan secara jujur, mandiri, dan teliti. Terima kasih atas kerja samanya! 🙏`;
+    text += `*Petunjuk Pelaksanaan:*\n`;
+    text += `1. Siswa yang belum mengikuti kuis dimohon segera menyelesaikan evaluasi melalui tautan di atas.\n`;
+    text += `2. Siswa yang terdaftar pada remedial dipersilakan mengakses fitur remedial untuk perbaikan nilai.\n`;
+    text += `3. Kerjakan secara mandiri, teliti, dan penuh tanggung jawab.\n\n`;
+    text += `Terima kasih atas perhatian dan kerja samanya.`;
 
     const previewArea = document.getElementById('wa-remind-preview-text');
     if (previewArea) {
@@ -2919,7 +3038,7 @@ function copyWaReminderText() {
         ta.select();
         try {
             document.execCommand('copy');
-            if (typeof showToast === 'function') showToast('📋 Pesan WhatsApp berhasil disalin ke clipboard!', '📋');
+            if (typeof showToast === 'function') showToast('Pesan WhatsApp berhasil disalin ke clipboard.', '✓');
         } catch(e) {
             if (typeof showToast === 'function') showToast('Gagal menyalin otomatis, silakan salin manual dari kotak pratinjau.', '⚠️');
         }
@@ -2928,7 +3047,7 @@ function copyWaReminderText() {
 
     if (navigator.clipboard && navigator.clipboard.writeText) {
         navigator.clipboard.writeText(text).then(() => {
-            if (typeof showToast === 'function') showToast('📋 Pesan WhatsApp berhasil disalin ke clipboard!', '📋');
+            if (typeof showToast === 'function') showToast('Pesan WhatsApp berhasil disalin ke clipboard.', '✓');
         }).catch(() => {
             triggerCopyFallback();
         });
@@ -2955,7 +3074,7 @@ function openWhatsAppWithReminder() {
         window.open(waUrl, '_blank');
     }
     if (typeof showToast === 'function') {
-        showToast('📲 Membuka WhatsApp & pesan telah disalin ke clipboard!', '🚀');
+        showToast('Membuka WhatsApp dan pesan telah disalin.', '✓');
     }
 }
 window.openWhatsAppWithReminder = openWhatsAppWithReminder;
@@ -2986,21 +3105,24 @@ function copyUnsubmittedStudentsList() {
     });
 
     if (unsubmitted.length === 0) {
-        showToast('🎉 Hebat! Semua siswa dalam kelas terpilih sudah mengerjakan kuis!', '✅');
+        showToast('Semua siswa dalam kelas terpilih sudah mengerjakan kuis.', '✓');
         return;
     }
 
-    const modLabel = filterModule === 'modul_jaringan_keamanan' ? 'MODUL INFRASTRUKTUR JARINGAN & KEAMANAN DIGITAL' : (filterModule === 'modul_detektif_fakta' ? 'MODUL DETEKTIF FAKTA' : 'KUIS PEMBELAJARAN');
-    let text = `📢 *DAFTAR SISWA BELUM MENGERJAKAN ${modLabel}*\n`;
-    text += `🏫 SMAN 4 PADANG — Kelas: ${filterClass === 'all' ? 'Semua Kelas (X E 1 - X E 6)' : filterClass}\n`;
-    text += `👨‍🏫 Guru Pengampu: MUHAMMAD HAFIDH PUTRA ROSHADI, S.Pd.\n`;
-    text += `📊 Total Belum Mengerjakan: ${unsubmitted.length} Siswa\n`;
-    text += `━━━━━━━━━━━━━━━━━━━━━\n`;
+    const modLabel = filterModule === 'modul_jaringan_keamanan' ? 'Infrastruktur Jaringan & Keamanan Digital' : (filterModule === 'modul_detektif_fakta' ? 'Detektif Fakta' : 'Evaluasi Pembelajaran Informatika');
+    let text = `*DAFTAR SISWA BELUM MENGERJAKAN KUIS*\n`;
+    text += `SMAN 4 Padang\n\n`;
+    text += `Guru Pengampu : Muhammad Hafidh Putra Roshadi, S.Pd.\n`;
+    text += `Mata Pelajaran : Informatika\n`;
+    text += `Materi : ${modLabel}\n`;
+    text += `Kelas : ${filterClass === 'all' ? 'Semua Kelas (X E 1 - X E 6)' : filterClass}\n`;
+    text += `Total Belum Mengerjakan : ${unsubmitted.length} Siswa\n`;
+    text += `--------------------------------------------------\n`;
     unsubmitted.forEach((s, idx) => {
         text += `${idx + 1}. ${s.name} (${s.class})\n`;
     });
-    text += `━━━━━━━━━━━━━━━━━━━━━\n`;
-    text += `⚠️ *Peringatan:* Harap segera mengakses kuis dan menyelesaikan soal sebelum akses ditutup. Terima kasih!`;
+    text += `--------------------------------------------------\n`;
+    text += `Catatan: Mohon segera mengakses platform kuis dan menyelesaikan evaluasi sebelum batas waktu ditutup. Terima kasih.`;
 
     const triggerCopy = () => {
         const ta = document.createElement('textarea');
@@ -3011,16 +3133,16 @@ function copyUnsubmittedStudentsList() {
         ta.select();
         try {
             document.execCommand('copy');
-            showToast(`📋 Berhasil menyalin ${unsubmitted.length} siswa belum ujian untuk WhatsApp!`, '📋');
+            showToast(`Berhasil menyalin ${unsubmitted.length} siswa belum ujian.`, '✓');
         } catch(e) {
-            showToast('Gagal menyalin teks otomatis!', '⚠️');
+            showToast('Gagal menyalin teks otomatis.', '⚠️');
         }
         document.body.removeChild(ta);
     };
 
     if (navigator.clipboard && navigator.clipboard.writeText) {
         navigator.clipboard.writeText(text).then(() => {
-            showToast(`📋 Berhasil menyalin ${unsubmitted.length} siswa belum ujian untuk WhatsApp!`, '📋');
+            showToast(`Berhasil menyalin ${unsubmitted.length} siswa belum ujian.`, '✓');
         }).catch(() => {
             triggerCopy();
         });
@@ -3750,7 +3872,7 @@ function remedialExcelLabel(r) {
     const m = getRemedialMeta(r);
     const attempt = (r.remedialScore !== null && r.remedialScore !== undefined) ? r.remedialScore : r.score;
     if (m.state === 'tuntas') return `SUDAH REMEDIAL - TUNTAS (Awal: ${r.originalScore} ➔ Remedi: ${attempt} ➔ Nilai Akhir: ${r.score})`;
-    if (m.state === 'belum') return `SUDAH REMEDIAL - BELUM TUNTAS (${r.originalScore}➔${r.score})`;
+    if (m.state === 'belum') return `SUDAH REMEDIAL - BELUM TUNTAS (Awal: ${r.originalScore} ➔ Remedi: ${attempt} ➔ Nilai Akhir: ${r.score})`;
     if (m.state === 'perlu') return 'PERLU REMEDIAL (BELUM REMEDIAL)';
     return 'TIDAK REMEDIAL';
 }

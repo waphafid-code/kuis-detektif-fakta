@@ -37,9 +37,9 @@
         }
     </script>
     <!-- QuizMaster Modern Design System & UI Styling -->
-    <link rel="stylesheet" href="css/style.css?v=20261121-v3033-rekap-remedial-xe2">
+<link rel="stylesheet" href="css/style.css?v=20261122-v3035-remedial-accuracy-fix">
     <!-- Cyber Guardian Sentinel Protocol & Gemini Teacher AI Assistant Styling -->
-    <link rel="stylesheet" href="css/guardian_and_chatbot.css?v=20261121-v3033-rekap-remedial-xe2">
+    <link rel="stylesheet" href="css/guardian_and_chatbot.css?v=20261122-v3035-remedial-accuracy-fix"> 7ec763c (fix: pulihkan 122 data nilai siswa dari Supabase, perbaiki rekonstruksi lembar jawaban remedial, dan sematkan switcher sesi riwayat ujian)
 
 
 </head>
@@ -323,14 +323,16 @@
 <div class="modal-overlay" id="wa-reminder-modal" onclick="if(event.target===this)closeWaReminderModal()">
     <div class="modal-box" style="max-width: 650px; width: 94%; max-height: 90vh; overflow-y: auto; border-color: rgba(37,211,102,0.4); box-shadow: 0 0 50px rgba(37,211,102,0.25);">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; border-bottom: 1px solid var(--glass-border); padding-bottom: 12px;">
-            <div style="display: flex; align-items: center; gap: 10px;">
-                <span style="font-size: 1.8rem;">📲</span>
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <div style="width: 38px; height: 38px; border-radius: 10px; background: rgba(37,211,102,0.12); border: 1px solid rgba(37,211,102,0.25); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#25D366" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+                </div>
                 <div>
-                    <h3 style="margin: 0; color: #25D366; font-size: 1.15rem; display: flex; align-items: center; gap: 8px;">
-                        <span>Broadcast Pengingat WhatsApp</span>
+                    <h3 style="margin: 0; color: #25D366; font-size: 1.15rem; font-weight: 700;">
+                        Pengingat WhatsApp Siswa
                     </h3>
                     <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 2px;">
-                        Ingatkan siswa yang belum mengerjakan &amp; butuh remedial langsung ke grup WA kelas
+                        Kirimkan daftar siswa belum ujian dan peserta remedial langsung ke grup kelas
                     </div>
                 </div>
             </div>
@@ -340,48 +342,48 @@
         <!-- Filter Bar: Kelas & Modul -->
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px; margin-bottom: 14px;">
             <div>
-                <label for="wa-remind-class" style="font-size: 0.8rem; font-weight: 700; color: var(--text-secondary); display: block; margin-bottom: 5px;">
-                    🏫 Pilih Kelas Target:
+                <label for="wa-remind-class" style="font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); display: block; margin-bottom: 5px;">
+                    Pilih Kelas Target:
                 </label>
                 <select id="wa-remind-class" class="form-select-modern" onchange="updateWaReminderPreview()" style="width: 100%; font-size: 0.85rem; padding: 8px 12px;">
-                    <option value="all">🏫 Semua Kelas Resmi (X E 1 - X E 6)</option>
+                    <option value="all">Semua Kelas Resmi (X E 1 - X E 6)</option>
                     <option value="X E 1">X E 1 (36 Siswa)</option>
                     <option value="X E 2">X E 2 (36 Siswa)</option>
                     <option value="X E 3">X E 3 (36 Siswa)</option>
                     <option value="X E 4">X E 4 (36 Siswa)</option>
                     <option value="X E 5">X E 5 (36 Siswa)</option>
                     <option value="X E 6">X E 6 (36 Siswa)</option>
-                    <option value="KELAS DEMO">🧪 KELAS DEMO (Uji Coba)</option>
+                    <option value="KELAS DEMO">KELAS DEMO (Uji Coba)</option>
                 </select>
             </div>
             <div>
-                <label for="wa-remind-module" style="font-size: 0.8rem; font-weight: 700; color: var(--text-secondary); display: block; margin-bottom: 5px;">
-                    📚 Pilih Modul Kuis:
+                <label for="wa-remind-module" style="font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); display: block; margin-bottom: 5px;">
+                    Pilih Modul Kuis:
                 </label>
                 <select id="wa-remind-module" class="form-select-modern" onchange="updateWaReminderPreview()" style="width: 100%; font-size: 0.85rem; padding: 8px 12px;">
-                    <option value="all">🌐 Semua Modul Aktif</option>
-                    <option value="modul_jaringan_keamanan">🛡️ Keamanan Jaringan &amp; Infrastruktur</option>
-                    <option value="modul_detektif_fakta">🕵️ Detektif Fakta &amp; Validitas Data</option>
-                    <option value="modul_hki_profesi_budaya">⚖️ Teknologi, Budaya, Profesi &amp; HKI</option>
-                    <option value="modul_etika_privasi_keamanan">🔒 Etika, Privasi &amp; Keamanan Digital</option>
+                    <option value="all">Semua Modul Aktif</option>
+                    <option value="modul_jaringan_keamanan">Keamanan Jaringan &amp; Infrastruktur</option>
+                    <option value="modul_detektif_fakta">Detektif Fakta &amp; Validitas Data</option>
+                    <option value="modul_hki_profesi_budaya">Teknologi, Budaya, Profesi &amp; HKI</option>
+                    <option value="modul_etika_privasi_keamanan">Etika, Privasi &amp; Keamanan Digital</option>
                 </select>
             </div>
         </div>
 
         <!-- Filter Mode Kategori: Segmented Controls -->
         <div style="margin-bottom: 14px;">
-            <label style="font-size: 0.8rem; font-weight: 700; color: var(--text-secondary); display: block; margin-bottom: 6px;">
-                🎯 Kategori Siswa yang Diingatkan:
+            <label style="font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); display: block; margin-bottom: 6px;">
+                Kategori Pengingat:
             </label>
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 8px;">
-                <button type="button" class="btn btn-secondary wa-category-btn active" id="btn-wa-cat-all" onclick="setWaReminderCategory('all')" style="padding: 8px 12px; font-size: 0.8rem; font-weight: 700; text-align: center; border-radius: 8px;">
-                    📢 Semua (Gabungan)
+                <button type="button" class="btn btn-secondary wa-category-btn active" id="btn-wa-cat-all" onclick="setWaReminderCategory('all')" style="padding: 8px 12px; font-size: 0.8rem; font-weight: 600; text-align: center; border-radius: 8px;">
+                    Semua Kategori
                 </button>
-                <button type="button" class="btn btn-secondary wa-category-btn" id="btn-wa-cat-unsubmitted" onclick="setWaReminderCategory('unsubmitted')" style="padding: 8px 12px; font-size: 0.8rem; font-weight: 700; text-align: center; border-radius: 8px;">
-                    ❌ Belum Mengerjakan
+                <button type="button" class="btn btn-secondary wa-category-btn" id="btn-wa-cat-unsubmitted" onclick="setWaReminderCategory('unsubmitted')" style="padding: 8px 12px; font-size: 0.8rem; font-weight: 600; text-align: center; border-radius: 8px;">
+                    Belum Mengerjakan
                 </button>
-                <button type="button" class="btn btn-secondary wa-category-btn" id="btn-wa-cat-remedial" onclick="setWaReminderCategory('remedial')" style="padding: 8px 12px; font-size: 0.8rem; font-weight: 700; text-align: center; border-radius: 8px;">
-                    🔄 Butuh Remedial (&lt; 80)
+                <button type="button" class="btn btn-secondary wa-category-btn" id="btn-wa-cat-remedial" onclick="setWaReminderCategory('remedial')" style="padding: 8px 12px; font-size: 0.8rem; font-weight: 600; text-align: center; border-radius: 8px;">
+                    Peserta Remedial
                 </button>
             </div>
         </div>
@@ -389,22 +391,22 @@
         <!-- Dynamic Counter Badges -->
         <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; background: rgba(255,255,255,0.03); padding: 10px 14px; border-radius: 10px; border: 1px solid var(--glass-border);">
             <div style="flex: 1; min-width: 100px; text-align: center;">
-                <div style="font-size: 0.72rem; color: var(--danger); font-weight: 700;">BELUM UJIAN</div>
+                <div style="font-size: 0.72rem; color: var(--danger); font-weight: 700; letter-spacing: 0.3px;">BELUM MENGERJAKAN</div>
                 <div id="wa-badge-unsubmitted" style="font-size: 1.15rem; font-weight: 800; color: #f43f5e;">0</div>
             </div>
             <div style="width: 1px; background: var(--glass-border);"></div>
             <div style="flex: 1; min-width: 100px; text-align: center;">
-                <div style="font-size: 0.72rem; color: var(--warning); font-weight: 700;">BUTUH REMEDIAL</div>
+                <div style="font-size: 0.72rem; color: var(--warning); font-weight: 700; letter-spacing: 0.3px;">PESERTA REMEDIAL</div>
                 <div id="wa-badge-remedial" style="font-size: 1.15rem; font-weight: 800; color: #fbbf24;">0</div>
             </div>
             <div style="width: 1px; background: var(--glass-border);"></div>
             <div style="flex: 1; min-width: 100px; text-align: center;">
-                <div style="font-size: 0.72rem; color: var(--success); font-weight: 700;">SUDAH TUNTAS</div>
+                <div style="font-size: 0.72rem; color: var(--success); font-weight: 700; letter-spacing: 0.3px;">SUDAH TUNTAS</div>
                 <div id="wa-badge-passed" style="font-size: 1.15rem; font-weight: 800; color: #10b981;">0</div>
             </div>
             <div style="width: 1px; background: var(--glass-border);"></div>
             <div style="flex: 1; min-width: 100px; text-align: center;">
-                <div style="font-size: 0.72rem; color: var(--text-muted); font-weight: 700;">TOTAL ROSTER</div>
+                <div style="font-size: 0.72rem; color: var(--text-muted); font-weight: 700; letter-spacing: 0.3px;">TOTAL SISWA</div>
                 <div id="wa-badge-total" style="font-size: 1.15rem; font-weight: 800; color: var(--accent);">0</div>
             </div>
         </div>
@@ -412,24 +414,24 @@
         <!-- Live Preview Textarea -->
         <div style="margin-bottom: 16px;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-                <label for="wa-remind-preview-text" style="font-size: 0.8rem; font-weight: 700; color: var(--text-secondary);">
-                    👁️ Pratinjau Pesan WhatsApp (Format Otomatis):
+                <label for="wa-remind-preview-text" style="font-size: 0.8rem; font-weight: 600; color: var(--text-secondary);">
+                    Format Pesan Pengingat:
                 </label>
                 <span id="wa-preview-char-count" style="font-size: 0.74rem; color: var(--text-muted); font-family: monospace;">0 karakter</span>
             </div>
-            <textarea id="wa-remind-preview-text" rows="10" spellcheck="false" class="form-input" style="width: 100%; box-sizing: border-box; font-family: 'JetBrains Mono', Consolas, monospace; font-size: 0.82rem; line-height: 1.45; background: rgba(10,15,30,0.85); color: #f1f5f9; border: 1.5px solid rgba(37,211,102,0.35); border-radius: 10px; padding: 10px 14px; resize: vertical;" placeholder="Pratinjau pesan WhatsApp akan muncul di sini..."></textarea>
+            <textarea id="wa-remind-preview-text" rows="10" spellcheck="false" class="form-input" style="width: 100%; box-sizing: border-box; font-family: 'JetBrains Mono', Consolas, monospace; font-size: 0.82rem; line-height: 1.45; background: rgba(10,15,30,0.85); color: #f1f5f9; border: 1px solid rgba(37,211,102,0.35); border-radius: 10px; padding: 10px 14px; resize: vertical;" placeholder="Pratinjau pesan WhatsApp akan muncul di sini..."></textarea>
         </div>
 
         <!-- Modal Actions -->
         <div class="modal-actions" style="display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap;">
-            <button type="button" class="btn btn-secondary" onclick="closeWaReminderModal()" style="padding: 9px 18px; font-weight: 700;">
+            <button type="button" class="btn btn-secondary" onclick="closeWaReminderModal()" style="padding: 9px 18px; font-weight: 600;">
                 Tutup
             </button>
-            <button type="button" class="btn btn-secondary" onclick="copyWaReminderText()" style="padding: 9px 18px; font-weight: 800; color: var(--accent); border-color: rgba(34,211,238,0.4);" title="Salin seluruh isi teks pesan ke clipboard">
-                📋 Salin Pesan WA
+            <button type="button" class="btn btn-secondary" onclick="copyWaReminderText()" style="padding: 9px 18px; font-weight: 700; color: var(--accent); border-color: rgba(34,211,238,0.4);" title="Salin seluruh isi teks pesan ke clipboard">
+                Salin Pesan
             </button>
-            <button type="button" class="btn btn-accent pulse-glow" onclick="openWhatsAppWithReminder()" style="padding: 9px 20px; font-weight: 800; background: linear-gradient(135deg, #25D366, #128C7E); color: #ffffff; border: none; box-shadow: 0 4px 14px rgba(37,211,102,0.4);" title="Salin teks otomatis dan buka aplikasi WhatsApp">
-                📲 Kirim ke Grup WA ➔
+            <button type="button" class="btn btn-accent" onclick="openWhatsAppWithReminder()" style="padding: 9px 20px; font-weight: 700; background: #25D366; color: #072711; border: none;" title="Salin teks otomatis dan buka aplikasi WhatsApp">
+                Buka WhatsApp
             </button>
         </div>
     </div>
@@ -438,11 +440,13 @@
 <!-- Class Access Locked Modal (Jadwal MUHAMMAD HAFIDH PUTRA ROSHADI) -->
 <div class="modal-overlay" id="access-locked-modal">
     <div class="modal-box modal-locked-box">
-        <div style="font-size: 3rem; margin-bottom: 6px;">🔒🕒</div>
+        <div style="width: 52px; height: 52px; border-radius: 50%; background: rgba(239,68,68,0.12); border: 1px solid rgba(239,68,68,0.3); display: flex; align-items: center; justify-content: center; margin: 0 auto 12px;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+        </div>
         <h3 class="modal-locked-title" id="locked-modal-title">Akses Kuis Belum Dibuka</h3>
         <p class="modal-locked-sub">
             Kuis ini hanya dapat diakses pada jam mata pelajaran atau rentang waktu yang diatur Guru:<br>
-            <strong style="font-size: 1.05rem;">👨‍🏫 Guru Mata Pelajaran: MUHAMMAD HAFIDH PUTRA ROSHADI, S.Pd.</strong>
+            <strong style="font-size: 1.05rem;">Guru Pengampu: Muhammad Hafidh Putra Roshadi, S.Pd.</strong>
         </p>
 
         <div class="modal-locked-banner">
@@ -456,11 +460,11 @@
         </div>
 
         <p class="modal-locked-note">
-            💡 <em>Akses pengerjaan kuis akan terbuka secara otomatis tepat pada jam pelajaran guru mata pelajaran dimulai.</em>
+            <em>Akses pengerjaan kuis akan terbuka secara otomatis tepat pada jam pelajaran dimulai.</em>
         </p>
 
         <div class="modal-actions" style="justify-content: center; gap: 12px; flex-wrap: wrap;">
-            <button type="button" class="btn btn-primary" onclick="closeAccessLockedModal(); if(typeof switchScreen==='function')switchScreen('learn');" style="padding: 10px 22px; font-weight: 700;">📖 Buka Ruang Belajar Sekarang</button>
+            <button type="button" class="btn btn-primary" onclick="closeAccessLockedModal(); if(typeof switchScreen==='function')switchScreen('learn');" style="padding: 10px 22px; font-weight: 600;">Buka Ruang Belajar</button>
             <button type="button" class="btn btn-secondary" onclick="closeAccessLockedModal()" style="padding: 10px 24px; font-weight: 700; min-width: 120px;">Kembali 🔙</button>
         </div>
     </div>
@@ -470,8 +474,10 @@
 <!-- Pilihan Remedial: muncul menggantikan popup "Respon Sudah Tercatat" bila nilai < KKM & remedial dibuka guru -->
 <div class="modal-overlay" id="remedial-offer-modal" style="z-index: 99999;">
     <div class="modal-box" style="border-color: rgba(245,158,11,0.55); box-shadow: 0 0 40px rgba(245,158,11,0.28); max-width: 490px;">
-        <div style="font-size: 3rem; margin-bottom: 6px;">🔁</div>
-        <h3 style="margin-bottom: 8px; color: #f59e0b;">Kesempatan Remedial</h3>
+        <div style="width: 52px; height: 52px; border-radius: 50%; background: rgba(245,158,11,0.12); border: 1px solid rgba(245,158,11,0.3); display: flex; align-items: center; justify-content: center; margin: 0 auto 12px;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+        </div>
+        <h3 style="margin-bottom: 8px; color: #f59e0b; font-weight: 700;">Kesempatan Remedial</h3>
         <p style="color: var(--text-secondary); line-height: 1.5; margin-bottom: 14px; font-size: 0.92rem;">
             Halo <strong id="rem-offer-name" style="color: var(--accent);">-</strong>, nilai Anda pada modul ini belum mencapai KKM. Apakah ananda ingin mengikuti remedial?
         </p>
@@ -485,17 +491,19 @@
         <p style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 18px; line-height: 1.45; text-align: left;">
             Anda mengerjakan ulang seluruh soal modul ini (<strong id="rem-offer-kkm">KKM 80</strong>). Jika lulus, nilai dipatok maksimal sesuai KKM. Jika tetap di bawah KKM, nilai tertinggi antara nilai sebelum dan sesudah remedial yang dipakai. Remedial hanya dapat dilakukan 1 kali.
         </p>
-        <div class="modal-actions" style="justify-content: center; gap: 12px; flex-wrap: wrap;">
-            <button type="button" class="btn btn-secondary" onclick="closeRemedialOffer()" style="padding: 10px 24px; font-weight: 700; min-width: 140px;">Kembali 🔙</button>
-            <button type="button" class="btn btn-warning pulse-glow" id="btn-confirm-remedial" onclick="confirmRemedialStart()" style="padding: 10px 24px; font-weight: 800; min-width: 180px;">Lanjutkan Remedial 🚀</button>
+        <div class="modal-actions">
+            <button type="button" class="btn btn-secondary" onclick="closeRemedialOffer()">Kembali</button>
+            <button type="button" class="btn btn-warning" id="btn-confirm-remedial" onclick="confirmRemedialStart()">Lanjutkan Remedial</button>
         </div>
     </div>
 </div>
 
 <div class="modal-overlay" id="already-submitted-modal">
     <div class="modal-box" style="border-color: rgba(59,130,246,0.4); box-shadow: 0 0 40px rgba(59,130,246,0.25); max-width: 490px;">
-        <div style="font-size: 3rem; margin-bottom: 6px;">📋🔒</div>
-        <h3 class="modal-dup-title" style="margin-bottom: 8px;">Respon Sudah Tercatat</h3>
+        <div style="width: 52px; height: 52px; border-radius: 50%; background: rgba(59,130,246,0.12); border: 1px solid rgba(59,130,246,0.3); display: flex; align-items: center; justify-content: center; margin: 0 auto 12px;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+        </div>
+        <h3 class="modal-dup-title" style="margin-bottom: 8px; font-weight: 700;">Respon Sudah Tercatat</h3>
         <p style="color: var(--text-secondary); line-height: 1.5; margin-bottom: 14px; font-size: 0.92rem;">
             Halo <strong id="dup-student-name" style="color: var(--accent);">-</strong>, Anda sudah pernah menyelesaikan dan mengirimkan jawaban kuis ini sebelumnya:
         </p>
@@ -511,12 +519,12 @@
         </div>
 
         <p style="font-size: 0.83rem; color: var(--text-muted); margin-bottom: 20px; line-height: 1.45;">
-            ⚠️ <em>Pengaturan kuis saat ini diset oleh guru mata pelajaran hanya menerima <strong>1 kali pengiriman (Single Submission)</strong>. Jika Anda memerlukan ujian perbaikan atau remedi, silakan hubungi guru mata pelajaran untuk membuka akses respon.</em>
+            <em>Pengaturan kuis saat ini diset oleh guru mata pelajaran hanya menerima <strong>1 kali pengiriman (Single Submission)</strong>. Jika Anda memerlukan ujian perbaikan atau remedi, silakan hubungi guru mata pelajaran untuk membuka akses respon.</em>
         </p>
 
         <div class="modal-actions" style="justify-content: center; gap: 12px; flex-wrap: wrap;">
-            <button class="btn btn-secondary" onclick="closeAlreadySubmittedModal()" style="padding: 10px 24px; font-weight: 700; min-width: 140px;">Mengerti & Kembali 🔙</button>
-            <button class="btn btn-primary" id="btn-recheck-permission" onclick="recheckStudentSubmissionPermission()" style="padding: 10px 24px; font-weight: 700; background: linear-gradient(135deg, #2563eb, #1d4ed8); border: none; box-shadow: 0 4px 15px rgba(37,99,235,0.35); min-width: 180px;">🔄 Cek Ulang Izin Guru</button>
+            <button class="btn btn-secondary" onclick="closeAlreadySubmittedModal()" style="padding: 10px 24px; font-weight: 600; min-width: 140px;">Kembali</button>
+            <button class="btn btn-primary" id="btn-recheck-permission" onclick="recheckStudentSubmissionPermission()" style="padding: 10px 24px; font-weight: 600; background: #2563eb; border: none; min-width: 180px;">Cek Status Izin</button>
         </div>
     </div>
 </div>
@@ -742,6 +750,22 @@
                 </div>
             </div>
             <button class="btn btn-secondary" onclick="closeStudentDetailModal()" style="padding: 6px 14px; font-size: 0.85rem; border-radius: 8px;">✕ Tutup</button>
+        </div>
+
+        <!-- Remedial Session Switcher (Muncul jika siswa memiliki riwayat sebelum & sesudah remedial) -->
+        <div id="sd-attempt-switcher-wrap" style="display: none; margin-bottom: 10px; align-items: center; justify-content: space-between; background: rgba(99,102,241,0.08); border: 1px solid rgba(99,102,241,0.28); border-radius: 10px; padding: 7px 12px; flex-shrink: 0; flex-wrap: wrap; gap: 8px;">
+            <div style="display: flex; align-items: center; gap: 6px; font-size: 0.8rem; font-weight: 700; color: var(--accent);">
+                <span>🔄 Riwayat Pengerjaan:</span>
+                <span id="sd-attempt-switcher-label" style="font-size: 0.76rem; color: var(--text-muted); font-weight: 500;">Pilih sesi ujian untuk dibandingkan</span>
+            </div>
+            <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+                <button type="button" class="btn btn-secondary active access-mode-btn" id="btn-sd-attempt-remedial" onclick="switchStudentDetailAttempt('remedial')" style="padding: 4px 12px !important; font-size: 0.76rem !important; font-weight: 700; border-radius: 6px;">
+                    🔄 Sesi Remedial
+                </button>
+                <button type="button" class="btn btn-secondary access-mode-btn" id="btn-sd-attempt-original" onclick="switchStudentDetailAttempt('original')" style="padding: 4px 12px !important; font-size: 0.76rem !important; font-weight: 700; border-radius: 6px;">
+                    📋 Sebelum Remedial
+                </button>
+            </div>
         </div>
 
         <!-- Student summary banner (Fixed Top) -->
@@ -1752,15 +1776,15 @@
                     </button>
                 </div>
                 <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
-                    <button type="button" class="btn btn-accent pulse-glow" onclick="openWaReminderModal()" style="padding: 7px 16px; font-size: 0.78rem; font-weight: 800; background: linear-gradient(135deg, #25D366, #128C7E); color: #ffffff; border: none; box-shadow: 0 4px 14px rgba(37,211,102,0.35); display: inline-flex; align-items: center; gap: 6px;" title="Buka Alat Broadcast WhatsApp Per Kelas (Belum Ujian & Butuh Remedial)">
-                        <span>📢</span>
-                        <span>Ingatkan Siswa di Grup WA</span>
+                    <button type="button" class="btn btn-primary" onclick="openWaReminderModal()" style="padding: 7px 16px; font-size: 0.78rem; font-weight: 700; background: #25D366; color: #072711; border: none; display: inline-flex; align-items: center; gap: 6px;" title="Kirim pengingat WhatsApp per kelas (belum ujian & peserta remedial)">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+                        <span>Pengingat WhatsApp</span>
                     </button>
-                    <button type="button" class="btn btn-primary" onclick="restoreOfficialPdfRecords()" style="padding: 7px 14px; font-size: 0.78rem; font-weight: 700; background: linear-gradient(135deg, #059669, #10b981); border: none;" title="Sinkronkan & pulihkan 155 data nilai resmi dari Modul Detektif Fakta SMAN 4 Padang">
-                        📥 Muat 155 Nilai Resmi (Detektif Fakta)
+                    <button type="button" class="btn btn-secondary" onclick="restoreOfficialPdfRecords()" style="padding: 7px 14px; font-size: 0.78rem; font-weight: 600;" title="Sinkronkan & pulihkan data nilai resmi dari Modul Detektif Fakta SMAN 4 Padang">
+                        Sinkron Nilai Resmi
                     </button>
-                    <button type="button" class="btn btn-secondary" onclick="openWaReminderModal(null, null)" style="padding: 7px 14px; font-size: 0.78rem; font-weight: 700;" title="Buka Alat Broadcast WhatsApp Per Kelas">
-                        📋 Salin Daftar Belum Ujian
+                    <button type="button" class="btn btn-secondary" onclick="copyUnsubmittedStudentsList()" style="padding: 7px 14px; font-size: 0.78rem; font-weight: 600;" title="Salin daftar siswa yang belum mengerjakan kuis ke clipboard">
+                        Salin Belum Ujian
                     </button>
                 </div>
             </div>
@@ -2252,29 +2276,29 @@
 <!-- ============================================================ -->
 <!-- 🧩 MODULAR JAVASCRIPT LIBRARIES & ENGINES                   -->
 <!-- ============================================================ -->
-<script src="js/student_roster.js?v=20261121-v3033-rekap-remedial-xe2"></script>
-<script src="js/default_records.js?v=20261121-v3033-rekap-remedial-xe2"></script>
-<script src="js/default_questions.js?v=20261121-v3033-rekap-remedial-xe2"></script>
-<script src="js/doc_parser.js?v=20261121-v3033-rekap-remedial-xe2"></script>
-<script src="js/ai_nemotron.js?v=20261121-v3033-rekap-remedial-xe2"></script>
-<script src="js/quiz_manager.js?v=20261121-v3033-rekap-remedial-xe2"></script>
-<script src="js/question_editor.js?v=20261121-v3033-rekap-remedial-xe2"></script>
-<script src="js/firebase_sync.js?v=20261121-v3033-rekap-remedial-xe2"></script>
-<script src="js/deviceTier.js?v=20261121-v3033-rekap-remedial-xe2"></script>
-<script src="js/storage.js?v=20261121-v3033-rekap-remedial-xe2"></script>
-<script src="js/audio.js?v=20261121-v3033-rekap-remedial-xe2"></script>
-<script src="js/particles.js?v=20261121-v3033-rekap-remedial-xe2"></script>
-<script src="js/quiz_engine.js?v=20261121-v3033-rekap-remedial-xe2"></script>
-<script src="js/rapor_excel.js?v=20261121-v3033-rekap-remedial-xe2"></script>
-<script src="js/dashboard.js?v=20261121-v3033-rekap-remedial-xe2"></script>
-<script src="js/export_reports.js?v=20261121-v3033-rekap-remedial-xe2"></script>
-<script src="js/ai_studio.js?v=20261121-v3033-rekap-remedial-xe2"></script>
-<script src="js/diagnostics.js?v=20261121-v3033-rekap-remedial-xe2"></script>
-<script src="js/learning_hub.js?v=20261121-v3033-rekap-remedial-xe2"></script>
-<script src="js/mini_games.js?v=20261121-v3033-rekap-remedial-xe2"></script>
-<script src="js/teacher_chatbot.js?v=20261121-v3033-rekap-remedial-xe2"></script>
-<script src="js/cyber_guardian_game.js?v=20261121-v3033-rekap-remedial-xe2"></script>
-<script src="js/app.js?v=20261121-v3033-rekap-remedial-xe2"></script>
+<script src="js/student_roster.js?v=20261122-v3035-remedial-accuracy-fix"></script>
+<script src="js/default_records.js?v=20261122-v3035-remedial-accuracy-fix"></script>
+<script src="js/default_questions.js?v=20261122-v3035-remedial-accuracy-fix"></script>
+<script src="js/doc_parser.js?v=20261122-v3035-remedial-accuracy-fix"></script>
+<script src="js/ai_nemotron.js?v=20261122-v3035-remedial-accuracy-fix"></script>
+<script src="js/quiz_manager.js?v=20261122-v3035-remedial-accuracy-fix"></script>
+<script src="js/question_editor.js?v=20261122-v3035-remedial-accuracy-fix"></script>
+<script src="js/firebase_sync.js?v=20261122-v3035-remedial-accuracy-fix"></script>
+<script src="js/deviceTier.js?v=20261122-v3035-remedial-accuracy-fix"></script>
+<script src="js/storage.js?v=20261122-v3035-remedial-accuracy-fix"></script>
+<script src="js/audio.js?v=20261122-v3035-remedial-accuracy-fix"></script>
+<script src="js/particles.js?v=20261122-v3035-remedial-accuracy-fix"></script>
+<script src="js/quiz_engine.js?v=20261122-v3035-remedial-accuracy-fix"></script>
+<script src="js/rapor_excel.js?v=20261122-v3035-remedial-accuracy-fix"></script>
+<script src="js/dashboard.js?v=20261122-v3035-remedial-accuracy-fix"></script>
+<script src="js/export_reports.js?v=20261122-v3035-remedial-accuracy-fix"></script>
+<script src="js/ai_studio.js?v=20261122-v3035-remedial-accuracy-fix"></script>
+<script src="js/diagnostics.js?v=20261122-v3035-remedial-accuracy-fix"></script>
+<script src="js/learning_hub.js?v=20261122-v3035-remedial-accuracy-fix"></script>
+<script src="js/mini_games.js?v=20261122-v3035-remedial-accuracy-fix"></script>
+<script src="js/teacher_chatbot.js?v=20261122-v3035-remedial-accuracy-fix"></script>
+<script src="js/cyber_guardian_game.js?v=20261122-v3035-remedial-accuracy-fix"></script>
+<script src="js/app.js?v=20261122-v3035-remedial-accuracy-fix"></script> 7ec763c (fix: pulihkan 122 data nilai siswa dari Supabase, perbaiki rekonstruksi lembar jawaban remedial, dan sematkan switcher sesi riwayat ujian)
 
 </body>
 </html>

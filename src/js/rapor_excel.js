@@ -359,7 +359,10 @@
         ];
         if (snap.isRemedial) {
             const att = snap.attemptScore !== undefined && snap.attemptScore !== null ? snap.attemptScore : snap.score;
-            idRows.push(['Status Remedial', `Sudah Remedial · Tuntas (Capaian: ${att} ➔ Nilai Akhir KKM: ${snap.score})`, st.value]);
+            const statusText = snap.score >= 80
+                ? `Sudah Remedial · Tuntas (Capaian: ${att} ➔ Nilai Akhir KKM: ${snap.score})`
+                : `Sudah Remedial · Belum Tuntas (Capaian: ${att} ➔ Nilai Akhir: ${snap.score})`;
+            idRows.push(['Status Remedial', statusText, st.value]);
         }
         idRows.forEach((row, i) => {
             const rr = idTop + i;
