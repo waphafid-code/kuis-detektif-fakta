@@ -160,12 +160,16 @@ async function saveRecordToFirebase(record, proofCode) {
             list: Array.isArray(record.wrongQuestions) ? record.wrongQuestions : [],
             ans: Array.isArray(record.studentAnswers) ? record.studentAnswers : [],
             moduleId: modId,
-            moduleTitle: record.moduleTitle || (modId === 'modul_jaringan_keamanan' ? 'Penilaian Harian: Infrastruktur Jaringan & Keamanan Digital' : 'Misi Detektif Fakta'),
+            moduleTitle: record.moduleTitle || (modId === 'modul_tryout_terpadu' ? 'Tryout Terpadu 60 Soal (6 Materi)' : (modId === 'modul_jaringan_keamanan' ? 'Penilaian Harian: Infrastruktur Jaringan & Keamanan Digital' : 'Misi Detektif Fakta')),
             proofId: proofCode || record.submissionProofId || '',
             isRemedial: !!record.isRemedial,
             originalScore: record.isRemedial ? (record.originalScore ?? null) : null,
-            remedialScore: record.isRemedial ? (record.remedialScore ?? null) : null
+            remedialScore: record.isRemedial ? (record.remedialScore ?? null) : null,
+            topicBreakdown: record.topicBreakdown || null,
+            detailedAnswers: Array.isArray(record.detailedAnswers) ? record.detailedAnswers : null
         },
+        topic_breakdown: record.topicBreakdown || null,
+        detailed_answers: Array.isArray(record.detailedAnswers) ? record.detailedAnswers : null,
         duration: record.duration || '0m',
         time_str: record.time || '00:00',
         quiz_date: record.date || new Date().toLocaleDateString('id-ID'),
@@ -259,12 +263,20 @@ async function fetchFirebaseRecords() {
                     let extractedModTitle = null;
                     let extractedWrong = [];
                     let extractedAns = [];
+                    let extractedTopicBreakdown = r.topic_breakdown || (r.wrong_questions && r.wrong_questions.topicBreakdown) || null;
+                    let extractedDetailedAnswers = r.detailed_answers || (r.wrong_questions && r.wrong_questions.detailedAnswers) || null;
 
                     if (r.wrong_questions && typeof r.wrong_questions === 'object' && !Array.isArray(r.wrong_questions)) {
                         extractedAns = Array.isArray(r.wrong_questions.ans) ? r.wrong_questions.ans : [];
                         extractedModId = r.wrong_questions.moduleId;
                         extractedModTitle = r.wrong_questions.moduleTitle;
                         extractedWrong = Array.isArray(r.wrong_questions.list) ? r.wrong_questions.list : [];
+                        if (!extractedTopicBreakdown && r.wrong_questions.topicBreakdown) {
+                            extractedTopicBreakdown = r.wrong_questions.topicBreakdown;
+                        }
+                        if (!extractedDetailedAnswers && r.wrong_questions.detailedAnswers) {
+                            extractedDetailedAnswers = r.wrong_questions.detailedAnswers;
+                        }
                     } else if (Array.isArray(r.wrong_questions)) {
                         extractedWrong = r.wrong_questions;
                     }
@@ -279,14 +291,16 @@ async function fetchFirebaseRecords() {
                         class: r.student_class || '-',
                         score: Number(r.score) || 0,
                         correct: Number(r.correct_count) || 0,
-                        total: Number(r.total_questions) || 20,
+                        total: Number(r.total_questions) || (modId === 'modul_tryout_terpadu' ? 60 : 20),
                         wrongQuestions: extractedWrong,
                         studentAnswers: extractedAns,
+                        topicBreakdown: extractedTopicBreakdown,
+                        detailedAnswers: extractedDetailedAnswers,
                         duration: r.duration || '0m',
                         time: r.time_str || '00:00',
                         date: r.quiz_date || '',
                         moduleId: modId,
-                        moduleTitle: extractedModTitle || (modId === 'modul_jaringan_keamanan' ? 'Penilaian Harian: Infrastruktur Jaringan & Keamanan Digital' : 'Misi Detektif Fakta'),
+                        moduleTitle: extractedModTitle || (modId === 'modul_tryout_terpadu' ? 'Tryout Terpadu 60 Soal (6 Materi)' : (modId === 'modul_jaringan_keamanan' ? 'Penilaian Harian: Infrastruktur Jaringan & Keamanan Digital' : 'Misi Detektif Fakta')),
                         submissionProofId: r.submission_proof_id || (r.wrong_questions ? r.wrong_questions.proofId : '') || key,
                         ...((r.wrong_questions && r.wrong_questions.isRemedial) ? { isRemedial: true, originalScore: r.wrong_questions.originalScore, remedialScore: r.wrong_questions.remedialScore } : {})
                     });
@@ -364,14 +378,18 @@ async function uploadAllRecordsToFirebase(recordsToUpload = null) {
             student_class: r.class,
             score: Number(r.score) || 0,
             correct_count: Number(r.correct) || 0,
-            total_questions: Number(r.total) || 20,
+            total_questions: Number(r.total) || (modId === 'modul_tryout_terpadu' ? 60 : 20),
             wrong_questions: {
                 list: Array.isArray(r.wrongQuestions) ? r.wrongQuestions : [],
                 ans: Array.isArray(r.studentAnswers) ? r.studentAnswers : [],
                 moduleId: modId,
-                moduleTitle: r.moduleTitle || (modId === 'modul_jaringan_keamanan' ? 'Penilaian Harian: Infrastruktur Jaringan & Keamanan Digital' : 'Misi Detektif Fakta'),
-                proofId: proofCode
+                moduleTitle: r.moduleTitle || (modId === 'modul_tryout_terpadu' ? 'Tryout Terpadu 60 Soal (6 Materi)' : (modId === 'modul_jaringan_keamanan' ? 'Penilaian Harian: Infrastruktur Jaringan & Keamanan Digital' : 'Misi Detektif Fakta')),
+                proofId: proofCode,
+                topicBreakdown: r.topicBreakdown || null,
+                detailedAnswers: Array.isArray(r.detailedAnswers) ? r.detailedAnswers : null
             },
+            topic_breakdown: r.topicBreakdown || null,
+            detailed_answers: Array.isArray(r.detailedAnswers) ? r.detailedAnswers : null,
             duration: r.duration || '0m',
             time_str: r.time || '00:00',
             quiz_date: r.date || '',

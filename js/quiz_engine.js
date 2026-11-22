@@ -139,6 +139,17 @@ function stripQuestionPrefix(text) {
 }
 window.stripQuestionPrefix = stripQuestionPrefix;
 
+// 🎯 METADATA TOPIK TRYOUT TERPADU (6 MATERI INTI)
+const TRYOUT_TOPICS_META = {
+    M1: { code: 'M1', title: 'Literasi Digital & Ekosistem Periksa Fakta', icon: '🕵️' },
+    M2: { code: 'M2', title: 'Web Browser, Search Engine, & Manajemen Konten', icon: '🌐' },
+    M3: { code: 'M3', title: 'Digitalisasi Budaya, Profesi Informatika, & HKI', icon: '🏛️' },
+    M4: { code: 'M4', title: 'Etika, Privasi, dan Keamanan Digital', icon: '🛡️' },
+    M5: { code: 'M5', title: 'Infrastruktur Jaringan Komputer & Keamanan Siber', icon: '⚡' },
+    M6: { code: 'M6', title: 'Aplikasi Perkantoran (MS Word, Mail Merge, & MS Excel)', icon: '📊' }
+};
+window.TRYOUT_TOPICS_META = TRYOUT_TOPICS_META;
+
 function stripOptionLetterPrefix(text) {
     if (!text) return '';
     return String(text).replace(/^\s*(?:\*?\s*[A-Ea-e\d][\.\)\:\-]\s*|\([A-Ea-e\d]\)\s*)/, '').trim();
@@ -1180,6 +1191,30 @@ async function initiateQuiz() {
 
         answeredCorrectly = new Array(quizData.length).fill(null);
         detailedAnswers = new Array(quizData.length).fill(null);
+
+        // 🎯 Inisialisasi Akumulasi Poin Real-Time per Materi (Tryout 60 Soal)
+        const tryoutMeta = {
+            M1: { code: 'M1', title: 'Literasi Digital & Ekosistem Periksa Fakta', icon: '🕵️' },
+            M2: { code: 'M2', title: 'Web Browser, Search Engine, & Manajemen Konten', icon: '🌐' },
+            M3: { code: 'M3', title: 'Digitalisasi Budaya, Profesi Informatika, & HKI', icon: '🏛️' },
+            M4: { code: 'M4', title: 'Etika, Privasi, dan Keamanan Digital', icon: '🛡️' },
+            M5: { code: 'M5', title: 'Infrastruktur Jaringan Komputer & Keamanan Siber', icon: '⚡' },
+            M6: { code: 'M6', title: 'Aplikasi Perkantoran (MS Word, Mail Merge, & MS Excel)', icon: '📊' }
+        };
+        window.TRYOUT_TOPICS_META = tryoutMeta;
+        window.liveTopicProgress = {};
+        Object.keys(tryoutMeta).forEach(k => {
+            window.liveTopicProgress[k] = {
+                code: k,
+                title: tryoutMeta[k].title,
+                icon: tryoutMeta[k].icon,
+                correct: 0,
+                total: 0,
+                earnedPoints: 0,
+                maxPoints: 0,
+                score: 0
+            };
+        });
         TIMER_MAX = loadTimerSetting();
 
         // 🖥️ Kunci Layar Penuh Otomatis jika Mode Wajib Aktif (Kecuali Akun Demo)
@@ -1333,7 +1368,7 @@ let singleActionTransitionTimer = null;
 function handleSingleNextAction() {
     if (isTransitioningQuestion) return;
 
-    // Fast-forward jika siswa mengklik kembali tombol selama jeda transisi 650ms
+    // Fast-forward jika ada timer jeda transisi
     if (singleActionTransitionTimer) {
         clearTimeout(singleActionTransitionTimer);
         singleActionTransitionTimer = null;
@@ -1341,21 +1376,24 @@ function handleSingleNextAction() {
         return;
     }
 
-    // Kunci dan nilai jawaban saat ini seketika (atau salahkan bila tidak memilih)
+    const origQIdx = shuffledQuizOrder[currentQ];
+    // Jika soal saat ini sudah diperiksa dan dikunci (pembahasan sudah tampil), lanjut ke soal berikutnya
+    if (detailedAnswers[origQIdx]) {
+        nextQuestion();
+        return;
+    }
+
+    // Klik pertama: Kunci dan nilai jawaban saat ini seketika (atau salahkan bila tidak memilih)
+    // Tampilkan pembahasan tanpa auto-skip 650ms agar siswa memiliki waktu untuk membaca tuntas!
     checkAnswer(false);
 
     const nextBtn = document.getElementById('btn-next');
     const isFinalQ = (currentQ >= quizData.length - 1);
     if (nextBtn) {
         nextBtn.innerHTML = isFinalQ 
-            ? '<span>⚡ Mengirim Nilai...</span>' 
-            : '<span>Memuat Soal Berikutnya... ⏳</span>';
+            ? '🏁 Selesai & Kirim Jawaban ➔' 
+            : 'Lanjut Soal Berikutnya ➔';
     }
-
-    singleActionTransitionTimer = setTimeout(() => {
-        singleActionTransitionTimer = null;
-        nextQuestion();
-    }, 650);
 }
 window.handleSingleNextAction = handleSingleNextAction;
 
@@ -1369,13 +1407,6 @@ function autoSubmitTimeout() {
     // kunci dan nilai otomatis jawaban pilihan siswa tanpa membatalkan/merugikan siswa!
     if (checkedInputs.length > 0) {
         checkAnswer(true);
-        if (singleActionTransitionTimer) {
-            clearTimeout(singleActionTransitionTimer);
-        }
-        singleActionTransitionTimer = setTimeout(() => {
-            singleActionTransitionTimer = null;
-            nextQuestion();
-        }, 650);
         return;
     }
 
@@ -1470,14 +1501,6 @@ function autoSubmitTimeout() {
     if (typeof spawnRandomEmojis === 'function') {
         spawnRandomEmojis('⏰', isPotato ? 1 : 3);
     }
-
-    if (singleActionTransitionTimer) {
-        clearTimeout(singleActionTransitionTimer);
-    }
-    singleActionTransitionTimer = setTimeout(() => {
-        singleActionTransitionTimer = null;
-        nextQuestion();
-    }, 650);
 }
 
 function updateCheckboxCounter() {
@@ -1792,6 +1815,19 @@ function loadQuestion(index) {
             tierHint.innerHTML = `⚖️ <strong>Tabel Matriks Pernyataan:</strong> Tentukan <strong>[Benar]</strong> atau <strong>[Salah]</strong> untuk SETIAP baris pernyataan di bawah. Sistem menjamin tidak bisa memilih 2 jawaban pada baris yang sama.`;
         } else {
             tierHint.style.display = 'none';
+        }
+    }
+
+    const activeModId = (currentActiveModule && currentActiveModule.id) || (window.QuizManager && QuizManager.getActiveModuleId ? QuizManager.getActiveModuleId() : 'modul_detektif_fakta');
+    const tCode = data.topicCode || (activeModId === 'modul_tryout_terpadu' ? 'M' + (Math.floor(origQIdx / 10) + 1) : null);
+    const topicBadge = document.getElementById('q-topic-badge');
+    if (topicBadge) {
+        if (tCode && window.TRYOUT_TOPICS_META && window.TRYOUT_TOPICS_META[tCode]) {
+            const tm = window.TRYOUT_TOPICS_META[tCode];
+            topicBadge.style.display = 'inline-flex';
+            topicBadge.innerHTML = `${tm.icon} <strong>${tm.code}</strong>: ${escapeHtml(data.topicName || tm.title)}`;
+        } else {
+            topicBadge.style.display = 'none';
         }
     }
 
@@ -2199,8 +2235,23 @@ function checkAnswer(isAutoTimeout = false) {
             maxPoints: pointRes.maxPoints,
             isPartial: pointRes.isPartial,
             pointSummary: pointRes.summary,
+            topicCode: (data.topicCode || (activeModId === 'modul_tryout_terpadu' ? 'M' + (Math.floor(origQIdx / 10) + 1) : null)),
+            topicName: data.topicName || null,
             explanation: expText
         };
+
+        // 🎯 REAL-TIME MATERI TRACKING: Akumulasi nilai materi spesifik yang sedang dijawab
+        const liveTCode = data.topicCode || (activeModId === 'modul_tryout_terpadu' ? 'M' + (Math.floor(origQIdx / 10) + 1) : null);
+        if (liveTCode && window.liveTopicProgress && window.liveTopicProgress[liveTCode]) {
+            const prog = window.liveTopicProgress[liveTCode];
+            prog.total += 1;
+            prog.maxPoints += pointRes.maxPoints;
+            prog.earnedPoints += pointRes.pointsEarned;
+            if (pointRes.isFullCorrect) prog.correct += 1;
+            prog.score = prog.maxPoints > 0 ? Math.round((prog.earnedPoints / prog.maxPoints) * 100) : 0;
+            detailedAnswers[origQIdx].topicCode = liveTCode;
+            detailedAnswers[origQIdx].topicName = prog.title;
+        }
 
         // Sembunyikan tombol petunjuk saat jawaban sudah dikunci
         const hintBtn = document.getElementById('btn-hint');
@@ -2265,7 +2316,27 @@ function checkAnswer(isAutoTimeout = false) {
             if (card) card.classList.remove('streak-on-fire');
         }
 
-        if (fb) fb.style.display = 'block';
+        if (fb) {
+            // 🎯 Banner Akumulasi Nilai per Materi Real-Time
+            if (liveTCode && window.liveTopicProgress && window.liveTopicProgress[liveTCode]) {
+                const prog = window.liveTopicProgress[liveTCode];
+                const tm = window.TRYOUT_TOPICS_META ? window.TRYOUT_TOPICS_META[liveTCode] : null;
+                const ptsColor = pointRes.isFullCorrect ? '#34d399' : (pointRes.isPartial ? '#fde047' : '#fb7185');
+                const topicBannerHtml = `
+                    <div class="live-topic-feedback-toast" style="margin-top: 10px; padding: 8px 12px; background: rgba(99,102,241,0.15); border: 1.5px solid rgba(99,102,241,0.35); border-radius: 8px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px;">
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                            <span style="font-size: 1.1rem;">${(tm && tm.icon) || '📌'}</span>
+                            <span style="font-size: 0.8rem; font-weight: 800; color: #c7d2fe;">${liveTCode}: ${escapeHtml((tm && tm.title) || data.topicName || liveTCode)}</span>
+                        </div>
+                        <div style="font-size: 0.8rem; font-family: var(--font-mono); font-weight: 800; color: ${ptsColor};">
+                            ${pointRes.pointsEarned > 0 ? `+${pointRes.pointsEarned} Poin!` : '0 Poin'} &bull; Nilai Materi: ${prog.score}/100 (${prog.correct}/${prog.total} Soal)
+                        </div>
+                    </div>
+                `;
+                fb.innerHTML += topicBannerHtml;
+            }
+            fb.style.display = 'block';
+        }
         const scoreEl = document.getElementById('score-display');
         if (scoreEl) scoreEl.style.display = 'none'; // Sembunyikan total poin kumulatif selama ujian berjalan
         const streakEl = document.getElementById('streak-display');
@@ -2284,6 +2355,7 @@ function checkAnswer(isAutoTimeout = false) {
         if (nextBtn) {
             nextBtn.style.display = 'inline-flex';
             nextBtn.disabled = false;
+            nextBtn.innerHTML = isFinalQ ? '🏁 Selesai & Kirim Jawaban ➔' : 'Lanjut Soal Berikutnya ➔';
         }
         saveCurrentQuizSession();
     } finally {
@@ -2703,21 +2775,131 @@ async function finishQuiz() {
     }
 
     // 🔒 Kontrol Penundaan Rapor & Kunci Pembahasan oleh Guru
-    const isPostponed = (typeof isReviewPostponed === 'function') 
+    // Siswa TIDAK BISA mengunduh laporan soal salah atau benar dan jawaban benarnya pada kuis harian/baru karena rawan kecurangan.
+    // Tapi kalau Tryout (TO) BISA!
+    const isTryoutSession = (activeModId === 'modul_tryout_terpadu');
+    const isPostponed = !isTryoutSession && ((typeof isReviewPostponed === 'function') 
         ? isReviewPostponed() 
-        : (localStorage.getItem('quizmaster_review_release_mode') !== 'open');
+        : (localStorage.getItem('quizmaster_review_release_mode') !== 'open'));
 
     const postponedCard = document.getElementById('review-postponed-card');
     const btnToggleReview = document.getElementById('btn-toggle-review');
     const reviewSection = document.getElementById('review-section');
+    const btnExportPdf = document.querySelector('button[onclick="exportStudentPDF()"]');
+    const btnExportExcel = document.querySelector('button[onclick="exportStudentExcel()"]');
 
-    if (isPostponed) {
-        if (postponedCard) postponedCard.style.display = 'block';
-        if (btnToggleReview) btnToggleReview.style.display = 'none';
-        if (reviewSection) reviewSection.style.display = 'none';
-    } else {
+    if (isTryoutSession) {
         if (postponedCard) postponedCard.style.display = 'none';
         if (btnToggleReview) btnToggleReview.style.display = 'inline-flex';
+        if (btnExportPdf) {
+            btnExportPdf.style.display = 'inline-flex';
+            btnExportPdf.innerHTML = '📑 Unduh Rapor Lengkap (PDF)';
+            btnExportPdf.disabled = false;
+        }
+        if (btnExportExcel) {
+            btnExportExcel.style.display = 'inline-flex';
+            btnExportExcel.innerHTML = '📊 Unduh Rapor Excel Tryout';
+            btnExportExcel.disabled = false;
+        }
+    } else {
+        // Kuis materi harian biasa: proteksi anti-bocor kunci jawaban
+        if (postponedCard) {
+            postponedCard.style.display = 'block';
+            const postponedDesc = postponedCard.querySelector('p');
+            if (postponedDesc) {
+                postponedDesc.innerHTML = 'Nilai Anda telah <strong>berhasil dikumpulkan &amp; tersimpan resmi</strong> di Dasbor Guru <strong>Bpk. MUHAMMAD HAFIDH PUTRA ROSHADI, S.Pd.</strong> Untuk mencegah kecurangan dan kebocoran soal kuis harian, laporan kunci jawaban dilindungi oleh guru.';
+            }
+        }
+        if (btnToggleReview) btnToggleReview.style.display = 'none';
+        if (reviewSection) reviewSection.style.display = 'none';
+        if (btnExportPdf) {
+            btnExportPdf.innerHTML = '📑 Unduh Bukti Submit (PDF)';
+        }
+        if (btnExportExcel) {
+            btnExportExcel.style.display = 'none';
+        }
+    }
+
+    // 🎯 Render Tabel Rekapitulasi Penguasaan 6 Materi Tryout (Responsif Android)
+    const topicSummaryCard = document.getElementById('tryout-topic-summary-card');
+    if (topicSummaryCard) {
+        if (isTryoutSession && topicBreakdown) {
+            topicSummaryCard.style.display = 'block';
+            let rowsHtml = '';
+            let totalCorrectAll = 0;
+            let totalQAll = 0;
+            let totalScoreSum = 0;
+            let topicCount = 0;
+
+            const topicsOrder = ['M1', 'M2', 'M3', 'M4', 'M5', 'M6'];
+            topicsOrder.forEach(code => {
+                const item = topicBreakdown[code];
+                if (!item) return;
+                totalCorrectAll += (item.correct || 0);
+                totalQAll += (item.total || 10);
+                totalScoreSum += (item.score || 0);
+                topicCount++;
+
+                const isPass = item.score >= 80;
+                const badgeColor = isPass ? '#34d399' : (item.score >= 60 ? '#38bdf8' : '#fb7185');
+                const badgeBg = isPass ? 'rgba(16,185,129,0.15)' : (item.score >= 60 ? 'rgba(56,189,248,0.15)' : 'rgba(244,63,94,0.15)');
+                const badgeBorder = isPass ? 'rgba(16,185,129,0.35)' : (item.score >= 60 ? 'rgba(56,189,248,0.35)' : 'rgba(244,63,94,0.35)');
+                const statusText = isPass ? 'LULUS (≥80)' : 'PERLU BELAJAR (<80)';
+
+                rowsHtml += `
+                    <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; border-bottom: 1px solid rgba(255,255,255,0.06); gap: 10px; flex-wrap: wrap;">
+                        <div style="flex: 1; min-width: 190px;">
+                            <div style="font-weight: 800; font-size: 0.85rem; color: #e2e8f0; display: flex; align-items: center; gap: 6px;">
+                                <span>${item.icon || '📌'} ${code}:</span>
+                                <span>${escapeHtml(item.title)}</span>
+                            </div>
+                            <div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 2px;">
+                                Jumlah Benar: <strong style="color: #cbd5e1;">${item.correct} dari ${item.total} Soal</strong>
+                            </div>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span style="font-family: var(--font-mono); font-size: 1.15rem; font-weight: 800; color: ${badgeColor}; min-width: 48px; text-align: right;">${item.score}</span>
+                            <span style="font-size: 0.72rem; font-weight: 800; padding: 4px 10px; border-radius: 8px; background: ${badgeBg}; border: 1px solid ${badgeBorder}; color: ${badgeColor}; white-space: nowrap;">${statusText}</span>
+                        </div>
+                    </div>
+                `;
+            });
+
+            const avgScoreAll = topicCount > 0 ? Math.round(totalScoreSum / topicCount) : 0;
+            const isAvgPass = avgScoreAll >= 80;
+
+            topicSummaryCard.innerHTML = `
+                <div style="background: rgba(15, 23, 42, 0.75); border: 1.5px solid rgba(99, 102, 241, 0.35); border-radius: 14px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.3);">
+                    <div style="background: linear-gradient(135deg, rgba(99,102,241,0.2), rgba(168,85,247,0.15)); padding: 12px 16px; border-bottom: 1px solid rgba(99,102,241,0.3); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <span style="font-size: 1.4rem;">🎯</span>
+                            <div>
+                                <div style="font-weight: 800; font-size: 0.95rem; color: #a5b4fc;">Rekapitulasi Penguasaan per Materi (Tryout 60 Soal)</div>
+                                <div style="font-size: 0.72rem; color: var(--text-muted);">Akumulasi otomatis per 10 butir soal tiap kompetensi materi</div>
+                            </div>
+                        </div>
+                        <div style="font-size: 0.75rem; background: rgba(0,0,0,0.35); padding: 4px 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); color: #cbd5e1;">
+                            Standar KKM: <strong>80</strong>
+                        </div>
+                    </div>
+                    <div style="display: flex; flex-direction: column;">
+                        ${rowsHtml}
+                    </div>
+                    <div style="background: rgba(15, 23, 42, 0.92); padding: 12px 16px; border-top: 1.5px solid rgba(99, 102, 241, 0.4); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+                        <div style="font-size: 0.82rem; color: #cbd5e1; font-weight: 700;">
+                            📊 Total Ketepatan Jawaban: <span style="color: #38bdf8;">${totalCorrectAll} dari ${totalQAll} Soal</span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <span style="font-size: 0.85rem; color: #e2e8f0; font-weight: 800;">Rata-rata 6 Materi:</span>
+                            <span style="font-family: var(--font-mono); font-size: 1.25rem; font-weight: 900; color: ${isAvgPass ? '#34d399' : '#fb7185'};">${avgScoreAll} / 100</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        } else {
+            topicSummaryCard.style.display = 'none';
+            topicSummaryCard.innerHTML = '';
+        }
     }
 
     // 🔁 Kontrol Tampilan Tombol & Card Remedial Adaptif (Sesuai Pengaturan Guru)
@@ -2800,16 +2982,17 @@ function buildReview() {
     if (!list) return;
     list.innerHTML = '';
 
-    const isPostponed = (typeof isReviewPostponed === 'function') 
+    const activeModId = currentActiveModule ? currentActiveModule.id : (window.QuizManager ? QuizManager.getActiveModuleId() : 'modul_detektif_fakta');
+    const isTryoutSession = (activeModId === 'modul_tryout_terpadu');
+    const isPostponed = !isTryoutSession && ((typeof isReviewPostponed === 'function') 
         ? isReviewPostponed() 
-        : (localStorage.getItem('quizmaster_review_release_mode') !== 'open');
+        : (localStorage.getItem('quizmaster_review_release_mode') !== 'open'));
 
     if (isPostponed) {
         return; // Seluruh DOM review dinonaktifkan tuntas saat mode tunda aktif
     }
 
     // Cek apakah modul saat ini adalah Modul Ujian Keamanan Jaringan dan status kunci jawaban ujian aktif
-    const activeModId = currentActiveModule ? currentActiveModule.id : (window.QuizManager ? QuizManager.getActiveModuleId() : 'modul_detektif_fakta');
     const isExamModule = (activeModId === 'modul_jaringan_keamanan');
     const accessSettings = (typeof loadAccessSettings === 'function') ? loadAccessSettings() : { lockAnswersDuringExam: true };
     const isAnswersLocked = isExamModule && (accessSettings.lockAnswersDuringExam !== false);
@@ -2893,9 +3076,11 @@ function buildReview() {
 
 let reviewVisible = false;
 function toggleReview() {
-    const isPostponed = (typeof isReviewPostponed === 'function') 
+    const activeModId = (currentActiveModule && currentActiveModule.id) || (typeof QuizManager !== 'undefined' && QuizManager.getActiveModuleId ? QuizManager.getActiveModuleId() : 'modul_detektif_fakta');
+    const isTryoutSession = (activeModId === 'modul_tryout_terpadu');
+    const isPostponed = !isTryoutSession && ((typeof isReviewPostponed === 'function') 
         ? isReviewPostponed() 
-        : (localStorage.getItem('quizmaster_review_release_mode') !== 'open');
+        : (localStorage.getItem('quizmaster_review_release_mode') !== 'open'));
 
     if (isPostponed) {
         if (typeof showToast === 'function') {

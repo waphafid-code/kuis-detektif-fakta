@@ -2924,6 +2924,7 @@ function selectModuleSegment(moduleId, syncToStudents = true) {
     }
     const btnsMap = {
         'all': 'btn-mod-filter-all',
+        'modul_tryout_terpadu': 'btn-mod-filter-tryout',
         'modul_jaringan_keamanan': 'btn-mod-filter-jaringan',
         'modul_detektif_fakta': 'btn-mod-filter-fakta'
     };
@@ -2934,12 +2935,14 @@ function selectModuleSegment(moduleId, syncToStudents = true) {
 
     const indText = document.getElementById('active-module-indicator-text');
     if (indText) {
-        if (moduleId === 'modul_jaringan_keamanan') {
+        if (moduleId === 'modul_tryout_terpadu') {
+            indText.innerHTML = 'Menampilkan: 🎯 <strong>Tryout Terpadu 60 Soal (6 Materi)</strong> — Rekap Nilai M1 s.d M6 Sekaligus';
+        } else if (moduleId === 'modul_jaringan_keamanan') {
             indText.innerHTML = 'Menampilkan: 🛡️ <strong>Modul Keamanan Jaringan Saja</strong> (Kuis lain disembunyikan)';
         } else if (moduleId === 'modul_detektif_fakta') {
             indText.innerHTML = 'Menampilkan: 🕵️ <strong>Modul Detektif Fakta Saja</strong> (Kuis lain disembunyikan)';
         } else {
-            indText.innerHTML = 'Menampilkan: 📊 <strong>Komparasi 2 Modul (Lengkap)</strong>';
+            indText.innerHTML = 'Menampilkan: 📊 <strong>Komparasi Semua Modul & Tryout (Lengkap)</strong>';
         }
     }
 
@@ -3603,14 +3606,14 @@ function renderDashboard() {
             else if (hasFakta) completionStatus = 'only_fakta';
             else if (hasJaringan) completionStatus = 'only_jaringan';
 
-            // Hitung nilai rata-rata komparatif
+            // Hitung nilai rata-rata komparatif (seluruh evaluasi yang telah diselesaikan)
+            const completedScores = [];
+            if (hasFakta) completedScores.push(bestFakta.score);
+            if (hasJaringan) completedScores.push(bestJaringan.score);
+            if (hasTryout) completedScores.push(bestTryout.score);
             let avgScore = -1;
-            if (hasFakta && hasJaringan) {
-                avgScore = Math.round((bestFakta.score + bestJaringan.score) / 2);
-            } else if (hasFakta) {
-                avgScore = bestFakta.score;
-            } else if (hasJaringan) {
-                avgScore = bestJaringan.score;
+            if (completedScores.length > 0) {
+                avgScore = Math.round(completedScores.reduce((a, b) => a + b, 0) / completedScores.length);
             }
 
             // Tentukan status aktif berdasarkan filterModule
@@ -3650,12 +3653,12 @@ function renderDashboard() {
                 activeAttempts = attemptsMod.length;
                 activeTimestamp = bestMod ? (bestMod.timestamp || 0) : 0;
             } else {
-                // Komparasi 2 Modul ('all')
-                hasSubmitted = hasFakta || hasJaringan;
-                activeRecord = bestJaringan || bestFakta;
+                // Komparasi Semua Modul & Tryout ('all')
+                hasSubmitted = hasFakta || hasJaringan || hasTryout;
+                activeRecord = bestTryout || bestJaringan || bestFakta;
                 activeScore = avgScore;
-                activeAttempts = attemptsFakta.length + attemptsJaringan.length;
-                activeTimestamp = Math.max(bestFakta ? (bestFakta.timestamp || 0) : 0, bestJaringan ? (bestJaringan.timestamp || 0) : 0);
+                activeAttempts = attemptsFakta.length + attemptsJaringan.length + attemptsTryout.length;
+                activeTimestamp = Math.max(bestFakta ? (bestFakta.timestamp || 0) : 0, bestJaringan ? (bestJaringan.timestamp || 0) : 0, bestTryout ? (bestTryout.timestamp || 0) : 0);
             }
 
             rosterStudentItems.push({
@@ -3867,14 +3870,15 @@ function renderDashboard() {
                 </tr>
             `;
         } else if (!isSingleModuleView) {
-            // Mode Komparasi 2 Modul
+            // Mode Komparasi Semua Modul & Tryout
             thead.innerHTML = `
                 <tr>
                     <th style="width: 45px;">No</th>
                     <th style="cursor: pointer;" onclick="toggleSort('name')" title="Klik untuk Urutkan Nama">Nama Siswa ⇅</th>
                     <th style="width: 80px;">Kelas</th>
-                    <th style="text-align: center; width: 175px;" title="Kuis 1: Detektif Fakta">🕵️ Kuis 1: Detektif Fakta</th>
-                    <th style="text-align: center; width: 175px;" title="Kuis 2: Keamanan Jaringan">🛡️ Kuis 2: Keamanan Jaringan</th>
+                    <th style="text-align: center; width: 145px;" title="Kuis 1: Detektif Fakta">🕵️ Kuis 1: Fakta</th>
+                    <th style="text-align: center; width: 145px;" title="Kuis 2: Keamanan Jaringan">🛡️ Kuis 2: Jaringan</th>
+                    <th style="text-align: center; width: 165px;" title="Tryout Terpadu 60 Soal (6 Materi Sekaligus)">🎯 Tryout (6 Materi)</th>
                     <th style="text-align: center; width: 90px; cursor: pointer;" onclick="toggleSort('score')" title="Urutkan Nilai Rata-Rata">Rata-Rata ⇅</th>
                     <th style="text-align: center; width: 140px;">Status Pengerjaan</th>
                     <th style="text-align: center; width: 165px;">Aksi</th>
@@ -4068,10 +4072,31 @@ function renderDashboard() {
                         kuis2Html = `<span class="quiz-score-subpill waiting">⏳ Belum</span>`;
                     }
 
+                    let tryoutHtml = '';
+                    if (item.hasTryout && item.recordTryout) {
+                        const recTO = item.recordTryout;
+                        const isPassTO = recTO.score >= 80;
+                        const rIdxTO = window.currentRenderedRecords.length;
+                        window.currentRenderedRecords.push(recTO);
+                        tryoutHtml = `
+                            <div style="display: flex; align-items: center; justify-content: center; gap: 4px; flex-wrap: wrap;">
+                                <span class="quiz-score-subpill ${isPassTO ? 'pass' : 'remedy'}" title="Skor Tryout Terpadu (60 Soal • 6 Materi)">${recTO.score} (${isPassTO ? 'Lulus' : 'Remedi'})</span>
+                                <button type="button" class="btn-detail-row" style="padding: 2px 7px; font-size: 0.7rem;" onclick="openStudentDetailModal(window.currentRenderedRecords[${rIdxTO}])" title="Periksa Matriks Nilai 6 Materi Tryout">🔍</button>
+                                <button type="button" class="btn-delete-row" style="padding: 2px 6px; font-size: 0.7rem; border-radius: 4px;" onclick="openDeleteStudentModuleModal('${escapeHtml(item.name)}', '${escapeHtml(item.class)}', 'modul_tryout_terpadu', ${recTO.score})" title="Hapus Nilai Tryout saja">🗑️</button>
+                            </div>
+                        `;
+                    } else {
+                        tryoutHtml = `<span class="quiz-score-subpill waiting">⏳ Belum</span>`;
+                    }
+
                     // Badge Status Pengerjaan Lengkap
                     let crossBadge = '';
-                    if (item.completionStatus === 'both') {
+                    if (item.completionStatus === 'both' && item.hasTryout) {
+                        crossBadge = `<span class="badge-cross-both" title="Menyelesaikan Kuis 1, Kuis 2, dan Tryout 60 Soal">🌟 Tuntas (2 Kuis + TO)</span>`;
+                    } else if (item.completionStatus === 'both') {
                         crossBadge = `<span class="badge-cross-both">🟢 Tuntas 2 Kuis</span>`;
+                    } else if (item.hasTryout) {
+                        crossBadge = `<span class="badge-cross-only1" style="background: rgba(99,102,241,0.18); border-color: rgba(99,102,241,0.4); color: #a5b4fc;" title="Sudah Menyelesaikan Tryout 60 Soal">🎯 Tryout Selesai</span>`;
                     } else if (item.completionStatus === 'only_fakta') {
                         crossBadge = `<span class="badge-cross-only1" title="Sudah Kuis 1, Belum Kuis 2">🟡 Hanya Kuis 1</span>`;
                     } else if (item.completionStatus === 'only_jaringan') {
@@ -4088,14 +4113,14 @@ function renderDashboard() {
 
                     // Aksi Bar
                     let actionHtml = '';
-                    if (item.hasFakta || item.hasJaringan) {
+                    if (item.hasFakta || item.hasJaringan || item.hasTryout) {
                         actionHtml = `
                             <div style="display: flex; align-items: center; justify-content: center; gap: 5px; flex-wrap: wrap;">
                                 <button type="button" class="btn-delete-row" onclick="openDeleteStudentModuleModal('${escapeHtml(item.name)}', '${escapeHtml(item.class)}')" style="padding: 4px 8px; font-size: 0.72rem; border-radius: 6px; font-weight: 700;" title="Pilih modul & hapus nilai untuk siswa ini">
                                     🗑️ Hapus Nilai...
                                 </button>
                                 ${item.completionStatus !== 'both' ? `
-                                    <button type="button" class="btn btn-secondary" onclick="remindStudent('${escapeHtml(item.name)}', '${escapeHtml(item.class)}', '${item.completionStatus === 'only_fakta' ? 'only_jaringan' : 'only_fakta'}')" style="padding: 4px 8px; font-size: 0.72rem; border-radius: 6px; font-weight: 700;" title="Salin Pengingat WhatsApp Sesuai Kuis yang Belum">
+                                    <button type="button" class="btn btn-secondary" onclick="remindStudent('${escapeHtml(item.name)}', '${escapeHtml(item.class)}', '${item.completionStatus === 'only_fakta' ? 'only_jaringan' : (item.hasTryout ? 'tryout' : 'only_fakta')}')" style="padding: 4px 8px; font-size: 0.72rem; border-radius: 6px; font-weight: 700;" title="Salin Pengingat WhatsApp Sesuai Evaluasi yang Belum">
                                         📲 Ingatkan
                                     </button>
                                 ` : ''}
@@ -4115,6 +4140,7 @@ function renderDashboard() {
                         <td><span style="font-family: var(--font-mono); color: var(--accent); font-size: 0.85rem;">${escapeHtml(item.class)}</span></td>
                         <td style="text-align: center;">${kuis1Html}</td>
                         <td style="text-align: center;">${kuis2Html}</td>
+                        <td style="text-align: center;">${tryoutHtml}</td>
                         <td style="text-align: center;">${avgPill}</td>
                         <td style="text-align: center;">${crossBadge}</td>
                         <td style="text-align: center; white-space: nowrap;">${actionHtml}</td>
@@ -5005,9 +5031,10 @@ function exportStudentPDF() {
         doc.setFontSize(8.5);
         doc.text(snap.isRemedial ? (isLulus ? `REMEDIAL: TUNTAS (≥${KKM_PDF})` : `REMEDIAL: BELUM TUNTAS (<${KKM_PDF})`) : (isLulus ? `STATUS: LULUS (≥${KKM_PDF})` : `STATUS: REMEDIAL (<${KKM_PDF})`), 163, 63, { align: 'center' });
 
-        const isPostponed = (typeof isReviewPostponed === 'function') 
+        const isTryoutMod = (snap.moduleId === 'modul_tryout_terpadu');
+        const isPostponed = !isTryoutMod && ((typeof isReviewPostponed === 'function') 
             ? isReviewPostponed() 
-            : (localStorage.getItem('quizmaster_review_release_mode') !== 'open');
+            : (localStorage.getItem('quizmaster_review_release_mode') !== 'open'));
 
         if (isPostponed) {
             // 🛡️ TAMPILKAN SURAT BUKTI PENGUMPULAN UJIAN RESMI TANPA MEMBOCORKAN BUTIR SOAL

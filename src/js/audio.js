@@ -104,7 +104,7 @@ function mergeRecordsList(existingList, incomingList) {
             const item = {
                 ...r,
                 moduleId: modId,
-                moduleTitle: r.moduleTitle || (modId === 'modul_jaringan_keamanan' ? 'Penilaian Harian: Infrastruktur Jaringan & Keamanan Digital' : 'Misi Detektif Fakta')
+                moduleTitle: r.moduleTitle || (modId === 'modul_tryout_terpadu' ? 'Tryout Terpadu 60 Soal (6 Materi)' : (modId === 'modul_jaringan_keamanan' ? 'Penilaian Harian: Infrastruktur Jaringan & Keamanan Digital' : 'Misi Detektif Fakta'))
             };
             map.set(makeKey(item), item);
         }
@@ -116,7 +116,7 @@ function mergeRecordsList(existingList, incomingList) {
         const item = {
             ...r,
             moduleId: modId,
-            moduleTitle: r.moduleTitle || (modId === 'modul_jaringan_keamanan' ? 'Penilaian Harian: Infrastruktur Jaringan & Keamanan Digital' : 'Misi Detektif Fakta')
+            moduleTitle: r.moduleTitle || (modId === 'modul_tryout_terpadu' ? 'Tryout Terpadu 60 Soal (6 Materi)' : (modId === 'modul_jaringan_keamanan' ? 'Penilaian Harian: Infrastruktur Jaringan & Keamanan Digital' : 'Misi Detektif Fakta'))
         };
         const k = makeKey(item);
         if (!map.has(k)) {
@@ -494,8 +494,12 @@ async function saveRecord(record) {
             proofId: proofCode,
             isRemedial: !!record.isRemedial,
             originalScore: record.isRemedial ? (record.originalScore ?? null) : null,
-            remedialScore: record.isRemedial ? (record.remedialScore ?? null) : null
+            remedialScore: record.isRemedial ? (record.remedialScore ?? null) : null,
+            topicBreakdown: record.topicBreakdown || null,
+            detailedAnswers: Array.isArray(record.detailedAnswers) ? record.detailedAnswers : null
         },
+        topic_breakdown: record.topicBreakdown || null,
+        detailed_answers: Array.isArray(record.detailedAnswers) ? record.detailedAnswers : null,
         duration: record.duration,
         time_str: record.time,
         quiz_date: record.date

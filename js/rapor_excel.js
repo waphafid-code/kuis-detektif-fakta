@@ -41,9 +41,11 @@
         const detailed = (rec ? rec.detailedAnswers : safeGlobal('detailedAnswers', [])) || [];
         const total = rec && rec.total ? rec.total : qd.length;
         const locked = !!global.isAnswersLocked;
-        const postponed = (typeof global.isReviewPostponed === 'function')
+        const modId = (rec ? rec.moduleId : safeGlobal('currentActiveQuizModuleId')) || (typeof QuizManager !== 'undefined' && QuizManager.getActiveModuleId ? QuizManager.getActiveModuleId() : '');
+        const isTryoutMod = (modId === 'modul_tryout_terpadu');
+        const postponed = !isTryoutMod && ((typeof global.isReviewPostponed === 'function')
             ? !!global.isReviewPostponed()
-            : (function () { try { return localStorage.getItem('quizmaster_review_release_mode') !== 'open'; } catch (e) { return true; } })();
+            : (function () { try { return localStorage.getItem('quizmaster_review_release_mode') !== 'open'; } catch (e) { return true; } })());
 
         const rows = [];
         for (let i = 0; i < total; i++) {
