@@ -2225,6 +2225,13 @@ function switchStudentDetailAttempt(type) {
     const btnOrig = document.getElementById('btn-sd-attempt-original');
     if (btnRem) btnRem.classList.toggle('active', type === 'remedial');
     if (btnOrig) btnOrig.classList.toggle('active', type === 'original');
+    const btnCmp = document.getElementById('btn-sd-attempt-compare');
+    if (btnCmp) btnCmp.classList.toggle('active', type === 'compare');
+
+    if (type === 'compare') {
+        renderAttemptComparison();
+        return;
+    }
 
     const targetRecord = type === 'original' 
         ? currentOriginalRecordForExamined 
@@ -2236,6 +2243,49 @@ function switchStudentDetailAttempt(type) {
     }
 }
 window.switchStudentDetailAttempt = switchStudentDetailAttempt;
+
+// ✅ Apakah lembar jawaban sesi ini berasal dari data asli (bukan perkiraan dari nilai)?
+function recordHasRealAnswers(r) {
+    if (!r) return false;
+    if (Array.isArray(r.detailedAnswers) && r.detailedAnswers.some(it => it !== null && it !== undefined)) return true;
+    return Array.isArray(r.studentAnswers) && r.studentAnswers.some(a => Array.isArray(a) ? a.length > 0 : (a !== null && a !== undefined));
+}
+
+function renderAttemptComparison() {
+    const container = document.getElementById('sd-questions-list');
+    if (!container || !currentOriginalRecordForExamined || !currentRemedialRecordForExamined) return;
+    const o = currentOriginalRecordForExamined, r = currentRemedialRecordForExamined;
+    const oReal = recordHasRealAnswers(o), rReal = recordHasRealAnswers(r);
+    const oList = reconstructStudentAnswers(o), rList = reconstructStudentAnswers(r);
+    let improved = 0, worsened = 0, same = 0;
+    const cell = (item, real) => {
+        const mark = item.isCorrect ? '✔️' : '❌';
+        const txt = (item.selectedText || ['-']).join('; ');
+        return `<div style="font-weight:800;color:${item.isCorrect ? 'var(--success)' : 'var(--danger)'};">${mark}${real ? '' : ' ≈'}</div><div style="font-size:0.72rem;color:var(--text-secondary);">${escapeHtml(String(txt).slice(0, 140))}</div>`;
+    };
+    const rows = oList.map((oi, idx) => {
+        const ri = rList[idx] || { isCorrect: false, selectedText: ['-'] };
+        let change = '＝ Tetap benar', color = 'var(--text-muted)';
+        if (!oi.isCorrect && ri.isCorrect) { change = '⬆ Membaik'; color = 'var(--success)'; improved++; }
+        else if (oi.isCorrect && !ri.isCorrect) { change = '⬇ Memburuk'; color = 'var(--danger)'; worsened++; }
+        else if (!oi.isCorrect && !ri.isCorrect) { change = '✖ Tetap salah'; color = '#fbbf24'; same++; }
+        else same++;
+        return `<tr style="border-top:1px solid rgba(148,163,184,0.2);">
+            <td style="padding:6px 8px;font-weight:800;vertical-align:top;">${idx + 1}</td>
+            <td style="padding:6px 8px;font-size:0.76rem;vertical-align:top;">${escapeHtml(String(oi.questionText || '').slice(0, 110))}</td>
+            <td style="padding:6px 8px;vertical-align:top;">${cell(oi, oReal)}</td>
+            <td style="padding:6px 8px;vertical-align:top;">${cell(ri, rReal)}</td>
+            <td style="padding:6px 8px;font-weight:800;color:${color};white-space:nowrap;vertical-align:top;">${change}</td></tr>`;
+    }).join('');
+    const warn = (!oReal || !rReal)
+        ? `<div style="margin-bottom:8px;padding:8px 10px;border-radius:8px;background:rgba(251,191,36,0.12);border:1px solid rgba(251,191,36,0.4);font-size:0.78rem;color:#fbbf24;">⚠️ Tanda ≈ berarti jawaban asli sesi tersebut tidak tersimpan; tampilan hanya perkiraan dari nilai dan jumlah soal salah, bukan jawaban sebenarnya siswa.</div>` : '';
+    container.innerHTML = `${warn}
+        <div style="margin-bottom:8px;font-size:0.82rem;font-weight:700;">⚖️ Pertama: <span style="color:var(--accent);">${Number(o.score) || 0}</span> (${escapeHtml(o.date || '-')}) &nbsp;➔&nbsp; Remedial: <span style="color:var(--accent);">${Number(r.score) || 0}</span> (${escapeHtml(r.date || '-')}) &nbsp;|&nbsp; ⬆ ${improved} membaik, ⬇ ${worsened} memburuk, ✖ ${same} tidak berubah/tetap salah</div>
+        <div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:0.8rem;">
+        <thead><tr style="text-align:left;color:var(--text-muted);font-size:0.72rem;text-transform:uppercase;"><th style="padding:6px 8px;">No</th><th style="padding:6px 8px;">Soal</th><th style="padding:6px 8px;">Pengerjaan Pertama</th><th style="padding:6px 8px;">Remedial</th><th style="padding:6px 8px;">Perubahan</th></tr></thead>
+        <tbody>${rows}</tbody></table></div>`;
+}
+window.renderAttemptComparison = renderAttemptComparison;
 
 function renderExaminedRecordView(record, attemptType = 'remedial') {
     const isOriginalView = attemptType === 'original';
@@ -2336,29 +2386,50 @@ function openStudentDetailModal(recordOrIdx) {
         const remScore = Number(record.remedialScore !== null && record.remedialScore !== undefined ? record.remedialScore : record.score);
         const totalQ = Number(record.total) || 20;
 
-        currentRemedialRecordForExamined = {
+        // 🧾 Gunakan snapshot sesi ASLI (jawaban pertama vs remedial dipisah, tidak dicampur & tidak dikarang)
+        const fromSnap = (snap, base) => ({
+            ...base,
+            ...(snap ? {
+                score: Number(snap.score),
+                correct: snap.correct !== undefined ? Number(snap.correct) : base.correct,
+                total: Number(snap.total) || totalQ,
+                partialCount: snap.partialCount,
+                wrongQuestions: Array.isArray(snap.wrongQuestions) ? snap.wrongQuestions : [],
+                detailedAnswers: snap.detailedAnswers || [],
+                studentAnswers: snap.studentAnswers || [],
+                date: snap.date || '-', time: snap.time || '-', duration: snap.duration || '-',
+                tabSwitchCount: snap.tabSwitchCount || 0
+            } : {})
+        });
+        const remSnap = record.remedialAttempt || null;
+        const firstSnap = record.firstAttempt || null;
+
+        currentRemedialRecordForExamined = fromSnap(remSnap, {
             ...record,
             score: remScore,
             correct: record.correct !== undefined ? Number(record.correct) : Math.round((remScore / 100) * totalQ),
             total: totalQ,
             isRemedial: true,
             sessionType: 'remedial'
-        };
+        });
+        currentRemedialRecordForExamined.__sessionSnapshot = !!remSnap;
 
-        currentOriginalRecordForExamined = {
+        currentOriginalRecordForExamined = fromSnap(firstSnap, {
             ...record,
             score: origScore,
             correct: Math.max(0, Math.min(totalQ, Math.round((origScore / 100) * totalQ))),
             total: totalQ,
-            wrongQuestions: [], // Reconstruct akan membuat daftar salah awal deterministik
+            wrongQuestions: [],
+            detailedAnswers: [],
+            studentAnswers: [],
             isRemedial: false,
-            duration: record.originalDuration || '6m 20s',
-            time: record.originalTime || '16:20 WIB',
-            date: record.originalDate || '31/8/2026',
+            duration: '-', time: '-', date: '-',
             sessionType: 'original'
-        };
+        });
+        currentOriginalRecordForExamined.__sessionSnapshot = !!firstSnap;
 
         if (switcherWrap) switcherWrap.style.display = 'flex';
+        { const bc = document.getElementById('btn-sd-attempt-compare'); if (bc) bc.classList.remove('active'); }
         if (btnRem) {
             btnRem.textContent = `🔄 Sesi Remedial (${remScore})`;
             btnRem.classList.add('active');
@@ -2368,7 +2439,7 @@ function openStudentDetailModal(recordOrIdx) {
             btnOrig.classList.remove('active');
         }
         if (switcherLabel) {
-            switcherLabel.textContent = `Klik tombol untuk beralih lembar jawaban: Sebelum Remedial vs Sesudah Remedial`;
+            switcherLabel.textContent = `Klik tombol untuk beralih lembar jawaban: Sebelum Remedial, Sesudah Remedial, atau Bandingkan`;
         }
         currentExaminedAttemptType = 'remedial';
         currentExaminedRecord = currentRemedialRecordForExamined;
@@ -2397,8 +2468,12 @@ function filterStudentDetail(filterType) {
 
 function renderStudentDetailQuestions() {
     if (!currentExaminedRecord) return;
+    if (currentExaminedAttemptType === 'compare') { renderAttemptComparison(); return; }
     const container = document.getElementById('sd-questions-list');
     container.innerHTML = '';
+    if (!recordHasRealAnswers(currentExaminedRecord)) {
+        container.innerHTML += `<div style="margin-bottom:8px;padding:8px 10px;border-radius:8px;background:rgba(251,191,36,0.12);border:1px solid rgba(251,191,36,0.4);font-size:0.78rem;color:#fbbf24;">⚠️ Jawaban asli siswa pada sesi ini tidak tersimpan. Pilihan jawaban di bawah adalah PERKIRAAN dari nilai dan jumlah soal salah, bukan jawaban sebenarnya.</div>`;
+    }
     const detailedList = reconstructStudentAnswers(currentExaminedRecord);
 
     const wrongList = detailedList.filter(d => !d.isCorrect);

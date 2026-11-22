@@ -148,7 +148,7 @@ async function saveRecordToFirebase(record, proofCode) {
         ? normalizeModuleId(record.moduleId || record.module_id, record.id, record.date)
         : (record.moduleId || 'modul_detektif_fakta');
 
-    const key = ('rec_' + (record.name || 'siswa') + '_' + (record.class || 'cls') + '_' + modId + '_' + (record.score || 0)).replace(/[^A-Za-z0-9_-]/g, '_');
+    const key = ('rec_' + (record.name || 'siswa') + '_' + (record.class || 'cls') + '_' + modId + '_' + (record.score || 0) + (record.isRemedial ? '_rem' : '')).replace(/[^A-Za-z0-9_-]/g, '_');
 
     const payload = {
         student_name: record.name,
@@ -158,6 +158,7 @@ async function saveRecordToFirebase(record, proofCode) {
         total_questions: Number(record.total) || 20,
         wrong_questions: {
             list: Array.isArray(record.wrongQuestions) ? record.wrongQuestions : [],
+            ans: Array.isArray(record.studentAnswers) ? record.studentAnswers : [],
             moduleId: modId,
             moduleTitle: record.moduleTitle || (modId === 'modul_jaringan_keamanan' ? 'Penilaian Harian: Infrastruktur Jaringan & Keamanan Digital' : 'Misi Detektif Fakta'),
             proofId: proofCode || record.submissionProofId || '',
@@ -257,8 +258,10 @@ async function fetchFirebaseRecords() {
                     let extractedModId = null;
                     let extractedModTitle = null;
                     let extractedWrong = [];
+                    let extractedAns = [];
 
                     if (r.wrong_questions && typeof r.wrong_questions === 'object' && !Array.isArray(r.wrong_questions)) {
+                        extractedAns = Array.isArray(r.wrong_questions.ans) ? r.wrong_questions.ans : [];
                         extractedModId = r.wrong_questions.moduleId;
                         extractedModTitle = r.wrong_questions.moduleTitle;
                         extractedWrong = Array.isArray(r.wrong_questions.list) ? r.wrong_questions.list : [];
@@ -278,6 +281,7 @@ async function fetchFirebaseRecords() {
                         correct: Number(r.correct_count) || 0,
                         total: Number(r.total_questions) || 20,
                         wrongQuestions: extractedWrong,
+                        studentAnswers: extractedAns,
                         duration: r.duration || '0m',
                         time: r.time_str || '00:00',
                         date: r.quiz_date || '',
@@ -315,6 +319,7 @@ async function fetchFirebaseRecords() {
                     correct: Number(r.correct_count) || 0,
                     total: Number(r.total_questions) || 20,
                     wrongQuestions: r.wrong_questions?.list || [],
+                    studentAnswers: Array.isArray(r.wrong_questions?.ans) ? r.wrong_questions.ans : [],
                     duration: r.duration || '0m',
                     time: r.time_str || '00:00',
                     date: r.quiz_date || '',
@@ -351,7 +356,7 @@ async function uploadAllRecordsToFirebase(recordsToUpload = null) {
             ? normalizeModuleId(r.moduleId || r.module_id, r.id, r.date)
             : (r.moduleId || 'modul_detektif_fakta');
 
-        const key = ('rec_' + (r.name || 'siswa') + '_' + (r.class || 'cls') + '_' + modId + '_' + (r.score || 0)).replace(/[^A-Za-z0-9_-]/g, '_');
+        const key = ('rec_' + (r.name || 'siswa') + '_' + (r.class || 'cls') + '_' + modId + '_' + (r.score || 0) + (r.isRemedial ? '_rem' : '')).replace(/[^A-Za-z0-9_-]/g, '_');
         const proofCode = r.submissionProofId || `SMAN4-${(r.class || 'XE').replace(/[^A-Za-z0-9]/g, '').toUpperCase()}-${r.score}-${Date.now().toString(36).toUpperCase()}`;
 
         payload[key] = {
@@ -362,6 +367,7 @@ async function uploadAllRecordsToFirebase(recordsToUpload = null) {
             total_questions: Number(r.total) || 20,
             wrong_questions: {
                 list: Array.isArray(r.wrongQuestions) ? r.wrongQuestions : [],
+                ans: Array.isArray(r.studentAnswers) ? r.studentAnswers : [],
                 moduleId: modId,
                 moduleTitle: r.moduleTitle || (modId === 'modul_jaringan_keamanan' ? 'Penilaian Harian: Infrastruktur Jaringan & Keamanan Digital' : 'Misi Detektif Fakta'),
                 proofId: proofCode

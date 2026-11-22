@@ -57,6 +57,37 @@ function isPoisonedRemedialRecord(r) {
 }
 window.isPoisonedRemedialRecord = isPoisonedRemedialRecord;
 
+// 🧾 Snapshot satu sesi pengerjaan (pertama / remedial) agar jawaban kedua sesi TIDAK tercampur saat digabung
+function snapshotAttempt(x, asRemedial) {
+    if (!x) return null;
+    const hasReal = Array.isArray(x.detailedAnswers) && x.detailedAnswers.some(a => a);
+    const hasAns = Array.isArray(x.studentAnswers) && x.studentAnswers.length > 0;
+    return {
+        score: asRemedial ? Number((x.remedialScore !== undefined && x.remedialScore !== null) ? x.remedialScore : x.score) : Number(x.score),
+        correct: x.correct, total: x.total, partialCount: x.partialCount,
+        wrongQuestions: Array.isArray(x.wrongQuestions) ? x.wrongQuestions : [],
+        detailedAnswers: hasReal ? x.detailedAnswers : null,
+        studentAnswers: hasAns ? x.studentAnswers : null,
+        hasRealAnswers: hasReal || hasAns,
+        date: x.date, time: x.time, duration: x.duration,
+        timestamp: x.timestamp, tabSwitchCount: x.tabSwitchCount || 0
+    };
+}
+function pickAttempts(a, b) {
+    const list = [a, b].filter(Boolean);
+    const firsts = [], rems = [];
+    list.forEach(x => {
+        if (x.firstAttempt) firsts.push(x.firstAttempt);
+        else if (!x.isRemedial && !x.adjustedByTeacher) firsts.push(snapshotAttempt(x, false));
+        if (x.remedialAttempt) rems.push(x.remedialAttempt);
+        else if ((x.isRemedial || x.adjustedByTeacher) && !x.firstAttempt) rems.push(snapshotAttempt(x, true));
+    });
+    const byTs = (p, q) => (Number(p.timestamp) || 0) - (Number(q.timestamp) || 0);
+    firsts.sort(byTs); rems.sort(byTs);
+    return { firstAttempt: firsts[0] || null, remedialAttempt: rems.length ? rems[rems.length - 1] : null };
+}
+window.snapshotAttempt = snapshotAttempt;
+
 function mergeRecordsList(existingList, incomingList) {
     const map = new Map();
     const makeKey = (r) => {
@@ -121,7 +152,9 @@ function mergeRecordsList(existingList, incomingList) {
                 remedialScore: (isRem || adj) ? (bestRemScore || finalScore) : null,
                 correct: higher.correct !== undefined ? higher.correct : (item.correct !== undefined ? item.correct : cur.correct),
                 wrongQuestions: higher.wrongQuestions || item.wrongQuestions || cur.wrongQuestions,
-                detailedAnswers: higher.detailedAnswers || item.detailedAnswers || cur.detailedAnswers
+                detailedAnswers: higher.detailedAnswers || item.detailedAnswers || cur.detailedAnswers,
+                studentAnswers: higher.studentAnswers || item.studentAnswers || cur.studentAnswers,
+                ...pickAttempts(cur, item)
             });
         }
     });
@@ -453,6 +486,7 @@ async function saveRecord(record) {
         total_questions: record.total || (window.quizData ? window.quizData.length : 20),
         wrong_questions: {
             list: Array.isArray(record.wrongQuestions) ? record.wrongQuestions : [],
+            ans: Array.isArray(record.studentAnswers) ? record.studentAnswers : [],
             moduleId: modId,
             moduleTitle: record.moduleTitle,
             proofId: proofCode,
@@ -959,6 +993,7 @@ async function syncWithBackend(showFeedback = false) {
                 extractedModId = r.wrong_questions.moduleId;
                 extractedModTitle = r.wrong_questions.moduleTitle;
                 extractedWrong = Array.isArray(r.wrong_questions.list) ? r.wrong_questions.list : [];
+                if (Array.isArray(r.wrong_questions.ans)) remFlags = { ...remFlags, studentAnswers: r.wrong_questions.ans };
             } else if (Array.isArray(r.wrong_questions)) {
                 extractedWrong = r.wrong_questions;
             }
