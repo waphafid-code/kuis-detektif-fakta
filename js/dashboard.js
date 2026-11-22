@@ -2173,30 +2173,28 @@ function reconstructStudentAnswers(record) {
         let selectedIndices = [];
         let selectedText = [];
 
+        const hasStoredAns = studentAnsList[idx] !== undefined && studentAnsList[idx] !== null;
         if (isRight) {
-            selectedIndices = [...correctOriginals];
-            selectedText = [...correctText];
-        } else {
-            // Cek apakah ada record jawaban spesifik yang tersimpan
-            if (studentAnsList[idx] !== undefined && studentAnsList[idx] !== null) {
+            if (hasStoredAns) {
                 const storedAns = studentAnsList[idx];
                 selectedIndices = Array.isArray(storedAns) ? storedAns : [storedAns];
                 selectedText = selectedIndices.map(i => (q.options && q.options[i]) || `Opsi ${i}`);
             } else {
-                // Tentukan opsi pengecoh spesifik secara deterministik untuk siswa ini
-                const opts = q.options || [];
-                const numOpts = Math.max(opts.length, 4);
-                let chosenDistractor = 0;
-                const nameHash = (record.name || 'siswa').split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
-                for (let offset = 1; offset < numOpts; offset++) {
-                    const candidate = (correctOriginals[0] + offset + nameHash + idx) % numOpts;
-                    if (!correctOriginals.includes(candidate)) {
-                        chosenDistractor = candidate;
-                        break;
-                    }
-                }
-                selectedIndices = [chosenDistractor];
-                selectedText = [opts[chosenDistractor] || `Opsi ${String.fromCharCode(65 + chosenDistractor)}`];
+                selectedIndices = [...correctOriginals];
+                selectedText = [...correctText];
+            }
+        } else {
+            // Cek apakah ada record jawaban spesifik yang tersimpan
+            if (hasStoredAns) {
+                const storedAns = studentAnsList[idx];
+                selectedIndices = Array.isArray(storedAns) ? storedAns : [storedAns];
+                selectedText = selectedIndices.map(i => (q.options && q.options[i]) || `Opsi ${i}`);
+            } else {
+                // 🛡️ KEJUJURAN REKAP: Jangan mengarang opsi pengecoh palsu (nameHash) sebagai fakta!
+                // Tetap tandai soal ini SALAH (isCorrect: false), tetapi kosongkan selectedIndices
+                // dan beri keterangan jujur bahwa rincian opsi yang diklik tidak tersimpan di basis data.
+                selectedIndices = [];
+                selectedText = ['(Pilihan opsi tidak tersimpan di basis data — tercatat salah)'];
             }
         }
 
@@ -2213,6 +2211,7 @@ function reconstructStudentAnswers(record) {
             correctIndices: correctOriginals,
             correctText: correctText,
             isCorrect: isRight,
+            hasRealAnswer: hasStoredAns,
             explanation: q.explanation
         };
     });
@@ -2632,7 +2631,9 @@ function renderStudentDetailQuestions() {
                 <!-- Student's Choice -->
                 <div style="background: ${item.isCorrect ? 'rgba(16,185,129,0.08)' : 'rgba(244,63,94,0.08)'}; border: 1px solid ${item.isCorrect ? 'rgba(16,185,129,0.3)' : 'rgba(244,63,94,0.3)'}; border-radius: 10px; padding: 10px 12px;">
                     <div style="font-size: 0.75rem; font-weight: 800; color: ${item.isCorrect ? 'var(--success)' : '#fb7185'}; text-transform: uppercase; margin-bottom: 4px;">
-                        ${item.isCorrect ? '✔️ Jawaban Yang Dipilih Siswa (Benar):' : '❌ Jawaban Yang Dipilih Siswa (Salah):'}
+                        ${item.isCorrect 
+                            ? (item.hasRealAnswer === false ? '✔️ Jawaban Siswa Tercatat Sesuai Kunci (Benar):' : '✔️ Jawaban Yang Dipilih Siswa (Benar):') 
+                            : (item.hasRealAnswer === false ? '❌ Catatan Jawaban Siswa (Pilihan Opsi Tidak Tersimpan):' : '❌ Jawaban Yang Dipilih Siswa (Salah):')}
                     </div>
                     <div style="font-size: 0.88rem; font-weight: 700; color: ${item.isCorrect ? '#34d399' : '#fda4af'}; line-height: 1.4;">
                         ${studentAnsStr}

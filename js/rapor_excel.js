@@ -115,6 +115,7 @@
             attemptScore: res && typeof res.attemptScore === 'number' ? res.attemptScore : score,
             isRemedial: !!(res && res.isRemedial),
             originalScore: (rec && rec.originalScore != null) ? rec.originalScore : null,
+            remedialScore: (rec && rec.remedialScore != null) ? rec.remedialScore : ((res && res.isRemedial && typeof res.attemptScore === 'number') ? res.attemptScore : null),
             isPassed: score >= kkm,
             pointsEarned: pointsEarned,
             totalPoints: totalPoints,

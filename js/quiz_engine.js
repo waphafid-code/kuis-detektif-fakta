@@ -2066,6 +2066,10 @@ function checkAnswer(isAutoTimeout = false) {
                     summary: isCorrect ? 'Benar Penuh' : 'Salah'
                 };
             }
+
+            if (pointRes && pointRes.isFullCorrect) {
+                isCorrect = true;
+            }
         }
 
         earnedPointsTotal += pointRes.pointsEarned;
