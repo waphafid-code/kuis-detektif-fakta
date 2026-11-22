@@ -307,6 +307,13 @@ function isQuizActive() {
 }
 window.isQuizActive = isQuizActive;
 
+function isCurrentStudentDemo() {
+    const cls = String(studentClass || (typeof remedialSourceRecord !== 'undefined' && remedialSourceRecord ? remedialSourceRecord.class : '')).toUpperCase();
+    const name = String(studentName || (typeof remedialSourceRecord !== 'undefined' && remedialSourceRecord ? remedialSourceRecord.name : '')).toUpperCase();
+    return cls.includes('DEMO') || name.includes('DEMO') || name.includes('GURU PENGUJI');
+}
+window.isCurrentStudentDemo = isCurrentStudentDemo;
+
 // 🖥️ FULLSCREEN LOCKDOWN UTILITIES & CONTROLLERS
 let fullscreenWarningTimer = null;
 let fullscreenWarningCountdownVal = 15;
@@ -409,6 +416,7 @@ function clearFullscreenWarningCountdown() {
 window.clearFullscreenWarningCountdown = clearFullscreenWarningCountdown;
 
 function handleFullscreenChange() {
+    if (typeof isCurrentStudentDemo === 'function' && isCurrentStudentDemo()) return;
     if (!isQuizActive() || isQuizFinishing) return;
     if (isMobileOrTouchDevice()) return; // 📱 Lewati di HP / Tablet
 
@@ -434,6 +442,7 @@ document.addEventListener('MSFullscreenChange', handleFullscreenChange);
 
 // 🛡️ Sistem Toleransi Anti-Cheat (3-Strike Warning System)
 function handleAntiCheatEvent(reason = 'Kecurangan / Aktivitas Terlarang', isCritical = false) {
+    if (typeof isCurrentStudentDemo === 'function' && isCurrentStudentDemo()) return; // 🧪 Akun Demo bebas tanpa anti-cheat
     if (isCheatingTriggered || isCheatWarningActive || isQuizFinishing) return;
     if (!isQuizActive()) return;
 
@@ -763,6 +772,7 @@ document.addEventListener('click', (e) => {
 
 // 🛡️ 2 TAHAP VERIFIKASI SAAT REFRESH / MENINGGALKAN HALAMAN
 window.addEventListener('beforeunload', (e) => {
+    if (typeof isCurrentStudentDemo === 'function' && isCurrentStudentDemo()) return; // 🧪 Akun demo bebas keluar kapan saja
     if (screens.quiz && screens.quiz.classList.contains('active') && !isCheatingTriggered) {
         saveCurrentQuizSession();
         const confirmationMessage = 'PERINGATAN: Kuis sedang berlangsung! Jawaban Anda akan disimpan di sesi ini, namun pastikan tidak meninggalkan kuis tanpa izin guru.';
@@ -1012,8 +1022,8 @@ async function initiateQuiz() {
             if (!m) return false;
             return Date.UTC(+m[3], +m[2] - 1, +m[1]) < Date.UTC(2026, 10, 21);
         };
-        const alreadyRemedialed = lastRecordsForRem.some(r => r.isRemedial && !isPreFixRemedial(r));
-        const remedialEligible = isRemedialAllowed && policy !== 'allow_multiple'
+        const alreadyRemedialed = !isCurrentStudentDemo() && lastRecordsForRem.some(r => r.isRemedial && !isPreFixRemedial(r));
+        const remedialEligible = isRemedialAllowed && (policy !== 'allow_multiple' || isCurrentStudentDemo())
             && lastRecordsForRem.length > 0 && bestScore < REMEDIAL_KKM && !alreadyRemedialed;
         const remedialConfirmed = window.__remedialConfirmed === true;
         window.__remedialConfirmed = false;
@@ -1060,10 +1070,14 @@ async function initiateQuiz() {
             // Abaikan attempt yang hanya berupa diskualifikasi sistem tanpa nilai / skor 0 akibat kendala teknis lama
             const validAttempts = previousAttempts.filter(r => !r.isCheated || Number(r.score) > 0);
             if (validAttempts.length > 0) {
-                canProceed = false;
-                blockMessage = alreadyRemedialed
-                    ? `Siswa ${name} sudah menggunakan kesempatan remedial untuk modul ini (Nilai akhir: ${bestScore}/100). Remedial hanya dapat dilakukan 1 kali.`
-                    : `Siswa ${name} sudah pernah mengirimkan jawaban kuis untuk modul ini (Nilai: ${bestScore}/100). Sesuai pengaturan guru, kuis hanya dapat dikerjakan 1 kali.`;
+                if (typeof isCurrentStudentDemo === 'function' && isCurrentStudentDemo()) {
+                    canProceed = true; // 🧪 Akun demo bebas mengulang pengujian
+                } else {
+                    canProceed = false;
+                    blockMessage = alreadyRemedialed
+                        ? `Siswa ${name} sudah menggunakan kesempatan remedial untuk modul ini (Nilai akhir: ${bestScore}/100). Remedial hanya dapat dilakukan 1 kali.`
+                        : `Siswa ${name} sudah pernah mengirimkan jawaban kuis untuk modul ini (Nilai: ${bestScore}/100). Sesuai pengaturan guru, kuis hanya dapat dikerjakan 1 kali.`;
+                }
             }
         }
 
@@ -1147,10 +1161,11 @@ async function initiateQuiz() {
         detailedAnswers = new Array(quizData.length).fill(null);
         TIMER_MAX = loadTimerSetting();
 
-        // 🖥️ Kunci Layar Penuh Otomatis jika Mode Wajib Aktif
-        const isWajib = (typeof isEnforcedFullscreen === 'function') 
+        // 🖥️ Kunci Layar Penuh Otomatis jika Mode Wajib Aktif (Kecuali Akun Demo)
+        const isDemo = (typeof isCurrentStudentDemo === 'function') && isCurrentStudentDemo();
+        const isWajib = !isDemo && ((typeof isEnforcedFullscreen === 'function') 
             ? isEnforcedFullscreen() 
-            : (localStorage.getItem('quizmaster_fullscreen_mode') !== 'opsional');
+            : (localStorage.getItem('quizmaster_fullscreen_mode') !== 'opsional'));
         if (isWajib) {
             enterExamFullscreen();
         }
@@ -1217,6 +1232,10 @@ function startQuizActual() {
     if (dispClass) dispClass.textContent = studentClass;
     quizStartTime = Date.now();
     switchScreen('quiz');
+    const demoBanner = document.getElementById('quiz-demo-banner');
+    if (demoBanner) {
+        demoBanner.style.display = (typeof isCurrentStudentDemo === 'function' && isCurrentStudentDemo()) ? 'flex' : 'none';
+    }
     loadQuestion(0);
     saveCurrentQuizSession();
     setTimeout(startBGM, 200);
@@ -2613,7 +2632,7 @@ async function finishQuiz() {
         if (!m) return false;
         return Date.UTC(+m[3], +m[2] - 1, +m[1]) < Date.UTC(2026, 10, 21);
     };
-    const hasAlreadyRemedialed = prevStudentAttempts.some(r => r.isRemedial && !isPreFixRem(r));
+    const hasAlreadyRemedialed = !isCurrentStudentDemo() && prevStudentAttempts.some(r => r.isRemedial && !isPreFixRem(r));
     const canOfferRemedial = !isPassed && !isRemedialSession && isRemedialConfigEnabled && !hasAlreadyRemedialed && submissionPolicy !== 'allow_multiple';
 
     if (canOfferRemedial) {
@@ -2657,6 +2676,14 @@ async function finishQuiz() {
     if (resCorrectEl) resCorrectEl.textContent = `${numCorrect} Soal`;
     if (resWrongEl) resWrongEl.textContent = `${quizData.length - numCorrect} Soal`;
     if (resStreakEl) resStreakEl.textContent = maxStreak;
+    const demoBanner = document.getElementById('quiz-demo-banner');
+    if (demoBanner) demoBanner.style.display = 'none';
+
+    const btnDemoReset = document.getElementById('btn-demo-reset');
+    if (btnDemoReset) {
+        btnDemoReset.style.display = (typeof isCurrentStudentDemo === 'function' && isCurrentStudentDemo()) ? 'inline-flex' : 'none';
+    }
+
     try {
         buildReview();
     } catch(errReview) {
@@ -2887,6 +2914,94 @@ window.closeRemedialOffer = closeRemedialOffer;
 window.confirmRemedialStart = confirmRemedialStart;
 window.triggerRemedialFromCard = triggerRemedialFromCard;
 
+// 🧪 KONTROL PENGUJIAN AKUN DEMO: KELUAR KAPAN SAJA & SIMULASI CEPAT REMEDIAL
+function exitDemoQuiz(action = 'home') {
+    if (typeof sfxClick === 'function') sfxClick();
+
+    if (action === 'finish_fail') {
+        const proceed = confirm('Simulasikan kuis selesai dengan nilai 70/100 (< 80 KKM) untuk langsung menguji alur penawaran remedial?');
+        if (proceed) {
+            simulateDemoRemedialResult(70);
+        }
+        return;
+    }
+
+    const proceed = confirm('Keluar dari kuis pengujian demo dan kembali ke beranda?');
+    if (proceed) {
+        stopTimer();
+        stopBGM();
+        clearFullscreenWarningCountdown();
+        exitExamFullscreen();
+        isQuizFinishing = false;
+        isCheatingTriggered = false;
+        isCheatWarningActive = false;
+        sessionStorage.removeItem(SESSION_QUIZ_ACTIVE_KEY);
+        try { localStorage.removeItem('quizmaster_active_exam_session_backup'); } catch(e) {}
+        const demoBanner = document.getElementById('quiz-demo-banner');
+        if (demoBanner) demoBanner.style.display = 'none';
+        if (typeof switchScreen === 'function') switchScreen('home');
+        if (typeof showToast === 'function') showToast('Sesi kuis demo dihentikan. Anda kembali ke beranda.', 'ℹ️');
+    }
+}
+window.exitDemoQuiz = exitDemoQuiz;
+
+function simulateDemoRemedialResult(targetScore = 70) {
+    stopTimer();
+    stopBGM();
+    clearFullscreenWarningCountdown();
+    exitExamFullscreen();
+
+    const qCount = (quizData && quizData.length > 0) ? quizData.length : 20;
+    const pointsPerQ = 5;
+    const targetCorrect = Math.max(0, Math.min(qCount, Math.round(targetScore / pointsPerQ)));
+
+    answeredCorrectly = new Array(qCount).fill(false);
+    detailedAnswers = [];
+    earnedPointsTotal = targetCorrect * pointsPerQ;
+    score = targetCorrect * pointsPerQ;
+
+    for (let i = 0; i < qCount; i++) {
+        const isCorr = i < targetCorrect;
+        answeredCorrectly[i] = isCorr;
+        detailedAnswers.push({
+            index: i,
+            questionIndex: i,
+            isCorrect: isCorr,
+            pointsEarned: isCorr ? pointsPerQ : 0,
+            maxPoints: pointsPerQ,
+            selected: isCorr ? 0 : 1,
+            correctAnswers: [0],
+            timeSpent: 2
+        });
+    }
+    currentQ = qCount - 1;
+    finishQuiz();
+}
+window.simulateDemoRemedialResult = simulateDemoRemedialResult;
+
+function resetDemoStudentRecords() {
+    if (typeof sfxClick === 'function') sfxClick();
+    if (!isCurrentStudentDemo()) return;
+    const name = studentName || 'Akun Demo';
+    const proceed = confirm(`Hapus seluruh riwayat pengerjaan demo untuk ${name} agar bisa diuji ulang dari awal?`);
+    if (proceed) {
+        try {
+            if (typeof loadRecords === 'function') {
+                const rem = loadRecords().filter(r => !isNameEquivalent(r.name, name));
+                localStorage.setItem('quizmaster_official_records', JSON.stringify(rem));
+                localStorage.setItem('kuis_detektif_fakta_records', JSON.stringify(rem));
+            }
+            if (typeof showToast === 'function') {
+                showToast(`Riwayat demo ${name} berhasil direset!`, '🎉');
+            }
+            if (typeof goHome === 'function') goHome();
+        } catch(e) {
+            console.error('Reset demo record error:', e);
+        }
+    }
+}
+window.resetDemoStudentRecords = resetDemoStudentRecords;
+
 function openRemedialBriefing() {
     if (typeof sfxClick === 'function') sfxClick();
     const modal = document.getElementById('remedial-briefing-modal');
@@ -3042,6 +3157,7 @@ window.addEventListener('pagehide', () => {
     }
 });
 window.addEventListener('beforeunload', (e) => {
+    if (typeof isCurrentStudentDemo === 'function' && isCurrentStudentDemo()) return; // 🧪 Akun demo bebas keluar kapan saja
     if (screens.quiz && screens.quiz.classList.contains('active') && !isQuizFinishing && !isCheatingTriggered) {
         saveCurrentQuizSession();
         e.preventDefault();

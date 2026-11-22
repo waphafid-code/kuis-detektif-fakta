@@ -1283,6 +1283,10 @@ const DEMO_VISIBILITY_STORAGE_KEY = 'quizmaster_demo_accounts_visibility';
 
 function loadDemoVisibilitySetting() {
     try {
+        if (typeof window !== 'undefined' && window.location) {
+            if (window.location.search && window.location.search.includes('demo=1')) return 'show';
+            if (window.location.hash && window.location.hash.toLowerCase().includes('demo')) return 'show';
+        }
         const v = localStorage.getItem(DEMO_VISIBILITY_STORAGE_KEY);
         if (v === 'show') return 'show';
     } catch(e) {}
@@ -1350,6 +1354,19 @@ function saveDemoVisibilitySetting(val, broadcast = true) {
     }
 }
 window.saveDemoVisibilitySetting = saveDemoVisibilitySetting;
+
+function toggleDemoModeFromHome() {
+    if (typeof sfxClick === 'function') sfxClick();
+    const current = (typeof loadDemoVisibilitySetting === 'function') ? loadDemoVisibilitySetting() : 'hide';
+    const nextVal = (current === 'show') ? 'hide' : 'show';
+    saveDemoVisibilitySetting(nextVal);
+    const classSelect = document.getElementById('input-class');
+    if (classSelect && nextVal === 'show') {
+        classSelect.value = 'KELAS DEMO';
+        if (typeof onHomeClassChanged === 'function') onHomeClassChanged();
+    }
+}
+window.toggleDemoModeFromHome = toggleDemoModeFromHome;
 
 function initDemoVisibilitySettingUi() {
     const sel = document.getElementById('setting-demo-visibility');
