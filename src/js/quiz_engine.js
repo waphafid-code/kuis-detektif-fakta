@@ -32,7 +32,8 @@ function backupMasterBuiltinQuestions() {
             { list: window.DEFAULT_BUILTIN_QUESTIONS, mod: (QM.DEFAULT_MODULE && QM.DEFAULT_MODULE.id) || 'modul_detektif_fakta' },
             { list: window.NETWORK_SECURITY_BUILTIN_QUESTIONS, mod: (QM.NETWORK_SECURITY_MODULE && QM.NETWORK_SECURITY_MODULE.id) || 'modul_jaringan_keamanan' },
             { list: window.HKI_CULTURE_BUILTIN_QUESTIONS, mod: (QM.HKI_CULTURE_MODULE && QM.HKI_CULTURE_MODULE.id) || 'modul_hki_profesi_budaya' },
-            { list: window.ETIKA_PRIVASI_BUILTIN_QUESTIONS, mod: (QM.ETIKA_PRIVASI_MODULE && QM.ETIKA_PRIVASI_MODULE.id) || 'modul_etika_privasi_keamanan' }
+            { list: window.ETIKA_PRIVASI_BUILTIN_QUESTIONS, mod: (QM.ETIKA_PRIVASI_MODULE && QM.ETIKA_PRIVASI_MODULE.id) || 'modul_etika_privasi_keamanan' },
+            { list: window.TRYOUT_TERPADU_BUILTIN_QUESTIONS, mod: (QM.TRYOUT_TERPADU_MODULE && QM.TRYOUT_TERPADU_MODULE.id) || 'modul_tryout_terpadu' }
         ];
 
         moduleSources.forEach(src => {
@@ -2364,6 +2365,62 @@ async function finishQuiz() {
     const isPassed = displayScore >= KKM;
     const activeModTitle = (currentActiveModule && currentActiveModule.title) || (window.QuizManager && QuizManager.getActiveModule() ? QuizManager.getActiveModule().title : (activeModId === 'modul_jaringan_keamanan' ? 'Penilaian Harian: Infrastruktur Jaringan & Keamanan Digital' : 'Misi Detektif Fakta'));
 
+    // 📊 Hitung Nilai Rinci Per Materi (Khusus Modul Tryout Terpadu 6 Materi)
+    let topicBreakdown = null;
+    if (activeModId === 'modul_tryout_terpadu' || (quizData && quizData.some(q => q && q.topicCode))) {
+        const topicsMeta = {
+            M1: { code: 'M1', title: 'Literasi Digital & Ekosistem Periksa Fakta', icon: '🕵️' },
+            M2: { code: 'M2', title: 'Web Browser, Search Engine, & Manajemen Konten', icon: '🌐' },
+            M3: { code: 'M3', title: 'Digitalisasi Budaya, Profesi Informatika, & HKI', icon: '🏛️' },
+            M4: { code: 'M4', title: 'Etika, Privasi, dan Keamanan Digital', icon: '🛡️' },
+            M5: { code: 'M5', title: 'Infrastruktur Jaringan Komputer & Keamanan Siber', icon: '⚡' },
+            M6: { code: 'M6', title: 'Aplikasi Perkantoran (MS Word, Mail Merge, & MS Excel)', icon: '📊' }
+        };
+        topicBreakdown = {};
+        Object.keys(topicsMeta).forEach(code => {
+            topicBreakdown[code] = {
+                code: code,
+                title: topicsMeta[code].title,
+                icon: topicsMeta[code].icon,
+                total: 0,
+                correct: 0,
+                earnedPoints: 0,
+                maxPoints: 0,
+                score: 0
+            };
+        });
+
+        detailedAnswers.forEach((ans, idx) => {
+            const q = (quizData && quizData[idx]) || {};
+            const tCode = q.topicCode || `M${Math.floor(idx / 10) + 1}`;
+            if (!topicBreakdown[tCode]) {
+                topicBreakdown[tCode] = {
+                    code: tCode,
+                    title: q.topicName || tCode,
+                    icon: '📝',
+                    total: 0,
+                    correct: 0,
+                    earnedPoints: 0,
+                    maxPoints: 0,
+                    score: 0
+                };
+            }
+            topicBreakdown[tCode].total += 1;
+            const pts = (ans && Number(ans.pointsEarned)) || 0;
+            const maxPts = (ans && Number(ans.maxPoints)) || (q && Number(q.points)) || 5;
+            topicBreakdown[tCode].earnedPoints += pts;
+            topicBreakdown[tCode].maxPoints += maxPts;
+            if (ans && ans.isCorrect) {
+                topicBreakdown[tCode].correct += 1;
+            }
+        });
+
+        Object.keys(topicBreakdown).forEach(code => {
+            const item = topicBreakdown[code];
+            item.score = item.maxPoints > 0 ? Math.round((item.earnedPoints / item.maxPoints) * 100) : (item.total > 0 ? Math.round((item.correct / item.total) * 100) : 0);
+        });
+    }
+
     const record = {
         moduleId: activeModId,
         moduleTitle: activeModTitle,
@@ -2379,6 +2436,7 @@ async function finishQuiz() {
         fullCorrect: detailedAnswers.filter(d => d && d.isCorrect && !d.isPartial && Number(d.pointsEarned) >= Number(d.maxPoints)).length,
         partialCount: detailedAnswers.filter(d => d && d.isPartial).length,
         total: quizData.length,
+        topicBreakdown: topicBreakdown,
         wrongQuestions: quizData.map((_, i) => answeredCorrectly[i] === false ? i : -1).filter(i => i >= 0),
         detailedAnswers: detailedAnswers,
         // Pilihan siswa per soal (indeks opsi asli) agar guru melihat jawaban SEBENARNYA (bukan perkiraan) dari cloud
@@ -2406,6 +2464,7 @@ async function finishQuiz() {
         record: record,
         displayScore: displayScore,
         attemptScore: finalScore,
+        topicBreakdown: topicBreakdown,
         kkm: KKM,
         isPassed: isPassed,
         isRemedial: !!isRemedialSession,

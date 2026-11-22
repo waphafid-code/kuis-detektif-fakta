@@ -1067,6 +1067,22 @@ const QuizManager = {
     CUSTOM_QUIZ_DATA_PREFIX: 'detektif_fakta_quiz_data_',
 
     // Modul Penilaian Harian Baru (Infrastruktur Jaringan & Keamanan Digital)
+    // Modul Tryout Terpadu Informatika Kelas X (60 Soal • 6 Materi Inti)
+    TRYOUT_TERPADU_MODULE: {
+        id: 'modul_tryout_terpadu',
+        title: 'Tryout Terpadu Informatika Kelas X (60 Soal • 6 Materi Inti)',
+        category: 'Tryout & Evaluasi Terpadu',
+        icon: '🎯',
+        badge: 'Tryout Terpadu HOTS',
+        description: 'Simulasi ujian komprehensif 60 butir soal HOTS mencakup 6 materi inti: Literasi Digital, Web & Search, Digitalisasi Budaya & HKI, Etika & Privasi, Jaringan & Keamanan Siber, serta Aplikasi Perkantoran (Word, Mail Merge, & Excel).',
+        questionCount: 60,
+        kkm: 80,
+        difficulty: 'HOTS Komprehensif (60 Butir PG Soal Terpadu)',
+        dataFile: 'bank_soal/modul_tryout_terpadu.json',
+        isDefault: true,
+        createdAt: '2026-11-22T08:00:00Z'
+    },
+
     NETWORK_SECURITY_MODULE: {
         id: 'modul_jaringan_keamanan',
         title: 'Penilaian Harian: Infrastruktur Jaringan & Keamanan Digital',
@@ -1148,7 +1164,7 @@ const QuizManager = {
         // Index 1: Modul 2 (Misi Detektif Fakta)
         // Index 2+: Modul tambahan buatan guru
         const customModules = (Array.isArray(list) ? list : []).filter(
-            m => m && m.id !== this.DEFAULT_MODULE.id && m.id !== this.NETWORK_SECURITY_MODULE.id && m.id !== this.HKI_CULTURE_MODULE.id && m.id !== this.ETIKA_PRIVASI_MODULE.id
+            m => m && m.id !== this.DEFAULT_MODULE.id && m.id !== this.NETWORK_SECURITY_MODULE.id && m.id !== this.HKI_CULTURE_MODULE.id && m.id !== this.ETIKA_PRIVASI_MODULE.id && m.id !== this.TRYOUT_TERPADU_MODULE.id
         );
 
         const orderedList = [
@@ -1156,6 +1172,7 @@ const QuizManager = {
             this.DEFAULT_MODULE,
             this.HKI_CULTURE_MODULE,
             this.ETIKA_PRIVASI_MODULE,
+            this.TRYOUT_TERPADU_MODULE,
             ...customModules
         ];
 
@@ -1187,7 +1204,8 @@ const QuizManager = {
             this.NETWORK_SECURITY_MODULE,
             this.DEFAULT_MODULE,
             this.HKI_CULTURE_MODULE,
-            this.ETIKA_PRIVASI_MODULE
+            this.ETIKA_PRIVASI_MODULE,
+            this.TRYOUT_TERPADU_MODULE
         ];
         let customModules = [];
         try {
@@ -1228,7 +1246,27 @@ const QuizManager = {
             }
         }
 
-                        if (targetId === this.ETIKA_PRIVASI_MODULE.id) {
+                        if (targetId === this.TRYOUT_TERPADU_MODULE.id) {
+            try {
+                const res = await fetch('bank_soal/modul_tryout_terpadu.json');
+                if (res.ok) {
+                    const data = await res.json();
+                    const qs = Array.isArray(data) ? data : (data && data.questions);
+                    if (Array.isArray(qs) && qs.length > 0) {
+                        window.quizData = qs;
+                        return qs;
+                    }
+                }
+            } catch (e) {
+                console.warn('Fetch modul_tryout_terpadu.json gagal, menggunakan fallback bawaan:', e);
+            }
+            if (Array.isArray(window.TRYOUT_TERPADU_BUILTIN_QUESTIONS)) {
+                window.quizData = window.TRYOUT_TERPADU_BUILTIN_QUESTIONS;
+                return window.TRYOUT_TERPADU_BUILTIN_QUESTIONS;
+            }
+        }
+
+        if (targetId === this.ETIKA_PRIVASI_MODULE.id) {
             try {
                 const res = await fetch('bank_soal/modul_etika_privasi_keamanan.json');
                 if (res.ok) {

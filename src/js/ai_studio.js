@@ -155,7 +155,8 @@ async function handleHomeModuleChange(isUserAction = false) {
 
     // ⚡ INSTANT RESOLVE: Cari modul secara sinkron terlebih dahulu tanpa await agar badge & deskripsi berubah 0ms tanpa glitch
     let current = null;
-    if (QuizManager.NETWORK_SECURITY_MODULE && moduleId === QuizManager.NETWORK_SECURITY_MODULE.id) current = QuizManager.NETWORK_SECURITY_MODULE;
+    if (QuizManager.TRYOUT_TERPADU_MODULE && moduleId === QuizManager.TRYOUT_TERPADU_MODULE.id) current = QuizManager.TRYOUT_TERPADU_MODULE;
+    else if (QuizManager.NETWORK_SECURITY_MODULE && moduleId === QuizManager.NETWORK_SECURITY_MODULE.id) current = QuizManager.NETWORK_SECURITY_MODULE;
     else if (QuizManager.HKI_CULTURE_MODULE && moduleId === QuizManager.HKI_CULTURE_MODULE.id) current = QuizManager.HKI_CULTURE_MODULE;
     else if (QuizManager.ETIKA_PRIVASI_MODULE && moduleId === QuizManager.ETIKA_PRIVASI_MODULE.id) current = QuizManager.ETIKA_PRIVASI_MODULE;
     else if (QuizManager.DEFAULT_MODULE && moduleId === QuizManager.DEFAULT_MODULE.id) current = QuizManager.DEFAULT_MODULE;
