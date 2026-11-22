@@ -1438,6 +1438,17 @@ function autoSubmitTimeout() {
 
     const expText = getExplanationFromVault(data, origQIdx);
 
+    const activeModId = (currentActiveModule && currentActiveModule.id) || (window.QuizManager ? QuizManager.getActiveModuleId() : 'modul_detektif_fakta');
+    const liveTCode = data.topicCode || (activeModId === 'modul_tryout_terpadu' ? 'M' + (Math.floor(origQIdx / 10) + 1) : null);
+    const liveTName = data.topicName || (window.TRYOUT_TOPICS_META && window.TRYOUT_TOPICS_META[liveTCode] && window.TRYOUT_TOPICS_META[liveTCode].title) || liveTCode;
+
+    if (liveTCode && window.liveTopicProgress && window.liveTopicProgress[liveTCode]) {
+        const prog = window.liveTopicProgress[liveTCode];
+        prog.total += 1;
+        prog.maxPoints += (data.points || 5);
+        prog.score = prog.maxPoints > 0 ? Math.round((prog.earnedPoints / prog.maxPoints) * 100) : 0;
+    }
+
     detailedAnswers[origQIdx] = {
         qIndex: origQIdx,
         questionNumber: currentQ + 1,
@@ -1457,6 +1468,8 @@ function autoSubmitTimeout() {
         maxPoints: data.points || 5,
         isPartial: false,
         pointSummary: 'Waktu Habis (0 Poin)',
+        topicCode: liveTCode,
+        topicName: liveTName,
         explanation: expText
     };
 

@@ -3530,6 +3530,29 @@ function renderDashboard() {
                     </div>
                 </div>
             `;
+        } else if (demoRecords.length > 0) {
+            // 🧪 Banner Cerdas: Beri tahu Guru bahwa ada rekaman pengujian Akun Demo yang tersedia!
+            demoBanner.style.display = 'block';
+            demoBanner.innerHTML = `
+                <div style="background: linear-gradient(135deg, rgba(16,185,129,0.12), rgba(6,182,212,0.1)); border: 1.5px solid rgba(16,185,129,0.35); border-radius: 12px; padding: 10px 16px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <span style="font-size: 1.4rem;">🧪</span>
+                        <div>
+                            <div style="font-weight: 800; font-size: 0.88rem; color: #34d399; display: flex; align-items: center; gap: 6px;">
+                                <span>Hasil Pengerjaan Akun Demo Guru Tersedia (${demoRecords.length} Data)</span>
+                                <span style="font-size: 0.7rem; padding: 1px 7px; border-radius: 8px; background: rgba(16,185,129,0.25); color: #6ee7b7; font-weight: 700;">Siap Ditinjau</span>
+                            </div>
+                            <div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 2px;">
+                                Termasuk rincian nilai Tryout 6 Materi (M1 s.d M6) &amp; Kuis. Klik tombol untuk langsung menengok rekap matriks nilai akun demo.
+                            </div>
+                        </div>
+                    </div>
+                    <button type="button" class="btn btn-accent" onclick="document.getElementById('filter-class').value = 'KELAS DEMO'; renderDashboard();" style="font-size: 0.8rem; padding: 8px 16px; font-weight: 800; border-radius: 8px; display: flex; align-items: center; gap: 6px; box-shadow: 0 0 12px rgba(99,102,241,0.35); cursor: pointer;">
+                        <span>👁️ Lihat Nilai Akun Demo</span>
+                        <span>➔</span>
+                    </button>
+                </div>
+            `;
         } else {
             demoBanner.style.display = 'none';
         }
@@ -3828,6 +3851,78 @@ function renderDashboard() {
 
     if (searchName) {
         displayList = displayList.filter(item => item.name.toLowerCase().includes(searchName));
+
+        // 🔍 PENCARIAN CERDAS AKUN DEMO: Jika filter class adalah 'all' atau kelas resmi lain,
+        // dan guru mencari "demo" atau nama siswa demo (mis. "hafidh", "andre", dll),
+        // sertakan siswa KELAS DEMO yang cocok ke dalam displayList agar guru langsung melihat nilainya!
+        if (!isDemoFilter && demoRecords.length > 0) {
+            const demoRoster = (typeof STUDENT_ROSTER !== 'undefined' && STUDENT_ROSTER['KELAS DEMO']) ? STUDENT_ROSTER['KELAS DEMO'] : [];
+            demoRoster.forEach(studentName => {
+                const sNameLower = studentName.toLowerCase();
+                if (sNameLower.includes(searchName) || searchName.includes('demo')) {
+                    const nameMatches = (typeof isNameEquivalent === 'function') 
+                        ? (recName) => isNameEquivalent(recName, studentName)
+                        : (recName) => (recName || '').trim().toLowerCase() === sNameLower;
+
+                    const attemptsTryout = demoRecords.filter(r => {
+                        const mod = (typeof normalizeModuleId === 'function') ? normalizeModuleId(r.moduleId, r.id, r.date) : r.moduleId;
+                        return mod === modTryoutId && nameMatches(r.name);
+                    }).sort((a, b) => (b.score - a.score) || ((b.timestamp || 0) - (a.timestamp || 0)));
+                    const bestTryout = attemptsTryout[0] || null;
+
+                    const attemptsFakta = demoRecords.filter(r => {
+                        const mod = (typeof normalizeModuleId === 'function') ? normalizeModuleId(r.moduleId, r.id, r.date) : r.moduleId;
+                        return mod === modFaktaId && nameMatches(r.name);
+                    }).sort((a, b) => (b.score - a.score) || ((b.timestamp || 0) - (a.timestamp || 0)));
+                    const bestFakta = attemptsFakta[0] || null;
+
+                    const attemptsJaringan = demoRecords.filter(r => {
+                        const mod = (typeof normalizeModuleId === 'function') ? normalizeModuleId(r.moduleId, r.id, r.date) : r.moduleId;
+                        return mod === modJaringanId && nameMatches(r.name);
+                    }).sort((a, b) => (b.score - a.score) || ((b.timestamp || 0) - (a.timestamp || 0)));
+                    const bestJaringan = attemptsJaringan[0] || null;
+
+                    const hasTryout = !!bestTryout;
+                    const hasFakta = !!bestFakta;
+                    const hasJaringan = !!bestJaringan;
+                    const hasSubmitted = isTryoutView ? hasTryout : (filterModule === modJaringanId ? hasJaringan : (filterModule === modFaktaId ? hasFakta : (hasFakta || hasJaringan || hasTryout)));
+
+                    if (hasSubmitted) {
+                        const activeRecord = isTryoutView ? bestTryout : (filterModule === modJaringanId ? bestJaringan : (filterModule === modFaktaId ? bestFakta : (bestTryout || bestJaringan || bestFakta)));
+                        const completedScores = [];
+                        if (hasFakta) completedScores.push(bestFakta.score);
+                        if (hasJaringan) completedScores.push(bestJaringan.score);
+                        if (hasTryout) completedScores.push(bestTryout.score);
+                        const avgScore = completedScores.length > 0 ? Math.round(completedScores.reduce((a, b) => a + b, 0) / completedScores.length) : -1;
+
+                        const alreadyInList = displayList.some(d => d.name === studentName && d.class === 'KELAS DEMO');
+                        if (!alreadyInList) {
+                            displayList.push({
+                                name: studentName,
+                                class: 'KELAS DEMO',
+                                hasSubmitted: true,
+                                record: activeRecord,
+                                attemptsCount: (attemptsFakta.length + attemptsJaringan.length + attemptsTryout.length),
+                                score: isTryoutView ? (bestTryout ? bestTryout.score : -1) : (filterModule === modJaringanId ? (bestJaringan ? bestJaringan.score : -1) : (filterModule === modFaktaId ? (bestFakta ? bestFakta.score : -1) : avgScore)),
+                                timestamp: activeRecord ? (activeRecord.timestamp || 0) : 0,
+                                hasFakta: hasFakta,
+                                recordFakta: bestFakta,
+                                scoreFakta: bestFakta ? bestFakta.score : null,
+                                hasJaringan: hasJaringan,
+                                recordJaringan: bestJaringan,
+                                scoreJaringan: bestJaringan ? bestJaringan.score : null,
+                                hasTryout: hasTryout,
+                                recordTryout: bestTryout,
+                                scoreTryout: bestTryout ? bestTryout.score : null,
+                                topicBreakdown: bestTryout ? bestTryout.topicBreakdown : null,
+                                completionStatus: (hasFakta && hasJaringan) ? 'both' : (hasFakta ? 'only_fakta' : (hasJaringan ? 'only_jaringan' : 'none')),
+                                avgScore: avgScore
+                            });
+                        }
+                    }
+                }
+            });
+        }
     }
 
     // 5. Pengurutan Data
