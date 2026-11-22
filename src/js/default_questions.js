@@ -367,6 +367,7 @@ window.DEFAULT_BUILTIN_QUESTIONS = [
     "answer": [
       0,
       1,
+      3,
       4
     ],
     "explanation": "Literasi media tidak hanya berarti mampu membaca, tetapi juga mampu menilai kualitas informasi. Memeriksa pembuat informasi dan membandingkan sumber membantu seseorang mengambil keputusan berdasarkan bukti, bukan hanya karena informasi tersebut populer.",
