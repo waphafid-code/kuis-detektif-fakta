@@ -2338,6 +2338,8 @@ async function finishQuiz() {
         total: quizData.length,
         wrongQuestions: quizData.map((_, i) => answeredCorrectly[i] === false ? i : -1).filter(i => i >= 0),
         detailedAnswers: detailedAnswers,
+        // Pilihan siswa per soal (indeks opsi asli) agar guru melihat jawaban SEBENARNYA (bukan perkiraan) dari cloud
+        studentAnswers: detailedAnswers.map(d => (d && Array.isArray(d.selectedIndices)) ? d.selectedIndices : []),
         time: clockStr,
         duration: timeStr,
         rawDurationMs: Date.now() - quizStartTime,
