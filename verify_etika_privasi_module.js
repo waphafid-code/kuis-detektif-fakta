@@ -157,7 +157,7 @@ assert(!isOrderIdentical, 'Simulation: Student 1 and Student 2 receive randomize
     assert(sandbox.window.QuizManager.ETIKA_PRIVASI_MODULE.id === 'modul_etika_privasi_keamanan', 'Module ID is correctly registered');
 
     const modules = await sandbox.window.QuizManager.getAllModules();
-    assert(modules.length === 4, `All 4 modules are returned (Actual: ${modules.length})`);
+    assert(modules.length >= 4, `At least 4 built-in modules are returned (Actual: ${modules.length})`);
     assert(modules[0].id === 'modul_jaringan_keamanan', 'Index 0 is modul_jaringan_keamanan');
     assert(modules[1].id === 'modul_detektif_fakta', 'Index 1 is modul_detektif_fakta');
     assert(modules[2].id === 'modul_hki_profesi_budaya', 'Index 2 is modul_hki_profesi_budaya');

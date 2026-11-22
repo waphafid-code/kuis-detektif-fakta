@@ -36,7 +36,8 @@ for (const [name, qs] of Object.entries(banks)) {
     }
     if (!q.explanation) bad(`${tag}: tanpa pembahasan`);
   }
-  if (pts !== 100) bad(`${name}: total poin ${pts} != 100`);
+  const expectedPts = qs.length === 60 ? 300 : 100;
+  if (pts !== expectedPts) bad(`${name}: total poin ${pts} != ${expectedPts}`);
 }
 // Regresi: Q18 Detektif Fakta - "Mengenali tanda-tanda informasi palsu" adalah jawaban benar
 for (const [name, qs] of Object.entries(banks)) {

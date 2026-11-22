@@ -1,0 +1,1082 @@
+[
+  {
+    "id": 1,
+    "type": "mcq",
+    "difficulty": "Medium",
+    "points": 5,
+    "topicCode": "M1",
+    "topicName": "Literasi Digital & Ekosistem Periksa Fakta",
+    "q": "Sebuah klaim kesehatan palsu menyebar secara masif lintas negara dalam hitungan jam dengan variasi narasi yang disesuaikan dengan bahasa lokal masing-masing negara. Agar proses verifikasi berjalan cepat tanpa mengulang investigasi dari nol di setiap wilayah, komponen ekosistem periksa fakta yang paling krusial diaktifkan adalah ....",
+    "options": [
+      "dukungan pendanaan dan perlindungan hukum dari institusi pemerintah setempat",
+      "penghapusan otomatis seluruh unggahan serupa oleh administrator platform media sosial",
+      "jaringan kolaboratif antarorganisasi periksa fakta untuk berbagi metode dan hasil riset",
+      "penerbitan pedoman metodologi verifikasi kepada masyarakat umum melalui laman resmi",
+      "pelaporan mandiri oleh pengguna individu melalui layanan pesan singkat pengaduan"
+    ],
+    "answer": 2,
+    "explanation": "Jaringan kolaboratif memungkinkan organisasi periksa fakta saling berbagi metode, bukti, dan hasil verifikasi sehingga hoaks lintas wilayah tertangani efisien."
+  },
+  {
+    "id": 2,
+    "type": "mcq",
+    "difficulty": "Medium",
+    "points": 5,
+    "topicCode": "M1",
+    "topicName": "Literasi Digital & Ekosistem Periksa Fakta",
+    "q": "Seorang siswa menerima tautan artikel dari sebuah situs berita yang belum pernah dikenalnya. Artikel tersebut memuat kutipan pakar tanpa mencantumkan tautan rujukan asli. Langkah paling tepat yang mencerminkan penerapan keterampilan membaca lateral (lateral reading) oleh individu adalah ....",
+    "options": [
+      "membaca ulang seluruh isi artikel dari awal hingga akhir untuk mencari kesalahan tata bahasa",
+      "membuka tab baru untuk menelusuri rekam jejak situs tersebut serta memeriksa konfirmasi di media kredibel lain",
+      "memeriksa bagian halaman depan dan kolom profil redaksi yang tercantum di dalam situs yang sama",
+      "meneruskan tautan artikel ke grup diskusi kelas agar teman lain ikut menilai kebenarannya",
+      "menyimpan halaman artikel tersebut ke penyimpanan lokal sebelum memutuskan untuk membagikannya"
+    ],
+    "answer": 1,
+    "explanation": "Membaca lateral (lateral reading) dilakukan dengan membuka sumber eksternal tepercaya untuk memverifikasi kredibilitas situs dan klaim secara silang."
+  },
+  {
+    "id": 3,
+    "type": "mcq",
+    "difficulty": "Medium",
+    "points": 5,
+    "topicCode": "M1",
+    "topicName": "Literasi Digital & Ekosistem Periksa Fakta",
+    "q": "Beberapa kelompok masyarakat menuduh lembaga pemeriksa fakta bersikap subjektif ketika melabeli suatu unggahan viral sebagai informasi menyesatkan. Dalam ekosistem periksa fakta, mekanisme utama yang digunakan organisasi periksa fakta untuk membuktikan objektivitas kesimpulannya adalah ....",
+    "options": [
+      "meminta lembaga pemerintah memblokir akses situs penyebar klaim tanpa perlu penjelasan publik",
+      "merahasiakan sumber rujukan ahli agar tim pemeriksa terhindar dari tekanan warganet",
+      "menyerahkan seluruh keputusan penetapan label hoaks kepada algoritma platform media sosial",
+      "menerapkan transparansi dan metodologi dengan memublikasikan tahapan serta bukti proses verifikasi",
+      "membatasi pemeriksaan hanya pada informasi yang telah dilaporkan oleh lebih dari seribu pengguna"
+    ],
+    "answer": 3,
+    "explanation": "Transparansi dan metodologi menjamin publik dapat menelusuri langkah investigasi serta bukti objektif yang mendasari kesimpulan verifikasi."
+  },
+  {
+    "id": 4,
+    "type": "mcq",
+    "difficulty": "Medium",
+    "points": 5,
+    "topicCode": "M1",
+    "topicName": "Literasi Digital & Ekosistem Periksa Fakta",
+    "q": "Dalam kerja sama ekosistem periksa fakta, terdapat pembagian peran yang jelas antara organisasi periksa fakta dan platform media sosial. Ketika sebuah unggahan terindikasi mengandung misinformasi, bentuk kontribusi spesifik yang dijalankan oleh platform media sosial dan teknologi adalah ....",
+    "options": [
+      "menandai konten bermasalah tersebut dan mengarahkan pengguna menuju rujukan informasi terverifikasi",
+      "menyusun laporan investigasi ilmiah mendalam untuk membantah setiap klaim yang beredar",
+      "menyediakan anggaran hibah operasional tahunan bagi seluruh jaringan pemeriksa fakta independen",
+      "menjatuhkan sanksi pidana siber kepada pemilik akun yang pertama kali mengunggah konten",
+      "menyelenggarakan kurikulum pelatihan literasi media formal di seluruh sekolah menengah"
+    ],
+    "answer": 0,
+    "explanation": "Platform media sosial dan teknologi bekerja sama menandai konten hoaks serta mengarahkan pengguna ke tautan informasi yang telah terverifikasi."
+  },
+  {
+    "id": 5,
+    "type": "mcq",
+    "difficulty": "Medium",
+    "points": 5,
+    "topicCode": "M1",
+    "topicName": "Literasi Digital & Ekosistem Periksa Fakta",
+    "q": "Budi menemukan sebuah unggahan berisi informasi palsu mengenai jadwal pencairan bantuan pemerintah dan ingin melaporkannya melalui kanal resmi Kementerian Komunikasi dan Informatika (Kominfo) sekaligus memantau apakah aduannya telah ditindaklanjuti. Prosedur lengkap yang sesuai ketentuan adalah ....",
+    "options": [
+      "mengirim ringkasan cerita ke cybercrime@polri.go.id lalu memantau hasilnya di laman turnbackhoax.id",
+      "menghubungi Chatbot Kalimasada di nomor +62 8592 1600 500 tanpa perlu menyertakan bukti visual",
+      "mengirim pesan teks ke +62811-1000-0579 dengan mencantumkan identitas lengkap pelapor secara terbuka",
+      "mengunggah ulang konten hoaks tersebut di media sosial dengan memberi tagar laporan ke akun resmi Kominfo",
+      "mengirim screen capture beserta URL tautan ke aduankonten@mail.kominfo.go.id dan memantau di trustpositif.kominfo.go.id"
+    ],
+    "answer": 4,
+    "explanation": "Aduan hoaks ke Kominfo dikirimkan dengan screen capture dan URL tautan ke aduankonten@mail.kominfo.go.id serta dipantau melalui trustpositif.kominfo.go.id."
+  },
+  {
+    "id": 6,
+    "type": "mcq",
+    "difficulty": "Medium",
+    "points": 5,
+    "topicCode": "M1",
+    "topicName": "Literasi Digital & Ekosistem Periksa Fakta",
+    "q": "Masyarakat Anti Fitnah Indonesia (Mafindo) menyediakan kanal partisipasi publik bagi warga yang ingin melaporkan dugaan konten hoaks secara cepat melalui layanan pesan instan maupun portal web. Kanal resmi yang dikelola oleh Mafindo adalah ....",
+    "options": [
+      "laman trustpositif.kominfo.go.id dan alamat pos elektronik aduankonten@mail.kominfo.go.id",
+      "portal https://turnbackhoax.id/lapor-hoax/ dan layanan Chatbot Kalimasada di nomor +62 8592 1600 500",
+      "alamat pos elektronik cybercrime@polri.go.id dan layanan polisionline.net@gmail.com",
+      "tipline pengaduan konten hoaks pemerintah melalui nomor chatbot +62811-1000-0579",
+      "portal Sistem Pendataan Kebudayaan Terpadu (SPKT) melalui fitur Urun Daya masyarakat"
+    ],
+    "answer": 1,
+    "explanation": "Kanal resmi pelaporan hoaks produk Mafindo adalah laman turnbackhoax.id/lapor-hoax/ dan Chatbot Kalimasada pada nomor +62 8592 1600 500."
+  },
+  {
+    "id": 7,
+    "type": "mcq",
+    "difficulty": "Medium",
+    "points": 5,
+    "topicCode": "M1",
+    "topicName": "Literasi Digital & Ekosistem Periksa Fakta",
+    "q": "Keberadaan ekosistem periksa fakta sering kali disalahpahami sebagai upaya membatasi kebebasan berpendapat di ruang digital. Padahal, tujuan utama dibangunnya ekosistem periksa fakta adalah ....",
+    "options": [
+      "menggantikan peran jurnalisme profesional sebagai satu-satunya sumber berita resmi negara",
+      "menghapus seluruh perbedaan opini politik maupun kritik sosial yang muncul di media sosial",
+      "memusatkan kendali seluruh percakapan digital di bawah pengawasan satu lembaga tunggal",
+      "membantu masyarakat mengakses informasi yang akurat serta mendorong literasi media yang lebih baik",
+      "membatasi akses pengguna internet agar hanya dapat membuka situs milik instansi pemerintah"
+    ],
+    "answer": 3,
+    "explanation": "Tujuan utama ekosistem periksa fakta adalah membantu masyarakat mengakses informasi akurat sekaligus meningkatkan literasi media secara kritis."
+  },
+  {
+    "id": 8,
+    "type": "mcq",
+    "difficulty": "Medium",
+    "points": 5,
+    "topicCode": "M1",
+    "topicName": "Literasi Digital & Ekosistem Periksa Fakta",
+    "q": "Selain melalui Kominfo dan Mafindo, masyarakat juga dapat melaporkan konten hoaks yang mengandung unsur tindak pidana siber secara langsung melalui jalur surat elektronik kepolisian. Alamat surel yang disediakan untuk pelaporan tersebut adalah ....",
+    "options": [
+      "cybercrime@polri.go.id dan polisionline.net@gmail.com",
+      "aduankonten@mail.kominfo.go.id dan trustpositif@kominfo.go.id",
+      "lapor-hoax@turnbackhoax.id dan kalimasada@mafindo.or.id",
+      "pengaduan@siberkreasi.id dan literasi@kominfo.go.id",
+      "verifikasi@cekfakta.com dan aduan@bssn.go.id"
+    ],
+    "answer": 0,
+    "explanation": "Kanal pelaporan kejahatan siber berbasis pos elektronik kepolisian adalah cybercrime@polri.go.id dan polisionline.net@gmail.com. No. Materi Kunci Konsep Kunci & Dasar Pembahasan"
+  },
+  {
+    "id": 9,
+    "type": "mcq",
+    "difficulty": "Medium",
+    "points": 5,
+    "topicCode": "M1",
+    "topicName": "Literasi Digital & Ekosistem Periksa Fakta",
+    "q": "Ketika pengguna media sosial menemukan unggahan menyesatkan, lalu menekan tombol lapor (report) sehingga platform meninjau dan menghapus unggahan tersebut, peristiwa ini menunjukkan berjalannya komponen ekosistem periksa fakta berupa ....",
+    "options": [
+      "transparansi metodologi dan publikasi hasil riset verifikasi",
+      "dukungan sumber daya serta perlindungan hukum dari pemerintah",
+      "pelaporan dan penghapusan konten palsu oleh pengguna dan platform",
+      "jaringan kolaboratif lintas organisasi pemeriksa fakta internasional",
+      "pendidikan formal literasi media di lingkungan sekolah dan kampus"
+    ],
+    "answer": 2,
+    "explanation": "Partisipasi pengguna melaporkan konten meragukan yang ditindaklanjuti dengan penandaan atau penghapusan oleh platform merupakan komponen pelaporan konten palsu."
+  },
+  {
+    "id": 10,
+    "type": "mcq",
+    "difficulty": "Medium",
+    "points": 5,
+    "topicCode": "M1",
+    "topicName": "Literasi Digital & Ekosistem Periksa Fakta",
+    "q": "Dalam ekosistem periksa fakta, institusi dan pemerintah memiliki peran penting agar organisasi pemeriksa fakta mampu bertahan menghadapi ancaman gugatan maupun keterbatasan biaya operasional. Bentuk dukungan yang tepat tanpa merusak independensi verifikasi adalah ....",
+    "options": [
+      "menentukan kesimpulan akhir apakah suatu berita layak diberi label hoaks atau fakta",
+      "mewajibkan seluruh organisasi periksa fakta meminta persetujuan pejabat sebelum merilis artikel",
+      "mengambil alih seluruh tim ahli pemeriksa fakta menjadi pegawai struktural kementerian",
+      "melarang organisasi periksa fakta bekerja sama dengan jaringan pemeriksa fakta luar negeri",
+      "menyediakan dukungan pendanaan, sumber daya, serta perlindungan hukum bagi organisasi periksa fakta"
+    ],
+    "answer": 4,
+    "explanation": "Institusi dan pemerintah berperan menyediakan dukungan pendanaan, sumber daya, serta perlindungan hukum tanpa mengintervensi independensi hasil verifikasi."
+  },
+  {
+    "id": 11,
+    "type": "mcq",
+    "difficulty": "Medium",
+    "points": 5,
+    "topicCode": "M2",
+    "topicName": "Web Browser, Search Engine, & Manajemen Konten",
+    "q": "Seorang siswa mengira bahwa Google Chrome dan Google Search merupakan satu perangkat lunak yang sama karena keduanya sering digunakan bersamaan saat mencari tugas. Perbedaan mendasar yang paling tepat antara web browser dan search engine adalah ....",
+    "options": [
+      "web browser hanya bekerja saat terhubung ke internet, sedangkan search engine dapat berjalan tanpa jaringan",
+      "web browser adalah perangkat lunak klien untuk mengakses dan menampilkan laman web, sedangkan search engine adalah program berbasis web untuk mencari informasi di WWW",
+      "web browser bertugas mengindeks seluruh situs di dunia, sedangkan search engine bertugas menyimpan berkas unduhan ke cakram lokal",
+      "web browser hanya mampu menampilkan konten teks statis, sedangkan search engine menampilkan konten multimedia dan video",
+      "web browser memerlukan kata kunci untuk membuka alamat situs, sedangkan search engine memerlukan alamat IP numerik"
+    ],
+    "answer": 1,
+    "explanation": "Web browser adalah aplikasi perangkat lunak untuk menampilkan isi web, sedangkan search engine adalah program berbasis web untuk mencari halaman di WWW."
+  },
+  {
+    "id": 12,
+    "type": "mcq",
+    "difficulty": "Medium",
+    "points": 5,
+    "topicCode": "M2",
+    "topicName": "Web Browser, Search Engine, & Manajemen Konten",
+    "q": "Sebuah jurnal ilmiah milik universitas baru saja diterbitkan secara daring sepuluh menit lalu dengan alamat URL yang valid. Namun, ketika mahasiswa mengetikkan judul artikel tersebut di mesin pencari, artikel belum muncul di daftar hasil pencarian. Penyebab teknis paling logis dari kondisi ini adalah ....",
+    "options": [
+      "komputer mahasiswa menggunakan web browser yang tidak mendukung protokol penyimpanan berkas lokal",
+      "situs universitas tidak mengizinkan pengguna memakai operator pencarian logika pada kolom kueri",
+      "algoritma ranking secara otomatis memblokir seluruh artikel ilmiah yang usianya kurang dari satu hari",
+      "proses crawling oleh bots/spiders belum menemukan dan mencatat URL halaman baru tersebut ke dalam tahap indexing",
+      "mahasiswa belum mengaktifkan aplikasi read-it-later untuk menyinkronkan halaman web ke perangkatnya"
+    ],
+    "answer": 3,
+    "explanation": "Laman baru belum muncul di hasil pencarian apabila bots/spiders belum menyelesaikan tahap crawling dan indexing terhadap URL tersebut."
+  },
+  {
+    "id": 13,
+    "type": "mcq",
+    "difficulty": "Medium",
+    "points": 5,
+    "topicCode": "M2",
+    "topicName": "Web Browser, Search Engine, & Manajemen Konten",
+    "q": "Dalam praktik pencarian informasi menggunakan mesin pencari, seorang siswa mengetikkan kueri \"mobil listrik AND penjualan 2020\". Pengaruh penggunaan operator logika AND pada kueri tersebut terhadap hasil penelusuran adalah ....",
+    "options": [
+      "mempersempit hasil dengan hanya menampilkan halaman yang memuat kedua istilah tersebut secara bersamaan",
+      "memperluas hasil dengan menampilkan seluruh halaman yang memuat salah satu dari kedua istilah tersebut",
+      "mengecualikan seluruh halaman web yang membahas data penjualan kendaraan pada tahun 2020",
+      "mengurutkan halaman berdasarkan tanggal publikasi terbaru tanpa mempertimbangkan relevansi kata kunci",
+      "membatasi hasil penelusuran hanya pada situs web yang memiliki akhiran domain lembaga pemerintah"
+    ],
+    "answer": 0,
+    "explanation": "Operator logika AND mensyaratkan kedua istilah muncul bersamaan pada dokumen sehingga hasil pencarian menjadi jauh lebih spesifik."
+  },
+  {
+    "id": 14,
+    "type": "mcq",
+    "difficulty": "Medium",
+    "points": 5,
+    "topicCode": "M2",
+    "topicName": "Web Browser, Search Engine, & Manajemen Konten",
+    "q": "Rani sedang menyusun karya tulis mengenai kebijakan subsidi energi terbarukan di Indonesia, tetapi hasil pencariannya selalu dipenuhi berita mengenai pembangkit listrik tenaga batubara. Formulasi kata kunci dengan operator pencarian paling efektif untuk mengatasi masalah Rani adalah ....",
+    "options": [
+      "\"energi terbarukan\" OR subsidi OR Indonesia OR batubara",
+      "\"energi terbarukan\" AND batubara NOT subsidi AND Indonesia",
+      "\"energi terbarukan\" AND subsidi AND Indonesia NOT batubara",
+      "subsidi NOT \"energi terbarukan\" AND Indonesia OR batubara",
+      "Indonesia NOT subsidi OR \"energi terbarukan\" AND batubara"
+    ],
+    "answer": 2,
+    "explanation": "Kombinasi operator AND menggabungkan topik wajib (energi terbarukan, subsidi, Indonesia), sedangkan NOT batubara menyaring keluar topik yang tidak diinginkan."
+  },
+  {
+    "id": 15,
+    "type": "mcq",
+    "difficulty": "Medium",
+    "points": 5,
+    "topicCode": "M2",
+    "topicName": "Web Browser, Search Engine, & Manajemen Konten",
+    "q": "Setelah menentukan kata kunci dan operator pencarian yang tepat, langkah keempat dalam mencari informasi yang akurat adalah memilih sumber yang kredibel. Di antara kelompok sumber berikut, yang memiliki tingkat validitas tertinggi untuk rujukan tugas akademik adalah ....",
+    "options": [
+      "unggahan utas viral di media sosial, forum diskusi anonim, dan blog pribadi tanpa daftar pustaka",
+      "ensiklopedia terbuka yang dapat disunting siapa saja tanpa proses peninjauan sejawat",
+      "situs agregator berita sensasional yang tidak mencantumkan nama penulis maupun dewan redaksi",
+      "pesan berantai dari grup percakapan daring yang mengutip pernyataan tokoh tanpa tautan sumber",
+      "repositori universitas, jurnal ilmiah, situs lembaga pemerintah, dan portal berita resmi bereputasi"
+    ],
+    "answer": 4,
+    "explanation": "Sumber kredibel untuk rujukan ilmiah meliputi repositori universitas, jurnal ilmiah, situs lembaga pemerintah, dan portal berita bereputasi."
+  },
+  {
+    "id": 16,
+    "type": "mcq",
+    "difficulty": "Medium",
+    "points": 5,
+    "topicCode": "M2",
+    "topicName": "Web Browser, Search Engine, & Manajemen Konten",
+    "q": "Dika sering menemukan artikel referensi penting saat menjelajah internet menggunakan komputer sekolah, namun ia baru sempat membacanya saat berada di perjalanan pulang menggunakan ponsel tanpa kuota internet. Fitur utama aplikasi Pocket yang paling membantu kebutuhan Dika adalah ....",
+    "options": [
+      "memblokir seluruh iklan dan pelacak pada jaringan Wi-Fi publik secara otomatis",
+      "menyimpan artikel daring sebagai aplikasi read-it-later untuk dibaca kembali secara luring (offline) di berbagai perangkat",
+      "menerjemahkan alamat domain situs web menjadi deretan angka alamat IP secara lokal",
+      "mengompresi seluruh berkas video beresolusi tinggi menjadi dokumen teks yang dapat disunting",
+      "menggantikan fungsi mesin pencari untuk melakukan crawling situs web secara mandiri"
+    ],
+    "answer": 1,
+    "explanation": "Pocket berfungsi sebagai aplikasi read-it-later untuk menyimpan artikel daring agar dapat dibaca kembali secara luring (offline) lintas perangkat."
+  },
+  {
+    "id": 17,
+    "type": "mcq",
+    "difficulty": "Medium",
+    "points": 5,
+    "topicCode": "M2",
+    "topicName": "Web Browser, Search Engine, & Manajemen Konten",
+    "q": "Perhatikan daftar perangkat lunak dan layanan berikut: (1) Safari, (2) Baidu, (3) Mozilla Firefox, (4) Yandex, (5) Opera, dan (6) Bing. Pengelompokan yang paling tepat berdasarkan fungsinya adalah ....",
+    "options": [
+      "nomor (1), (2), dan (3) adalah web browser; nomor (4), (5), dan (6) adalah search engine",
+      "nomor (2), (4), dan (5) adalah web browser; nomor (1), (3), dan (6) adalah search engine",
+      "nomor (1), (4), dan (6) adalah web browser; nomor (2), (3), dan (5) adalah search engine",
+      "nomor (1), (3), dan (5) adalah web browser; nomor (2), (4), dan (6) adalah search engine",
+      "nomor (3), (5), dan (6) adalah web browser; nomor (1), (2), dan (4) adalah search engine"
+    ],
+    "answer": 3,
+    "explanation": "Safari, Mozilla Firefox, dan Opera termasuk perangkat lunak web browser, sedangkan Baidu, Yandex, dan Bing termasuk search engine."
+  },
+  {
+    "id": 18,
+    "type": "mcq",
+    "difficulty": "Medium",
+    "points": 5,
+    "topicCode": "M2",
+    "topicName": "Web Browser, Search Engine, & Manajemen Konten",
+    "q": "Selain menampilkan konten multimedia dan mengunduh berkas ke penyimpanan lokal, sebuah web browser modern memiliki fungsi perlindungan perangkat. Wujud nyata dari fungsi perlindungan tersebut saat pengguna berselancar di internet adalah ....",
+    "options": [
+      "memberikan peringatan dan memblokir akses ketika pengguna hendak membuka situs berbahaya atau berkas berisiko",
+      "menjamin seluruh informasi yang ditulis di dalam artikel situs web pasti bebas dari unsur hoaks",
+      "meningkatkan kecepatan paket data dari penyedia layanan internet secara fisik hingga dua kali lipat",
+      "menghapus secara permanen seluruh salinan unggahan pengguna dari peladen media sosial pihak ketiga",
+      "menyusun daftar peringkat relevansi jutaan situs web di dunia berdasarkan kata kunci pengguna"
+    ],
+    "answer": 0,
+    "explanation": "Salah satu dari lima fungsi utama web browser adalah melindungi perangkat pengguna dari ancaman situs berbahaya maupun unduhan berisiko."
+  },
+  {
+    "id": 19,
+    "type": "mcq",
+    "difficulty": "Medium",
+    "points": 5,
+    "topicCode": "M2",
+    "topicName": "Web Browser, Search Engine, & Manajemen Konten",
+    "q": "Ketika mencari data statistik untuk tugas sekolah, mengetikkan satu kata umum seperti \"pendidikan\" menghasilkan jutaan halaman yang terlalu luas dan tidak fokus. Strategi berurutan yang dianjurkan agar hasil pencarian tepat sasaran adalah ....",
+    "options": [
+      "mengganti web browser berkali-kali hingga urutan hasil pada halaman pertama berubah total",
+      "menyalin seluruh paragraf pertanyaan tugas ke kolom pencarian tanpa menggunakan tanda kutip maupun operator",
+      "menentukan tujuan pencarian secara spesifik, memilih kata kunci/frasa relevan, lalu menerapkan operator pencarian",
+      "membuka hasil pencarian mulai dari halaman terakhir karena sumber ilmiah selalu berada di urutan terbawah",
+      "menyimpan seluruh laman hasil pencarian ke aplikasi Pocket terlebih dahulu sebelum memeriksa kata kuncinya"
+    ],
+    "answer": 2,
+    "explanation": "Pencarian efektif diawali dengan merumuskan tujuan pencarian, memilih kata kunci/frasa spesifik, lalu memperincinya menggunakan operator pencarian."
+  },
+  {
+    "id": 20,
+    "type": "mcq",
+    "difficulty": "Medium",
+    "points": 5,
+    "topicCode": "M2",
+    "topicName": "Web Browser, Search Engine, & Manajemen Konten",
+    "q": "Dalam mekanisme kerja search engine, setelah bots/spiders menjelajahi tautan dan menyimpannya ke dalam basis data, mesin pencari menyusun daftar urutan tautan yang tampil di layar pengguna dari yang paling sesuai dengan kata kunci hingga yang kurang relevan. Tahapan ini disebut ....",
+    "options": [
+      "Crawling",
+      "Bookmarking",
+      "Downloading",
+      "Archiving",
+      "Ranking Intelektual"
+    ],
+    "answer": 4,
+    "explanation": "Ranking adalah tahapan ketiga cara kerja mesin pencari yang menyusun daftar hasil berdasarkan tingkat relevansi tertinggi terhadap kata kunci."
+  },
+  {
+    "id": 21,
+    "type": "mcq",
+    "difficulty": "Medium",
+    "points": 5,
+    "topicCode": "M3",
+    "topicName": "Digitalisasi Budaya, Profesi Informatika, & HKI",
+    "q": "Pemerintah mengembangkan dua platform digital untuk mendukung pelestarian kebudayaan nasional, yaitu Budaya Kita dan SPKT (Sistem Pendataan Kebudayaan Terpadu). Perbedaan fungsi utama di antara kedua platform tersebut adalah ....",
+    "options": [
+      "Budaya Kita khusus mendata cagar budaya benda, sedangkan SPKT hanya memuat koleksi manuskrip digital",
+      "Budaya Kita dikelola oleh komunitas swasta, sedangkan SPKT merupakan aplikasi komersial berbayar",
+      "Budaya Kita menjadi laman informasi publik objek kebudayaan, sedangkan SPKT mengintegrasikan data terpusat termasuk fitur Urun Daya masyarakat",
+      "Budaya Kita berfungsi mengurus pendaftaran hak paten seni tradisional, sedangkan SPKT berfungsi memblokir konten bajakan",
+      "Budaya Kita digunakan untuk pembelajaran luring di sekolah, sedangkan SPKT digunakan untuk transaksi jual beli karya seni"
+    ],
+    "answer": 2,
+    "explanation": "Budaya Kita menjadi portal informasi objek kebudayaan publik, sedangkan SPKT mengintegrasikan data terpusat termasuk partisipasi Urun Daya masyarakat."
+  },
+  {
+    "id": 22,
+    "type": "mcq",
+    "difficulty": "Medium",
+    "points": 5,
+    "topicCode": "M3",
+    "topicName": "Digitalisasi Budaya, Profesi Informatika, & HKI",
+    "q": "Seorang kreator konten membuat video pendek tentang upacara adat suatu daerah, tetapi ia memotong bagian penjelasan makna filosofisnya dan menambahkan narasi komedi yang mengubah arti ritual tersebut agar cepat viral. Tindakan kreator tersebut paling bertentangan dengan prinsip etika kreator budaya digital berupa ....",
+    "options": [
+      "Konteks Asli dan Integritas dalam menjaga makna sejarah serta keutuhan informasi budaya",
+      "Anti-Hoaks dan Validasi dalam memeriksa sumber data statistik kependudukan",
+      "Kepatuhan Lisensi dalam mendaftarkan merek dagang perangkat lunak penyunting video",
+      "Efisiensi Jaringan dalam mengompresi ukuran berkas multimedia sebelum diunggah",
+      "Autentikasi Dua Langkah dalam mengamankan akun kanal media sosial kreator"
+    ],
+    "answer": 0,
+    "explanation": "Kreator budaya digital wajib menjaga prinsip Konteks Asli dan Integritas agar makna sejarah serta nilai budaya tidak diubah secara sembarangan."
+  },
+  {
+    "id": 23,
+    "type": "mcq",
+    "difficulty": "Medium",
+    "points": 5,
+    "topicCode": "M3",
+    "topicName": "Digitalisasi Budaya, Profesi Informatika, & HKI",
+    "q": "Sebelum tim pengembang mulai menulis baris kode untuk sistem informasi akademik sekolah yang baru, diperlukan seorang profesional yang bertugas mewawancarai bagian tata usaha, menganalisis alur administrasi yang sedang berjalan, serta menyusun dokumen rancangan kebutuhan sistem. Profesi informatika yang dimaksud adalah ....",
+    "options": [
+      "Database Administrator",
+      "Network Engineer",
+      "Game Developer",
+      "Cybersecurity Specialist",
+      "System Analyst"
+    ],
+    "answer": 4,
+    "explanation": "System Analyst bertugas menganalisis masalah pengguna dan alur sistem berjalan lalu menerjemahkannya menjadi rancangan kebutuhan bagi pengembang."
+  },
+  {
+    "id": 24,
+    "type": "mcq",
+    "difficulty": "Medium",
+    "points": 5,
+    "topicCode": "M3",
+    "topicName": "Digitalisasi Budaya, Profesi Informatika, & HKI",
+    "q": "Sebuah platform pendidikan daring ingin menghadirkan dua fitur baru: (1) dasbor laporan untuk memantau tren nilai ujian siswa per semester, dan (2) algoritma cerdas yang otomatis merekomendasikan latihan soal sesuai tingkat kemampuan tiap siswa. Dua profesi yang paling tepat menangani masing-masing fitur tersebut secara berurutan adalah ....",
+    "options": [
+      "UI/UX Designer dan Network Engineer",
+      "Data Analyst dan AI / Machine Learning Engineer",
+      "Web Developer dan Database Administrator",
+      "Programmer dan Cybersecurity Specialist",
+      "System Analyst dan Game Developer"
+    ],
+    "answer": 1,
+    "explanation": "Data Analyst mengolah data menjadi dasbor insight keputusan, sedangkan AI/Machine Learning Engineer melatih dan menerapkan model pembelajaran adaptif."
+  },
+  {
+    "id": 25,
+    "type": "mcq",
+    "difficulty": "Medium",
+    "points": 5,
+    "topicCode": "M3",
+    "topicName": "Digitalisasi Budaya, Profesi Informatika, & HKI",
+    "q": "Saat pelaksanaan ujian berbasis komputer di sekolah, terdeteksi upaya akses ilegal dari luar jaringan yang mencoba masuk ke basis data nilai siswa dan mengubah catatan skor. Profesi informatika yang memiliki tugas utama memantau lalu lintas ancaman, mengidentifikasi risiko, serta menangani insiden keamanan tersebut adalah ....",
+    "options": [
+      "UI/UX Designer",
+      "Game Developer",
+      "Data Analyst",
+      "Cybersecurity Specialist",
+      "Web Developer"
+    ],
+    "answer": 3,
+    "explanation": "Cybersecurity Specialist bertugas melindungi sistem, jaringan, dan data nilai dari ancaman serta menangani insiden akses ilegal peretas. No. Materi Kunci Konsep Kunci & Dasar Pembahasan"
+  },
+  {
+    "id": 26,
+    "type": "mcq",
+    "difficulty": "Medium",
+    "points": 5,
+    "topicCode": "M3",
+    "topicName": "Digitalisasi Budaya, Profesi Informatika, & HKI",
+    "q": "Satu produk ponsel pintar modern dilindungi oleh beberapa jenis Hak Kekayaan Intelektual (HKI) sekaligus. Pasangan komponen produk dan jenis perlindungan HKI yang paling akurat adalah ....",
+    "options": [
+      "logo merek dagang dilindungi Paten, sedangkan cara kerja sensor sidik jari dilindungi Hak Cipta",
+      "bentuk fisik casing ponsel dilindungi Rahasia Dagang, sedangkan kode perangkat lunak dilindungi Merek",
+      "kode aplikasi dilindungi Hak Cipta, teknologi sensor sidik jari dilindungi Paten, dan bentuk casing dilindungi Desain Industri",
+      "algoritma internal rahasia dilindungi Desain Industri, sedangkan musik bawaan dilindungi Paten",
+      "nama dagang produk dilindungi Hak Cipta, sedangkan konfigurasi tampilan bodi luar dilindungi Rahasia Dagang"
+    ],
+    "answer": 2,
+    "explanation": "Dalam anatomi HKI produk digital: kode aplikasi dilindungi Hak Cipta, mekanisme teknis sensor sidik jari dilindungi Paten, dan bentuk casing dilindungi Desain Industri."
+  },
+  {
+    "id": 27,
+    "type": "mcq",
+    "difficulty": "Medium",
+    "points": 5,
+    "topicCode": "M3",
+    "topicName": "Digitalisasi Budaya, Profesi Informatika, & HKI",
+    "q": "Sinta memiliki gagasan cemerlang di kepalanya mengenai konsep aplikasi pengingat jadwal belajar, namun ia belum pernah menuangkannya ke dalam rancangan tertulis, purwarupa, maupun kode program. Ditinjau dari konsep Kekayaan Intelektual (KI) dan HKI, status gagasan Sinta adalah ....",
+    "options": [
+      "belum memperoleh perlindungan hukum HKI karena ide abstrak baru dilindungi setelah diwujudkan menjadi karya nyata",
+      "otomatis terdaftar sebagai hak paten sejak pertama kali gagasan tersebut diceritakan kepada teman",
+      "dilindungi sebagai desain industri selama gagasan tersebut belum ditiru oleh pengembang lain",
+      "termasuk pelanggaran hak cipta apabila ada orang lain yang lebih dulu membuat aplikasi serupa",
+      "otomatis menjadi milik publik yang tidak boleh didaftarkan meskipun kelak telah dikembangkan menjadi aplikasi"
+    ],
+    "answer": 0,
+    "explanation": "Kekayaan Intelektual baru memperoleh perlindungan hukum HKI apabila ide atau kreativitas tersebut telah diwujudkan menjadi karya nyata yang teridentifikasi."
+  },
+  {
+    "id": 28,
+    "type": "mcq",
+    "difficulty": "Medium",
+    "points": 5,
+    "topicCode": "M3",
+    "topicName": "Digitalisasi Budaya, Profesi Informatika, & HKI",
+    "q": "Andi mengunduh ilustrasi grafis dari internet yang berlisensi non-komersial (tidak boleh diperjualbelikan). Ia mencetak ilustrasi tersebut pada kaus untuk dijual dan mencantumkan nama ilustrator serta tautan situs aslinya pada label produk. Penilaian yang paling tepat terhadap tindakan Andi adalah ....",
+    "options": [
+      "sudah sepenuhnya sah secara hukum karena pencantuman atribusi otomatis menggugurkan larangan komersial",
+      "sah apabila keuntungan penjualan kaus tidak melebihi biaya produksi pencetakan",
+      "melanggar prinsip atribusi sumber karena tautan situs tidak dicantumkan di bagian depan kaus",
+      "tidak melanggar HKI selama karya tersebut diunduh secara gratis tanpa meretas peladen pemiliknya",
+      "tetap merupakan pelanggaran HKI karena atribusi hanya memenuhi kejujuran akademis, sedangkan penggunaan komersial melanggar ketentuan lisensi"
+    ],
+    "answer": 4,
+    "explanation": "Atribusi hanya memenuhi etika pencantuman asal karya, sedangkan pemanfaatan komersial atas karya berlisensi non-komersial tetap melanggar HKI."
+  },
+  {
+    "id": 29,
+    "type": "mcq",
+    "difficulty": "Medium",
+    "points": 5,
+    "topicCode": "M3",
+    "topicName": "Digitalisasi Budaya, Profesi Informatika, & HKI",
+    "q": "Dalam program digitalisasi budaya, tim dokumentasi daerah merekam naskah kuno beraksara daerah, teknik pembuatan perahu tradisional tanpa paku, ramuan pengobatan herbal warisan leluhur, serta tata cara upacara panen. Keempat hal tersebut secara berurutan termasuk dalam 10 Objek Pemajuan Budaya kategori ....",
+    "options": [
+      "Bahasa, Permainan Rakyat, Olahraga Tradisional, dan Adat Istiadat",
+      "Manuskrip, Teknologi Tradisional, Pengetahuan Tradisional, dan Ritus",
+      "Seni, Bahasa, Manuskrip, dan Permainan Rakyat",
+      "Ritus, Olahraga Tradisional, Adat Istiadat, dan Seni",
+      "Teknologi Tradisional, Seni, Bahasa, dan Olahraga Tradisional"
+    ],
+    "answer": 1,
+    "explanation": "Naskah kuno (Manuskrip), teknik perahu tradisional (Teknologi Tradisional), ramuan herbal (Pengetahuan Tradisional), dan upacara panen (Ritus) termasuk 10 Objek Pemajuan Budaya."
+  },
+  {
+    "id": 30,
+    "type": "mcq",
+    "difficulty": "Medium",
+    "points": 5,
+    "topicCode": "M3",
+    "topicName": "Digitalisasi Budaya, Profesi Informatika, & HKI",
+    "q": "Rancangan visual antarmuka dan alur prototipe portal berita sekolah telah selesai dibuat dengan tampilan menarik dan mudah dinavigasi. Namun, situs web tersebut belum bisa menampilkan artikel dinamis karena belum dibangun fungsi sisi peladen (server) dan belum terhubung ke basis data. Profesi yang bertugas menyelesaikan tahap tersebut adalah ....",
+    "options": [
+      "UI/UX Designer",
+      "Network Engineer",
+      "Data Analyst",
+      "Web Developer",
+      "System Analyst"
+    ],
+    "answer": 3,
+    "explanation": "Web Developer bertugas membangun sisi tampilan maupun fungsi peladen (server), menghubungkan basis data, serta menguji kelayakan situs web."
+  },
+  {
+    "id": 31,
+    "type": "mcq",
+    "difficulty": "Medium",
+    "points": 5,
+    "topicCode": "M4",
+    "topicName": "Etika, Privasi, dan Keamanan Digital",
+    "q": "Nisa meneruskan tangkapan layar percakapan yang mempermalukan teman sekelasnya ke grup WhatsApp. Sepuluh menit kemudian ia menyesal dan menghapus pesan tersebut dari grup. Analisis yang paling tepat mengenai konsekuensi etika dan jejak digital dari tindakan Nisa adalah ....",
+    "options": [
+      "Nisa bebas dari tanggung jawab karena ia hanya berperan sebagai penyebar, bukan pembuat tangkapan layar",
+      "penghapusan pesan di grup secara otomatis menghapus seluruh berkas gambar yang telah tersimpan di galeri anggota lain",
+      "sebagai penyebar (distributor), Nisa tetap memikul tanggung jawab atas dampaknya dan salinan konten berpotensi tetap tersimpan sebagai jejak digital",
+      "jejak digital hanya terbentuk apabila konten diunggah ke platform publik terbuka, bukan pada grup percakapan tertutup",
+      "tindakan meneruskan pesan tidak berdampak pada reputasi korban selama nama lengkap korban tidak ditulis pada takarir"
+    ],
+    "answer": 2,
+    "explanation": "Penyebar konten (distributor) tetap memikul tanggung jawab atas dampak informasi yang diteruskan, dan penghapusan tidak menghapus salinan tangkapan layar pihak lain."
+  },
+  {
+    "id": 32,
+    "type": "mcq",
+    "difficulty": "Medium",
+    "points": 5,
+    "topicCode": "M4",
+    "topicName": "Etika, Privasi, dan Keamanan Digital",
+    "q": "Seorang siswa menggunakan kombinasi tanggal lahir dan nama sekolahnya sebagai kata sandi yang sama untuk akun permainan daring, media sosial, dan pos elektronik utama. Risiko keamanan terbesar dari kebiasaan tersebut adalah ....",
+    "options": [
+      "aplikasi autentikator menolak menghasilkan kode OTP jika panjang kata sandi kurang dari dua puluh karakter",
+      "perangkat ponsel otomatis memblokir izin akses kamera dan mikrofon pada seluruh aplikasi terpasang",
+      "kata sandi yang menggunakan angka tanggal lahir tidak dapat disimpan di dalam brankas Password Manager",
+      "penyedia layanan internet akan memutus koneksi jaringan karena mendeteksi pola karakter yang berulang",
+      "jika satu akun mengalami kebocoran data, penyerang dapat memakai kata sandi yang sama untuk membobol akun penting lainnya"
+    ],
+    "answer": 4,
+    "explanation": "Penggunaan satu kata sandi yang sama di banyak layanan menyebabkan kebocoran pada satu akun mengancam keamanan email dan akun penting lainnya."
+  },
+  {
+    "id": 33,
+    "type": "mcq",
+    "difficulty": "Medium",
+    "points": 5,
+    "topicCode": "M4",
+    "topicName": "Etika, Privasi, dan Keamanan Digital",
+    "q": "Penggunaan Password Manager sangat dianjurkan untuk mengatasi keterbatasan manusia dalam mengingat puluhan kata sandi yang rumit dan berbeda. Cara kerja serta manfaat utama Password Manager adalah ....",
+    "options": [
+      "mengganti seluruh kata sandi akun menjadi kode sidik jari sehingga pengguna tidak lagi membutuhkan satu pun kata sandi",
+      "menyimpan kata sandi unik tiap akun di dalam brankas digital terenkripsi yang dilindungi satu master password serta membantu mengaudit kata sandi lemah/bocor",
+      "mengirimkan daftar seluruh kata sandi pengguna secara berkala ke surat elektronik cadangan dalam bentuk teks biasa",
+      "menyeragamkan kata sandi pada seluruh situs web agar pengguna cukup mengetik satu kombinasi yang sama di mana saja",
+      "mematikan kebutuhan autentikasi dua langkah karena seluruh pintu masuk akun telah dijaga oleh aplikasi pengelola"
+    ],
+    "answer": 1,
+    "explanation": "Password Manager menyimpan kata sandi unik tiap akun dalam brankas digital terenkripsi yang dikunci satu master password serta mengaudit kredensial lemah."
+  },
+  {
+    "id": 34,
+    "type": "mcq",
+    "difficulty": "Medium",
+    "points": 5,
+    "topicCode": "M4",
+    "topicName": "Etika, Privasi, dan Keamanan Digital",
+    "q": "Dalam penerapan Autentikasi Dua Langkah (2FA), pengguna dapat memilih pengiriman kode OTP melalui SMS atau menggunakan aplikasi autentikator seperti Google/Microsoft Authenticator. Keunggulan utama penggunaan aplikasi autentikator dibandingkan kode OTP berbasis SMS adalah ....",
+    "options": [
+      "kode pada aplikasi autentikator bersifat tetap seumur hidup sehingga tidak pernah berubah setiap waktu",
+      "aplikasi autentikator memperbolehkan pengguna membagikan kode verifikasi kepada petugas layanan pelanggan",
+      "aplikasi autentikator secara otomatis menyinkronkan kata sandi akun ke seluruh perangkat publik",
+      "kode verifikasi sementara dihasilkan langsung di dalam aplikasi perangkat tanpa bergantung pada jaringan SMS yang rentan intersepsi",
+      "pengguna tidak perlu memasukkan kata sandi utama saat melakukan login dari perangkat baru yang asing"
+    ],
+    "answer": 3,
+    "explanation": "Aplikasi autentikator menghasilkan kode sementara secara lokal di perangkat tanpa bergantung pada jalur SMS yang rentan intersepsi atau rekayasa sosial."
+  },
+  {
+    "id": 35,
+    "type": "mcq",
+    "difficulty": "Medium",
+    "points": 5,
+    "topicCode": "M4",
+    "topicName": "Etika, Privasi, dan Keamanan Digital",
+    "q": "Akun media sosial milik Raka sudah dilindungi dengan kata sandi 16 karakter yang unik serta autentikasi dua langkah (2FA) sehingga peretas tidak dapat masuk ke akunnya. Namun, Raka mengatur profilnya menjadi publik dan rutin mengunggah lokasi real-time rumah serta jadwal hariannya. Kondisi Raka menunjukkan bahwa ....",
+    "options": [
+      "aspek keamanan digital akunnya sudah kuat dalam mencegah akses tanpa izin, tetapi aspek privasi digital tetap lemah karena data pribadi terbuka bagi publik",
+      "aspek privasi digital akunnya telah terjaga sempurna, tetapi aspek keamanan digital gagal karena fitur lokasi diaktifkan",
+      "pengaktifan 2FA secara otomatis menyembunyikan seluruh unggahan foto dan informasi lokasi dari pengguna yang belum berteman",
+      "keamanan dan privasi digital merupakan dua istilah identik sehingga penguatan kata sandi otomatis melindungi seluruh data diri",
+      "data lokasi dan alamat rumah tidak termasuk kategori informasi pribadi selama tidak disertai nomor identitas kependudukan"
+    ],
+    "answer": 0,
+    "explanation": "Keamanan digital mencegah akses masuk tanpa izin, sedangkan privasi digital mengatur kendali atas informasi pribadi apa yang boleh diketahui publik."
+  },
+  {
+    "id": 36,
+    "type": "mcq",
+    "difficulty": "Medium",
+    "points": 5,
+    "topicCode": "M4",
+    "topicName": "Etika, Privasi, dan Keamanan Digital",
+    "q": "Sebuah aplikasi kalkulator sederhana yang bekerja secara luring meminta izin akses (permissions) terhadap daftar kontak, mikrofon, dan lokasi perangkat secara terus-menerus saat dipasang. Langkah paling bijak yang sesuai dengan prinsip pengelolaan izin aplikasi adalah ....",
+    "options": [
+      "menyetujui seluruh izin agar aplikasi dapat menghitung operasi matematika dengan tingkat akurasi lebih tinggi",
+      "memberikan izin akses kontak dan lokasi saja sambil tetap membiarkan akses mikrofon aktif di latar belakang",
+      "menolak seluruh izin akses yang tidak relevan dengan fungsi utama aplikasi dan memeriksa ulang pengaturan izin ponsel",
+      "membagikan kode OTP akun Google agar aplikasi kalkulator dapat mencadangkan riwayat perhitungan ke awan",
+      "tetap menyetujui semua izin dengan syarat akun media sosial pengguna diubah menjadi mode privat"
+    ],
+    "answer": 2,
+    "explanation": "Aplikasi hanya boleh diberi izin akses yang relevan dengan fungsi utamanya; izin kontak, mikrofon, dan lokasi pada kalkulator luring harus ditolak."
+  },
+  {
+    "id": 37,
+    "type": "mcq",
+    "difficulty": "Medium",
+    "points": 5,
+    "topicCode": "M4",
+    "topicName": "Etika, Privasi, dan Keamanan Digital",
+    "q": "Kamu menerima notifikasi peringatan resmi bahwa akun media sosialmu baru saja diakses dari perangkat dan kota yang tidak dikenal. Urutan langkah pemulihan pertama yang paling tepat dan aman dilakukan adalah ....",
+    "options": [
+      "mengklik tautan pemulihan yang dikirim melalui pesan singkat mencurigakan lalu memasukkan kode OTP",
+      "membuka aplikasi atau situs resmi dari perangkat tepercaya, mengamankan email utama dan mengganti kata sandi, lalu mengeluarkan semua sesi perangkat asing",
+      "segera menghapus aplikasi media sosial dari ponsel tanpa mengubah kata sandi maupun memeriksa perangkat yang masih login",
+      "membalas pesan notifikasi dengan menanyakan identitas pemilik perangkat asing yang sedang mengakses akun",
+      "membuat akun baru menggunakan kata sandi yang sama persis dengan akun lama agar mudah diingat kembali"
+    ],
+    "answer": 1,
+    "explanation": "Pemulihan akun dimulai dari aplikasi/situs resmi di perangkat tepercaya dengan mengamankan email utama, mengganti kata sandi, dan memutus sesi perangkat asing."
+  },
+  {
+    "id": 38,
+    "type": "mcq",
+    "difficulty": "Medium",
+    "points": 5,
+    "topicCode": "M4",
+    "topicName": "Etika, Privasi, dan Keamanan Digital",
+    "q": "Saat membuka kolom komentar suatu unggahan, Dina menemukan serangan penghinaan berkelanjutan dan penyebaran data pribadi (doxing) yang ditujukan kepada seorang siswa. Sikap beretika dan aman yang seharusnya diambil Dina adalah ....",
+    "options": [
+      "membagikan ulang unggahan tersebut ke akun pribadinya agar semakin banyak orang mengetahui identitas pelaku",
+      "membalas komentar pelaku dengan kata-kata kasar serupa untuk membela korban di kolom publik",
+      "mengunduh data pribadi korban yang tersebar untuk disimpan sebagai koleksi pribadi di perangkatnya",
+      "mengabaikan kejadian tersebut tanpa melakukan pelaporan karena perundungan daring bukan pelanggaran aturan platform",
+      "tidak ikut menyebarkan konten, menyimpan bukti seperlunya, memblokir dan melaporkan akun pelaku, serta meminta bantuan orang dewasa tepercaya"
+    ],
+    "answer": 4,
+    "explanation": "Penanganan konten berisiko dan perundungan siber meliputi: tidak menyebarkan ulang, menyimpan bukti seperlunya, memblokir/melaporkan, serta melapor ke orang dewasa tepercaya."
+  },
+  {
+    "id": 39,
+    "type": "mcq",
+    "difficulty": "Medium",
+    "points": 5,
+    "topicCode": "M4",
+    "topicName": "Etika, Privasi, dan Keamanan Digital",
+    "q": "Ketika mulai menerapkan perlindungan keamanan berlapis pada seluruh akun digital yang dimiliki, pengguna sangat disarankan memprioritaskan pengaktifan 2FA pada akun email utama terlebih dahulu. Alasan strategis di balik prioritas ini adalah ....",
+    "options": [
+      "akun email utama sering digunakan sebagai jalur pemulihan kata sandi dan verifikasi keamanan bagi berbagai akun digital lainnya",
+      "layanan email merupakan satu-satunya platform yang tidak dapat dilindungi menggunakan Password Manager",
+      "pengaktifan 2FA pada email otomatis mengaktifkan 2FA pada seluruh aplikasi permainan dan media sosial tanpa pengaturan tambahan",
+      "peretas hanya mengincar akun surat elektronik dan tidak pernah menyerang akun media sosial maupun perbankan",
+      "kode OTP yang dikirim ke surat elektronik memiliki masa berlaku permanen sehingga lebih mudah dicatat"
+    ],
+    "answer": 0,
+    "explanation": "Email utama diprioritaskan karena umumnya berperan sebagai akun pemulihan kata sandi dan pusat verifikasi bagi berbagai layanan digital lainnya."
+  },
+  {
+    "id": 40,
+    "type": "mcq",
+    "difficulty": "Medium",
+    "points": 5,
+    "topicCode": "M4",
+    "topicName": "Etika, Privasi, dan Keamanan Digital",
+    "q": "Pada suatu malam, ponsel Arman tiba-tiba menerima dua pesan SMS berisi kode OTP resmi dari platform media sosial padahal Arman sedang tidak mencoba masuk ke akunnya. Analisis paling tepat terhadap fenomena ini adalah ....",
+    "options": [
+      "sistem operator seluler mengalami gangguan acak yang sering mengirimkan kode keamanan ke nomor yang salah",
+      "fitur Password Manager di ponsel Arman sedang memperbarui kata sandi akun secara otomatis di latar belakang",
+      "akun Arman telah sepenuhnya aman sehingga kode OTP dikirim sebagai tanda penghargaan keamanan bulanan",
+      "pihak lain telah berhasil mengetahui kata sandi akun Arman dan sedang berupaya melewati tahap verifikasi kedua (2FA)",
+      "Arman harus segera mengirimkan kode OTP tersebut ke layanan bantuan agar sesi login asing dapat dibatalkan"
+    ],
+    "answer": 3,
+    "explanation": "Kode OTP yang muncul tanpa diminta menandakan pihak lain telah mengetahui kata sandi akun dan sedang mencoba melewati autentikasi langkah kedua."
+  },
+  {
+    "id": 41,
+    "type": "mcq",
+    "difficulty": "Medium",
+    "points": 5,
+    "topicCode": "M5",
+    "topicName": "Infrastruktur Jaringan Komputer & Keamanan Siber",
+    "q": "Sebuah bank nasional membangun jaringan komunikasi data yang menghubungkan seluruh kantor cabang pembantu di dalam satu wilayah kota metropolitan agar transaksi nasabah terintegrasi secara real-time. Klasifikasi skala jaringan, topologi umum, dan media kabel utama yang paling sesuai untuk infrastruktur tersebut adalah ....",
+    "options": [
+      "PAN (Personal Area Network) dengan topologi Point-to-Point menggunakan gelombang Bluetooth",
+      "LAN (Local Area Network) dengan topologi Bus menggunakan kabel Koaksial tunggal",
+      "MAN (Metropolitan Area Network) dengan topologi Mesh atau Star menggunakan kabel Fiber Optik",
+      "WAN (Wide Area Network) dengan topologi Ring menggunakan kabel UTP tanpa pelindung",
+      "PAN (Personal Area Network) dengan topologi Tree menggunakan jaringan seluler 4G"
+    ],
+    "answer": 2,
+    "explanation": "Jaringan yang menghubungkan beberapa gedung dalam satu kota termasuk skala MAN dengan topologi Mesh atau Star serta media kabel Fiber Optik."
+  },
+  {
+    "id": 42,
+    "type": "mcq",
+    "difficulty": "Medium",
+    "points": 5,
+    "topicCode": "M5",
+    "topicName": "Infrastruktur Jaringan Komputer & Keamanan Siber",
+    "q": "Laboratorium komputer sekolah mengalami penurunan kinerja jaringan lokal karena perangkat lama meneruskan setiap paket data ke seluruh komputer secara acak (broadcast). Teknisi mengganti perangkat penghubung tersebut dengan perangkat yang mampu membaca alamat tujuan spesifik tiap komputer. Perbandingan perangkat lama dan perangkat pengganti tersebut adalah ....",
+    "options": [
+      "mengganti Router dengan Modem agar sinyal analog berubah menjadi pulsa cahaya",
+      "mengganti Hub dengan Switch sehingga pengiriman data dalam LAN terarah ke alamat spesifik",
+      "mengganti Switch dengan Access Point agar seluruh komputer kabel terputus dari peladen",
+      "mengganti Modem dengan Hub untuk memperluas jangkauan gelombang radio Wi-Fi antar-gedung",
+      "mengganti Access Point dengan Router untuk menerjemahkan nama domain menjadi alamat IP"
+    ],
+    "answer": 1,
+    "explanation": "Hub mengirim paket data secara acak ke seluruh port (broadcast), sedangkan Switch meneruskan data secara terarah berdasarkan alamat spesifik tujuan. No. Materi Kunci Konsep Kunci & Dasar Pembahasan"
+  },
+  {
+    "id": 43,
+    "type": "mcq",
+    "difficulty": "Medium",
+    "points": 5,
+    "topicCode": "M5",
+    "topicName": "Infrastruktur Jaringan Komputer & Keamanan Siber",
+    "q": "Dalam perancangan jaringan ruangan, topologi Star jauh lebih banyak dipilih oleh sekolah dibandingkan topologi Ring maupun Bus. Analisis keandalan yang mendasari pemilihan topologi Star tersebut adalah ....",
+    "options": [
+      "pada topologi Star setiap komputer terhubung langsung ke semua komputer lain sehingga tidak membutuhkan perangkat pusat",
+      "pada topologi Bus kerusakan satu unit komputer klien otomatis memutus seluruh komunikasi antar- komputer lainnya",
+      "pada topologi Ring data mengalir dua arah sehingga kerusakan satu simpul tidak memengaruhi simpul lainnya",
+      "pada topologi Star biaya kabel lebih murah daripada Bus karena hanya memakai satu jalur kabel lurus utama",
+      "pada topologi Ring kerusakan satu simpul mengganggu seluruh aliran melingkar, sedangkan pada Star kerusakan satu cabang tidak mematikan perangkat lain"
+    ],
+    "answer": 4,
+    "explanation": "Pada topologi Ring kerusakan satu simpul mengganggu aliran melingkar seluruh jaringan, sedangkan pada Star kerusakan satu cabang tidak mematikan komputer lain."
+  },
+  {
+    "id": 44,
+    "type": "mcq",
+    "difficulty": "Medium",
+    "points": 5,
+    "topicCode": "M5",
+    "topicName": "Infrastruktur Jaringan Komputer & Keamanan Siber",
+    "q": "Sebuah kawasan industri membutuhkan jalur komunikasi data antar-gedung sejauh 1,5 kilometer yang melewati area mesin-mesin listrik bertegangan tinggi dengan medan elektromagnetik kuat. Media transmisi kabel yang paling tepat dipilih agar data tetap cepat dan bebas gangguan adalah ....",
+    "options": [
+      "kabel Fiber Optik karena mentransmisikan data menggunakan pulsa cahaya melalui serat kaca sehingga kebal interferensi elektromagnetik",
+      "kabel UTP (Unshielded Twisted Pair) karena tidak memiliki pelindung logam sehingga lebih ringan ditarik jarak jauh",
+      "kabel Koaksial televisi karena konduktor tembaga tunggalnya tidak terpengaruh medan magnet industri",
+      "gelombang Bluetooth karena mampu menembus dinding beton pabrik hingga jarak beberapa kilometer",
+      "kabel UTP tanpa konektor RJ-45 agar sinyal listrik mengalir langsung tanpa hambatan"
+    ],
+    "answer": 0,
+    "explanation": "Kabel Fiber Optik mengirimkan data melalui pulsa cahaya dalam serat kaca sehingga kebal terhadap gangguan elektromagnetik dan andal untuk jarak jauh."
+  },
+  {
+    "id": 45,
+    "type": "mcq",
+    "difficulty": "Medium",
+    "points": 5,
+    "topicCode": "M5",
+    "topicName": "Infrastruktur Jaringan Komputer & Keamanan Siber",
+    "q": "Ketika siswa mengetikkan alamat www.sekolah.com di peramban, muncul pesan galat bahwa alamat situs tidak dapat ditemukan. Namun, ketika siswa mengetikkan langsung deretan angka 142.250.190.46, halaman situs web berhasil terbuka dengan normal. Komponen sistem navigasi internet yang sedang mengalami gangguan adalah ....",
+    "options": [
+      "kartu jaringan (NIC) pada komputer klien",
+      "kabel transmisi Fiber Optik bawah laut",
+      "peramban web yang tidak mendukung tampilan grafis",
+      "peladen DNS (Domain Name System) yang menerjemahkan nama domain ke alamat IP",
+      "perangkat Access Point yang memancarkan sinyal Wi-Fi ruangan"
+    ],
+    "answer": 3,
+    "explanation": "Situs tetap terbuka via alamat IP tetapi gagal via nama domain menunjukkan gangguan pada DNS (Domain Name System) sebagai penerjemah nama ke IP."
+  },
+  {
+    "id": 46,
+    "type": "mcq",
+    "difficulty": "Medium",
+    "points": 5,
+    "topicCode": "M5",
+    "topicName": "Infrastruktur Jaringan Komputer & Keamanan Siber",
+    "q": "Seseorang mengakses akun perbankan dan surel pribadinya melalui jaringan Wi-Fi publik gratis di kafe tanpa pengamanan enkripsi. Di tempat yang sama, pelaku kejahatan siber menjalankan perangkat lunak untuk memantau dan menyadap lalu lintas paket data yang melintas di udara secara diam-diam. Jenis ancaman jaringan yang terjadi pada kasus ini adalah ....",
+    "options": [
+      "Phishing",
+      "Ransomware",
+      "Sniffing",
+      "Indexing",
+      "Broadcasting"
+    ],
+    "answer": 2,
+    "explanation": "Sniffing adalah tindakan memantau atau menyadap lalu lintas paket data yang lewat pada jaringan secara diam-diam untuk mencegat informasi sensitif."
+  },
+  {
+    "id": 47,
+    "type": "mcq",
+    "difficulty": "Medium",
+    "points": 5,
+    "topicCode": "M5",
+    "topicName": "Infrastruktur Jaringan Komputer & Keamanan Siber",
+    "q": "Tepat pada hari pelaksanaan ujian akhir semester daring, peladen situs ujian sekolah dibanjiri jutaan permintaan akses palsu hingga lumpuh (down) sehingga seluruh siswa yang berhak tidak dapat masuk untuk mengerjakan soal. Pilar utama keamanan jaringan yang dilanggar dalam insiden tersebut adalah ....",
+    "options": [
+      "Confidentiality (Kerahasiaan)",
+      "Availability (Ketersediaan)",
+      "Integrity (Integritas)",
+      "Authentication (Autentikasi)",
+      "Attribution (Atribusi)"
+    ],
+    "answer": 1,
+    "explanation": "Pilar Availability (Ketersediaan) menjamin jaringan dan layanan selalu siap diakses oleh pengguna yang berhak pada saat diperlukan seperti waktu ujian."
+  },
+  {
+    "id": 48,
+    "type": "mcq",
+    "difficulty": "Medium",
+    "points": 5,
+    "topicCode": "M5",
+    "topicName": "Infrastruktur Jaringan Komputer & Keamanan Siber",
+    "q": "Kabel UTP dan STP sama-sama termasuk jenis kabel Twisted Pair yang digunakan pada jaringan lokal. Persamaan standar konektor serta perbedaan struktur fisik yang paling tepat di antara keduanya adalah ....",
+    "options": [
+      "UTP memakai konektor RJ-11 dan berinti serat kaca, sedangkan STP memakai konektor RJ-45 dan berinti tembaga",
+      "UTP memiliki anyaman pelindung logam tebal, sedangkan STP sama sekali tidak memiliki lapisan isolator luar",
+      "UTP digunakan khusus untuk jaringan antar-benua dasar laut, sedangkan STP digunakan untuk koneksi Bluetooth pribadi",
+      "UTP mentransmisikan gelombang radio nirkabel, sedangkan STP mentransmisikan pulsa cahaya laser",
+      "keduanya memakai konektor RJ-45, namun STP memiliki lapisan foil/anyaman logam pelindung gangguan elektromagnetik yang memerlukan pembumian"
+    ],
+    "answer": 4,
+    "explanation": "Kabel UTP dan STP sama-sama memakai konektor RJ-45, tetapi STP dilengkapi pelindung foil/anyaman logam pelindung elektromagnetik yang membutuhkan pembumian (grounding)."
+  },
+  {
+    "id": 49,
+    "type": "mcq",
+    "difficulty": "Medium",
+    "points": 5,
+    "topicCode": "M5",
+    "topicName": "Infrastruktur Jaringan Komputer & Keamanan Siber",
+    "q": "Dalam merancang ruang laboratorium ujian berbasis komputer yang menuntut kestabilan koneksi tinggi bagi 40 komputer secara serentak, jaringan kabel (wired) lebih diutamakan daripada nirkabel (wireless) karena ....",
+    "options": [
+      "jalur transmisi fisik kabel menawarkan kecepatan dan kestabilan koneksi yang lebih konsisten dibandingkan gelombang radio",
+      "jaringan nirkabel tidak mampu menghubungkan lebih dari dua perangkat ke dalam satu peladen lokal",
+      "jaringan kabel memungkinkan pengguna memindahkan posisi meja komputer secara bebas tanpa batasan panjang jalur",
+      "komputer meja di laboratorium tidak memiliki antarmuka kartu jaringan untuk menerima sinyal nirkabel",
+      "penggunaan kabel secara otomatis mengenkripsi seluruh kata sandi pengguna tanpa memerlukan konfigurasi keamanan"
+    ],
+    "answer": 0,
+    "explanation": "Jaringan kabel unggul dalam hal kecepatan dan kestabilan transmisi dibandingkan jaringan nirkabel yang lebih mengutamakan fleksibilitas mobilitas."
+  },
+  {
+    "id": 50,
+    "type": "mcq",
+    "difficulty": "Medium",
+    "points": 5,
+    "topicCode": "M5",
+    "topicName": "Infrastruktur Jaringan Komputer & Keamanan Siber",
+    "q": "Agar jaringan LAN di kantor dapat terhubung ke penyedia layanan internet (ISP) sekaligus menyediakan akses Wi-Fi bagi ponsel karyawan, digunakan tiga perangkat: Modem, Router, dan Access Point. Rangkaian fungsi masing-masing perangkat secara berurutan adalah ....",
+    "options": [
+      "memancarkan sinyal Wi-Fi, menerjemahkan sinyal digital-analog, dan mengirim data secara broadcast ke semua port",
+      "menentukan jalur antar-jaringan, memancarkan gelombang Bluetooth, dan menyimpan basis data karyawan",
+      "menghubungkan kabel UTP dalam satu ruangan, menerjemahkan nama domain ke IP, dan memblokir serangan siber",
+      "menerjemahkan sinyal digital-analog ke ISP, menentukan jalur penghubung antar-jaringan berbeda, dan memancarkan sinyal Wi-Fi ke perangkat nirkabel",
+      "mengirim data berdasarkan alamat MAC spesifik, mengonversi pulsa cahaya ke listrik, dan mengatur topologi Ring"
+    ],
+    "answer": 3,
+    "explanation": "Modem menerjemahkan sinyal digital-analog ke ISP, Router menentukan rute antar- jaringan berbeda, dan Access Point memancarkan sinyal Wi-Fi ke klien nirkabel."
+  },
+  {
+    "id": 51,
+    "type": "mcq",
+    "difficulty": "Medium",
+    "points": 5,
+    "topicCode": "M6",
+    "topicName": "Aplikasi Perkantoran (MS Word, Mail Merge, & MS Excel)",
+    "q": "Seorang siswa menyusun laporan penelitian sebanyak 12 halaman di Microsoft Word dengan orientasi kertas Portrait. Pada halaman ke-6 terdapat tabel rekapitulasi data yang sangat lebar sehingga hanya muat jika ditampilkan dalam posisi Landscape, sementara halaman 1–5 dan 7–12 harus tetap Portrait. Pengaturan paling tepat untuk melakukan hal tersebut adalah ....",
+    "options": [
+      "menekan tombol Page Break biasa di awal halaman ke-6 lalu mengubah Orientation menjadi Landscape",
+      "menyisipkan Section Break (Next Page) sebelum dan sesudah halaman ke-6 lalu mengubah Orientation khusus pada bagian tersebut menjadi Landscape",
+      "mengecilkan ukuran margin kiri dan kanan seluruh dokumen menjadi nol sentimeter melalui menu Home",
+      "menggunakan fitur Columns (Two Columns) pada halaman ke-6 agar tabel otomatis berputar 90 derajat",
+      "menyisipkan Line Break berulang kali di atas tabel hingga posisi kertas pada halaman ke-6 melebar otomatis"
+    ],
+    "answer": 1,
+    "explanation": "Section Break (Next Page) memisahkan pengaturan tata letak halaman sehingga orientasi Landscape dapat diterapkan khusus pada satu halaman saja."
+  },
+  {
+    "id": 52,
+    "type": "mcq",
+    "difficulty": "Medium",
+    "points": 5,
+    "topicCode": "M6",
+    "topicName": "Aplikasi Perkantoran (MS Word, Mail Merge, & MS Excel)",
+    "q": "Ketika seorang penulis mencoba membuat daftar isi otomatis melalui tab References → Table of Contents di Microsoft Word, muncul pesan peringatan bahwa tidak ada entri daftar isi yang ditemukan meskipun seluruh judul bab sudah ditebalkan dan diperbesar ukuran hurufnya secara manual. Penyebab utama masalah tersebut adalah ....",
+    "options": [
+      "nomor halaman belum ditempatkan di bagian atas kertas (Header) menggunakan rata tengah",
+      "dokumen belum disimpan dalam format ekstensi .pdf sebelum daftar isi dibuat",
+      "jarak spasi antarbaris di seluruh dokumen masih menggunakan pengaturan bawaan Single (1.0)",
+      "judul bab dan subbab belum diformat menggunakan gaya struktur bawaan seperti Heading 1 dan Heading 2",
+      "fitur Track Changes pada tab Review dalam keadaan tidak aktif saat penulis mengetik judul bab"
+    ],
+    "answer": 3,
+    "explanation": "Fitur daftar isi otomatis di Word memindai paragraf yang telah diberi gaya hierarki bawaan seperti Heading 1 dan Heading 2, bukan teks tebal manual."
+  },
+  {
+    "id": 53,
+    "type": "mcq",
+    "difficulty": "Medium",
+    "points": 5,
+    "topicCode": "M6",
+    "topicName": "Aplikasi Perkantoran (MS Word, Mail Merge, & MS Excel)",
+    "q": "Dalam penulisan daftar pustaka karya ilmiah di Microsoft Word, baris pertama setiap sumber rujukan diletakkan rata di margin kiri, sedangkan baris kedua dan baris-baris berikutnya menjorok masuk ke dalam sejauh 1,27 cm secara seragam. Pengaturan paragraf yang digunakan untuk menghasilkan tampilan tersebut adalah ....",
+    "options": [
+      "Hanging Indent",
+      "First Line Indent",
+      "Right Indent",
+      "Justify Alignment",
+      "Line Spacing Before"
+    ],
+    "answer": 0,
+    "explanation": "Hanging Indent membuat baris pertama paragraf tetap rata kiri sementara baris kedua dan seterusnya menjorok ke dalam secara seragam."
+  },
+  {
+    "id": 54,
+    "type": "mcq",
+    "difficulty": "Medium",
+    "points": 5,
+    "topicCode": "M6",
+    "topicName": "Aplikasi Perkantoran (MS Word, Mail Merge, & MS Excel)",
+    "q": "Panitia ujian sekolah ingin mencetak 350 kartu peserta ujian yang tata letaknya seragam, tetapi memuat nama, nomor peserta, dan ruang ujian berbeda untuk setiap siswa menggunakan fitur Mail Merge di Microsoft Word. Dua komponen utama yang wajib dihubungkan dalam proses tersebut adalah ....",
+    "options": [
+      "Table of Contents sebagai kerangka kartu dan SmartArt sebagai penyimpanan daftar nama siswa",
+      "Header & Footer sebagai templat utama dan Endnote sebagai sumber basis data nomor ujian",
+      "Main Document yang berisi kerangka surat serta Merge Fields, dan Data Source yang berisi tabel data terstruktur",
+      "Macro Script sebagai pengatur margin kertas dan Footnote sebagai penghubung kolom lembar kerja",
+      "Cross-reference sebagai dokumen induk dan Bookmark sebagai berkas pencetak kartu otomatis"
+    ],
+    "answer": 2,
+    "explanation": "Mail Merge memadukan Main Document (kerangka surat dan Merge Fields) dengan Data Source (sumber data penerima berbentuk tabel terstruktur)."
+  },
+  {
+    "id": 55,
+    "type": "mcq",
+    "difficulty": "Medium",
+    "points": 5,
+    "topicCode": "M6",
+    "topicName": "Aplikasi Perkantoran (MS Word, Mail Merge, & MS Excel)",
+    "q": "Berkas sumber data (Data Source) Excel berisi 360 baris data siswa dari kelas X-A hingga X-F telah dihubungkan ke dokumen surat panggilan orang tua di Microsoft Word. Jika wali kelas X-A hanya ingin mencetak surat khusus untuk siswa kelas X-A tanpa menghapus data kelas lain dari berkas Excel asli, langkah paling efisien pada tab Mailings adalah ....",
+    "options": [
+      "menekan Preview Results lalu menyalin teks satu per satu ke dokumen baru secara manual",
+      "menghapus kode Merge Field kelas pada Main Document sebelum menekan tombol cetak",
+      "menggunakan perintah Select Recipients → Type a New List untuk mengetik ulang seluruh nama siswa X-A",
+      "memilih Highlight Merge Fields agar pencetak hanya memproses baris teks yang diberi warna latar",
+      "membuka Edit Recipient List lalu menerapkan Filter pada kolom Kelas untuk memilih X-A sebelum menjalankan Finish & Merge"
+    ],
+    "answer": 4,
+    "explanation": "Menu Edit Recipient List → Filter memungkinkan penyaringan penerima berdasarkan kriteria tertentu (seperti Kelas X-A) tanpa mengubah berkas sumber Excel."
+  },
+  {
+    "id": 56,
+    "type": "mcq",
+    "difficulty": "Medium",
+    "points": 5,
+    "topicCode": "M6",
+    "topicName": "Aplikasi Perkantoran (MS Word, Mail Merge, & MS Excel)",
+    "q": "Saat menghubungkan tabel Excel ke Mail Merge di Word, daftar Insert Merge Field justru menampilkan nama kolom generik seperti F1, F2, dan F3 alih-alih Nama_Siswa, NISN, dan Kelas. Kesalahan struktur pada lembar kerja Excel yang memicu kondisi tersebut adalah ....",
+    "options": [
+      "ukuran huruf judul kolom di Excel menggunakan jenis huruf yang berbeda dengan dokumen Word",
+      "terdapat baris judul laporan dengan sel gabungan (merged cells) di atas baris nama kolom sehingga baris pertama tidak berisi header",
+      "jumlah baris data siswa di dalam lembar kerja Excel melebihi seratus baris dalam satu lembar",
+      "kolom nilai ujian di Excel diformat menggunakan tipe angka desimal dua angka di belakang koma",
+      "dokumen utama di Microsoft Word belum diberi nomor halaman pada bagian bawah kertas"
+    ],
+    "answer": 1,
+    "explanation": "Baris paling atas pada lembar kerja sumber data Excel harus langsung memuat nama kolom unik tanpa baris judul gabungan (merged cells) di atasnya."
+  },
+  {
+    "id": 57,
+    "type": "mcq",
+    "difficulty": "Medium",
+    "points": 5,
+    "topicCode": "M6",
+    "topicName": "Aplikasi Perkantoran (MS Word, Mail Merge, & MS Excel)",
+    "q": "Pada lembar kerja Microsoft Excel, nilai empat mata pelajaran seorang siswa berada pada sel C4, D4, E4, dan F4 dengan nilai berturut-turut 80, 90, (sel kosong karena belum ujian susulan), dan 70. Perbedaan hasil perhitungan antara rumus =AVERAGE(C4:F4) dengan kondisi jika sel E4 diisi angka 0 adalah ....",
+    "options": [
+      "keduanya menghasilkan nilai 60 karena fungsi AVERAGE selalu membagi total dengan jumlah sel dalam rentang",
+      "keduanya menghasilkan nilai 80 karena angka nol diperlakukan sama persis seperti sel kosong oleh Excel",
+      "saat kosong menghasilkan galat #DIV/0!, sedangkan saat diisi angka 0 menghasilkan nilai rata- rata 80",
+      "saat kosong menghasilkan 80 (total 240 dibagi 3 sel terisi), sedangkan saat diisi 0 menghasilkan 60 (total 240 dibagi 4 sel)",
+      "saat kosong menghasilkan 60, sedangkan saat diisi angka 0 menghasilkan 80 karena angka nol diabaikan"
+    ],
+    "answer": 3,
+    "explanation": "Fungsi =AVERAGE(C4:F4) mengabaikan sel kosong (240 ÷ 3 = 80), sedangkan sel bernilai 0 dihitung sebagai pembagi numerik (240 ÷ 4 = 60)."
+  },
+  {
+    "id": 58,
+    "type": "mcq",
+    "difficulty": "Medium",
+    "points": 5,
+    "topicCode": "M6",
+    "topicName": "Aplikasi Perkantoran (MS Word, Mail Merge, & MS Excel)",
+    "q": "Setiap siswa mengikuti 5 kali kuis harian yang nilainya tercatat pada sel B2 sampai F2. Guru menetapkan aturan bahwa nilai akhir kuis diambil dari rata-rata 4 nilai tertinggi saja dengan menggugurkan 1 nilai terendah masing-masing siswa. Penulisan rumus Excel yang paling tepat untuk menghitung nilai akhir tersebut adalah ....",
+    "options": [
+      "=(SUM(B2:F2)-MIN(B2:F2))/4",
+      "=(SUM(B2:F2)-MAX(B2:F2))/4",
+      "=AVERAGE(B2:F2)-MIN(B2:F2)",
+      "=(MAX(B2:F2)-MIN(B2:F2))/4",
+      "=SUM(B2:F2)/MIN(B2:F2)"
+    ],
+    "answer": 0,
+    "explanation": "Rumus =(SUM(B2:F2)-MIN(B2:F2))/4 menjumlahkan kelima skor, mengurangi satu skor terendah dengan MIN, lalu membagi sisanya dengan 4."
+  },
+  {
+    "id": 59,
+    "type": "mcq",
+    "difficulty": "Medium",
+    "points": 5,
+    "topicCode": "M6",
+    "topicName": "Aplikasi Perkantoran (MS Word, Mail Merge, & MS Excel)",
+    "q": "Untuk menghitung nilai rata-rata kelas pada sel B2 hingga B31, seorang siswa mengetikkan rumus =AVG(B2:B31) lalu menekan Enter. Hasil yang muncul pada sel tersebut beserta penyebabnya adalah ....",
+    "options": [
+      "muncul galat #VALUE! karena rentang sel berisi angka bulat tanpa tanda pemisah desimal",
+      "muncul galat #REF! karena jumlah sel yang dihitung melebihi batas maksimal fungsi statistik",
+      "muncul galat #NAME? karena Excel tidak mengenali nama fungsi AVG; sintaks yang benar adalah =AVERAGE(B2:B31)",
+      "muncul angka 0 karena Excel menganggap AVG sebagai teks label bukan perintah perhitungan",
+      "muncul hasil penjumlahan total karena Excel otomatis mengubah singkatan AVG menjadi fungsi SUM"
+    ],
+    "answer": 2,
+    "explanation": "Excel menghasilkan galat #NAME? jika pengguna menulis =AVG(...) karena nama fungsi rata-rata yang valid di Excel adalah =AVERAGE(...)."
+  },
+  {
+    "id": 60,
+    "type": "mcq",
+    "difficulty": "Medium",
+    "points": 5,
+    "topicCode": "M6",
+    "topicName": "Aplikasi Perkantoran (MS Word, Mail Merge, & MS Excel)",
+    "q": "Pada sebuah tabel rekapitulasi nilai, kolom B, C, dan D berisi nilai tugas semester ganjil, kolom E berisi nomor induk siswa (NISN), sedangkan kolom F, G, dan H berisi nilai tugas semester genap. Rumus Excel yang tepat untuk menjumlahkan seluruh nilai tugas ganjil dan genap pada baris ke-5 tanpa ikut menjumlahkan NISN di kolom E adalah ....",
+    "options": [
+      "=SUM(B5:H5)",
+      "=SUM(B5:H5)-AVERAGE(E5)",
+      "=MAX(B5:D5)+MIN(F5:H5)",
+      "=SUM(B5:D5:F5:H5)",
+      "=SUM(B5:D5; F5:H5)"
+    ],
+    "answer": 4,
+    "explanation": "Penggunaan pemisah argumen pada =SUM(B5:D5; F5:H5) menjumlahkan dua rentang terpisah sehingga kolom NISN di E5 tidak ikut terhitung."
+  }
+]

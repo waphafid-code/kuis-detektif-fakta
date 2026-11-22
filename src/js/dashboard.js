@@ -2112,6 +2112,9 @@ let currentExaminedAttemptType = 'remedial';
 
 function getQuestionsForRecord(record) {
     const modId = record ? (record.moduleId || (typeof normalizeModuleId === 'function' ? normalizeModuleId(record.moduleId, record.id, record.date) : '')) : '';
+    if (modId === 'modul_tryout_terpadu' && typeof window !== 'undefined' && Array.isArray(window.TRYOUT_TERPADU_BUILTIN_QUESTIONS) && window.TRYOUT_TERPADU_BUILTIN_QUESTIONS.length > 0) {
+        return window.TRYOUT_TERPADU_BUILTIN_QUESTIONS;
+    }
     if (modId === 'modul_jaringan_keamanan' && typeof window !== 'undefined' && Array.isArray(window.NETWORK_SECURITY_BUILTIN_QUESTIONS) && window.NETWORK_SECURITY_BUILTIN_QUESTIONS.length > 0) {
         return window.NETWORK_SECURITY_BUILTIN_QUESTIONS;
     }
@@ -2369,6 +2372,70 @@ function renderExaminedRecordView(record, attemptType = 'remedial') {
     if (countAllEl) countAllEl.textContent = detailedList.length;
     if (countWrongEl) countWrongEl.textContent = wrongCount;
     if (countCorrectEl) countCorrectEl.textContent = correctCount;
+
+    // 📊 Render Kartu Penguasaan Materi (Khusus Tryout Terpadu 60 Soal)
+    let tb = record.topicBreakdown;
+    if (!tb && (record.moduleId === 'modul_tryout_terpadu' || detailedList.length === 60)) {
+        const topicsMeta = {
+            M1: { code: 'M1', title: 'Literasi Digital & Ekosistem Periksa Fakta', icon: '🕵️' },
+            M2: { code: 'M2', title: 'Web Browser, Search Engine, & Manajemen Konten', icon: '🌐' },
+            M3: { code: 'M3', title: 'Digitalisasi Budaya, Profesi Informatika, & HKI', icon: '🏛️' },
+            M4: { code: 'M4', title: 'Etika, Privasi, dan Keamanan Digital', icon: '🛡️' },
+            M5: { code: 'M5', title: 'Infrastruktur Jaringan Komputer & Keamanan Siber', icon: '⚡' },
+            M6: { code: 'M6', title: 'Aplikasi Perkantoran (MS Word, Mail Merge, & MS Excel)', icon: '📊' }
+        };
+        tb = {};
+        Object.keys(topicsMeta).forEach(code => {
+            tb[code] = { ...topicsMeta[code], total: 0, correct: 0, score: 0 };
+        });
+        detailedList.forEach((item, idx) => {
+            const mCode = `M${Math.floor(idx / 10) + 1}`;
+            if (tb[mCode]) {
+                tb[mCode].total += 1;
+                if (item.isCorrect) tb[mCode].correct += 1;
+            }
+        });
+        Object.keys(tb).forEach(code => {
+            const item = tb[code];
+            item.score = item.total > 0 ? Math.round((item.correct / item.total) * 100) : 0;
+        });
+    }
+
+    const topicWrap = document.getElementById('sd-topic-breakdown-wrap');
+    if (topicWrap) {
+        if (tb && Object.keys(tb).length > 0) {
+            topicWrap.style.display = 'block';
+            let cardsHtml = `
+                <div style="background: rgba(99,102,241,0.06); border: 1px solid rgba(99,102,241,0.25); border-radius: 12px; padding: 10px 14px; margin-bottom: 10px;">
+                    <div style="font-size: 0.78rem; font-weight: 800; color: #a5b4fc; margin-bottom: 8px; display: flex; align-items: center; gap: 6px;">
+                        <span>🎯 Rekapitulasi Penguasaan per Materi (Tryout 60 Soal):</span>
+                    </div>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 8px;">
+            `;
+            Object.keys(tb).forEach(code => {
+                const item = tb[code];
+                const isItemPassed = item.score >= 80;
+                cardsHtml += `
+                    <div style="background: rgba(255,255,255,0.03); border: 1px solid ${isItemPassed ? 'rgba(16,185,129,0.3)' : 'rgba(244,63,94,0.3)'}; border-radius: 8px; padding: 8px 10px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                            <span style="font-weight: 800; font-size: 0.8rem; color: #e2e8f0;">${item.icon || '📌'} ${code}</span>
+                            <span style="font-weight: 800; font-size: 0.85rem; color: ${isItemPassed ? '#34d399' : '#fb7185'};">${item.score}/100</span>
+                        </div>
+                        <div style="font-size: 0.72rem; color: var(--text-muted); line-height: 1.2; margin-bottom: 4px;">${escapeHtml(item.title)}</div>
+                        <div style="font-size: 0.7rem; color: var(--text-secondary); display: flex; justify-content: space-between;">
+                            <span>Benar: ${item.correct}/${item.total}</span>
+                            <span style="font-weight: 700; color: ${isItemPassed ? '#34d399' : '#fb7185'};">${isItemPassed ? 'TUNTAS' : 'REMEDIAL'}</span>
+                        </div>
+                    </div>
+                `;
+            });
+            cardsHtml += '</div></div>';
+            topicWrap.innerHTML = cardsHtml;
+        } else {
+            topicWrap.style.display = 'none';
+            topicWrap.innerHTML = '';
+        }
+    }
 
     filterStudentDetail('all');
 }
@@ -3844,6 +3911,15 @@ function renderDashboard() {
                             ? `<span class="badge-attempts" title="Siswa ini telah mengerjakan ${item.attemptsCount} kali (Menampilkan nilai terbaik)">${item.attemptsCount}x Percobaan</span>` 
                             : '';
 
+                        let tryoutMiniChip = '';
+                        if (r.topicBreakdown) {
+                            const tb = r.topicBreakdown;
+                            const parts = Object.keys(tb).map(k => `${k}:${tb[k].score}`);
+                            tryoutMiniChip = `<div style="font-size: 0.65rem; color: #a5b4fc; font-family: var(--font-mono); margin-top: 3px;" title="Nilai per materi: ${Object.keys(tb).map(k => `${k} (${tb[k].title}): ${tb[k].score}`).join(' | ')}">${parts.join(' ')}</div>`;
+                        } else if (r.moduleId === 'modul_tryout_terpadu') {
+                            tryoutMiniChip = `<div style="font-size: 0.65rem; color: #a5b4fc; font-family: var(--font-mono); margin-top: 3px;">6 Materi (Klik Periksa)</div>`;
+                        }
+
                         tr.innerHTML = `
                             <td style="font-family: var(--font-mono); color: var(--text-muted);">${i + 1}</td>
                             <td style="font-weight: 700;">
@@ -3853,7 +3929,7 @@ function renderDashboard() {
                                 </div>
                             </td>
                             <td><span style="font-family: var(--font-mono); color: var(--accent); font-size: 0.85rem;">${escapeHtml(item.class)}</span></td>
-                            <td>${scoreDisplay}</td>
+                            <td>${scoreDisplay}${tryoutMiniChip}</td>
                             <td>${statusDisplay}</td>
                             <td style="font-family: var(--font-mono);">${r.correct !== undefined ? r.correct : '-'}/${r.total || 20}</td>
                             <td style="color: var(--text-muted); font-size: 0.85rem;">${escapeHtml(r.duration || '-')}</td>

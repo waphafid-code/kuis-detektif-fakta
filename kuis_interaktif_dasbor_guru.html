@@ -37,9 +37,9 @@
         }
     </script>
     <!-- QuizMaster Modern Design System & UI Styling -->
-    <link rel="stylesheet" href="css/style.css?v=20261122-v3045-demo-remedial-test">
+    <link rel="stylesheet" href="css/style.css?v=20261122-v3046-tryout-terpadu">
     <!-- Cyber Guardian Sentinel Protocol & Gemini Teacher AI Assistant Styling -->
-    <link rel="stylesheet" href="css/guardian_and_chatbot.css?v=20261122-v3045-demo-remedial-test">
+    <link rel="stylesheet" href="css/guardian_and_chatbot.css?v=20261122-v3046-tryout-terpadu">
 
 
 </head>
@@ -360,6 +360,7 @@
                 </label>
                 <select id="wa-remind-module" class="form-select-modern" onchange="updateWaReminderPreview()" style="width: 100%; font-size: 0.85rem; padding: 8px 12px;">
                     <option value="all">🌐 Semua Modul Aktif</option>
+                    <option value="modul_tryout_terpadu">🎯 Tryout Terpadu 60 Soal (6 Materi)</option>
                     <option value="modul_jaringan_keamanan">🛡️ Keamanan Jaringan &amp; Infrastruktur</option>
                     <option value="modul_detektif_fakta">🕵️ Detektif Fakta &amp; Validitas Data</option>
                     <option value="modul_hki_profesi_budaya">⚖️ Teknologi, Budaya, Profesi &amp; HKI</option>
@@ -724,6 +725,9 @@
             <!-- Filled via JS -->
         </div>
 
+        <!-- 🎯 Tryout 6-Topic Competency Breakdown Container -->
+        <div id="sd-topic-breakdown-wrap" style="display:none; flex-shrink: 0;"></div>
+
         <!-- Filter tabs: Semua (20), Salah (N), Benar (M) (Fixed Top) -->
         <div style="display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; flex-shrink: 0;">
             <button class="btn btn-secondary active access-mode-btn" id="sd-tab-all" onclick="filterStudentDetail('all')" style="padding: 6px 12px !important; font-size: 0.78rem !important;">
@@ -861,6 +865,7 @@
                         <span id="home-module-badge" class="module-badge-pill">20 Soal • Maks 100 Poin</span>
                     </label>
                     <select class="form-select" id="input-module" onchange="handleHomeModuleChange(true)">
+                        <option value="modul_tryout_terpadu">🎯 Tryout Terpadu Informatika Kelas X (60 Soal • 6 Materi Inti)</option>
                         <option value="modul_jaringan_keamanan" selected>🛡️ Penilaian Harian: Infrastruktur Jaringan &amp; Keamanan Digital (20 Soal)</option>
                         <option value="modul_hki_profesi_budaya">⚖️ Penilaian Harian: Teknologi Digital, Profesi Informatika, Budaya &amp; HKI (20 Soal)</option>
                         <option value="modul_etika_privasi_keamanan">🔒 Penilaian Harian: Etika, Privasi, dan Keamanan Digital (20 Soal)</option>
@@ -1680,7 +1685,8 @@
                     <option value="time_asc">⏳ Waktu (Terlama ➔ Terbaru)</option>
                 </select>
                 <select id="filter-module" onchange="selectModuleSegment(this.value)" class="form-select" style="max-width: 260px; font-size: 0.85rem;">
-                    <option value="all">📊 Komparasi 2 Modul (Lengkap)</option>
+                    <option value="all">📊 Komparasi Semua Modul</option>
+                    <option value="modul_tryout_terpadu">🎯 Tryout Terpadu 60 Soal (6 Materi)</option>
                     <option value="modul_jaringan_keamanan">🛡️ Modul Keamanan Jaringan Saja</option>
                     <option value="modul_detektif_fakta">🕵️ Modul Detektif Fakta Saja</option>
                 </select>
@@ -2226,29 +2232,29 @@
 <!-- ============================================================ -->
 <!-- 🧩 MODULAR JAVASCRIPT LIBRARIES & ENGINES                   -->
 <!-- ============================================================ -->
-<script src="js/student_roster.js?v=20261122-v3045-demo-remedial-test"></script>
-<script src="js/default_records.js?v=20261122-v3045-demo-remedial-test"></script>
-<script src="js/default_questions.js?v=20261122-v3045-demo-remedial-test"></script>
-<script src="js/doc_parser.js?v=20261122-v3045-demo-remedial-test"></script>
-<script src="js/ai_nemotron.js?v=20261122-v3045-demo-remedial-test"></script>
-<script src="js/quiz_manager.js?v=20261122-v3045-demo-remedial-test"></script>
-<script src="js/question_editor.js?v=20261122-v3045-demo-remedial-test"></script>
-<script src="js/firebase_sync.js?v=20261122-v3045-demo-remedial-test"></script>
-<script src="js/deviceTier.js?v=20261122-v3045-demo-remedial-test"></script>
-<script src="js/storage.js?v=20261122-v3045-demo-remedial-test"></script>
-<script src="js/audio.js?v=20261122-v3045-demo-remedial-test"></script>
-<script src="js/particles.js?v=20261122-v3045-demo-remedial-test"></script>
-<script src="js/quiz_engine.js?v=20261122-v3045-demo-remedial-test"></script>
-<script src="js/rapor_excel.js?v=20261122-v3045-demo-remedial-test"></script>
-<script src="js/dashboard.js?v=20261122-v3045-demo-remedial-test"></script>
-<script src="js/export_reports.js?v=20261122-v3045-demo-remedial-test"></script>
-<script src="js/ai_studio.js?v=20261122-v3045-demo-remedial-test"></script>
-<script src="js/diagnostics.js?v=20261122-v3045-demo-remedial-test"></script>
-<script src="js/learning_hub.js?v=20261122-v3045-demo-remedial-test"></script>
-<script src="js/mini_games.js?v=20261122-v3045-demo-remedial-test"></script>
-<script src="js/teacher_chatbot.js?v=20261122-v3045-demo-remedial-test"></script>
-<script src="js/cyber_guardian_game.js?v=20261122-v3045-demo-remedial-test"></script>
-<script src="js/app.js?v=20261122-v3045-demo-remedial-test"></script>
+<script src="js/student_roster.js?v=20261122-v3046-tryout-terpadu"></script>
+<script src="js/default_records.js?v=20261122-v3046-tryout-terpadu"></script>
+<script src="js/default_questions.js?v=20261122-v3046-tryout-terpadu"></script>
+<script src="js/doc_parser.js?v=20261122-v3046-tryout-terpadu"></script>
+<script src="js/ai_nemotron.js?v=20261122-v3046-tryout-terpadu"></script>
+<script src="js/quiz_manager.js?v=20261122-v3046-tryout-terpadu"></script>
+<script src="js/question_editor.js?v=20261122-v3046-tryout-terpadu"></script>
+<script src="js/firebase_sync.js?v=20261122-v3046-tryout-terpadu"></script>
+<script src="js/deviceTier.js?v=20261122-v3046-tryout-terpadu"></script>
+<script src="js/storage.js?v=20261122-v3046-tryout-terpadu"></script>
+<script src="js/audio.js?v=20261122-v3046-tryout-terpadu"></script>
+<script src="js/particles.js?v=20261122-v3046-tryout-terpadu"></script>
+<script src="js/quiz_engine.js?v=20261122-v3046-tryout-terpadu"></script>
+<script src="js/rapor_excel.js?v=20261122-v3046-tryout-terpadu"></script>
+<script src="js/dashboard.js?v=20261122-v3046-tryout-terpadu"></script>
+<script src="js/export_reports.js?v=20261122-v3046-tryout-terpadu"></script>
+<script src="js/ai_studio.js?v=20261122-v3046-tryout-terpadu"></script>
+<script src="js/diagnostics.js?v=20261122-v3046-tryout-terpadu"></script>
+<script src="js/learning_hub.js?v=20261122-v3046-tryout-terpadu"></script>
+<script src="js/mini_games.js?v=20261122-v3046-tryout-terpadu"></script>
+<script src="js/teacher_chatbot.js?v=20261122-v3046-tryout-terpadu"></script>
+<script src="js/cyber_guardian_game.js?v=20261122-v3046-tryout-terpadu"></script>
+<script src="js/app.js?v=20261122-v3046-tryout-terpadu"></script>
 
 </body>
 </html>
