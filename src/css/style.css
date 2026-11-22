@@ -8829,3 +8829,57 @@ body.dark-theme .modal-cheat-desc {
         min-width: 160px;
     }
 }
+
+/* ============================================================ */
+/* 🛡️ ADVANCED ANTI-CHEAT WATERMARK & SECURITY PROTECTION       */
+/* ============================================================ */
+.exam-security-watermark {
+    position: fixed;
+    top: -20vh;
+    left: -20vw;
+    width: 140vw;
+    height: 140vh;
+    pointer-events: none;
+    user-select: none;
+    -webkit-user-select: none;
+    z-index: 9999;
+    display: none;
+    flex-wrap: wrap;
+    align-content: space-around;
+    justify-content: space-around;
+    overflow: hidden;
+    opacity: 0.055;
+    transform: rotate(-16deg);
+}
+
+.watermark-item {
+    font-size: 1rem;
+    font-weight: 800;
+    letter-spacing: 2px;
+    color: #ef4444;
+    white-space: nowrap;
+    padding: 16px 24px;
+}
+
+/* 🖨️ ANTI-PRINT / EXPORT BLOCKER DALAM MODE UJIAN */
+@media print {
+    body.exam-mode-active,
+    body.exam-mode-active #screen-quiz,
+    #screen-quiz.active {
+        display: none !important;
+        visibility: hidden !important;
+    }
+    body.exam-mode-active::after {
+        content: "⚠️ DILARANG MENCETAK ATAU MENYIMPAN SOAL UJIAN DEMI INTEGRITAS ASESMEN!";
+        display: block !important;
+        visibility: visible !important;
+        position: fixed !important;
+        top: 35% !important;
+        left: 0 !important;
+        width: 100% !important;
+        font-size: 20pt !important;
+        color: #dc2626 !important;
+        text-align: center !important;
+        font-weight: 800 !important;
+    }
+}

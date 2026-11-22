@@ -326,6 +326,51 @@ function isCurrentStudentDemo() {
 }
 window.isCurrentStudentDemo = isCurrentStudentDemo;
 
+// 🔒 DYNAMIC SECURITY WATERMARK (ANTI-JOKI & ANTI-FOTO KAMERA HP LAIN)
+function renderExamWatermark() {
+    try {
+        if (typeof document === 'undefined') return;
+        let wm = document.getElementById('exam-security-watermark');
+        if (!wm) {
+            wm = document.createElement('div');
+            wm.id = 'exam-security-watermark';
+            wm.className = 'exam-security-watermark';
+            document.body.appendChild(wm);
+        }
+        const sName = (typeof studentName !== 'undefined' && studentName) 
+            ? studentName 
+            : ((typeof window !== 'undefined' && window.studentName) 
+                || (document.getElementById('display-name') && document.getElementById('display-name').textContent !== 'Siswa' ? document.getElementById('display-name').textContent : '') 
+                || (document.getElementById('input-name') ? document.getElementById('input-name').value : '') 
+                || 'PESERTA UJIAN');
+        const sClass = (typeof studentClass !== 'undefined' && studentClass) 
+            ? studentClass 
+            : ((typeof window !== 'undefined' && window.studentClass) 
+                || (document.getElementById('display-class') ? document.getElementById('display-class').textContent : '') 
+                || (document.getElementById('input-class') ? document.getElementById('input-class').value : '') 
+                || 'KELAS X');
+        const wmText = `🔒 ${sName} • ${sClass} • KUIS INFORMATIKA`;
+        let itemsHtml = '';
+        for (let i = 0; i < 36; i++) {
+            itemsHtml += `<span class="watermark-item">${wmText}</span>`;
+        }
+        wm.innerHTML = itemsHtml;
+        wm.style.display = 'flex';
+    } catch(e) {}
+}
+
+function removeExamWatermark() {
+    try {
+        if (typeof document === 'undefined') return;
+        const wm = document.getElementById('exam-security-watermark');
+        if (wm) {
+            wm.style.display = 'none';
+        }
+    } catch(e) {}
+}
+window.renderExamWatermark = renderExamWatermark;
+window.removeExamWatermark = removeExamWatermark;
+
 // 🖥️ FULLSCREEN LOCKDOWN UTILITIES & CONTROLLERS
 let fullscreenWarningTimer = null;
 let fullscreenWarningCountdownVal = 15;
@@ -524,6 +569,7 @@ function triggerCheatPenalty(reason = 'Kecurangan / Buka Tab Lain') {
     isCheatWarningActive = false;
     const warningModal = document.getElementById('cheat-warning-modal');
     if (warningModal) warningModal.classList.remove('active');
+    removeExamWatermark();
 
     stopTimer();
     stopBGM();
@@ -571,6 +617,7 @@ function triggerCheatPenalty(reason = 'Kecurangan / Buka Tab Lain') {
 function acknowledgeCheatPenalty() {
     clearFullscreenWarningCountdown();
     exitExamFullscreen();
+    removeExamWatermark();
     document.getElementById('cheat-modal').classList.remove('active');
     isCheatingTriggered = false;
     cheatStrikes = 0;
@@ -626,23 +673,60 @@ window.addEventListener('blur', () => {
     }, graceMs);
 });
 
-// 📱 DETEKSI SPLIT SCREEN / RESIZE ANOMALI SAAT UJIAN
-window.addEventListener('resize', () => {
+// 📱 DETEKSI SPLIT SCREEN / RESIZE ANOMALI SAAT UJIAN & DEVTOOLS DOCKED
+function checkScreenIntegrity() {
     if (!isQuizActive() || isCheatWarningActive || isQuizFinishing) return;
+    if (typeof isCurrentStudentDemo === 'function' && isCurrentStudentDemo()) return;
     try {
         const screenH = (window.screen && (window.screen.availHeight || window.screen.height)) || 800;
-        // Jika tinggi jendela browser menyusut drastis (< 55% tinggi layar HP dan bukan input form aktif)
-        if (isMobileOrTouchDevice() && window.innerHeight < screenH * 0.55) {
+        // 📱 HP / Mobile: Deteksi Layar Terbelah (Split Screen) jika tinggi berkurang < 65% dan bukan input form
+        if (isMobileOrTouchDevice() && window.innerHeight < screenH * 0.65) {
             const activeTag = document.activeElement ? (document.activeElement.tagName || '').toLowerCase() : '';
             if (activeTag !== 'input' && activeTag !== 'textarea') {
                 handleAntiCheatEvent('📱 Layar Terbelah (Split Screen) Terdeteksi');
+                return;
+            }
+        }
+        // 💻 Laptop / Desktop: Deteksi DevTools Docked (Inspeksi elemen samping/bawah)
+        if (!isMobileOrTouchDevice()) {
+            const widthDiff = window.outerWidth - window.innerWidth;
+            const heightDiff = window.outerHeight - window.innerHeight;
+            if (widthDiff > 160 || heightDiff > 160) {
+                handleAntiCheatEvent('🛠️ Developer Tools / Inspector Terdeteksi Terbuka');
+                return;
             }
         }
     } catch(e) {}
+}
+window.checkScreenIntegrity = checkScreenIntegrity;
+
+window.addEventListener('resize', () => {
+    if (!isQuizActive() || isCheatWarningActive || isQuizFinishing) return;
+    checkScreenIntegrity();
 });
 
 window.addEventListener('focus', () => {
     clearBlurGraceTimer();
+});
+
+// 📱 GESTURE TANGKAPAN LAYAR 3 JARI (PADA SMARTPHONE ANDROID)
+document.addEventListener('touchstart', (e) => {
+    if (!isQuizActive() || isCheatWarningActive || isQuizFinishing) return;
+    if (typeof isCurrentStudentDemo === 'function' && isCurrentStudentDemo()) return;
+    if (e.touches && e.touches.length >= 3) {
+        try { e.preventDefault(); } catch(err) {}
+        try { e.stopPropagation(); } catch(err) {}
+        handleAntiCheatEvent('📸 Gesture Usap 3 Jari (Screenshot Ponsel) Terdeteksi');
+    }
+}, { passive: false });
+
+// 🖨️ DETEKSI PERCOBAAN PRINT / CETAK HALAMAN
+window.addEventListener('beforeprint', (e) => {
+    if (isQuizActive()) {
+        if (typeof isCurrentStudentDemo === 'function' && isCurrentStudentDemo()) return;
+        try { e.preventDefault(); } catch(err) {}
+        handleAntiCheatEvent('🖨️ Percobaan Mencetak / Export Halaman (Print Screen)');
+    }
 });
 
 // 📸 2. DETEKSI SCREENSHOT / TANGKAPAN LAYAR / SNIPPING TOOL
@@ -1292,6 +1376,7 @@ function startQuizActual() {
     if (demoBanner) {
         demoBanner.style.display = (typeof isCurrentStudentDemo === 'function' && isCurrentStudentDemo()) ? 'flex' : 'none';
     }
+    renderExamWatermark();
     loadQuestion(0);
     saveCurrentQuizSession();
     setTimeout(startBGM, 200);
@@ -1336,6 +1421,10 @@ function startTimer(customDuration) {
         if (timerVal <= 5 && timerVal > 0 && timerVal !== lastWarnedSec) {
             lastWarnedSec = timerVal;
             sfxTimerWarn();
+        }
+
+        if (typeof checkScreenIntegrity === 'function') {
+            checkScreenIntegrity();
         }
 
         if (timerVal <= 0) {
@@ -2432,6 +2521,7 @@ async function finishQuiz() {
         clearFullscreenWarningCountdown();
         clearBlurGraceTimer();
         isCheatWarningActive = false;
+        removeExamWatermark();
         const warningModal = document.getElementById('cheat-warning-modal');
         if (warningModal) warningModal.classList.remove('active');
     } catch(e) {}

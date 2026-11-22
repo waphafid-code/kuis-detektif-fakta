@@ -390,8 +390,10 @@ function switchScreen(key) {
     // 🛡️ MODE UJIAN BEBAS DISTRAKSI: KETIKA UJIAN AKTIF, HILANGKAN SEMUA NAVIGASI (HANYA SOAL & PILIHAN JAWABAN)
     if (key === 'quiz') {
         document.body.classList.add('exam-mode-active');
+        if (typeof renderExamWatermark === 'function') renderExamWatermark();
     } else {
         document.body.classList.remove('exam-mode-active');
+        if (typeof removeExamWatermark === 'function') removeExamWatermark();
     }
 
     // Sync Modern Header Elements
