@@ -65,6 +65,7 @@ function snapshotAttempt(x, asRemedial) {
     return {
         score: asRemedial ? Number((x.remedialScore !== undefined && x.remedialScore !== null) ? x.remedialScore : x.score) : Number(x.score),
         correct: x.correct, total: x.total, partialCount: x.partialCount,
+        topicBreakdown: x.topicBreakdown || null,
         wrongQuestions: Array.isArray(x.wrongQuestions) ? x.wrongQuestions : [],
         detailedAnswers: hasReal ? x.detailedAnswers : null,
         studentAnswers: hasAns ? x.studentAnswers : null,
@@ -151,6 +152,7 @@ function mergeRecordsList(existingList, incomingList) {
                 originalScore: (isRem || adj) ? origScore : (cur.originalScore ?? item.originalScore ?? null),
                 remedialScore: (isRem || adj) ? (bestRemScore || finalScore) : null,
                 correct: higher.correct !== undefined ? higher.correct : (item.correct !== undefined ? item.correct : cur.correct),
+                topicBreakdown: higher.topicBreakdown || item.topicBreakdown || cur.topicBreakdown || null,
                 wrongQuestions: higher.wrongQuestions || item.wrongQuestions || cur.wrongQuestions,
                 detailedAnswers: higher.detailedAnswers || item.detailedAnswers || cur.detailedAnswers,
                 studentAnswers: higher.studentAnswers || item.studentAnswers || cur.studentAnswers,

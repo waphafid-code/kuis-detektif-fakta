@@ -2407,8 +2407,9 @@ function renderExaminedRecordView(record, attemptType = 'remedial') {
             topicWrap.style.display = 'block';
             let cardsHtml = `
                 <div style="background: rgba(99,102,241,0.06); border: 1px solid rgba(99,102,241,0.25); border-radius: 12px; padding: 10px 14px; margin-bottom: 10px;">
-                    <div style="font-size: 0.78rem; font-weight: 800; color: #a5b4fc; margin-bottom: 8px; display: flex; align-items: center; gap: 6px;">
+                    <div style="font-size: 0.78rem; font-weight: 800; color: #a5b4fc; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px;">
                         <span>🎯 Rekapitulasi Penguasaan per Materi (Tryout 60 Soal):</span>
+                        <span style="font-size: 0.7rem; color: var(--text-muted); font-weight: 500;">(Klik kartu untuk memfilter 10 butir soal materi terkait)</span>
                     </div>
                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 8px;">
             `;
@@ -2416,7 +2417,7 @@ function renderExaminedRecordView(record, attemptType = 'remedial') {
                 const item = tb[code];
                 const isItemPassed = item.score >= 80;
                 cardsHtml += `
-                    <div style="background: rgba(255,255,255,0.03); border: 1px solid ${isItemPassed ? 'rgba(16,185,129,0.3)' : 'rgba(244,63,94,0.3)'}; border-radius: 8px; padding: 8px 10px;">
+                    <div class="sd-topic-card" data-topic="${code}" onclick="filterStudentDetail('${code}')" style="cursor: pointer; background: rgba(255,255,255,0.03); border: 1px solid ${isItemPassed ? 'rgba(16,185,129,0.3)' : 'rgba(244,63,94,0.3)'}; border-radius: 8px; padding: 8px 10px; transition: all 0.2s;" title="Klik untuk memfilter dan menampilkan 10 soal ${escapeHtml(item.title)}">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
                             <span style="font-weight: 800; font-size: 0.8rem; color: #e2e8f0;">${item.icon || '📌'} ${code}</span>
                             <span style="font-weight: 800; font-size: 0.85rem; color: ${isItemPassed ? '#34d399' : '#fb7185'};">${item.score}/100</span>
@@ -2440,7 +2441,7 @@ function renderExaminedRecordView(record, attemptType = 'remedial') {
     filterStudentDetail('all');
 }
 
-function openStudentDetailModal(recordOrIdx) {
+function openStudentDetailModal(recordOrIdx, initialTopicFilter) {
     if (typeof sfxClick === 'function') sfxClick();
     let record = null;
     if (typeof recordOrIdx === 'object' && recordOrIdx !== null) {
@@ -2537,15 +2538,31 @@ function openStudentDetailModal(recordOrIdx) {
     renderExaminedRecordView(currentExaminedRecord, currentExaminedAttemptType);
     const modalEl = document.getElementById('student-detail-modal');
     if (modalEl) modalEl.classList.add('active');
+    if (initialTopicFilter) {
+        setTimeout(() => filterStudentDetail(initialTopicFilter), 50);
+    }
 }
 
 function filterStudentDetail(filterType) {
-    sfxClick();
+    if (typeof sfxClick === 'function') sfxClick();
     currentExaminedFilter = filterType;
     ['all', 'wrong', 'correct'].forEach(f => {
         const tab = document.getElementById(`sd-tab-${f}`);
         if (tab) tab.classList.toggle('active', f === filterType);
     });
+    // Sorot kartu topik yang aktif
+    if (typeof document !== 'undefined' && typeof document.querySelectorAll === 'function') {
+        document.querySelectorAll('.sd-topic-card').forEach(card => {
+            const t = card.getAttribute('data-topic');
+            if (t === filterType) {
+                card.style.borderColor = '#818cf8';
+                card.style.boxShadow = '0 0 12px rgba(129,140,248,0.4)';
+            } else {
+                card.style.borderColor = '';
+                card.style.boxShadow = '';
+            }
+        });
+    }
     renderStudentDetailQuestions();
 }
 
@@ -2557,6 +2574,25 @@ function renderStudentDetailQuestions() {
     if (!recordHasRealAnswers(currentExaminedRecord)) {
         container.innerHTML += `<div style="margin-bottom:8px;padding:8px 10px;border-radius:8px;background:rgba(251,191,36,0.12);border:1px solid rgba(251,191,36,0.4);font-size:0.78rem;color:#fbbf24;">⚠️ Jawaban asli siswa pada sesi ini tidak tersimpan. Pilihan jawaban di bawah adalah PERKIRAAN dari nilai dan jumlah soal salah, bukan jawaban sebenarnya.</div>`;
     }
+
+    const topicsTitleMap = {
+        M1: 'Materi 1: Literasi Digital & Ekosistem Periksa Fakta',
+        M2: 'Materi 2: Web Browser, Search Engine & Manajemen Konten',
+        M3: 'Materi 3: Digitalisasi Budaya, Profesi Informatika & HKI',
+        M4: 'Materi 4: Etika, Privasi & Keamanan Digital',
+        M5: 'Materi 5: Infrastruktur Jaringan & Keamanan Siber',
+        M6: 'Materi 6: Aplikasi Perkantoran (MS Word, Excel & Mail Merge)'
+    };
+
+    if (['M1', 'M2', 'M3', 'M4', 'M5', 'M6'].includes(currentExaminedFilter)) {
+        container.innerHTML += `
+            <div style="margin-bottom:12px;padding:8px 12px;border-radius:8px;background:rgba(99,102,241,0.15);border:1px solid rgba(99,102,241,0.4);color:#a5b4fc;font-size:0.82rem;font-weight:700;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;">
+                <span>🎯 Menampilkan 10 Butir Soal ${topicsTitleMap[currentExaminedFilter]}</span>
+                <button type="button" class="btn btn-secondary" style="padding:2px 10px;font-size:0.72rem;border-radius:6px;" onclick="filterStudentDetail('all')">Tampilkan Semua 60 Soal</button>
+            </div>
+        `;
+    }
+
     const detailedList = reconstructStudentAnswers(currentExaminedRecord);
 
     const wrongList = detailedList.filter(d => !d.isCorrect);
@@ -2595,9 +2631,13 @@ function renderStudentDetailQuestions() {
     if (navCorrectCount) navCorrectCount.textContent = correctList.length;
     if (navWrongCount) navWrongCount.textContent = wrongList.length;
 
-    const filtered = detailedList.filter(item => {
+    const filtered = detailedList.filter((item, idx) => {
         if (currentExaminedFilter === 'wrong') return !item.isCorrect;
         if (currentExaminedFilter === 'correct') return item.isCorrect;
+        if (['M1', 'M2', 'M3', 'M4', 'M5', 'M6'].includes(currentExaminedFilter)) {
+            const itemTopic = item.topicCode || (item.topic ? item.topic.toUpperCase() : null) || `M${Math.floor((item.qIndex !== undefined ? item.qIndex : idx) / 10) + 1}`;
+            return itemTopic === currentExaminedFilter;
+        }
         return true;
     });
 
@@ -3322,6 +3362,44 @@ function closeAlreadySubmittedModal() {
 }
 window.closeAlreadySubmittedModal = closeAlreadySubmittedModal;
 
+// 🎯 Hitung rekapitulasi penguasaan materi (M1-M6) dari record Tryout
+function computeTopicBreakdownFromRecord(r) {
+    if (!r) return null;
+    if (r.topicBreakdown && Object.keys(r.topicBreakdown).length > 0) return r.topicBreakdown;
+    const topicsMeta = {
+        M1: { code: 'M1', title: 'Literasi Digital & Ekosistem Periksa Fakta', icon: '🕵️' },
+        M2: { code: 'M2', title: 'Web Browser, Search Engine, & Manajemen Konten', icon: '🌐' },
+        M3: { code: 'M3', title: 'Digitalisasi Budaya, Profesi Informatika, & HKI', icon: '🏛️' },
+        M4: { code: 'M4', title: 'Etika, Privasi, dan Keamanan Digital', icon: '🛡️' },
+        M5: { code: 'M5', title: 'Infrastruktur Jaringan Komputer & Keamanan Siber', icon: '⚡' },
+        M6: { code: 'M6', title: 'Aplikasi Perkantoran (MS Word, Mail Merge, & MS Excel)', icon: '📊' }
+    };
+    const tb = {};
+    Object.keys(topicsMeta).forEach(code => {
+        tb[code] = { ...topicsMeta[code], total: 0, correct: 0, score: 0 };
+    });
+    let detailedList = [];
+    if (Array.isArray(r.detailedAnswers) && r.detailedAnswers.length > 0) {
+        detailedList = r.detailedAnswers;
+    } else {
+        detailedList = reconstructStudentAnswers(r);
+    }
+    detailedList.forEach((item, idx) => {
+        if (!item) return;
+        const mCode = item.topicCode || ('M' + (Math.floor(idx / 10) + 1));
+        if (tb[mCode]) {
+            tb[mCode].total += 1;
+            if (item.isCorrect) tb[mCode].correct += 1;
+        }
+    });
+    Object.keys(tb).forEach(code => {
+        const it = tb[code];
+        it.score = it.total > 0 ? Math.round((it.correct / it.total) * 100) : 0;
+    });
+    return tb;
+}
+window.computeTopicBreakdownFromRecord = computeTopicBreakdownFromRecord;
+
 function renderDashboard() {
     // 🔒 SECURITY GUARD: Jangan muat dan render data jika belum terverifikasi PIN Guru
     if (typeof isTeacherAuthValid === 'function' && !isTeacherAuthValid()) {
@@ -3384,6 +3462,7 @@ function renderDashboard() {
     // Sinkronkan tombol segmented filter modul & teks indikator aktif
     const btnsMap = {
         'all': 'btn-mod-filter-all',
+        'modul_tryout_terpadu': 'btn-mod-filter-tryout',
         'modul_jaringan_keamanan': 'btn-mod-filter-jaringan',
         'modul_detektif_fakta': 'btn-mod-filter-fakta'
     };
@@ -3393,10 +3472,14 @@ function renderDashboard() {
     });
     const indText = document.getElementById('active-module-indicator-text');
     if (indText) {
-        if (filterModule === 'modul_jaringan_keamanan') {
+        if (filterModule === 'modul_tryout_terpadu') {
+            indText.innerHTML = 'Menampilkan: 🎯 <strong>Tryout Terpadu 60 Soal (6 Materi)</strong> — Rekap Nilai M1 s.d M6 Sekaligus';
+        } else if (filterModule === 'modul_jaringan_keamanan') {
             indText.innerHTML = 'Menampilkan: 🛡️ <strong>Modul Keamanan Jaringan Saja</strong> (Kuis lain disembunyikan)';
         } else if (filterModule === 'modul_detektif_fakta') {
             indText.innerHTML = 'Menampilkan: 🕵️ <strong>Modul Detektif Fakta Saja</strong> (Kuis lain disembunyikan)';
+        } else if (filterModule !== 'all') {
+            indText.innerHTML = `Menampilkan: 📚 <strong>${escapeHtml(filterModule)} Saja</strong>`;
         } else {
             indText.innerHTML = 'Menampilkan: 📊 <strong>Komparasi 2 Modul (Lengkap)</strong>';
         }
@@ -3450,6 +3533,7 @@ function renderDashboard() {
     }
 
     // Pisahkan records per modul kuis dengan normalisasi otomatis
+    const modTryoutId = 'modul_tryout_terpadu';
     const recordsFakta = activePoolRecords.filter(r => {
         const mod = (typeof normalizeModuleId === 'function') ? normalizeModuleId(r.moduleId, r.id, r.date) : (r.moduleId || modFaktaId);
         return mod === modFaktaId;
@@ -3458,19 +3542,26 @@ function renderDashboard() {
         const mod = (typeof normalizeModuleId === 'function') ? normalizeModuleId(r.moduleId, r.id, r.date) : (r.moduleId || modFaktaId);
         return mod === modJaringanId;
     });
+    const recordsTryout = activePoolRecords.filter(r => {
+        const mod = (typeof normalizeModuleId === 'function') ? normalizeModuleId(r.moduleId, r.id, r.date) : (r.moduleId || modFaktaId);
+        return mod === modTryoutId;
+    });
 
     // Update counter pada badge tombol segmented modul
     const badgeAll = document.getElementById('badge-cnt-all-mod');
     const badgeJaringan = document.getElementById('badge-cnt-jaringan-mod');
     const badgeFakta = document.getElementById('badge-cnt-fakta-mod');
+    const badgeTryout = document.getElementById('badge-cnt-tryout-mod');
     const poolLabel = isDemoFilter ? `${demoRecords.length} Data Demo` : `${officialRecords.length} Data Resmi`;
     if (badgeAll) badgeAll.textContent = poolLabel;
     if (badgeJaringan) badgeJaringan.textContent = `${recordsJaringan.length} Data`;
     if (badgeFakta) badgeFakta.textContent = `${recordsFakta.length} Data`;
+    if (badgeTryout) badgeTryout.textContent = `${recordsTryout.length} Data`;
 
     // Filter records sesuai modul pembelajaran terpilih
-    const isSingleModuleView = (filterModule === modJaringanId || filterModule === modFaktaId);
-    const activeSingleModId = isSingleModuleView ? filterModule : null;
+    const isTryoutView = (filterModule === modTryoutId);
+    const isSingleModuleView = (filterModule === modJaringanId || filterModule === modFaktaId || (filterModule !== 'all' && !isTryoutView));
+    const activeSingleModId = isSingleModuleView ? filterModule : (isTryoutView ? modTryoutId : null);
 
     // Bangun daftar siswa terdaftar & cross-reference dengan submission untuk kedua kuis
     const rosterStudentItems = [];
@@ -3497,8 +3588,15 @@ function renderDashboard() {
             ).sort((a, b) => (b.score - a.score) || ((b.timestamp || 0) - (a.timestamp || 0)));
             const bestJaringan = attemptsJaringan[0] || null;
 
+            // Attempts Tryout Terpadu 60 Soal
+            const attemptsTryout = recordsTryout.filter(r => 
+                nameMatches(r.name) && classMatches(r.class)
+            ).sort((a, b) => (b.score - a.score) || ((b.timestamp || 0) - (a.timestamp || 0)));
+            const bestTryout = attemptsTryout[0] || null;
+
             const hasFakta = !!bestFakta;
             const hasJaringan = !!bestJaringan;
+            const hasTryout = !!bestTryout;
 
             let completionStatus = 'none'; // 'both', 'only_fakta', 'only_jaringan', 'none'
             if (hasFakta && hasJaringan) completionStatus = 'both';
@@ -3522,7 +3620,13 @@ function renderDashboard() {
             let activeAttempts = 0;
             let activeTimestamp = 0;
 
-            if (filterModule === modJaringanId) {
+            if (isTryoutView) {
+                hasSubmitted = hasTryout;
+                activeRecord = bestTryout;
+                activeScore = bestTryout ? bestTryout.score : -1;
+                activeAttempts = attemptsTryout.length;
+                activeTimestamp = bestTryout ? (bestTryout.timestamp || 0) : 0;
+            } else if (filterModule === modJaringanId) {
                 hasSubmitted = hasJaringan;
                 activeRecord = bestJaringan;
                 activeScore = bestJaringan ? bestJaringan.score : -1;
@@ -3534,6 +3638,17 @@ function renderDashboard() {
                 activeScore = bestFakta ? bestFakta.score : -1;
                 activeAttempts = attemptsFakta.length;
                 activeTimestamp = bestFakta ? (bestFakta.timestamp || 0) : 0;
+            } else if (filterModule !== 'all') {
+                const attemptsMod = activePoolRecords.filter(r => {
+                    const mod = (typeof normalizeModuleId === 'function') ? normalizeModuleId(r.moduleId, r.id, r.date) : (r.moduleId || modFaktaId);
+                    return mod === filterModule && nameMatches(r.name) && classMatches(r.class);
+                }).sort((a, b) => (b.score - a.score) || ((b.timestamp || 0) - (a.timestamp || 0)));
+                const bestMod = attemptsMod[0] || null;
+                hasSubmitted = !!bestMod;
+                activeRecord = bestMod;
+                activeScore = bestMod ? bestMod.score : -1;
+                activeAttempts = attemptsMod.length;
+                activeTimestamp = bestMod ? (bestMod.timestamp || 0) : 0;
             } else {
                 // Komparasi 2 Modul ('all')
                 hasSubmitted = hasFakta || hasJaringan;
@@ -3557,6 +3672,10 @@ function renderDashboard() {
                 hasJaringan: hasJaringan,
                 recordJaringan: bestJaringan,
                 scoreJaringan: bestJaringan ? bestJaringan.score : null,
+                hasTryout: hasTryout,
+                recordTryout: bestTryout,
+                scoreTryout: bestTryout ? bestTryout.score : null,
+                topicBreakdown: bestTryout ? bestTryout.topicBreakdown : null,
                 completionStatus: completionStatus,
                 avgScore: avgScore
             });
@@ -3725,10 +3844,29 @@ function renderDashboard() {
         return (b.score - a.score) || a.name.localeCompare(b.name);
     });
 
-    // 6. Sinkronkan Header Tabel Sesuai Mode Tampilan (Komparasi 2 Modul vs Modul Tunggal)
+    // 6. Sinkronkan Header Tabel Sesuai Mode Tampilan (Tryout 13 Kolom vs Komparasi 2 Modul vs Modul Tunggal)
     const thead = document.querySelector('.dash-table thead');
     if (thead) {
-        if (!isSingleModuleView) {
+        if (isTryoutView) {
+            // Mode Tryout Terpadu 60 Soal (Matriks Nilai 6 Materi Sekaligus)
+            thead.innerHTML = `
+                <tr>
+                    <th style="width: 45px;">No</th>
+                    <th style="cursor: pointer;" onclick="toggleSort('name')" title="Klik untuk Urutkan Nama">Nama Siswa ⇅</th>
+                    <th style="width: 85px;">Kelas</th>
+                    <th style="cursor: pointer; width: 95px; text-align: center;" onclick="toggleSort('score')" title="Klik untuk Urutkan Skor Total">Skor Total ⇅</th>
+                    <th style="text-align: center; width: 68px;" title="Materi 1: Literasi Digital & Ekosistem Periksa Fakta (10 Soal)">🕵️ M1</th>
+                    <th style="text-align: center; width: 68px;" title="Materi 2: Web Browser, Search Engine & Manajemen Konten (10 Soal)">🌐 M2</th>
+                    <th style="text-align: center; width: 68px;" title="Materi 3: Digitalisasi Budaya, Profesi Informatika & HKI (10 Soal)">🏛️ M3</th>
+                    <th style="text-align: center; width: 68px;" title="Materi 4: Etika, Privasi & Keamanan Digital (10 Soal)">🛡️ M4</th>
+                    <th style="text-align: center; width: 68px;" title="Materi 5: Infrastruktur Jaringan & Keamanan Siber (10 Soal)">⚡ M5</th>
+                    <th style="text-align: center; width: 68px;" title="Materi 6: Aplikasi Perkantoran (MS Word, Excel & Mail Merge) (10 Soal)">📊 M6</th>
+                    <th style="text-align: center; width: 110px;">Status Tryout</th>
+                    <th style="text-align: center; width: 85px;">Durasi</th>
+                    <th style="text-align: center; width: 130px;">Aksi</th>
+                </tr>
+            `;
+        } else if (!isSingleModuleView) {
             // Mode Komparasi 2 Modul
             thead.innerHTML = `
                 <tr>
@@ -3772,12 +3910,12 @@ function renderDashboard() {
         if (displayList.length === 0) {
             tbody.innerHTML = `
                 <tr>
-                    <td colspan="${isSingleModuleView ? 9 : 8}">
+                    <td colspan="${isTryoutView ? 13 : (isSingleModuleView ? 9 : 8)}">
                         <div class="empty-state">
                             <div class="empty-icon">📭</div>
                             <p>Tidak ada data siswa yang cocok dengan filter aktif:<br>
                             ${filterClass !== 'all' ? `• Kelas: <strong>${escapeHtml(filterClass)}</strong><br>` : ''}
-                            ${filterModule !== 'all' ? `• Modul: <strong>${filterModule === modJaringanId ? 'Keamanan Jaringan Saja' : 'Detektif Fakta Saja'}</strong><br>` : ''}
+                            ${filterModule !== 'all' ? `• Modul: <strong>${filterModule === modTryoutId ? 'Tryout Terpadu (6 Materi)' : (filterModule === modJaringanId ? 'Keamanan Jaringan Saja' : 'Detektif Fakta Saja')}</strong><br>` : ''}
                             ${searchName ? `• Pencarian: "<strong>${escapeHtml(searchName)}</strong>"` : ''}
                             </p>
                         </div>
@@ -3788,7 +3926,113 @@ function renderDashboard() {
             displayList.forEach((item, i) => {
                 const tr = document.createElement('tr');
 
-                if (!isSingleModuleView) {
+                if (isTryoutView) {
+                    // ──── RENDER MODE TRYOUT TERPADU (6 MATERI SEKALIGUS) ────
+                    if (item.hasSubmitted && item.record) {
+                        const r = item.record;
+                        const recordIdx = window.currentRenderedRecords.length;
+                        window.currentRenderedRecords.push(r);
+
+                        const tb = r.topicBreakdown || (typeof computeTopicBreakdownFromRecord === 'function' ? computeTopicBreakdownFromRecord(r) : null);
+
+                        let pillClass = 'low';
+                        if (r.score >= 80) pillClass = 'high';
+                        else if (r.score >= 60) pillClass = 'mid';
+
+                        const scoreDisplay = r.isCheated
+                            ? `<span class="score-pill low" style="background: rgba(244,63,94,0.25); border-color: var(--danger); color: #fff;">0 🚨</span>`
+                            : `<span class="score-pill ${pillClass}">${r.score}</span>`;
+
+                        const statusDisplay = r.isCheated
+                            ? `<span class="kkm-pill remedial" style="background: var(--danger); color: white; font-weight: 800;" title="${escapeHtml(r.statusNote || 'Diskualifikasi')}">🚨 DISKUALIFIKASI</span>`
+                            : (r.score >= 80
+                                ? `<span class="kkm-pill passed" style="font-weight: 800;">LULUS KKM</span>`
+                                : `<span class="kkm-pill remedial" style="font-weight: 800;">PERLU BELAJAR</span>`);
+
+                        const renderTopicCell = (topicKey, topicName) => {
+                            if (!tb || !tb[topicKey]) {
+                                return `<span style="color: var(--text-muted); font-size: 0.75rem;">-</span>`;
+                            }
+                            const t = tb[topicKey];
+                            const tScore = (t.score !== undefined) ? t.score : Math.round((t.correct / (t.total || 10)) * 100);
+                            const bgStyle = tScore >= 80 
+                                ? 'background: rgba(16,185,129,0.15); border: 1px solid rgba(16,185,129,0.4); color: #34d399;' 
+                                : (tScore >= 60 
+                                    ? 'background: rgba(56,189,248,0.15); border: 1px solid rgba(56,189,248,0.4); color: #38bdf8;'
+                                    : 'background: rgba(244,63,94,0.15); border: 1px solid rgba(244,63,94,0.4); color: #fb7185;');
+                            return `
+                                <div style="display: inline-flex; flex-direction: column; align-items: center; justify-content: center; padding: 2px 6px; border-radius: 6px; ${bgStyle} cursor: pointer; min-width: 48px;" 
+                                     onclick="openStudentDetailModal(window.currentRenderedRecords[${recordIdx}], '${topicKey}')" 
+                                     title="${escapeHtml(topicName)}: ${tScore} (${t.correct}/${t.total} Soal) - Klik untuk filter 10 soal materi ini">
+                                    <span style="font-family: var(--font-mono); font-weight: 800; font-size: 0.82rem;">${tScore}</span>
+                                    <span style="font-size: 0.65rem; opacity: 0.85;">${t.correct}/${t.total}</span>
+                                </div>
+                            `;
+                        };
+
+                        const m1Cell = renderTopicCell('M1', 'Literasi Digital & Ekosistem Fakta');
+                        const m2Cell = renderTopicCell('M2', 'Web Browser & Mesin Pencari');
+                        const m3Cell = renderTopicCell('M3', 'Digitalisasi Budaya & HKI');
+                        const m4Cell = renderTopicCell('M4', 'Etika, Privasi & Keamanan');
+                        const m5Cell = renderTopicCell('M5', 'Infrastruktur Jaringan & Siber');
+                        const m6Cell = renderTopicCell('M6', 'Aplikasi Perkantoran Word & Excel');
+
+                        tr.innerHTML = `
+                            <td style="font-family: var(--font-mono); color: var(--text-muted);">${i + 1}</td>
+                            <td style="font-weight: 700;">
+                                <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+                                    <span>${escapeHtml(item.name)}</span>
+                                    ${item.attemptsCount > 1 ? `<span class="badge-attempts">${item.attemptsCount}x</span>` : ''}
+                                </div>
+                            </td>
+                            <td><span style="font-family: var(--font-mono); color: var(--accent); font-size: 0.85rem;">${escapeHtml(item.class)}</span></td>
+                            <td style="text-align: center;">${scoreDisplay}</td>
+                            <td style="text-align: center;">${m1Cell}</td>
+                            <td style="text-align: center;">${m2Cell}</td>
+                            <td style="text-align: center;">${m3Cell}</td>
+                            <td style="text-align: center;">${m4Cell}</td>
+                            <td style="text-align: center;">${m5Cell}</td>
+                            <td style="text-align: center;">${m6Cell}</td>
+                            <td style="text-align: center;">${statusDisplay}</td>
+                            <td style="text-align: center; color: var(--text-muted); font-size: 0.82rem;">${escapeHtml(r.duration || '-')}</td>
+                            <td style="text-align: center; white-space: nowrap;">
+                                <button class="btn-detail-row" title="Periksa Lembar Jawaban 60 Soal & Analisis Tiap Materi" onclick="openStudentDetailModal(window.currentRenderedRecords[${recordIdx}])">
+                                    🔍 Periksa
+                                </button>
+                                <button class="btn-delete-row" title="Hapus nilai Tryout siswa ini" onclick="openDeleteStudentModuleModal('${escapeHtml(item.name)}', '${escapeHtml(item.class)}', 'modul_tryout_terpadu', ${r.score})">
+                                    🗑️
+                                </button>
+                            </td>
+                        `;
+                    } else {
+                        // Siswa belum mengerjakan Tryout
+                        tr.style.opacity = '0.85';
+                        tr.innerHTML = `
+                            <td style="font-family: var(--font-mono); color: var(--text-muted);">${i + 1}</td>
+                            <td style="font-weight: 600; color: var(--text-secondary);">
+                                <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+                                    <span>${escapeHtml(item.name)}</span>
+                                    <span class="badge-waiting">⏳ Menunggu</span>
+                                </div>
+                            </td>
+                            <td><span style="font-family: var(--font-mono); color: var(--text-muted); font-size: 0.85rem;">${escapeHtml(item.class)}</span></td>
+                            <td style="text-align: center;"><span class="score-pill low" style="background: rgba(148,163,184,0.08); border-color: rgba(148,163,184,0.25); color: var(--text-muted);">-</span></td>
+                            <td style="text-align: center; color: var(--text-muted); font-size: 0.75rem;">-</td>
+                            <td style="text-align: center; color: var(--text-muted); font-size: 0.75rem;">-</td>
+                            <td style="text-align: center; color: var(--text-muted); font-size: 0.75rem;">-</td>
+                            <td style="text-align: center; color: var(--text-muted); font-size: 0.75rem;">-</td>
+                            <td style="text-align: center; color: var(--text-muted); font-size: 0.75rem;">-</td>
+                            <td style="text-align: center; color: var(--text-muted); font-size: 0.75rem;">-</td>
+                            <td style="text-align: center;"><span class="kkm-pill remedial" style="background: rgba(234,179,8,0.12); color: #fde047; border-color: rgba(234,179,8,0.35); font-size: 0.72rem; padding: 3px 8px;">⏳ BELUM TRYOUT</span></td>
+                            <td style="text-align: center; color: var(--text-muted);">-</td>
+                            <td style="text-align: center;">
+                                <button type="button" class="btn btn-secondary" onclick="remindStudent('${escapeHtml(item.name)}', '${escapeHtml(item.class)}', 'tryout')" style="padding: 4px 8px; font-size: 0.72rem; border-radius: 6px; font-weight: 700;" title="Salin Pengingat WhatsApp Tryout">
+                                    📲 Ingatkan
+                                </button>
+                            </td>
+                        `;
+                    }
+                } else if (!isSingleModuleView) {
                     // ──── RENDER MODE KOMPARASI 2 KUIS (ALL) ────
                     let kuis1Html = '';
                     if (item.hasFakta && item.recordFakta) {
@@ -4065,6 +4309,96 @@ function exportExcel() {
 
     const wb = XLSX.utils.book_new();
     const targetClasses = filterClass === 'all' ? ['X E 1', 'X E 2', 'X E 3', 'X E 4', 'X E 5', 'X E 6'] : [filterClass];
+
+    if (filterModule === 'modul_tryout_terpadu') {
+        // ──── MODE TRYOUT TERPADU 60 SOAL (EXCEL DENGAN MATRIKS 6 MATERI) ────
+        const generateTryoutSheet = (clsTitle, classRecords) => {
+            const bestByStudent = new Map();
+            classRecords.forEach(r => {
+                const key = `${(r.name || '').trim().toLowerCase()}|${(r.class || '').replace(/\s+/g, '').toUpperCase()}`;
+                const cur = bestByStudent.get(key);
+                if (!cur || pickBestRecord([cur, r]) === r) bestByStudent.set(key, r);
+            });
+            const sorted = [...bestByStudent.values()].sort((a, b) => b.score - a.score || (a.name || '').localeCompare(b.name || ''));
+
+            const sheetData = [
+                ['SMAN 4 PADANG — REKAP NILAI TRYOUT TERPADU INFORMATIKA (60 SOAL • 6 MATERI)'],
+                [`Laporan Kelas: ${clsTitle} (Standar KKM: 80) — Guru: MUHAMMAD HAFIDH PUTRA ROSHADI, S.Pd.`],
+                [`Total Responden: ${sorted.length} Siswa | Waktu Unduh: ${new Date().toLocaleString('id-ID')}`],
+                [],
+                [
+                    'No', 'Nama Siswa', 'Kelas', 'Skor Total Tryout', 'Status Kelulusan',
+                    'M1 (Fakta)', 'M2 (Browser)', 'M3 (HKI)', 'M4 (Etika)', 'M5 (Jaringan)', 'M6 (Word/Excel)',
+                    'Jawaban Benar', 'Total Soal', 'Durasi', 'Waktu Selesai', 'Tanggal'
+                ]
+            ];
+
+            sorted.forEach((r, i) => {
+                const tb = r.topicBreakdown || (typeof computeTopicBreakdownFromRecord === 'function' ? computeTopicBreakdownFromRecord(r) : null);
+                const getTopicScore = (code) => {
+                    if (!tb || !tb[code]) return '-';
+                    return `${tb[code].score} (${tb[code].correct}/${tb[code].total})`;
+                };
+                sheetData.push([
+                    i + 1,
+                    sanitizeSpreadsheetValue(r.name),
+                    sanitizeSpreadsheetValue(r.class || clsTitle),
+                    r.score,
+                    r.score >= 80 ? 'LULUS (TUNTAS)' : 'PERLU BELAJAR',
+                    getTopicScore('M1'),
+                    getTopicScore('M2'),
+                    getTopicScore('M3'),
+                    getTopicScore('M4'),
+                    getTopicScore('M5'),
+                    getTopicScore('M6'),
+                    r.correct !== undefined ? r.correct : '-',
+                    r.total || 60,
+                    r.duration || '-',
+                    r.time || '-',
+                    r.date || '-'
+                ]);
+            });
+            return sheetData;
+        };
+
+        const tryoutColWidths = [
+            { wch: 6 }, { wch: 32 }, { wch: 10 }, { wch: 18 }, { wch: 16 },
+            { wch: 14 }, { wch: 14 }, { wch: 14 }, { wch: 14 }, { wch: 14 }, { wch: 18 },
+            { wch: 14 }, { wch: 12 }, { wch: 12 }, { wch: 15 }, { wch: 14 }
+        ];
+
+        const tryoutRecords = allRecords.filter(r => {
+            const mod = (typeof normalizeModuleId === 'function') ? normalizeModuleId(r.moduleId, r.id, r.date) : (r.moduleId || '');
+            return mod === 'modul_tryout_terpadu';
+        });
+
+        if (filterClass === 'all') {
+            const sheetAll = generateTryoutSheet('Semua Kelas (X E 1 - X E 6)', tryoutRecords);
+            const wsAll = XLSX.utils.aoa_to_sheet(sheetAll);
+            wsAll['!cols'] = tryoutColWidths;
+            XLSX.utils.book_append_sheet(wb, wsAll, 'Tryout Semua Siswa');
+
+            targetClasses.forEach(c => {
+                const clsRecords = tryoutRecords.filter(r => r.class === c);
+                const sheetCls = generateTryoutSheet(`Kelas ${c}`, clsRecords);
+                const wsCls = XLSX.utils.aoa_to_sheet(sheetCls);
+                wsCls['!cols'] = tryoutColWidths;
+                XLSX.utils.book_append_sheet(wb, wsCls, `Kelas ${c}`);
+            });
+        } else {
+            const clsRecords = tryoutRecords.filter(r => r.class === filterClass);
+            const sheetCls = generateTryoutSheet(`Kelas ${filterClass}`, clsRecords);
+            const wsCls = XLSX.utils.aoa_to_sheet(sheetCls);
+            wsCls['!cols'] = tryoutColWidths;
+            XLSX.utils.book_append_sheet(wb, wsCls, `Kelas ${filterClass}`);
+        }
+
+        const fileName = `Rekap_Nilai_Tryout_Terpadu_${filterClass === 'all' ? 'Semua_Kelas' : filterClass.replace(/ /g, '_')}_${new Date().toISOString().slice(0,10)}.xlsx`;
+        XLSX.writeFile(wb, fileName);
+        if (typeof sfxCorrect === 'function') sfxCorrect();
+        showToast(`File Excel Tryout Terpadu berhasil diunduh! 📊`, '✅');
+        return;
+    }
 
     if (filterModule === 'all') {
         // ──── MODE KOMPARASI 2 KUIS (EXCEL) ────
@@ -4967,3 +5301,6 @@ function resetDemoRecords() {
     renderDashboard();
 }
 window.resetDemoRecords = resetDemoRecords;
+window.exportExcel = exportExcel;
+window.exportRecordsToExcel = exportExcel;
+window.reconstructStudentAnswers = reconstructStudentAnswers;

@@ -137,7 +137,7 @@ const assert = require('assert');
     ['index.html', 'src/index.html', 'kuis_interaktif_dasbor_guru.html', 'src/kuis_interaktif_dasbor_guru.html'].forEach(htmlPath => {
         const html = fs.readFileSync(path.join(__dirname, htmlPath), 'utf8');
         assert(html.includes('modul_tryout_terpadu'), `${htmlPath} harus memiliki opsi dropdown modul_tryout_terpadu`);
-        assert(html.includes('20261122-v3047-instant-feedback-strict-anticheat'), `${htmlPath} harus menggunakan cache buster 20261122-v3047-instant-feedback-strict-anticheat`);
+        assert(html.includes('20261122-v3048-tryout-dashboard-matrix'), `${htmlPath} harus menggunakan cache buster 20261122-v3048-tryout-dashboard-matrix`);
     });
     console.log('✅ 4. Seluruh file HTML (Beranda & Dasbor Guru di root & src) menyediakan modul Tryout Terpadu dan cache buster terbaru.');
 
