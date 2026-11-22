@@ -843,10 +843,29 @@ async function initiateQuiz() {
     if (isInitiatingQuiz) return;
     const clsSelect = document.getElementById('input-class');
     const nameSelect = document.getElementById('input-name');
-    const cls = clsSelect ? clsSelect.value : '';
-    const name = nameSelect ? nameSelect.value.trim() : '';
     const moduleSelect = document.getElementById('input-module');
-    const moduleId = moduleSelect ? moduleSelect.value : (window.QuizManager ? QuizManager.getActiveModuleId() : 'modul_detektif_fakta');
+
+    // 🛡️ Auto-fill fallback: jika dipicu langsung dari layar hasil remedial, ambil nama/kelas/modul aktif
+    const fallbackCls = studentClass || (remedialSourceRecord ? remedialSourceRecord.class : '');
+    const fallbackName = studentName || (remedialSourceRecord ? remedialSourceRecord.name : '');
+    const fallbackModuleId = (currentActiveModule && currentActiveModule.id) || (remedialSourceRecord ? remedialSourceRecord.moduleId : (window.QuizManager ? QuizManager.getActiveModuleId() : 'modul_detektif_fakta'));
+
+    if (clsSelect && !clsSelect.value && fallbackCls) {
+        clsSelect.value = fallbackCls;
+        if (typeof onHomeClassChanged === 'function') {
+            try { onHomeClassChanged(); } catch (e) {}
+        }
+    }
+    if (nameSelect && !nameSelect.value && fallbackName) {
+        nameSelect.value = fallbackName;
+    }
+    if (moduleSelect && !moduleSelect.value && fallbackModuleId) {
+        moduleSelect.value = fallbackModuleId;
+    }
+
+    const cls = (clsSelect && clsSelect.value) ? clsSelect.value : fallbackCls;
+    const name = (nameSelect && nameSelect.value && nameSelect.value.trim()) ? nameSelect.value.trim() : fallbackName;
+    const moduleId = (moduleSelect && moduleSelect.value) ? moduleSelect.value : fallbackModuleId;
 
     if (!cls) {
         if (typeof switchScreen === 'function') switchScreen('home');
@@ -883,7 +902,8 @@ async function initiateQuiz() {
     }
 
     // 🔑 ANTI-JOKI 1: Token Ujian Kelas Dinamis (Cegah joki dari luar ruangan kelas)
-    if (cls !== 'KELAS DEMO' && typeof isExamTokenRequired === 'function' && isExamTokenRequired()) {
+    const isRemedialConfirmed = window.__remedialConfirmed === true;
+    if (!isRemedialConfirmed && cls !== 'KELAS DEMO' && typeof isExamTokenRequired === 'function' && isExamTokenRequired()) {
         const tokenInput = document.getElementById('input-exam-token');
         const enteredToken = tokenInput ? tokenInput.value.trim().toUpperCase() : '';
         const expectedToken = (typeof getExpectedExamToken === 'function') ? getExpectedExamToken().toUpperCase() : '';
@@ -2588,22 +2608,44 @@ async function finishQuiz() {
     const remedialBtnCount = document.getElementById('remedial-q-count');
 
     const wrongList = record.wrongQuestions || [];
-    // Jangan izinkan remedial instan jika mode tunda review aktif agar tidak dimanfaatkan untuk tebak kunci
-    if (!isPassed && wrongList.length > 0 && isRemedialConfigEnabled && !isPostponed) {
+    const isPreFixRem = (r) => {
+        const m = String((r && r.date) || '').match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+        if (!m) return false;
+        return Date.UTC(+m[3], +m[2] - 1, +m[1]) < Date.UTC(2026, 10, 21);
+    };
+    const hasAlreadyRemedialed = prevStudentAttempts.some(r => r.isRemedial && !isPreFixRem(r));
+    const canOfferRemedial = !isPassed && !isRemedialSession && isRemedialConfigEnabled && !hasAlreadyRemedialed && submissionPolicy !== 'allow_multiple';
+
+    if (canOfferRemedial) {
         remedialSourceRecord = record;
         window.remedialSourceRecord = record;
         if (remedialCard) {
             remedialCard.style.display = 'flex';
             const rTitle = remedialCard.querySelector('h4');
-            if (rTitle) rTitle.textContent = 'Pilihan Remedial Mandiri (Opsional)';
+            if (rTitle) rTitle.textContent = 'Kesempatan Remedial Terbuka';
             const rText = remedialCard.querySelector('p');
-            if (rText) rText.innerHTML = `Nilai Anda sudah tersimpan resmi di guru. Terdapat <strong id="remedial-card-count" style="color: #fbbf24;">${wrongList.length}</strong> butir soal yang belum tuntas. Anda dapat mengikuti remedial mandiri ini untuk memperbaiki nilai jika diinginkan.`;
+            if (rText) rText.innerHTML = `Nilai Anda (${displayScore}/100) belum mencapai KKM 80. Guru membuka kesempatan 1x remedial untuk memperbaiki nilai rapor Anda.`;
             const rBtn = remedialCard.querySelector('button');
-            if (rBtn) rBtn.innerHTML = '🔁 Mulai Remedial (Opsional) ➔';
+            if (rBtn) {
+                rBtn.innerHTML = '🔁 Lanjutkan Remedial ➔';
+                rBtn.onclick = () => openRemedialOffer(studentName, studentClass, activeModTitle, record);
+            }
         }
-        if (btnStartRemedial) btnStartRemedial.style.display = 'inline-flex';
+        if (btnStartRemedial) {
+            btnStartRemedial.style.display = 'inline-flex';
+            btnStartRemedial.onclick = () => openRemedialOffer(studentName, studentClass, activeModTitle, record);
+        }
         if (remedialCount) remedialCount.textContent = wrongList.length;
         if (remedialBtnCount) remedialBtnCount.textContent = wrongList.length;
+
+        // 🚀 LANGSUNG MUNCULKAN MODAL PENAWARAN REMEDIAL KE SISWA SETELAH NILAI KELUAR
+        // Setelah animasi skor di layar hasil selesai (1.3 detik), modal remedial langsung tampil otomatis
+        setTimeout(() => {
+            const resScreen = document.getElementById('screen-result');
+            if (resScreen && resScreen.classList.contains('active')) {
+                openRemedialOffer(studentName, studentClass, activeModTitle, record);
+            }
+        }, 1300);
     } else {
         if (remedialCard) remedialCard.style.display = 'none';
         if (btnStartRemedial) btnStartRemedial.style.display = 'none';
@@ -2831,9 +2873,19 @@ function confirmRemedialStart() {
     window.__remedialConfirmed = true;
     initiateQuiz();
 }
+
+function triggerRemedialFromCard() {
+    if (typeof sfxClick === 'function') sfxClick();
+    const rec = remedialSourceRecord || (window.lastQuizResult ? window.lastQuizResult.record : null);
+    const modTitle = (currentActiveModule && currentActiveModule.title) || (rec ? rec.moduleTitle : 'Modul Kuis');
+    const sName = (rec && rec.name) || studentName || 'Siswa';
+    const sClass = (rec && rec.class) || studentClass || '-';
+    openRemedialOffer(sName, sClass, modTitle, rec);
+}
 window.openRemedialOffer = openRemedialOffer;
 window.closeRemedialOffer = closeRemedialOffer;
 window.confirmRemedialStart = confirmRemedialStart;
+window.triggerRemedialFromCard = triggerRemedialFromCard;
 
 function openRemedialBriefing() {
     if (typeof sfxClick === 'function') sfxClick();
