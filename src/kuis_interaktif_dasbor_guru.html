@@ -720,6 +720,25 @@
             <button class="btn btn-secondary" onclick="closeStudentDetailModal()" style="padding: 6px 14px; font-size: 0.85rem; border-radius: 8px;">✕ Tutup</button>
         </div>
 
+        <!-- Remedial Session Switcher (Muncul jika siswa memiliki riwayat sebelum & sesudah remedial) -->
+        <div id="sd-attempt-switcher-wrap" style="display: none; margin-bottom: 10px; align-items: center; justify-content: space-between; background: rgba(99,102,241,0.08); border: 1px solid rgba(99,102,241,0.28); border-radius: 10px; padding: 7px 12px; flex-shrink: 0; flex-wrap: wrap; gap: 8px;">
+            <div style="display: flex; align-items: center; gap: 6px; font-size: 0.8rem; font-weight: 700; color: var(--accent);">
+                <span>🔄 Riwayat Pengerjaan:</span>
+                <span id="sd-attempt-switcher-label" style="font-size: 0.76rem; color: var(--text-muted); font-weight: 500;">Pilih sesi ujian untuk dibandingkan</span>
+            </div>
+            <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+                <button type="button" class="btn btn-secondary active access-mode-btn" id="btn-sd-attempt-remedial" onclick="switchStudentDetailAttempt('remedial')" style="padding: 4px 12px !important; font-size: 0.76rem !important; font-weight: 700; border-radius: 6px;">
+                    🔄 Sesi Remedial
+                </button>
+                <button type="button" class="btn btn-secondary access-mode-btn" id="btn-sd-attempt-original" onclick="switchStudentDetailAttempt('original')" style="padding: 4px 12px !important; font-size: 0.76rem !important; font-weight: 700; border-radius: 6px;">
+                    📋 Sebelum Remedial
+                </button>
+                <button type="button" class="btn btn-secondary access-mode-btn" id="btn-sd-attempt-compare" onclick="switchStudentDetailAttempt('compare')" style="padding: 4px 12px !important; font-size: 0.76rem !important; font-weight: 700; border-radius: 6px;">
+                    ⚖️ Bandingkan
+                </button>
+            </div>
+        </div>
+
         <!-- Student summary banner (Fixed Top) -->
         <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border); border-radius: 12px; padding: 10px 14px; margin-bottom: 10px; display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 8px; flex-shrink: 0;" id="sd-summary-grid">
             <!-- Filled via JS -->

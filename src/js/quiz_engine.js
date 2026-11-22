@@ -877,7 +877,10 @@ async function initiateQuiz() {
     // 🛡️ Auto-fill fallback: jika dipicu langsung dari layar hasil remedial, ambil nama/kelas/modul aktif
     const fallbackCls = studentClass || (remedialSourceRecord ? remedialSourceRecord.class : '');
     const fallbackName = studentName || (remedialSourceRecord ? remedialSourceRecord.name : '');
-    const fallbackModuleId = (currentActiveModule && currentActiveModule.id) || (remedialSourceRecord ? remedialSourceRecord.moduleId : (window.QuizManager ? QuizManager.getActiveModuleId() : 'modul_detektif_fakta'));
+    const fallbackModuleId = (remedialSourceRecord ? remedialSourceRecord.moduleId : ((currentActiveModule && currentActiveModule.id) || (window.QuizManager ? QuizManager.getActiveModuleId() : 'modul_detektif_fakta')));
+
+    const isRemedialConfirmed = window.__remedialConfirmed === true;
+    const activeRemRec = (isRemedialConfirmed && (remedialSourceRecord || window.__pendingRemedialRec)) ? (remedialSourceRecord || window.__pendingRemedialRec) : null;
 
     if (clsSelect && !clsSelect.value && fallbackCls) {
         clsSelect.value = fallbackCls;
@@ -892,9 +895,9 @@ async function initiateQuiz() {
         moduleSelect.value = fallbackModuleId;
     }
 
-    const cls = (clsSelect && clsSelect.value) ? clsSelect.value : fallbackCls;
-    const name = (nameSelect && nameSelect.value && nameSelect.value.trim()) ? nameSelect.value.trim() : fallbackName;
-    const moduleId = (moduleSelect && moduleSelect.value) ? moduleSelect.value : fallbackModuleId;
+    const cls = activeRemRec ? activeRemRec.class : ((clsSelect && clsSelect.value) ? clsSelect.value : fallbackCls);
+    const name = activeRemRec ? activeRemRec.name : ((nameSelect && nameSelect.value && nameSelect.value.trim()) ? nameSelect.value.trim() : fallbackName);
+    const moduleId = activeRemRec ? (typeof normalizeModuleId === 'function' ? normalizeModuleId(activeRemRec.moduleId, activeRemRec.id, activeRemRec.date) : activeRemRec.moduleId) : ((moduleSelect && moduleSelect.value) ? moduleSelect.value : fallbackModuleId);
 
     if (!cls) {
         if (typeof switchScreen === 'function') switchScreen('home');
@@ -931,7 +934,6 @@ async function initiateQuiz() {
     }
 
     // 🔑 ANTI-JOKI 1: Token Ujian Kelas Dinamis (Cegah joki dari luar ruangan kelas)
-    const isRemedialConfirmed = window.__remedialConfirmed === true;
     if (!isRemedialConfirmed && cls !== 'KELAS DEMO' && typeof isExamTokenRequired === 'function' && isExamTokenRequired()) {
         const tokenInput = document.getElementById('input-exam-token');
         const enteredToken = tokenInput ? tokenInput.value.trim().toUpperCase() : '';
@@ -2914,13 +2916,20 @@ function startDeliveryRetry(record, pill, detailEl) {
 }
 window.startDeliveryRetry = startDeliveryRetry;
 
+let activePendingRemedialRecord = null;
 function openRemedialOffer(name, cls, moduleTitle, rec) {
+    activePendingRemedialRecord = rec || null;
+    window.__pendingRemedialRec = rec || null;
+    if (rec) {
+        remedialSourceRecord = rec;
+        window.remedialSourceRecord = rec;
+    }
     const modal = document.getElementById('remedial-offer-modal');
     if (!modal) { showToast('Remedial tersedia, namun jendela pilihan tidak ditemukan.', '⚠️'); return; }
     const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
     set('rem-offer-name', name);
     set('rem-offer-class', `Kelas: ${cls}`);
-    set('rem-offer-module', moduleTitle || '-');
+    set('rem-offer-module', moduleTitle || (rec && rec.moduleTitle) || '-');
     set('rem-offer-score', `Nilai Tercatat: ${Number(rec && rec.score) || 0} / 100`);
     set('rem-offer-kkm', 'KKM 80');
     modal.classList.add('active');
@@ -2932,11 +2941,38 @@ function closeRemedialOffer() {
     if (modal) modal.classList.remove('active');
 }
 
-function confirmRemedialStart() {
+async function confirmRemedialStart() {
     const modal = document.getElementById('remedial-offer-modal');
     if (modal) modal.classList.remove('active');
     window.__remedialConfirmed = true;
-    initiateQuiz();
+    const rec = window.__pendingRemedialRec || remedialSourceRecord || activePendingRemedialRecord;
+    if (rec) {
+        remedialSourceRecord = rec;
+        window.remedialSourceRecord = rec;
+        studentName = rec.name;
+        studentClass = rec.class;
+        const clsSelect = document.getElementById('input-class');
+        const nameSelect = document.getElementById('input-name');
+        const moduleSelect = document.getElementById('input-module');
+        if (clsSelect) {
+            clsSelect.value = rec.class;
+            if (typeof onHomeClassChanged === 'function') {
+                try { onHomeClassChanged(); } catch (e) {}
+            }
+        }
+        if (nameSelect) {
+            nameSelect.value = rec.name;
+        }
+        const targetMod = (typeof normalizeModuleId === 'function') ? normalizeModuleId(rec.moduleId, rec.id, rec.date) : rec.moduleId;
+        if (moduleSelect) {
+            moduleSelect.value = targetMod;
+        }
+        if (window.QuizManager) {
+            QuizManager.setActiveModuleId(targetMod, true);
+        }
+        try { sessionStorage.setItem('user_chosen_module_id', targetMod); } catch(e) {}
+    }
+    await initiateQuiz();
 }
 
 function triggerRemedialFromCard() {
@@ -3008,6 +3044,8 @@ function simulateDemoRemedialResult(targetScore = 70) {
             pointsEarned: isCorr ? pointsPerQ : 0,
             maxPoints: pointsPerQ,
             selected: isCorr ? 0 : 1,
+            selectedIndices: isCorr ? [0] : [1],
+            selectedText: [isCorr ? 'Jawaban Benar' : 'Jawaban Salah'],
             correctAnswers: [0],
             timeSpent: 2
         });
