@@ -1450,20 +1450,41 @@ function handleSingleNextAction() {
 
     const nextBtn = document.getElementById('btn-next');
 
-    // Tahap kedua: jawaban sudah dikunci dan feedback sudah tampil.
+    // Klik kedua: hasil sudah disimpan, lanjut ke soal berikutnya.
     if (detailedAnswers && detailedAnswers[origQIdx]) {
         nextQuestion();
         return;
     }
 
-    // Tahap pertama: periksa jawaban. checkAnswer() mengatur label tombol
-    // setelah feedback dibuat; label tersebut tidak boleh ditimpa lagi.
     if (nextBtn) {
         nextBtn.disabled = true;
         nextBtn.innerHTML = '⏳ Memeriksa Jawaban...';
     }
 
-    checkAnswer(false);
+    try {
+        checkAnswer(false);
+    } catch (error) {
+        console.error('Kesalahan saat memeriksa jawaban:', error);
+        isCheckingAnswer = false;
+
+        // Jika snapshot sempat tersimpan sebelum error lain, siswa tetap boleh lanjut.
+        if (detailedAnswers && detailedAnswers[origQIdx]) {
+            if (nextBtn) {
+                nextBtn.disabled = false;
+                nextBtn.innerHTML = currentQ >= quizData.length - 1
+                    ? '🏁 Kirim Jawaban & Lihat Hasil ➔'
+                    : 'Lanjutkan ➔';
+            }
+            showToast('Jawaban tersimpan. Silakan tekan Lanjutkan.', 'ℹ️');
+        } else {
+            if (nextBtn) {
+                nextBtn.disabled = false;
+                nextBtn.innerHTML = '🔄 Periksa Lagi';
+            }
+            showToast('Pemeriksaan gagal. Silakan coba sekali lagi.', '⚠️');
+        }
+        return;
+    }
 
     if (detailedAnswers && detailedAnswers[origQIdx]) {
         if (nextBtn) {
@@ -1473,6 +1494,7 @@ function handleSingleNextAction() {
                 : 'Lanjutkan ➔';
         }
     } else {
+        isCheckingAnswer = false;
         if (nextBtn) {
             nextBtn.disabled = false;
             nextBtn.innerHTML = '🔄 Periksa Lagi';
@@ -2115,6 +2137,14 @@ function checkAnswer(isAutoTimeout = false) {
         const origQIdx = shuffledQuizOrder[currentQ];
         const data = quizData[origQIdx];
         if (!data) return;
+
+        // ID modul harus berada dalam scope checkAnswer karena dipakai saat
+        // menyimpan topicCode/topicName. Sebelumnya variabel ini hanya lokal
+        // di loadQuestion(), sehingga ReferenceError terjadi setelah nilai dihitung.
+        const activeModId = (currentActiveModule && currentActiveModule.id) ||
+            (window.QuizManager && typeof QuizManager.getActiveModuleId === 'function'
+                ? QuizManager.getActiveModuleId()
+                : 'modul_detektif_fakta');
         const grid = document.getElementById('options-grid');
         if (!grid) return;
 
@@ -2462,50 +2492,107 @@ function checkAnswer(isAutoTimeout = false) {
 }
 
 function nextQuestion() {
-    if (isTransitioningQuestion) return;
+    if (isTransitioningQuestion || isCheckingAnswer) return false;
+
+    const origQIdx = shuffledQuizOrder && shuffledQuizOrder[currentQ];
+    if (!quizData || !quizData[origQIdx]) {
+        showToast('Soal berikutnya belum siap. Silakan coba lagi.', '⚠️');
+        return false;
+    }
+
+    // Pastikan jawaban sudah diperiksa sebelum memulai transisi.
+    if (!detailedAnswers || !detailedAnswers[origQIdx]) {
+        try {
+            checkAnswer(false);
+        } catch (error) {
+            console.error('Gagal memeriksa jawaban sebelum lanjut:', error);
+            isCheckingAnswer = false;
+            const retryBtn = document.getElementById('btn-next');
+            if (retryBtn) {
+                retryBtn.disabled = false;
+                retryBtn.innerHTML = '🔄 Periksa Lagi';
+            }
+            showToast('Jawaban belum berhasil diperiksa. Coba tekan kembali.', '⚠️');
+            return false;
+        }
+    }
+
+    // Jangan pindah jika penilaian tidak menghasilkan snapshot jawaban.
+    if (!detailedAnswers || !detailedAnswers[origQIdx]) {
+        isCheckingAnswer = false;
+        const retryBtn = document.getElementById('btn-next');
+        if (retryBtn) {
+            retryBtn.disabled = false;
+            retryBtn.innerHTML = '🔄 Periksa Lagi';
+        }
+        showToast('Jawaban belum tersimpan. Silakan periksa kembali.', '⚠️');
+        return false;
+    }
+
     isTransitioningQuestion = true;
-
-    if (singleActionTransitionTimer) {
-        clearTimeout(singleActionTransitionTimer);
-        singleActionTransitionTimer = null;
-    }
-
-    const origQIdx = shuffledQuizOrder[currentQ];
-    if (quizData && quizData[origQIdx] && !detailedAnswers[origQIdx]) {
-        checkAnswer(false);
-    }
-
     const isFinalQ = (currentQ >= quizData.length - 1);
+    const nextBtn = document.getElementById('btn-next');
+
     if (isFinalQ) {
-        // ⚡ INSTANT FINISH: Langsung panggil finishQuiz() seketika tanpa penundaan setTimeout!
-        const nextBtn = document.getElementById('btn-next');
         if (nextBtn) {
             nextBtn.disabled = true;
             nextBtn.innerHTML = '⚡ Mengirim Nilai...';
         }
-        sfxClick();
-        finishQuiz();
-        return;
+        try {
+            if (typeof sfxClick === 'function') sfxClick();
+            Promise.resolve(finishQuiz()).catch(error => {
+                console.error('Gagal menyelesaikan kuis:', error);
+                isQuizFinishing = false;
+                isTransitioningQuestion = false;
+                if (nextBtn) {
+                    nextBtn.disabled = false;
+                    nextBtn.innerHTML = '🔁 Coba Kirim Hasil Lagi';
+                }
+                showToast('Pengiriman hasil belum berhasil. Silakan coba lagi.', '⚠️');
+            });
+        } catch (error) {
+            console.error('Gagal memulai pengiriman hasil:', error);
+            isQuizFinishing = false;
+            isTransitioningQuestion = false;
+            if (nextBtn) {
+                nextBtn.disabled = false;
+                nextBtn.innerHTML = '🔁 Coba Kirim Hasil Lagi';
+            }
+            showToast('Terjadi kendala saat mengirim hasil. Silakan coba lagi.', '⚠️');
+        }
+        return true;
     }
 
-    const nextBtn = document.getElementById('btn-next');
     if (nextBtn) nextBtn.disabled = true;
-    sfxClick();
+    if (typeof sfxClick === 'function') sfxClick();
     const qContent = document.getElementById('q-content');
     if (qContent) {
         qContent.classList.remove('slide-in');
         qContent.classList.add('slide-out');
     }
 
+    const previousQ = currentQ;
     setTimeout(() => {
-        currentQ++;
-        if (currentQ < quizData.length) {
+        try {
+            currentQ = previousQ + 1;
             loadQuestion(currentQ);
-        } else {
-            finishQuiz();
+            // Pastikan soal baru benar-benar tersedia sebelum melepas guard.
+            const newOrigIdx = shuffledQuizOrder && shuffledQuizOrder[currentQ];
+            if (!quizData[newOrigIdx]) throw new Error('Data soal berikutnya tidak ditemukan');
+        } catch (error) {
+            console.error('Gagal memuat soal berikutnya:', error);
+            currentQ = previousQ;
+            isCheckingAnswer = false;
+            if (nextBtn) {
+                nextBtn.disabled = false;
+                nextBtn.innerHTML = '➡️ Coba Lanjutkan Lagi';
+            }
+            showToast('Soal berikutnya gagal dimuat. Silakan tekan Lanjutkan lagi.', '⚠️');
+        } finally {
+            isTransitioningQuestion = false;
         }
-        isTransitioningQuestion = false;
     }, 180);
+    return true;
 }
 
 async function finishQuiz() {
