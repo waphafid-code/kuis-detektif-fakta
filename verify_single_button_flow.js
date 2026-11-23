@@ -63,7 +63,8 @@ test('4. quiz_engine.js: handleSingleNextAction terdefinisi dan terekspor ke win
 test('5. quiz_engine.js: loadQuestion menampilkan satu tombol untuk periksa lalu lanjut', () => {
     assert(rootEngine.includes("checkBtn.style.display = 'none';"), 'loadQuestion harus menyembunyikan checkBtn');
     assert(rootEngine.includes("nextBtn.style.display = 'inline-flex';"), 'loadQuestion harus menampilkan nextBtn');
-    assert(rootEngine.includes("nextBtn.innerHTML = isFinalQ ? '🏁 Selesai & Kirim Jawaban ➔' : 'Lanjut Soal Berikutnya ➔';"), 'loadQuestion harus mengatur teks tombol tunggal');
+    assert(rootEngine.includes("nextBtn.innerHTML = isFinalQ ? '🏁 Periksa & Kirim Jawaban ➔' : 'Periksa Jawaban & Lanjutkan ➔';"), 'loadQuestion harus mengatur teks awal tombol tunggal');
+    assert(rootEngine.includes("nextBtn.innerHTML = isFinalQ ? '🏁 Kirim Jawaban & Lihat Hasil ➔' : 'Lanjutkan ➔';"), 'Setelah hasil keluar, tombol berubah menjadi Lanjutkan');
 });
 
 test('6. quiz_engine.js: checkAnswer tidak memblokir siswa saat tidak memilih jawaban (MCQ/TF/Matrix/Checkbox)', () => {
@@ -78,7 +79,7 @@ test('7. quiz_engine.js: nextQuestion memiliki guard jika jawaban belum terkunci
 });
 
 console.log('════════════════════════════════════════════════════════════════');
-console.log(`🎉 ALL ${passed}/7 TESTS PASSED SUCCESSFULLY!`);
+console.log(`🎉 ${passed} TESTS PASSED SUCCESSFULLY!`);
 console.log('════════════════════════════════════════════════════════════════');
 
 
