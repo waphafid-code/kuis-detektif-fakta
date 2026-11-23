@@ -3436,7 +3436,7 @@ function renderDashboard() {
 
     // Pulihkan filter modul dasbor yang tersimpan agar tidak ter-reset
     if (!window._dashFilterInitDone && filterModuleEl) {
-        const savedDashFilter = localStorage.getItem('quizmaster_dashboard_module_filter') || 'modul_jaringan_keamanan';
+        const savedDashFilter = localStorage.getItem('quizmaster_dashboard_module_filter') || 'all';
         filterModuleEl.value = savedDashFilter;
         window.currentDashboardModuleFilter = savedDashFilter;
         window._dashFilterInitDone = true;
