@@ -1713,23 +1713,23 @@
                 <div class="module-deck-header">
                     <div>
                         <div class="module-deck-title">🎯 Filter &amp; Pilihan Modul Kuis</div>
-                        <div class="module-deck-sub">Pilih modul kuis tunggal atau mode komparasi lintas 2 modul evaluasi</div>
+                        <div class="module-deck-sub">Pilih modul tunggal atau bandingkan seluruh nilai kuis siswa dalam satu tabel</div>
                     </div>
                     <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
                         <button type="button" class="btn btn-primary" id="btn-apply-student-module" onclick="applyCurrentSegmentToStudents()" style="padding: 6px 14px; font-size: 0.76rem; font-weight: 700; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.2);" title="Terapkan modul yang dipilih agar hanya modul ini yang muncul di halaman siswa">
                             🔒 Terapkan Hanya Modul Ini untuk Siswa
                         </button>
                         <div class="active-module-indicator-text" id="active-module-indicator-text">
-                            Menampilkan: 📊 <strong>Komparasi 2 Modul (Lengkap)</strong>
+                            Menampilkan: 📊 <strong>Komparasi Semua Modul (seluruh nilai kuis)</strong>
                         </div>
                     </div>
                 </div>
                 <div class="module-filter-buttons">
-                    <button type="button" class="module-seg-btn active" id="btn-mod-filter-all" onclick="selectModuleSegment('all')" title="Tampilkan perbandingan Kuis 1 &amp; Kuis 2 secara berdampingan">
+                    <button type="button" class="module-seg-btn active" id="btn-mod-filter-all" onclick="selectModuleSegment('all')" title="Tampilkan semua nilai kuis siswa secara berdampingan">
                         <span class="seg-icon">📊</span>
                         <div class="seg-info">
-                            <span class="seg-title">Komparasi 2 Modul</span>
-                            <span class="seg-desc">Evaluasi komprehensif kedua kuis</span>
+                            <span class="seg-title">Komparasi Semua Modul</span>
+                            <span class="seg-desc">Tampilkan seluruh nilai kuis berdampingan</span>
                         </div>
                         <span class="seg-badge" id="badge-cnt-all-mod">300 Data</span>
                     </button>
@@ -1772,7 +1772,7 @@
                     <option value="time_asc">⏳ Waktu (Terlama ➔ Terbaru)</option>
                 </select>
                 <select id="filter-module" onchange="selectModuleSegment(this.value)" class="form-select" style="max-width: 260px; font-size: 0.85rem;">
-                    <option value="all">📊 Komparasi Semua Modul</option>
+                    <option value="all">📊 Komparasi Semua Modul (Semua Nilai)</option>
                     <option value="modul_tryout_terpadu">🎯 Tryout Terpadu 60 Soal (6 Materi)</option>
                     <option value="modul_jaringan_keamanan">🛡️ Modul Keamanan Jaringan Saja</option>
                     <option value="modul_detektif_fakta">🕵️ Modul Detektif Fakta Saja</option>
