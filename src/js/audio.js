@@ -599,11 +599,11 @@ async function saveTimerSetting() {
     try {
         await fetch('/api/settings', {
             method: 'POST',
-            headers: { 
+            headers: {
                 'Content-Type': 'application/json',
-                'x-admin-pin': PIN_GURU 
+                'x-admin-token': sessionStorage.getItem('quizmaster_teacher_auth_token') || ''
             },
-            body: JSON.stringify({ timer_seconds: val, pin: PIN_GURU })
+            body: JSON.stringify({ timer_seconds: val })
         });
     } catch (e) {}
 }
