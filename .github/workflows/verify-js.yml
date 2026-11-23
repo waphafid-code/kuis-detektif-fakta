@@ -1,0 +1,42 @@
+name: Verify JavaScript and quiz regression tests
+
+on:
+  pull_request:
+    branches: ["main"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Syntax-check every JavaScript file
+        shell: bash
+        run: |
+          set -euo pipefail
+          while IFS= read -r -d '' file; do
+            echo "Checking $file"
+            node --check "$file"
+          done < <(find . -type f -name '*.js' -not -path './.git/*' -not -path './node_modules/*' -print0)
+      - name: Run all quiz verification scripts
+        shell: bash
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          tests=(verify_*.js)
+          if (( ${#tests[@]} == 0 )); then
+            echo "No verify_*.js scripts found"
+            exit 1
+          fi
+          for test in "${tests[@]}"; do
+            echo "Running $test"
+            node "$test"
+          done
