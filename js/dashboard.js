@@ -1550,7 +1550,7 @@ function initActiveExamModuleUi() {
 window.initActiveExamModuleUi = initActiveExamModuleUi;
 
 function applyCurrentSegmentToStudents() {
-    const currentFilter = window.currentDashboardModuleFilter || localStorage.getItem('quizmaster_dashboard_module_filter') || 'modul_jaringan_keamanan';
+    const currentFilter = window.currentDashboardModuleFilter || localStorage.getItem('quizmaster_dashboard_module_filter') || 'all';
     saveActiveExamModuleSetting(currentFilter);
 }
 window.applyCurrentSegmentToStudents = applyCurrentSegmentToStudents;
@@ -3469,7 +3469,7 @@ function renderDashboard() {
             const extraMods = mods.filter(m => m.id !== 'modul_jaringan_keamanan' && m.id !== 'modul_detektif_fakta');
             if (filterModuleEl.options && filterModuleEl.options.length !== 3 + extraMods.length) {
                 let opts = `
-                    <option value="all" ${curVal === 'all' ? 'selected' : ''}>📊 Komparasi 2 Modul (Lengkap)</option>
+                    <option value="all" ${curVal === 'all' ? 'selected' : ''}>📊 Komparasi Semua Modul (Semua Nilai)</option>
                     <option value="modul_jaringan_keamanan" ${curVal === 'modul_jaringan_keamanan' ? 'selected' : ''}>🛡️ Modul Keamanan Jaringan Saja</option>
                     <option value="modul_detektif_fakta" ${curVal === 'modul_detektif_fakta' ? 'selected' : ''}>🕵️ Modul Detektif Fakta Saja</option>
                 `;
@@ -3503,7 +3503,7 @@ function renderDashboard() {
         } else if (filterModule !== 'all') {
             indText.innerHTML = `Menampilkan: 📚 <strong>${escapeHtml(filterModule)} Saja</strong>`;
         } else {
-            indText.innerHTML = 'Menampilkan: 📊 <strong>Komparasi 2 Modul (Lengkap)</strong>';
+            indText.innerHTML = 'Menampilkan: 📊 <strong>Komparasi Semua Modul (seluruh nilai kuis)</strong>';
         }
     }
 
@@ -3673,6 +3673,8 @@ function renderDashboard() {
             if (hasFakta) completedScores.push(bestFakta.score);
             if (hasJaringan) completedScores.push(bestJaringan.score);
             if (hasTryout) completedScores.push(bestTryout.score);
+            if (bestPanduan) completedScores.push(bestPanduan.score);
+            if (bestPrivasi) completedScores.push(bestPrivasi.score);
             let avgScore = -1;
             if (completedScores.length > 0) {
                 avgScore = Math.round(completedScores.reduce((a, b) => a + b, 0) / completedScores.length);
@@ -3716,11 +3718,11 @@ function renderDashboard() {
                 activeTimestamp = bestMod ? (bestMod.timestamp || 0) : 0;
             } else {
                 // Komparasi Semua Modul & Tryout ('all')
-                hasSubmitted = hasFakta || hasJaringan || hasTryout;
-                activeRecord = bestTryout || bestJaringan || bestFakta;
+                hasSubmitted = hasFakta || hasJaringan || hasPanduan || hasPrivasi || hasTryout;
+                activeRecord = bestTryout || bestPrivasi || bestPanduan || bestJaringan || bestFakta;
                 activeScore = avgScore;
-                activeAttempts = attemptsFakta.length + attemptsJaringan.length + attemptsTryout.length;
-                activeTimestamp = Math.max(bestFakta ? (bestFakta.timestamp || 0) : 0, bestJaringan ? (bestJaringan.timestamp || 0) : 0, bestTryout ? (bestTryout.timestamp || 0) : 0);
+                activeAttempts = attemptsFakta.length + attemptsJaringan.length + attemptsPanduan.length + attemptsPrivasi.length + attemptsTryout.length;
+                activeTimestamp = Math.max(bestFakta ? (bestFakta.timestamp || 0) : 0, bestJaringan ? (bestJaringan.timestamp || 0) : 0, bestPanduan ? (bestPanduan.timestamp || 0) : 0, bestPrivasi ? (bestPrivasi.timestamp || 0) : 0, bestTryout ? (bestTryout.timestamp || 0) : 0);
             }
 
             rosterStudentItems.push({
