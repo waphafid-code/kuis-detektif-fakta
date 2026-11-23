@@ -1510,9 +1510,9 @@ function handleSingleNextAction() {
     const nextBtn = document.getElementById('btn-next');
     const isFinalQ = (currentQ >= quizData.length - 1);
     if (nextBtn) {
-        nextBtn.innerHTML = isFinalQ 
-            ? '🏁 Selesai & Kirim Jawaban ➔' 
-            : 'Lanjut Soal Berikutnya ➔';
+        nextBtn.innerHTML = isFinalQ
+            ? '🏁 Periksa & Kirim Jawaban ➔'
+            : 'Periksa Jawaban & Lanjutkan ➔';
     }
 }
 window.handleSingleNextAction = handleSingleNextAction;
@@ -1895,7 +1895,7 @@ function loadQuestion(index) {
     if (nextBtn) {
         nextBtn.style.display = 'inline-flex';
         nextBtn.disabled = false;
-        nextBtn.innerHTML = isFinalQ ? '🏁 Selesai & Kirim Jawaban ➔' : 'Lanjut Soal Berikutnya ➔';
+        nextBtn.innerHTML = isFinalQ ? '🏁 Kirim Jawaban & Lihat Hasil ➔' : 'Lanjutkan ➔';
     }
 
     const pct = Math.round((index / quizData.length) * 100);
