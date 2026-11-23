@@ -85,7 +85,7 @@ test('6. Integrasi Firebase RTDB dan Dasbor Guru (Semua Modul & Tryout)', () => 
     assert(rootFb.includes('topicBreakdown: extractedTopicBreakdown'), 'fetchFirebaseRecords harus mengekstrak topicBreakdown');
     assert(rootDash.includes("'modul_tryout_terpadu': 'btn-mod-filter-tryout'"), 'btnsMap selectModuleSegment harus menyertakan tryout');
     assert(rootDash.includes('🎯 Tryout (6 Materi)'), 'Tabel mode Semua Modul harus menampilkan kolom Tryout');
-    assert(rootDash.includes('hasSubmitted = hasFakta || hasJaringan || hasTryout'), 'Siswa yang sudah Tryout harus terhitung sudah mengumpulkan di mode Semua Modul');
+    assert(rootDash.includes('hasSubmitted = hasFakta || hasJaringan || hasPanduan || hasPrivasi || hasTryout'), 'Mode Semua Modul harus menghitung semua lima modul, termasuk Tryout');
 });
 
 console.log('════════════════════════════════════════════════════════════════');
