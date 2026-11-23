@@ -2445,6 +2445,49 @@ function checkAnswer(isAutoTimeout = false) {
         }
 
         if (fb) {
+            // Tampilkan koreksi eksplisit: jawaban siswa, kunci benar, dan alasan.
+            // Seluruh bank soal resmi sudah memiliki explanation; fallback ini
+            // menjaga UI tetap informatif jika ada soal tambahan tanpa pembahasan.
+            const safeFeedbackText = (value) => {
+                const raw = String(value ?? '');
+                return typeof escapeHtml === 'function'
+                    ? escapeHtml(raw)
+                    : raw.replace(/[&<>"']/g, ch => ({
+                        '&': '&amp;', '<': '&lt;', '>': '&gt;',
+                        '"': '&quot;', "'": '&#39;'
+                    }[ch]));
+            };
+            const selectedSummary = selectedText.length
+                ? selectedText.map(safeFeedbackText).join('<br>')
+                : 'Tidak memilih jawaban';
+            const correctSummary = correctText.length
+                ? correctText.map(safeFeedbackText).join('<br>')
+                : 'Kunci jawaban tidak tersedia';
+
+            const correctnessLabel = pointRes.isFullCorrect
+                ? 'Mengapa jawaban ini benar?'
+                : (pointRes.isPartial ? 'Bagian mana yang benar dan perlu diperbaiki?' : 'Mengapa jawaban ini salah?');
+
+            fb.innerHTML += `
+                <section class="instant-answer-review" style="margin-top:12px;padding:14px;border-radius:14px;background:rgba(15,23,42,.32);border:1px solid rgba(148,163,184,.25);text-align:left;">
+                    <h4 style="margin:0 0 10px;font-size:.98rem;">📝 Koreksi Jawaban</h4>
+                    <div style="display:grid;gap:9px;">
+                        <div style="padding:10px;border-radius:10px;background:rgba(148,163,184,.09);">
+                            <div style="font-size:.76rem;font-weight:800;opacity:.8;margin-bottom:4px;">JAWABAN KAMU</div>
+                            <div style="line-height:1.5;">${selectedSummary}</div>
+                        </div>
+                        <div style="padding:10px;border-radius:10px;background:rgba(16,185,129,.10);border:1px solid rgba(16,185,129,.24);">
+                            <div style="font-size:.76rem;font-weight:800;color:#34d399;margin-bottom:4px;">JAWABAN YANG TEPAT</div>
+                            <div style="line-height:1.5;">${correctSummary}</div>
+                        </div>
+                    </div>
+                    <div style="margin-top:11px;font-weight:800;font-size:.9rem;">💡 ${correctnessLabel}</div>
+                    <div style="margin-top:6px;line-height:1.55;">
+                        ${expText ? formatPedagogicalFeedback(expText) : '<p>Pembahasan untuk soal ini belum tersedia. Silakan tanyakan kepada guru agar alasan jawaban dapat dijelaskan berdasarkan materi.</p>'}
+                    </div>
+                </section>
+            `;
+
             // 🎯 Banner Akumulasi Nilai per Materi Real-Time
             if (liveTCode && window.liveTopicProgress && window.liveTopicProgress[liveTCode]) {
                 const prog = window.liveTopicProgress[liveTCode];
