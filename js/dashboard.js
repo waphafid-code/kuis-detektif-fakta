@@ -1502,12 +1502,13 @@ function saveActiveExamModuleSetting(val) {
     const mode = val || (sel ? sel.value : 'modul_jaringan_keamanan');
     try {
         localStorage.setItem('quizmaster_active_exam_module_mode', mode);
-        if (mode !== 'all') {
-            if (window.QuizManager) {
-                QuizManager.setActiveModuleId(mode, false);
-            }
-            try { sessionStorage.removeItem('user_chosen_module_id'); } catch(e) {}
+        // Mode "all" harus benar-benar membuka semua modul dan tidak mewarisi
+        // modul terakhir (mis. HKI) sebagai kunci yang seolah-olah membatasi siswa.
+        const defaultModuleId = 'modul_jaringan_keamanan';
+        if (window.QuizManager && typeof QuizManager.setActiveModuleId === 'function') {
+            QuizManager.setActiveModuleId(mode === 'all' ? defaultModuleId : mode, false);
         }
+        try { sessionStorage.removeItem('user_chosen_module_id'); } catch(e) {}
     } catch(e) {}
 
     const msg = document.getElementById('active-module-saved-msg');
@@ -1531,7 +1532,7 @@ function saveActiveExamModuleSetting(val) {
     if (typeof saveCloudSharedState === 'function') {
         saveCloudSharedState({ 
             activeExamModuleMode: mode,
-            activeModuleId: (mode === 'all' ? (window.QuizManager ? QuizManager.getActiveModuleId() : 'modul_jaringan_keamanan') : mode)
+            activeModuleId: (mode === 'all' ? 'modul_jaringan_keamanan' : mode)
         });
     }
 
@@ -1561,7 +1562,10 @@ function updateApplyButtonState(currentMode) {
     const mode = currentMode || loadActiveExamModuleSetting();
     const filter = window.currentDashboardModuleFilter || localStorage.getItem('quizmaster_dashboard_module_filter') || 'all';
     
-    if (mode === filter && mode !== 'all') {
+    if (mode === filter && mode === 'all') {
+        btn.innerHTML = `✅ Semua Modul Sudah Dibuka`;
+        btn.style.background = 'linear-gradient(135deg, #059669, #10b981)';
+    } else if (mode === filter) {
         btn.innerHTML = `✅ Siswa Terkunci di Modul Ini`;
         btn.style.background = 'linear-gradient(135deg, #059669, #10b981)';
     } else if (filter === 'all') {
@@ -2930,7 +2934,7 @@ let currentSortOrder = 'desc';
 let currentRosterStatusFilter = 'all'; // 'all', 'submitted', 'waiting'
 window.currentRenderedRecords = [];
 
-function selectModuleSegment(moduleId, syncToStudents = true) {
+function selectModuleSegment(moduleId, syncToStudents = false) {
     if (typeof sfxClick === 'function') sfxClick();
     window.currentDashboardModuleFilter = moduleId;
     try {
@@ -2960,14 +2964,19 @@ function selectModuleSegment(moduleId, syncToStudents = true) {
             indText.innerHTML = 'Menampilkan: 🛡️ <strong>Modul Keamanan Jaringan Saja</strong> (Kuis lain disembunyikan)';
         } else if (moduleId === 'modul_detektif_fakta') {
             indText.innerHTML = 'Menampilkan: 🕵️ <strong>Modul Detektif Fakta Saja</strong> (Kuis lain disembunyikan)';
+        } else if (moduleId === 'modul_hki_profesi_budaya') {
+            indText.innerHTML = 'Menampilkan: 📘 <strong>Panduan Generasi Digital: Teknologi, Profesi, Budaya & HKI</strong>';
+        } else if (moduleId === 'modul_etika_privasi_keamanan') {
+            indText.innerHTML = 'Menampilkan: 🔐 <strong>Etika, Privasi & Keamanan Digital</strong>';
         } else {
             indText.innerHTML = 'Menampilkan: 📊 <strong>Komparasi Semua Modul & Tryout (Lengkap)</strong>';
         }
     }
 
-    // 🔒 Otomatis sinkronkan modul ujian aktif ke siswa agar tidak perlu 2x klik
-    if (syncToStudents && typeof setActiveExamModuleSetting === 'function') {
-        setActiveExamModuleSetting(moduleId, true);
+    // Filter dashboard hanya mengubah tampilan guru. Penguncian/visibilitas siswa
+    // hanya berubah setelah guru menekan tombol Terapkan.
+    if (syncToStudents && typeof saveActiveExamModuleSetting === 'function') {
+        saveActiveExamModuleSetting(moduleId);
     }
 
     if (typeof updateApplyButtonState === 'function') updateApplyButtonState(moduleId);
