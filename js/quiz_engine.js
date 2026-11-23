@@ -263,7 +263,7 @@ async function restoreQuizSession() {
         isQuizFinishing = false;
         isCheatingTriggered = false;
         isCheatWarningActive = false;
-        cheatStrikes = Math.max(0, Math.min(MAX_CHEAT_STRIKES - 1, Number(data.cheatStrikes) || 0));
+        cheatStrikes = Math.max(0, Math.min(MAX_CHEAT_STRIKES, Number(data.cheatStrikes) || 0));
 
         studentName = data.studentName;
         studentClass = data.studentClass;
@@ -514,8 +514,8 @@ function handleAntiCheatEvent(reason = 'Kecurangan / Aktivitas Terlarang', isCri
     // Simpan jumlah peringatan agar reload yang diizinkan tidak menghapus riwayat strike.
     try { saveCurrentQuizSession(); } catch (e) {}
 
-    if (cheatStrikes < MAX_CHEAT_STRIKES && !isCritical) {
-        // ⏸️ TOLERANSI 1 & 2: Pause Kuis & Tampilkan Modal Peringatan Edukatif
+    if (cheatStrikes <= MAX_CHEAT_STRIKES && !isCritical) {
+        // ⏸️ TOLERANSI 1, 2, & 3: tiga peringatan penuh sebelum diskualifikasi pada pelanggaran berikutnya
         isCheatWarningActive = true;
         stopTimer();
         sfxTimerWarn();
@@ -527,14 +527,16 @@ function handleAntiCheatEvent(reason = 'Kecurangan / Aktivitas Terlarang', isCri
         const modal = document.getElementById('cheat-warning-modal');
 
         if (titleEl) {
-            titleEl.textContent = cheatStrikes === 1 
-                ? '⚠️ Peringatan Toleransi Anti-Cheat (#1 dari 3)' 
-                : '🚨 Peringatan Keras Toleransi (#2 dari 3)';
+            titleEl.textContent = cheatStrikes === 1
+                ? '⚠️ Peringatan Toleransi Anti-Cheat (#1 dari 3)'
+                : (cheatStrikes === 2
+                    ? '🚨 Peringatan Keras Toleransi (#2 dari 3)'
+                    : '⛔ Peringatan Terakhir Anti-Cheat (#3 dari 3)');
         }
         if (reasonEl) reasonEl.textContent = `Penyebab: ${reason}`;
         if (chancesEl) {
-            const rem = MAX_CHEAT_STRIKES - cheatStrikes;
-            chancesEl.innerHTML = `• Sisa Kesempatan: <strong style="color: ${rem === 1 ? '#f43f5e' : '#fde047'}; font-size: 0.95rem;">${rem} kali lagi</strong> sebelum DISKUALIFIKASI otomatis dan skor 0.`;
+            const rem = Math.max(0, MAX_CHEAT_STRIKES - cheatStrikes);
+            chancesEl.innerHTML = `• Sisa Peringatan: <strong style="color: ${rem <= 1 ? '#f43f5e' : '#fde047'}; font-size: 0.95rem;">${rem} kali lagi</strong>. Pelanggaran berikutnya setelah 3 peringatan akan menyebabkan diskualifikasi dan skor 0.`;
         }
         if (modal) modal.classList.add('active');
     } else {
