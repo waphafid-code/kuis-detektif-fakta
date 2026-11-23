@@ -648,7 +648,7 @@ document.addEventListener('visibilitychange', () => {
     if (document.hidden) {
         clearBlurGraceTimer();
         // Toleransi: 15 detik di ponsel/tablet (notifikasi/panggilan/keyboard), 8 detik di desktop
-        const graceMs = isMobileOrTouchDevice() ? 15000 : 8000;
+        const graceMs = isMobileOrTouchDevice() ? 2500 : 1800;
         blurGraceTimer = setTimeout(() => {
             if (document.hidden && isQuizActive() && !isCheatWarningActive && !isQuizFinishing) {
                 handleAntiCheatEvent('🌐 Berpindah Tab / Meminimalkan Browser');
@@ -665,7 +665,7 @@ window.addEventListener('blur', () => {
     clearBlurGraceTimer();
     // 🛡️ ANTI-CHEAT FLOATING WINDOW & POP-UP APP:
     // Aktifkan timer grace period bahkan saat document.hidden bernilai false (misal aplikasi mengambang / split-screen)
-    const graceMs = isMobileOrTouchDevice() ? 8000 : 5000;
+    const graceMs = isMobileOrTouchDevice() ? 3000 : 1800;
     blurGraceTimer = setTimeout(() => {
         if (isQuizActive() && !isCheatWarningActive && !isQuizFinishing) {
             handleAntiCheatEvent('🌐 Kehilangan Fokus / Jendela Mengambang (Floating App) Terdeteksi');
@@ -829,59 +829,13 @@ window.addEventListener('keydown', (e) => {
 });
 
 // 📋 4. DETEKSI & PENCEGAHAN COPY - PASTE - CUT - KLIK KANAN - DRAG - SELECT
-document.addEventListener('selectstart', (e) => {
-    if (isQuizActive()) {
-        e.preventDefault();
-        return false;
-    }
-});
-
-document.addEventListener('copy', (e) => {
-    if (isQuizActive()) {
-        e.preventDefault();
-        showToast('⚠️ Tindakan dilarang: Menyalin teks soal dinonaktifkan demi integritas asesmen.', '🔒');
-        handleAntiCheatEvent('📋 Percobaan Copy / Salin Teks Soal');
-    }
-});
-
-document.addEventListener('paste', (e) => {
-    if (isQuizActive()) {
-        e.preventDefault();
-        showToast('⚠️ Tindakan dilarang: Menempelkan teks dinonaktifkan demi integritas asesmen.', '🔒');
-        handleAntiCheatEvent('📋 Percobaan Paste / Tempel Teks');
-    }
-});
-
-document.addEventListener('cut', (e) => {
-    if (isQuizActive()) {
-        e.preventDefault();
-        showToast('⚠️ Tindakan dilarang: Memotong teks dinonaktifkan demi integritas asesmen.', '🔒');
-        handleAntiCheatEvent('📋 Percobaan Cut / Potong Teks');
-    }
-});
-
-document.addEventListener('contextmenu', (e) => {
-    if (isQuizActive()) {
-        e.preventDefault();
-        showToast('⚠️ Tindakan dilarang: Menu klik kanan dinonaktifkan.', '🔒');
-        handleAntiCheatEvent('🖱️ Percobaan Klik Kanan / Context Menu');
-    }
-});
+// Seleksi teks, long-press, copy, paste, cut, dan menu konteks diperbolehkan.
+// Browser/Android dapat mengirim event ini untuk gesture normal; jangan jadikan strike.
+// Deteksi screenshot yang tersedia (PrintScreen / shortcut / gesture 3 jari) tetap aktif.
 
 document.addEventListener('dragstart', (e) => {
-    if (isQuizActive()) {
+    if (isQuizActive() && e.target && e.target.closest && e.target.closest('.question-content')) {
         e.preventDefault();
-        return false;
-    }
-});
-
-// 🛡️ Bersihkan seleksi teks otomatis saat kuis aktif (Anti-Highlight)
-document.addEventListener('selectionchange', () => {
-    if (isQuizActive()) {
-        const sel = window.getSelection();
-        if (sel && sel.toString().trim().length > 0) {
-            sel.removeAllRanges();
-        }
     }
 });
 
@@ -1486,33 +1440,44 @@ function updateTimerDisplay() {
 let singleActionTransitionTimer = null;
 
 function handleSingleNextAction() {
-    if (isTransitioningQuestion) return;
+    if (isTransitioningQuestion || isCheckingAnswer) return;
 
-    // Fast-forward jika ada timer jeda transisi
-    if (singleActionTransitionTimer) {
-        clearTimeout(singleActionTransitionTimer);
-        singleActionTransitionTimer = null;
-        nextQuestion();
+    const origQIdx = shuffledQuizOrder && shuffledQuizOrder[currentQ];
+    if (origQIdx === undefined || !quizData || !quizData[origQIdx]) {
+        showToast('Soal belum siap. Silakan coba lagi.', '⚠️');
         return;
     }
-
-    const origQIdx = shuffledQuizOrder[currentQ];
-    // Jika soal saat ini sudah diperiksa dan dikunci (pembahasan sudah tampil), lanjut ke soal berikutnya
-    if (detailedAnswers[origQIdx]) {
-        nextQuestion();
-        return;
-    }
-
-    // Klik pertama: Kunci dan nilai jawaban saat ini seketika (atau salahkan bila tidak memilih)
-    // Tampilkan pembahasan tanpa auto-skip 650ms agar siswa memiliki waktu untuk membaca tuntas!
-    checkAnswer(false);
 
     const nextBtn = document.getElementById('btn-next');
-    const isFinalQ = (currentQ >= quizData.length - 1);
+
+    // Tahap kedua: jawaban sudah dikunci dan feedback sudah tampil.
+    if (detailedAnswers && detailedAnswers[origQIdx]) {
+        nextQuestion();
+        return;
+    }
+
+    // Tahap pertama: periksa jawaban. checkAnswer() mengatur label tombol
+    // setelah feedback dibuat; label tersebut tidak boleh ditimpa lagi.
     if (nextBtn) {
-        nextBtn.innerHTML = isFinalQ
-            ? '🏁 Periksa & Kirim Jawaban ➔'
-            : 'Periksa Jawaban & Lanjutkan ➔';
+        nextBtn.disabled = true;
+        nextBtn.innerHTML = '⏳ Memeriksa Jawaban...';
+    }
+
+    checkAnswer(false);
+
+    if (detailedAnswers && detailedAnswers[origQIdx]) {
+        if (nextBtn) {
+            nextBtn.disabled = false;
+            nextBtn.innerHTML = currentQ >= quizData.length - 1
+                ? '🏁 Kirim Jawaban & Lihat Hasil ➔'
+                : 'Lanjutkan ➔';
+        }
+    } else {
+        if (nextBtn) {
+            nextBtn.disabled = false;
+            nextBtn.innerHTML = '🔄 Periksa Lagi';
+        }
+        showToast('Jawaban belum berhasil diperiksa. Silakan tekan tombol sekali lagi.', '⚠️');
     }
 }
 window.handleSingleNextAction = handleSingleNextAction;
