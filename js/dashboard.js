@@ -3442,7 +3442,7 @@ function renderDashboard() {
         window._dashFilterInitDone = true;
     }
 
-    const filterModule = filterModuleEl ? filterModuleEl.value : (window.currentDashboardModuleFilter || 'all');
+    let filterModule = filterModuleEl ? filterModuleEl.value : (window.currentDashboardModuleFilter || 'all');
     window.currentDashboardModuleFilter = filterModule;
     const searchNameEl = document.getElementById('filter-search-name');
     const searchName = searchNameEl ? searchNameEl.value.toLowerCase().trim() : '';
@@ -3462,10 +3462,11 @@ function renderDashboard() {
     initActiveExamModuleUi();
     if (typeof updateApplyButtonState === 'function') updateApplyButtonState();
 
-    // Sinkronisasi dropdown yang deterministik: selalu sediakan mode komparasi semua
-    // dan seluruh modul inti, terlepas dari jumlah opsi/cache versi HTML sebelumnya.
-    if (filterModuleEl) {
-        const currentValue = filterModuleEl.value || window.currentDashboardModuleFilter || 'all';
+    // Bangun opsi dropdown hanya sekali. renderDashboard() dipanggil berulang kali
+    // setelah pilihan berubah; membangun ulang <select> pada setiap render menyebabkan
+    // kedipan dan Promise getAllModules() yang terlambat dapat mengembalikan pilihan lama.
+    if (filterModuleEl && !window._dashModuleOptionsInitStarted) {
+        window._dashModuleOptionsInitStarted = true;
         const coreOptions = [
             { id: 'all', label: '📊 KOMPARASI SEMUA MODUL (SEMUA NILAI)' },
             { id: 'modul_tryout_terpadu', label: '🎯 Tryout Terpadu Informatika Kelas X (6 Materi)' },
@@ -3474,29 +3475,57 @@ function renderDashboard() {
             { id: 'modul_hki_profesi_budaya', label: '📘 Panduan Generasi Digital: Teknologi Digital, Profesi, Budaya & HKI' },
             { id: 'modul_etika_privasi_keamanan', label: '🔐 Etika, Privasi, dan Keamanan Digital' }
         ];
+
         const applyOptions = (modules = []) => {
+            // Ambil pilihan terkini tepat sebelum opsi diperbarui, bukan nilai
+            // yang ditangkap saat renderDashboard pertama kali dipanggil.
+            const liveValue = filterModuleEl.value ||
+                window.currentDashboardModuleFilter ||
+                localStorage.getItem('quizmaster_dashboard_module_filter') ||
+                'all';
             const knownIds = new Set(coreOptions.map(option => option.id));
             const dynamicOptions = (Array.isArray(modules) ? modules : [])
-                .filter(module => module && module.id && !knownIds.has(module.id))
+                .filter(module => module && module.id && !knownIds.has(String(module.id)))
                 .map(module => ({
                     id: String(module.id),
                     label: `${module.icon || '📚'} ${module.title || module.name || module.id}`
-                }));
+                }))
+                .sort((a, b) => a.label.localeCompare(b.label, 'id'));
+
             const options = [...coreOptions, ...dynamicOptions];
-            const selectedValue = options.some(option => option.id === currentValue) ? currentValue : 'all';
-            filterModuleEl.innerHTML = options.map(option =>
-                `<option value="${escapeHtml(option.id)}" ${option.id === selectedValue ? 'selected' : ''}>${escapeHtml(option.label)}</option>`
-            ).join('');
-            filterModuleEl.value = selectedValue;
+            const selectedValue = options.some(option => option.id === liveValue) ? liveValue : 'all';
+            const currentSignature = Array.from(filterModuleEl.options)
+                .map(option => `${option.value}:${option.textContent}`).join('|');
+            const nextSignature = options.map(option => `${option.id}:${option.label}`).join('|');
+
+            // Jangan sentuh DOM jika susunan opsi sudah sama. Ini mencegah dropdown
+            // berkedip ketika fungsi renderDashboard dipanggil akibat perubahan filter.
+            if (currentSignature !== nextSignature) {
+                filterModuleEl.innerHTML = options.map(option =>
+                    `<option value="${escapeHtml(option.id)}">${escapeHtml(option.label)}</option>`
+                ).join('');
+            }
+
+            if (filterModuleEl.value !== selectedValue) filterModuleEl.value = selectedValue;
             window.currentDashboardModuleFilter = selectedValue;
             try { localStorage.setItem('quizmaster_dashboard_module_filter', selectedValue); } catch (e) {}
         };
+
+        // Opsi inti tersedia langsung tanpa menunggu jaringan/QuizManager.
         applyOptions();
         if (window.QuizManager && typeof QuizManager.getAllModules === 'function') {
-            QuizManager.getAllModules().then(applyOptions).catch(error => {
-                console.warn('Tidak dapat memuat modul tambahan untuk dropdown dashboard:', error);
-            });
+            Promise.resolve(QuizManager.getAllModules())
+                .then(modules => applyOptions(modules))
+                .catch(error => {
+                    console.warn('Tidak dapat memuat modul tambahan untuk dropdown dashboard:', error);
+                });
         }
+    }
+    // Opsi inti dapat baru saja dipasang pada inisialisasi pertama; sinkronkan
+    // nilai filter lokal agar render pertama langsung memakai pilihan yang benar.
+    if (filterModuleEl) {
+        filterModule = filterModuleEl.value || window.currentDashboardModuleFilter || 'all';
+        window.currentDashboardModuleFilter = filterModule;
     }
 
     // Sinkronkan tombol segmented filter modul & teks indikator aktif
