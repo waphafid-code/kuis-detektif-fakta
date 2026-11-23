@@ -130,3 +130,33 @@ test('13. Screenshot dan perpindahan halaman tetap memiliki deteksi yang tersedi
     assert(rootEngine.includes("window.addEventListener('beforeunload'"), 'Keluar/reload halaman tetap diberi konfirmasi');
     assert(rootEngine.includes('isMobileOrTouchDevice() ? 2500 : 1800'), 'Grace period mobile dipersingkat untuk deteksi meninggalkan browser');
 });
+
+
+test('14. checkAnswer mendeklarasikan activeModId di scope sendiri', () => {
+    const start = rootEngine.indexOf('function checkAnswer(isAutoTimeout = false) {');
+    const end = rootEngine.indexOf('\\nfunction nextQuestion() {', start);
+    const body = rootEngine.slice(start, end);
+    assert(body.includes('const activeModId ='), 'activeModId harus tersedia di dalam checkAnswer');
+    assert(body.includes('detailedAnswers[origQIdx] ='), 'Snapshot jawaban disimpan sebelum topic metadata dipakai');
+    assert(body.includes('finally {\\n        isCheckingAnswer = false;'), 'Flag pemeriksaan harus selalu direset');
+});
+
+test('15. nextQuestion selalu melepas guard transisi jika pemuatan soal gagal', () => {
+    const start = rootEngine.indexOf('function nextQuestion() {');
+    const end = rootEngine.indexOf('\\nasync function finishQuiz()', start);
+    const body = rootEngine.slice(start, end);
+    assert(body.includes('finally {\\n            isTransitioningQuestion = false;'), 'Guard transisi wajib direset di finally');
+    assert(body.includes('currentQ = previousQ;'), 'Indeks soal dikembalikan jika loadQuestion gagal');
+    assert(body.includes('Coba Lanjutkan Lagi'), 'Tombol dipulihkan jika transisi gagal');
+    assert(body.includes('if (!detailedAnswers || !detailedAnswers[origQIdx])'), 'Tidak boleh pindah jika jawaban belum tersimpan');
+});
+
+test('16. Handler tombol menangani error pemeriksaan dan memulihkan tombol', () => {
+    const start = rootEngine.indexOf('function handleSingleNextAction() {');
+    const end = rootEngine.indexOf('\\nwindow.handleSingleNextAction', start);
+    const body = rootEngine.slice(start, end);
+    assert(body.includes('try {\\n        checkAnswer(false);'), 'Pemeriksaan harus ditangani dengan try/catch');
+    assert(body.includes('catch (error)'), 'Error pemeriksaan tidak boleh mematikan alur');
+    assert(body.includes('nextQuestion();'), 'Klik kedua tetap meneruskan soal');
+    assert(body.includes('isCheckingAnswer = false;'), 'Flag diperbaiki saat error');
+});
