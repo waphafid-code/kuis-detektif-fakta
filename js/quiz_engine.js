@@ -589,7 +589,8 @@ function triggerCheatPenalty(reason = 'Kecurangan / Buka Tab Lain') {
     const now = new Date();
     const clockStr = `${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')} WIB`;
     const activeModId = currentActiveModule ? currentActiveModule.id : (window.QuizManager ? QuizManager.getActiveModuleId() : 'modul_detektif_fakta');
-    const activeModTitle = currentActiveModule ? currentActiveModule.title : (window.QuizManager && QuizManager.getActiveModule() ? QuizManager.getActiveModule().title : 'Misi Detektif Fakta');
+    const activeModuleMeta = currentActiveModule || (window.QuizManager && typeof QuizManager.getActiveModule === 'function' ? QuizManager.getActiveModule() : null);
+    const activeModTitle = (activeModuleMeta && activeModuleMeta.title) || 'Misi Detektif Fakta';
     const cheatRecord = {
         moduleId: activeModId,
         moduleTitle: activeModTitle,
@@ -1397,8 +1398,11 @@ let questionStartPerf = 0;
 function startTimer(customDuration) {
     stopTimer();
     if (TIMER_MAX === 0) {
-        document.getElementById('timer-display').textContent = '⏱ ∞';
-        document.getElementById('timer-display').classList.remove('warning');
+        const timerEl = document.getElementById('timer-display');
+        if (timerEl) {
+            timerEl.textContent = '⏱ ∞';
+            timerEl.classList.remove('warning');
+        }
         return;
     }
     questionDuration = (customDuration !== undefined && customDuration > 0) ? customDuration : TIMER_MAX;
@@ -1448,6 +1452,7 @@ function stopTimer() {
 
 function updateTimerDisplay() {
     const el = document.getElementById('timer-display');
+    if (!el) return;
     el.textContent = `⏱ ${timerVal}`;
     el.classList.toggle('warning', timerVal <= 5);
 }
@@ -2583,7 +2588,8 @@ async function finishQuiz() {
     }
 
     const isPassed = displayScore >= KKM;
-    const activeModTitle = (currentActiveModule && currentActiveModule.title) || (window.QuizManager && QuizManager.getActiveModule() ? QuizManager.getActiveModule().title : (activeModId === 'modul_jaringan_keamanan' ? 'Penilaian Harian: Infrastruktur Jaringan & Keamanan Digital' : 'Misi Detektif Fakta'));
+    const activeModuleMeta = currentActiveModule || (window.QuizManager && typeof QuizManager.getActiveModule === 'function' ? QuizManager.getActiveModule() : null);
+    const activeModTitle = (activeModuleMeta && activeModuleMeta.title) || (activeModId === 'modul_jaringan_keamanan' ? 'Penilaian Harian: Infrastruktur Jaringan & Keamanan Digital' : 'Misi Detektif Fakta'));
 
     // 📊 Hitung Nilai Rinci Per Materi (Khusus Modul Tryout Terpadu 6 Materi)
     let topicBreakdown = null;
