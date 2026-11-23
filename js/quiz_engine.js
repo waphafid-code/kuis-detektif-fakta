@@ -139,6 +139,17 @@ function stripQuestionPrefix(text) {
 }
 window.stripQuestionPrefix = stripQuestionPrefix;
 
+// 🎯 METADATA TOPIK TRYOUT TERPADU (6 MATERI INTI)
+const TRYOUT_TOPICS_META = {
+    M1: { code: 'M1', title: 'Literasi Digital & Ekosistem Periksa Fakta', icon: '🕵️' },
+    M2: { code: 'M2', title: 'Web Browser, Search Engine, & Manajemen Konten', icon: '🌐' },
+    M3: { code: 'M3', title: 'Digitalisasi Budaya, Profesi Informatika, & HKI', icon: '🏛️' },
+    M4: { code: 'M4', title: 'Etika, Privasi, dan Keamanan Digital', icon: '🛡️' },
+    M5: { code: 'M5', title: 'Infrastruktur Jaringan Komputer & Keamanan Siber', icon: '⚡' },
+    M6: { code: 'M6', title: 'Aplikasi Perkantoran (MS Word, Mail Merge, & MS Excel)', icon: '📊' }
+};
+window.TRYOUT_TOPICS_META = TRYOUT_TOPICS_META;
+
 function stripOptionLetterPrefix(text) {
     if (!text) return '';
     return String(text).replace(/^\s*(?:\*?\s*[A-Ea-e\d][\.\)\:\-]\s*|\([A-Ea-e\d]\)\s*)/, '').trim();
@@ -314,6 +325,51 @@ function isCurrentStudentDemo() {
     return cls.includes('DEMO') || name.includes('DEMO') || name.includes('GURU PENGUJI');
 }
 window.isCurrentStudentDemo = isCurrentStudentDemo;
+
+// 🔒 DYNAMIC SECURITY WATERMARK (ANTI-JOKI & ANTI-FOTO KAMERA HP LAIN)
+function renderExamWatermark() {
+    try {
+        if (typeof document === 'undefined') return;
+        let wm = document.getElementById('exam-security-watermark');
+        if (!wm) {
+            wm = document.createElement('div');
+            wm.id = 'exam-security-watermark';
+            wm.className = 'exam-security-watermark';
+            document.body.appendChild(wm);
+        }
+        const sName = (typeof studentName !== 'undefined' && studentName) 
+            ? studentName 
+            : ((typeof window !== 'undefined' && window.studentName) 
+                || (document.getElementById('display-name') && document.getElementById('display-name').textContent !== 'Siswa' ? document.getElementById('display-name').textContent : '') 
+                || (document.getElementById('input-name') ? document.getElementById('input-name').value : '') 
+                || 'PESERTA UJIAN');
+        const sClass = (typeof studentClass !== 'undefined' && studentClass) 
+            ? studentClass 
+            : ((typeof window !== 'undefined' && window.studentClass) 
+                || (document.getElementById('display-class') ? document.getElementById('display-class').textContent : '') 
+                || (document.getElementById('input-class') ? document.getElementById('input-class').value : '') 
+                || 'KELAS X');
+        const wmText = `🔒 ${sName} • ${sClass} • KUIS INFORMATIKA`;
+        let itemsHtml = '';
+        for (let i = 0; i < 36; i++) {
+            itemsHtml += `<span class="watermark-item">${wmText}</span>`;
+        }
+        wm.innerHTML = itemsHtml;
+        wm.style.display = 'flex';
+    } catch(e) {}
+}
+
+function removeExamWatermark() {
+    try {
+        if (typeof document === 'undefined') return;
+        const wm = document.getElementById('exam-security-watermark');
+        if (wm) {
+            wm.style.display = 'none';
+        }
+    } catch(e) {}
+}
+window.renderExamWatermark = renderExamWatermark;
+window.removeExamWatermark = removeExamWatermark;
 
 // 🖥️ FULLSCREEN LOCKDOWN UTILITIES & CONTROLLERS
 let fullscreenWarningTimer = null;
@@ -513,6 +569,7 @@ function triggerCheatPenalty(reason = 'Kecurangan / Buka Tab Lain') {
     isCheatWarningActive = false;
     const warningModal = document.getElementById('cheat-warning-modal');
     if (warningModal) warningModal.classList.remove('active');
+    removeExamWatermark();
 
     stopTimer();
     stopBGM();
@@ -560,6 +617,7 @@ function triggerCheatPenalty(reason = 'Kecurangan / Buka Tab Lain') {
 function acknowledgeCheatPenalty() {
     clearFullscreenWarningCountdown();
     exitExamFullscreen();
+    removeExamWatermark();
     document.getElementById('cheat-modal').classList.remove('active');
     isCheatingTriggered = false;
     cheatStrikes = 0;
@@ -615,29 +673,68 @@ window.addEventListener('blur', () => {
     }, graceMs);
 });
 
-// 📱 DETEKSI SPLIT SCREEN / RESIZE ANOMALI SAAT UJIAN
-window.addEventListener('resize', () => {
+// 📱 DETEKSI SPLIT SCREEN / RESIZE ANOMALI SAAT UJIAN & DEVTOOLS DOCKED
+function checkScreenIntegrity() {
     if (!isQuizActive() || isCheatWarningActive || isQuizFinishing) return;
+    if (typeof isCurrentStudentDemo === 'function' && isCurrentStudentDemo()) return;
     try {
         const screenH = (window.screen && (window.screen.availHeight || window.screen.height)) || 800;
-        // Jika tinggi jendela browser menyusut drastis (< 55% tinggi layar HP dan bukan input form aktif)
-        if (isMobileOrTouchDevice() && window.innerHeight < screenH * 0.55) {
+        // 📱 HP / Mobile: Deteksi Layar Terbelah (Split Screen) jika tinggi berkurang < 65% dan bukan input form
+        if (isMobileOrTouchDevice() && window.innerHeight < screenH * 0.65) {
             const activeTag = document.activeElement ? (document.activeElement.tagName || '').toLowerCase() : '';
             if (activeTag !== 'input' && activeTag !== 'textarea') {
                 handleAntiCheatEvent('📱 Layar Terbelah (Split Screen) Terdeteksi');
+                return;
+            }
+        }
+        // 💻 Laptop / Desktop: Deteksi DevTools Docked (Inspeksi elemen samping/bawah)
+        if (!isMobileOrTouchDevice()) {
+            const widthDiff = window.outerWidth - window.innerWidth;
+            const heightDiff = window.outerHeight - window.innerHeight;
+            if (widthDiff > 160 || heightDiff > 160) {
+                handleAntiCheatEvent('🛠️ Developer Tools / Inspector Terdeteksi Terbuka');
+                return;
             }
         }
     } catch(e) {}
+}
+window.checkScreenIntegrity = checkScreenIntegrity;
+
+window.addEventListener('resize', () => {
+    if (!isQuizActive() || isCheatWarningActive || isQuizFinishing) return;
+    checkScreenIntegrity();
 });
 
 window.addEventListener('focus', () => {
     clearBlurGraceTimer();
 });
 
+// 📱 GESTURE TANGKAPAN LAYAR 3 JARI (PADA SMARTPHONE ANDROID)
+document.addEventListener('touchstart', (e) => {
+    if (!isQuizActive() || isCheatWarningActive || isQuizFinishing) return;
+    if (typeof isCurrentStudentDemo === 'function' && isCurrentStudentDemo()) return;
+    if (e.touches && e.touches.length >= 3) {
+        try { e.preventDefault(); } catch(err) {}
+        try { e.stopPropagation(); } catch(err) {}
+        handleAntiCheatEvent('📸 Gesture Usap 3 Jari (Screenshot Ponsel) Terdeteksi');
+    }
+}, { passive: false });
+
+// 🖨️ DETEKSI PERCOBAAN PRINT / CETAK HALAMAN
+window.addEventListener('beforeprint', (e) => {
+    if (isQuizActive()) {
+        if (typeof isCurrentStudentDemo === 'function' && isCurrentStudentDemo()) return;
+        try { e.preventDefault(); } catch(err) {}
+        handleAntiCheatEvent('🖨️ Percobaan Mencetak / Export Halaman (Print Screen)');
+    }
+});
+
 // 📸 2. DETEKSI SCREENSHOT / TANGKAPAN LAYAR / SNIPPING TOOL
 window.addEventListener('keyup', (e) => {
     if (!isQuizActive()) return;
     if (e.key === 'PrintScreen' || e.keyCode === 44) {
+        e.preventDefault();
+        try { navigator.clipboard.writeText(''); } catch(err) {}
         handleAntiCheatEvent('📸 Screenshot / PrintScreen Terdeteksi');
     }
 });
@@ -686,16 +783,32 @@ window.addEventListener('keydown', (e) => {
         return;
     }
 
-    // Windows Snipping tool (Win+Shift+S), Mac Screenshot (Cmd+Shift+3/4)
-    if ((e.ctrlKey || e.metaKey) && e.shiftKey && ['S', 's', '3', '4'].includes(e.key)) {
+    // PrintScreen / Screenshot keydown blocker
+    if (e.key === 'PrintScreen' || e.keyCode === 44) {
+        e.preventDefault();
+        try { navigator.clipboard.writeText(''); } catch(err) {}
+        handleAntiCheatEvent('📸 Screenshot / PrintScreen Terdeteksi');
+        return;
+    }
+
+    // Windows Snipping tool (Win+Shift+S), Mac Screenshot (Cmd+Shift+3/4/5)
+    if ((e.ctrlKey || e.metaKey) && e.shiftKey && ['S', 's', '3', '4', '5'].includes(e.key)) {
         e.preventDefault();
         e.stopPropagation();
+        try { navigator.clipboard.writeText(''); } catch(err) {}
         handleAntiCheatEvent('📸 Screenshot / Snipping Tool Terdeteksi');
         return;
     }
 });
 
-// 📋 4. DETEKSI & PENCEGAHAN COPY - PASTE - CUT - KLIK KANAN - DRAG
+// 📋 4. DETEKSI & PENCEGAHAN COPY - PASTE - CUT - KLIK KANAN - DRAG - SELECT
+document.addEventListener('selectstart', (e) => {
+    if (isQuizActive()) {
+        e.preventDefault();
+        return false;
+    }
+});
+
 document.addEventListener('copy', (e) => {
     if (isQuizActive()) {
         e.preventDefault();
@@ -859,7 +972,10 @@ async function initiateQuiz() {
     // 🛡️ Auto-fill fallback: jika dipicu langsung dari layar hasil remedial, ambil nama/kelas/modul aktif
     const fallbackCls = studentClass || (remedialSourceRecord ? remedialSourceRecord.class : '');
     const fallbackName = studentName || (remedialSourceRecord ? remedialSourceRecord.name : '');
-    const fallbackModuleId = (currentActiveModule && currentActiveModule.id) || (remedialSourceRecord ? remedialSourceRecord.moduleId : (window.QuizManager ? QuizManager.getActiveModuleId() : 'modul_detektif_fakta'));
+    const fallbackModuleId = (remedialSourceRecord ? remedialSourceRecord.moduleId : ((currentActiveModule && currentActiveModule.id) || (window.QuizManager ? QuizManager.getActiveModuleId() : 'modul_detektif_fakta')));
+
+    const isRemedialConfirmed = window.__remedialConfirmed === true;
+    const activeRemRec = (isRemedialConfirmed && (remedialSourceRecord || window.__pendingRemedialRec)) ? (remedialSourceRecord || window.__pendingRemedialRec) : null;
 
     if (clsSelect && !clsSelect.value && fallbackCls) {
         clsSelect.value = fallbackCls;
@@ -874,9 +990,9 @@ async function initiateQuiz() {
         moduleSelect.value = fallbackModuleId;
     }
 
-    const cls = (clsSelect && clsSelect.value) ? clsSelect.value : fallbackCls;
-    const name = (nameSelect && nameSelect.value && nameSelect.value.trim()) ? nameSelect.value.trim() : fallbackName;
-    const moduleId = (moduleSelect && moduleSelect.value) ? moduleSelect.value : fallbackModuleId;
+    const cls = activeRemRec ? activeRemRec.class : ((clsSelect && clsSelect.value) ? clsSelect.value : fallbackCls);
+    const name = activeRemRec ? activeRemRec.name : ((nameSelect && nameSelect.value && nameSelect.value.trim()) ? nameSelect.value.trim() : fallbackName);
+    const moduleId = activeRemRec ? (typeof normalizeModuleId === 'function' ? normalizeModuleId(activeRemRec.moduleId, activeRemRec.id, activeRemRec.date) : activeRemRec.moduleId) : ((moduleSelect && moduleSelect.value) ? moduleSelect.value : fallbackModuleId);
 
     if (!cls) {
         if (typeof switchScreen === 'function') switchScreen('home');
@@ -913,7 +1029,6 @@ async function initiateQuiz() {
     }
 
     // 🔑 ANTI-JOKI 1: Token Ujian Kelas Dinamis (Cegah joki dari luar ruangan kelas)
-    const isRemedialConfirmed = window.__remedialConfirmed === true;
     if (!isRemedialConfirmed && cls !== 'KELAS DEMO' && typeof isExamTokenRequired === 'function' && isExamTokenRequired()) {
         const tokenInput = document.getElementById('input-exam-token');
         const enteredToken = tokenInput ? tokenInput.value.trim().toUpperCase() : '';
@@ -1160,6 +1275,30 @@ async function initiateQuiz() {
 
         answeredCorrectly = new Array(quizData.length).fill(null);
         detailedAnswers = new Array(quizData.length).fill(null);
+
+        // 🎯 Inisialisasi Akumulasi Poin Real-Time per Materi (Tryout 60 Soal)
+        const tryoutMeta = {
+            M1: { code: 'M1', title: 'Literasi Digital & Ekosistem Periksa Fakta', icon: '🕵️' },
+            M2: { code: 'M2', title: 'Web Browser, Search Engine, & Manajemen Konten', icon: '🌐' },
+            M3: { code: 'M3', title: 'Digitalisasi Budaya, Profesi Informatika, & HKI', icon: '🏛️' },
+            M4: { code: 'M4', title: 'Etika, Privasi, dan Keamanan Digital', icon: '🛡️' },
+            M5: { code: 'M5', title: 'Infrastruktur Jaringan Komputer & Keamanan Siber', icon: '⚡' },
+            M6: { code: 'M6', title: 'Aplikasi Perkantoran (MS Word, Mail Merge, & MS Excel)', icon: '📊' }
+        };
+        window.TRYOUT_TOPICS_META = tryoutMeta;
+        window.liveTopicProgress = {};
+        Object.keys(tryoutMeta).forEach(k => {
+            window.liveTopicProgress[k] = {
+                code: k,
+                title: tryoutMeta[k].title,
+                icon: tryoutMeta[k].icon,
+                correct: 0,
+                total: 0,
+                earnedPoints: 0,
+                maxPoints: 0,
+                score: 0
+            };
+        });
         TIMER_MAX = loadTimerSetting();
 
         // 🖥️ Kunci Layar Penuh Otomatis jika Mode Wajib Aktif (Kecuali Akun Demo)
@@ -1237,6 +1376,7 @@ function startQuizActual() {
     if (demoBanner) {
         demoBanner.style.display = (typeof isCurrentStudentDemo === 'function' && isCurrentStudentDemo()) ? 'flex' : 'none';
     }
+    renderExamWatermark();
     loadQuestion(0);
     saveCurrentQuizSession();
     setTimeout(startBGM, 200);
@@ -1283,6 +1423,10 @@ function startTimer(customDuration) {
             sfxTimerWarn();
         }
 
+        if (typeof checkScreenIntegrity === 'function') {
+            checkScreenIntegrity();
+        }
+
         if (timerVal <= 0) {
             stopTimer();
             autoSubmitTimeout();
@@ -1308,7 +1452,42 @@ function updateTimerDisplay() {
     el.classList.toggle('warning', timerVal <= 5);
 }
 
+let singleActionTransitionTimer = null;
+
+function handleSingleNextAction() {
+    if (isTransitioningQuestion) return;
+
+    // Fast-forward jika ada timer jeda transisi
+    if (singleActionTransitionTimer) {
+        clearTimeout(singleActionTransitionTimer);
+        singleActionTransitionTimer = null;
+        nextQuestion();
+        return;
+    }
+
+    const origQIdx = shuffledQuizOrder[currentQ];
+    // Jika soal saat ini sudah diperiksa dan dikunci (pembahasan sudah tampil), lanjut ke soal berikutnya
+    if (detailedAnswers[origQIdx]) {
+        nextQuestion();
+        return;
+    }
+
+    // Klik pertama: Kunci dan nilai jawaban saat ini seketika (atau salahkan bila tidak memilih)
+    // Tampilkan pembahasan tanpa auto-skip 650ms agar siswa memiliki waktu untuk membaca tuntas!
+    checkAnswer(false);
+
+    const nextBtn = document.getElementById('btn-next');
+    const isFinalQ = (currentQ >= quizData.length - 1);
+    if (nextBtn) {
+        nextBtn.innerHTML = isFinalQ 
+            ? '🏁 Selesai & Kirim Jawaban ➔' 
+            : 'Lanjut Soal Berikutnya ➔';
+    }
+}
+window.handleSingleNextAction = handleSingleNextAction;
+
 function autoSubmitTimeout() {
+    if (isTransitioningQuestion) return;
     const origQIdx = shuffledQuizOrder[currentQ];
     const data = quizData[origQIdx];
     const checkedInputs = document.querySelectorAll('input[name="q-opt"]:checked, input[type="radio"][name^="matrix_row_"]:checked');
@@ -1348,6 +1527,17 @@ function autoSubmitTimeout() {
 
     const expText = getExplanationFromVault(data, origQIdx);
 
+    const activeModId = (currentActiveModule && currentActiveModule.id) || (window.QuizManager ? QuizManager.getActiveModuleId() : 'modul_detektif_fakta');
+    const liveTCode = data.topicCode || (activeModId === 'modul_tryout_terpadu' ? 'M' + (Math.floor(origQIdx / 10) + 1) : null);
+    const liveTName = data.topicName || (window.TRYOUT_TOPICS_META && window.TRYOUT_TOPICS_META[liveTCode] && window.TRYOUT_TOPICS_META[liveTCode].title) || liveTCode;
+
+    if (liveTCode && window.liveTopicProgress && window.liveTopicProgress[liveTCode]) {
+        const prog = window.liveTopicProgress[liveTCode];
+        prog.total += 1;
+        prog.maxPoints += (data.points || 5);
+        prog.score = prog.maxPoints > 0 ? Math.round((prog.earnedPoints / prog.maxPoints) * 100) : 0;
+    }
+
     detailedAnswers[origQIdx] = {
         qIndex: origQIdx,
         questionNumber: currentQ + 1,
@@ -1367,6 +1557,8 @@ function autoSubmitTimeout() {
         maxPoints: data.points || 5,
         isPartial: false,
         pointSummary: 'Waktu Habis (0 Poin)',
+        topicCode: liveTCode,
+        topicName: liveTName,
         explanation: expText
     };
 
@@ -1634,6 +1826,10 @@ function loadQuestion(index) {
     }
 
     // Reset status petunjuk berpikir & guard flags
+    if (singleActionTransitionTimer) {
+        clearTimeout(singleActionTransitionTimer);
+        singleActionTransitionTimer = null;
+    }
     isCheckingAnswer = false;
     isTransitioningQuestion = false;
     currentQuestionHintOpened = false;
@@ -1662,14 +1858,13 @@ function loadQuestion(index) {
     const checkBtn = document.getElementById('btn-check');
     const nextBtn = document.getElementById('btn-next');
     if (checkBtn) {
-        checkBtn.style.display = 'inline-flex';
-        checkBtn.disabled = false;
-        checkBtn.innerHTML = isFinalQ ? 'Kunci Jawaban & Selesai 🏁' : 'Cek Jawaban ✔️';
+        checkBtn.style.display = 'none';
+        checkBtn.disabled = true;
     }
     if (nextBtn) {
-        nextBtn.style.display = 'none';
+        nextBtn.style.display = 'inline-flex';
         nextBtn.disabled = false;
-        nextBtn.innerHTML = isFinalQ ? '🏁 Kirim Nilai ke Dasbor Guru ➔' : 'Lanjut Soal ➡️';
+        nextBtn.innerHTML = isFinalQ ? '🏁 Selesai & Kirim Jawaban ➔' : 'Lanjut Soal Berikutnya ➔';
     }
 
     const pct = Math.round((index / quizData.length) * 100);
@@ -1682,7 +1877,10 @@ function loadQuestion(index) {
     if (progressFill) progressFill.style.width = `${pct}%`;
     if (progressLabel) progressLabel.textContent = `Progres Ujian (${pct}%) • Soal & Pilihan Diacak 🎲`;
     if (progressPct) progressPct.textContent = `${pct}%`;
-    if (scoreDisplay) scoreDisplay.textContent = earnedPointsTotal > 0 ? `⭐ ${earnedPointsTotal} Poin` : `⭐ ${score}`;
+    if (scoreDisplay) {
+        // 🛡️ Sembunyikan total skor kumulatif selama ujian berjalan agar siswa fokus pada setiap butir soal
+        scoreDisplay.style.display = 'none';
+    }
     if (streakDisplay) {
         streakDisplay.textContent = `🔥 ${streak}`;
         streakDisplay.classList.toggle('on-fire', streak >= 3);
@@ -1719,6 +1917,19 @@ function loadQuestion(index) {
             tierHint.innerHTML = `⚖️ <strong>Tabel Matriks Pernyataan:</strong> Tentukan <strong>[Benar]</strong> atau <strong>[Salah]</strong> untuk SETIAP baris pernyataan di bawah. Sistem menjamin tidak bisa memilih 2 jawaban pada baris yang sama.`;
         } else {
             tierHint.style.display = 'none';
+        }
+    }
+
+    const activeModId = (currentActiveModule && currentActiveModule.id) || (window.QuizManager && QuizManager.getActiveModuleId ? QuizManager.getActiveModuleId() : 'modul_detektif_fakta');
+    const tCode = data.topicCode || (activeModId === 'modul_tryout_terpadu' ? 'M' + (Math.floor(origQIdx / 10) + 1) : null);
+    const topicBadge = document.getElementById('q-topic-badge');
+    if (topicBadge) {
+        if (tCode && window.TRYOUT_TOPICS_META && window.TRYOUT_TOPICS_META[tCode]) {
+            const tm = window.TRYOUT_TOPICS_META[tCode];
+            topicBadge.style.display = 'inline-flex';
+            topicBadge.innerHTML = `${tm.icon} <strong>${tm.code}</strong>: ${escapeHtml(data.topicName || tm.title)}`;
+        } else {
+            topicBadge.style.display = 'none';
         }
     }
 
@@ -1942,13 +2153,6 @@ function checkAnswer(isAutoTimeout = false) {
                 }
             });
 
-            if (!allChosen && !isAutoTimeout) {
-                sfxWrong();
-                showToast('Harap tentukan [Benar] atau [Salah] untuk setiap baris sebelum mengecek!', '⚠️');
-                if (TIMER_MAX > 0) startTimer();
-                return;
-            }
-
             // Disable all matrix radios
             grid.querySelectorAll('input[type="radio"]').forEach(inp => inp.disabled = true);
             const table = document.getElementById('matrix-active-table');
@@ -1969,7 +2173,7 @@ function checkAnswer(isAutoTimeout = false) {
                 if (correctVal === 0 && lblTrue) lblTrue.classList.add('correct-choice');
                 if (correctVal === 1 && lblFalse) lblFalse.classList.add('correct-choice');
 
-                // Jika jawaban siswa salah, tandai pilihan siswa dengan border merah
+                // Jika jawaban siswa salah atau belum dipilih, tandai pilihan siswa dengan border merah
                 if (userVal !== null && userVal !== correctVal) {
                     const wrongLbl = userVal === 0 ? lblTrue : lblFalse;
                     if (wrongLbl) wrongLbl.classList.add('wrong-choice');
@@ -2017,22 +2221,6 @@ function checkAnswer(isAutoTimeout = false) {
                 });
             }
 
-            if (selectedShuffleIdxs.length === 0 && !isAutoTimeout) {
-                sfxWrong();
-                showToast('Silakan pilih jawaban terlebih dahulu!', '⚠️');
-                if (TIMER_MAX > 0) startTimer();
-                return;
-            }
-
-            if (data.type === 'checkbox' && !isAutoTimeout) {
-                if (selectedShuffleIdxs.length === 0) {
-                    sfxWrong();
-                    showToast('Silakan pilih minimal 1 jawaban sebelum mengunci!', '⚠️');
-                    if (TIMER_MAX > 0) startTimer();
-                    return;
-                }
-            }
-
             inputs.forEach(inp => inp.disabled = true);
             labels.forEach(lbl => lbl.classList.add('disabled'));
 
@@ -2040,61 +2228,63 @@ function checkAnswer(isAutoTimeout = false) {
             const answerKey = getAnswerFromVault(data, origQIdx);
             correctOriginals = Array.isArray(answerKey) ? answerKey : (answerKey !== null && answerKey !== undefined ? [answerKey] : []);
 
-            if (data.type === 'mcq' || data.type === 'tf') {
+            if (selectedShuffleIdxs.length === 0) {
+                // ⚠️ Siswa tidak memilih jawaban sama sekali: LANGSUNG SALAHKAN (0 Poin) & kunci jawaban
+                isCorrect = false;
+                currentShuffleMap.forEach((origIdx, shuffIdx) => {
+                    if (correctOriginals.includes(origIdx)) {
+                        const l = document.getElementById(`label-${shuffIdx}`);
+                        if (l) l.classList.add('correct');
+                    }
+                });
+                pointRes = {
+                    pointsEarned: 0,
+                    maxPoints: data.points || 5,
+                    isFullCorrect: false,
+                    isPartial: false,
+                    summary: 'Dilewati / Belum Memilih (0 Poin)'
+                };
+            } else if (data.type === 'mcq' || data.type === 'tf') {
                 isCorrect = selectedOriginals.length > 0 && selectedOriginals[0] === correctOriginals[0];
-                if (isExamLive) {
-                    // 🛡️ ANTI-LEAK LIVE EXAM: Kunci pilihan tanpa mewarnai hijau/merah agar kawan di sebelah tidak melihat kunci
+                if (isCorrect) {
+                    const l = document.getElementById(`label-${selectedShuffleIdxs[0]}`);
+                    if (l) l.classList.add('correct');
+                } else {
                     if (selectedShuffleIdxs.length > 0) {
                         const l = document.getElementById(`label-${selectedShuffleIdxs[0]}`);
-                        if (l) l.classList.add('selected-locked');
+                        if (l) l.classList.add('wrong');
                     }
-                } else {
-                    if (isCorrect) {
-                        const l = document.getElementById(`label-${selectedShuffleIdxs[0]}`);
-                        if (l) l.classList.add('correct');
-                    } else {
-                        if (selectedShuffleIdxs.length > 0) {
-                            const l = document.getElementById(`label-${selectedShuffleIdxs[0]}`);
-                            if (l) l.classList.add('wrong');
+                    currentShuffleMap.forEach((origIdx, shuffIdx) => {
+                        if (origIdx === correctOriginals[0]) {
+                            const l = document.getElementById(`label-${shuffIdx}`);
+                            if (l) l.classList.add('correct');
                         }
-                        currentShuffleMap.forEach((origIdx, shuffIdx) => {
-                            if (origIdx === correctOriginals[0]) {
-                                const l = document.getElementById(`label-${shuffIdx}`);
-                                if (l) l.classList.add('correct');
-                            }
-                        });
-                    }
+                    });
                 }
             } else {
                 const correctSet = new Set(correctOriginals);
                 const selectedSet = new Set(selectedOriginals);
                 isCorrect = correctSet.size === selectedSet.size && [...correctSet].every(v => selectedSet.has(v));
 
-                if (isExamLive) {
-                    // 🛡️ ANTI-LEAK LIVE EXAM: Hanya tandai pilihan terkunci tanpa membocorkan opsi mana yang benar
-                    selectedShuffleIdxs.forEach(shuffIdx => {
+                currentShuffleMap.forEach((origIdx, shuffIdx) => {
+                    if (correctSet.has(origIdx)) {
                         const l = document.getElementById(`label-${shuffIdx}`);
-                        if (l) l.classList.add('selected-locked');
-                    });
-                } else {
-                    currentShuffleMap.forEach((origIdx, shuffIdx) => {
-                        if (correctSet.has(origIdx)) {
-                            const l = document.getElementById(`label-${shuffIdx}`);
-                            if (l) l.classList.add('correct');
-                        }
-                        if (selectedShuffleIdxs.includes(shuffIdx) && !correctSet.has(origIdx)) {
-                            const l = document.getElementById(`label-${shuffIdx}`);
-                            if (l) l.classList.add('wrong');
-                        }
-                    });
-                }
+                        if (l) l.classList.add('correct');
+                    }
+                    if (selectedShuffleIdxs.includes(shuffIdx) && !correctSet.has(origIdx)) {
+                        const l = document.getElementById(`label-${shuffIdx}`);
+                        if (l) l.classList.add('wrong');
+                    }
+                });
             }
 
-            try {
-                pointRes = window.NemotronAI ? window.NemotronAI.calculateQuestionPoints({ ...data, answer: answerKey }, selectedOriginals) : null;
-            } catch (errNemotron) {
-                console.warn('Nemotron point calc fallback:', errNemotron);
-                pointRes = null;
+            if (!pointRes) {
+                try {
+                    pointRes = window.NemotronAI ? window.NemotronAI.calculateQuestionPoints({ ...data, answer: answerKey }, selectedOriginals) : null;
+                } catch (errNemotron) {
+                    console.warn('Nemotron point calc fallback:', errNemotron);
+                    pointRes = null;
+                }
             }
 
             if (!pointRes) {
@@ -2121,7 +2311,7 @@ function checkAnswer(isAutoTimeout = false) {
         let correctText = [];
         if (data.type === 'matrix_tf') {
             const stmts = data.statements || data.options || [];
-            selectedText = selectedOriginals.map((val, idx) => `[#${idx+1}] ${val === 0 ? 'Benar' : (val === 1 ? 'Salah' : 'Belum')}`);
+            selectedText = selectedOriginals.map((val, idx) => `[#${idx+1}] ${val === 0 ? 'Benar' : (val === 1 ? 'Salah' : 'Belum Memilih')}`);
             correctText = correctOriginals.map((val, idx) => `[#${idx+1}] ${val === 0 ? 'Benar' : 'Salah'}`);
         } else {
             selectedText = selectedOriginals.map(idx => (data.options && data.options[idx]) || idx);
@@ -2139,7 +2329,7 @@ function checkAnswer(isAutoTimeout = false) {
             type: data.type,
             options: data.options || data.statements,
             selectedIndices: selectedOriginals,
-            selectedText: selectedText.length > 0 ? selectedText : ['(Waktu Habis — Belum Memilih)'],
+            selectedText: selectedText.length > 0 ? selectedText : ['(Dilewati — Tidak Memilih Jawaban)'],
             correctIndices: correctOriginals,
             correctText: correctText,
             isCorrect: isCorrect,
@@ -2147,8 +2337,23 @@ function checkAnswer(isAutoTimeout = false) {
             maxPoints: pointRes.maxPoints,
             isPartial: pointRes.isPartial,
             pointSummary: pointRes.summary,
+            topicCode: (data.topicCode || (activeModId === 'modul_tryout_terpadu' ? 'M' + (Math.floor(origQIdx / 10) + 1) : null)),
+            topicName: data.topicName || null,
             explanation: expText
         };
+
+        // 🎯 REAL-TIME MATERI TRACKING: Akumulasi nilai materi spesifik yang sedang dijawab
+        const liveTCode = data.topicCode || (activeModId === 'modul_tryout_terpadu' ? 'M' + (Math.floor(origQIdx / 10) + 1) : null);
+        if (liveTCode && window.liveTopicProgress && window.liveTopicProgress[liveTCode]) {
+            const prog = window.liveTopicProgress[liveTCode];
+            prog.total += 1;
+            prog.maxPoints += pointRes.maxPoints;
+            prog.earnedPoints += pointRes.pointsEarned;
+            if (pointRes.isFullCorrect) prog.correct += 1;
+            prog.score = prog.maxPoints > 0 ? Math.round((prog.earnedPoints / prog.maxPoints) * 100) : 0;
+            detailedAnswers[origQIdx].topicCode = liveTCode;
+            detailedAnswers[origQIdx].topicName = prog.title;
+        }
 
         // Sembunyikan tombol petunjuk saat jawaban sudah dikunci
         const hintBtn = document.getElementById('btn-hint');
@@ -2156,82 +2361,86 @@ function checkAnswer(isAutoTimeout = false) {
         if (hintBtn) hintBtn.style.display = 'none';
         if (hintBox) hintBox.style.display = 'none';
 
-        if (isExamLive) {
-            // 🔒 ANTI-LEAK LIVE UJIAN KELAS:
-            // Pada saat ujian langsung (Penilaian Harian), feedback visual hijau/merah dan pembahasan disembunyikan
-            // agar tidak terbaca oleh teman sebangku/sebelah siswa di ruang kelas.
-            sfxClick();
-            if (pointRes.isFullCorrect) {
-                score++;
-                streak++;
-                if (streak > maxStreak) maxStreak = streak;
-                answeredCorrectly[origQIdx] = true;
-            } else if (pointRes.isPartial) {
-                streak = 0;
-                answeredCorrectly[origQIdx] = true;
-            } else {
-                streak = 0;
-                answeredCorrectly[origQIdx] = false;
+        // 🎯 UMPAN BALIK INSTAN: Langsung tampilkan status Benar / Salah dan Poin per butir soal
+        if (pointRes.isFullCorrect) {
+            sfxCorrect();
+            score++;
+            streak++;
+            if (streak > maxStreak) maxStreak = streak;
+            answeredCorrectly[origQIdx] = true;
+
+            triggerStreakVibration(streak);
+
+            if (fb) {
+                fb.className = 'feedback-box correct-fb';
+                fb.innerHTML = `<h4>${isAutoTimeout ? '⏰ Waktu Habis — Pilihan Terkunci & Benar! ✅' : '✅ Jawaban Benar!'} (+${pointRes.pointsEarned} Poin)</h4>${expText ? formatPedagogicalFeedback(expText) : ''}`;
+            }
+
+            const streakEl = document.getElementById('streak-display');
+            if (streakEl) {
+                streakEl.style.transform = 'scale(1.25)';
+                setTimeout(() => streakEl.style.transform = '', 250);
+            }
+
+            if (card) card.classList.toggle('streak-on-fire', streak >= 3);
+            if (streak >= 2) showMegaComboHero(streak);
+        } else if (pointRes.isPartial) {
+            sfxCorrect();
+            streak = 0;
+            answeredCorrectly[origQIdx] = true;
+
+            if (fb) {
+                fb.className = 'feedback-box warning-fb';
+                fb.innerHTML = `<h4>🟡 Jawaban Benar Sebagian (+${pointRes.pointsEarned}/${pointRes.maxPoints} Poin)</h4><p style="font-weight: 700; color: #fde047; margin-bottom: 6px;">${pointRes.summary}</p>${expText ? formatPedagogicalFeedback(expText) : ''}`;
+            }
+
+            if (card) card.classList.remove('streak-on-fire');
+        } else {
+            sfxWrong();
+            streak = 0;
+            answeredCorrectly[origQIdx] = false;
+
+            const isSkipped = (data.type === 'matrix_tf') 
+                ? selectedOriginals.every(v => v === null) 
+                : (selectedOriginals.length === 0);
+            let wrongTitle = '❌ Jawaban Salah!';
+            if (isAutoTimeout) {
+                wrongTitle = '⏰ Waktu Habis — Jawaban Otomatis Disalahkan!';
+            } else if (isSkipped) {
+                wrongTitle = '⚠️ Dilewati / Belum Ada Jawaban Terpilih (0 Poin)';
             }
 
             if (fb) {
-                fb.className = 'feedback-box locked-fb';
-                fb.innerHTML = `<h4>🔒 Jawaban Terkunci & Disimpan</h4><p style="font-size:0.85rem; color:var(--text-secondary); margin-top:4px;">Pilihan Anda telah tercatat resmi oleh sistem. Kunci jawaban dan pembahasan lengkap dapat ditinjau setelah ujian selesai.</p>`;
+                fb.className = 'feedback-box wrong-fb';
+                fb.innerHTML = `<h4>${wrongTitle} (0/${pointRes.maxPoints} Poin)</h4>${expText ? formatPedagogicalFeedback(expText) : ''}`;
             }
+
             if (card) card.classList.remove('streak-on-fire');
-        } else {
-            // 🎓 MODE REMEDIAL / LATIHAN PEDAGOGIS:
-            // Tampilkan pembahasan komprehensif, animasi kombo, dan suara interaktif
-            if (pointRes.isFullCorrect) {
-                sfxCorrect();
-                score++;
-                streak++;
-                if (streak > maxStreak) maxStreak = streak;
-                answeredCorrectly[origQIdx] = true;
-
-                triggerStreakVibration(streak);
-
-                if (fb) {
-                    fb.className = 'feedback-box correct-fb';
-                    fb.innerHTML = `<h4>${isAutoTimeout ? '⏰ Waktu Habis — Pilihan Terkunci & Benar! ✅' : '✅ Jawaban Benar Penuh!'} (+${pointRes.pointsEarned} Poin)</h4>${formatPedagogicalFeedback(expText)}`;
-                }
-
-                const streakEl = document.getElementById('streak-display');
-                if (streakEl) {
-                    streakEl.style.transform = 'scale(1.25)';
-                    setTimeout(() => streakEl.style.transform = '', 250);
-                }
-
-                if (card) card.classList.toggle('streak-on-fire', streak >= 3);
-                if (streak >= 2) showMegaComboHero(streak);
-            } else if (pointRes.isPartial) {
-                sfxCorrect();
-                streak = 0;
-                answeredCorrectly[origQIdx] = true;
-
-                if (fb) {
-                    fb.className = 'feedback-box warning-fb';
-                    fb.innerHTML = `<h4>🟡 Jawaban Benar Sebagian (+${pointRes.pointsEarned}/${pointRes.maxPoints} Poin)</h4><p style="font-weight: 700; color: #fde047; margin-bottom: 6px;">${pointRes.summary}</p>${formatPedagogicalFeedback(expText)}`;
-                }
-
-                if (card) card.classList.remove('streak-on-fire');
-            } else {
-                sfxWrong();
-                streak = 0;
-                answeredCorrectly[origQIdx] = false;
-
-                if (fb) {
-                    fb.className = 'feedback-box wrong-fb';
-                    fb.innerHTML = `<h4>${isAutoTimeout ? '⏰ Waktu Habis — Pilihan Otomatis Terkunci! ❌' : '❌ Analisis Kurang Tepat'} (0/${pointRes.maxPoints} Poin)</h4>${formatPedagogicalFeedback(expText)}`;
-                }
-
-                if (card) card.classList.remove('streak-on-fire');
-            }
         }
 
-        if (fb) fb.style.display = 'block';
+        if (fb) {
+            // 🎯 Banner Akumulasi Nilai per Materi Real-Time
+            if (liveTCode && window.liveTopicProgress && window.liveTopicProgress[liveTCode]) {
+                const prog = window.liveTopicProgress[liveTCode];
+                const tm = window.TRYOUT_TOPICS_META ? window.TRYOUT_TOPICS_META[liveTCode] : null;
+                const ptsColor = pointRes.isFullCorrect ? '#34d399' : (pointRes.isPartial ? '#fde047' : '#fb7185');
+                const topicBannerHtml = `
+                    <div class="live-topic-feedback-toast" style="margin-top: 10px; padding: 8px 12px; background: rgba(99,102,241,0.15); border: 1.5px solid rgba(99,102,241,0.35); border-radius: 8px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px;">
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                            <span style="font-size: 1.1rem;">${(tm && tm.icon) || '📌'}</span>
+                            <span style="font-size: 0.8rem; font-weight: 800; color: #c7d2fe;">${liveTCode}: ${escapeHtml((tm && tm.title) || data.topicName || liveTCode)}</span>
+                        </div>
+                        <div style="font-size: 0.8rem; font-family: var(--font-mono); font-weight: 800; color: ${ptsColor};">
+                            ${pointRes.pointsEarned > 0 ? `+${pointRes.pointsEarned} Poin!` : '0 Poin'} &bull; Nilai Materi: ${prog.score}/100 (${prog.correct}/${prog.total} Soal)
+                        </div>
+                    </div>
+                `;
+                fb.innerHTML += topicBannerHtml;
+            }
+            fb.style.display = 'block';
+        }
         const scoreEl = document.getElementById('score-display');
-        if (scoreEl) scoreEl.textContent = `⭐ ${earnedPointsTotal} Poin`;
+        if (scoreEl) scoreEl.style.display = 'none'; // Sembunyikan total poin kumulatif selama ujian berjalan
         const streakEl = document.getElementById('streak-display');
         if (streakEl) {
             streakEl.textContent = `🔥 ${streak}`;
@@ -2248,7 +2457,7 @@ function checkAnswer(isAutoTimeout = false) {
         if (nextBtn) {
             nextBtn.style.display = 'inline-flex';
             nextBtn.disabled = false;
-            nextBtn.innerHTML = isFinalQ ? '🏁 Kirim Nilai ke Dasbor Guru ➔' : 'Lanjut Soal ➡️';
+            nextBtn.innerHTML = isFinalQ ? '🏁 Selesai & Kirim Jawaban ➔' : 'Lanjut Soal Berikutnya ➔';
         }
         saveCurrentQuizSession();
     } finally {
@@ -2259,6 +2468,16 @@ function checkAnswer(isAutoTimeout = false) {
 function nextQuestion() {
     if (isTransitioningQuestion) return;
     isTransitioningQuestion = true;
+
+    if (singleActionTransitionTimer) {
+        clearTimeout(singleActionTransitionTimer);
+        singleActionTransitionTimer = null;
+    }
+
+    const origQIdx = shuffledQuizOrder[currentQ];
+    if (quizData && quizData[origQIdx] && !detailedAnswers[origQIdx]) {
+        checkAnswer(false);
+    }
 
     const isFinalQ = (currentQ >= quizData.length - 1);
     if (isFinalQ) {
@@ -2302,6 +2521,7 @@ async function finishQuiz() {
         clearFullscreenWarningCountdown();
         clearBlurGraceTimer();
         isCheatWarningActive = false;
+        removeExamWatermark();
         const warningModal = document.getElementById('cheat-warning-modal');
         if (warningModal) warningModal.classList.remove('active');
     } catch(e) {}
@@ -2658,21 +2878,131 @@ async function finishQuiz() {
     }
 
     // 🔒 Kontrol Penundaan Rapor & Kunci Pembahasan oleh Guru
-    const isPostponed = (typeof isReviewPostponed === 'function') 
+    // Siswa TIDAK BISA mengunduh laporan soal salah atau benar dan jawaban benarnya pada kuis harian/baru karena rawan kecurangan.
+    // Tapi kalau Tryout (TO) BISA!
+    const isTryoutSession = (activeModId === 'modul_tryout_terpadu');
+    const isPostponed = !isTryoutSession && ((typeof isReviewPostponed === 'function') 
         ? isReviewPostponed() 
-        : (localStorage.getItem('quizmaster_review_release_mode') !== 'open');
+        : (localStorage.getItem('quizmaster_review_release_mode') !== 'open'));
 
     const postponedCard = document.getElementById('review-postponed-card');
     const btnToggleReview = document.getElementById('btn-toggle-review');
     const reviewSection = document.getElementById('review-section');
+    const btnExportPdf = document.querySelector('button[onclick="exportStudentPDF()"]');
+    const btnExportExcel = document.querySelector('button[onclick="exportStudentExcel()"]');
 
-    if (isPostponed) {
-        if (postponedCard) postponedCard.style.display = 'block';
-        if (btnToggleReview) btnToggleReview.style.display = 'none';
-        if (reviewSection) reviewSection.style.display = 'none';
-    } else {
+    if (isTryoutSession) {
         if (postponedCard) postponedCard.style.display = 'none';
         if (btnToggleReview) btnToggleReview.style.display = 'inline-flex';
+        if (btnExportPdf) {
+            btnExportPdf.style.display = 'inline-flex';
+            btnExportPdf.innerHTML = '📑 Unduh Rapor Lengkap (PDF)';
+            btnExportPdf.disabled = false;
+        }
+        if (btnExportExcel) {
+            btnExportExcel.style.display = 'inline-flex';
+            btnExportExcel.innerHTML = '📊 Unduh Rapor Excel Tryout';
+            btnExportExcel.disabled = false;
+        }
+    } else {
+        // Kuis materi harian biasa: proteksi anti-bocor kunci jawaban
+        if (postponedCard) {
+            postponedCard.style.display = 'block';
+            const postponedDesc = postponedCard.querySelector('p');
+            if (postponedDesc) {
+                postponedDesc.innerHTML = 'Nilai Anda telah <strong>berhasil dikumpulkan &amp; tersimpan resmi</strong> di Dasbor Guru <strong>Bpk. MUHAMMAD HAFIDH PUTRA ROSHADI, S.Pd.</strong> Untuk mencegah kecurangan dan kebocoran soal kuis harian, laporan kunci jawaban dilindungi oleh guru.';
+            }
+        }
+        if (btnToggleReview) btnToggleReview.style.display = 'none';
+        if (reviewSection) reviewSection.style.display = 'none';
+        if (btnExportPdf) {
+            btnExportPdf.innerHTML = '📑 Unduh Bukti Submit (PDF)';
+        }
+        if (btnExportExcel) {
+            btnExportExcel.style.display = 'none';
+        }
+    }
+
+    // 🎯 Render Tabel Rekapitulasi Penguasaan 6 Materi Tryout (Responsif Android)
+    const topicSummaryCard = document.getElementById('tryout-topic-summary-card');
+    if (topicSummaryCard) {
+        if (isTryoutSession && topicBreakdown) {
+            topicSummaryCard.style.display = 'block';
+            let rowsHtml = '';
+            let totalCorrectAll = 0;
+            let totalQAll = 0;
+            let totalScoreSum = 0;
+            let topicCount = 0;
+
+            const topicsOrder = ['M1', 'M2', 'M3', 'M4', 'M5', 'M6'];
+            topicsOrder.forEach(code => {
+                const item = topicBreakdown[code];
+                if (!item) return;
+                totalCorrectAll += (item.correct || 0);
+                totalQAll += (item.total || 10);
+                totalScoreSum += (item.score || 0);
+                topicCount++;
+
+                const isPass = item.score >= 80;
+                const badgeColor = isPass ? '#34d399' : (item.score >= 60 ? '#38bdf8' : '#fb7185');
+                const badgeBg = isPass ? 'rgba(16,185,129,0.15)' : (item.score >= 60 ? 'rgba(56,189,248,0.15)' : 'rgba(244,63,94,0.15)');
+                const badgeBorder = isPass ? 'rgba(16,185,129,0.35)' : (item.score >= 60 ? 'rgba(56,189,248,0.35)' : 'rgba(244,63,94,0.35)');
+                const statusText = isPass ? 'LULUS (≥80)' : 'PERLU BELAJAR (<80)';
+
+                rowsHtml += `
+                    <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; border-bottom: 1px solid rgba(255,255,255,0.06); gap: 10px; flex-wrap: wrap;">
+                        <div style="flex: 1; min-width: 190px;">
+                            <div style="font-weight: 800; font-size: 0.85rem; color: #e2e8f0; display: flex; align-items: center; gap: 6px;">
+                                <span>${item.icon || '📌'} ${code}:</span>
+                                <span>${escapeHtml(item.title)}</span>
+                            </div>
+                            <div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 2px;">
+                                Jumlah Benar: <strong style="color: #cbd5e1;">${item.correct} dari ${item.total} Soal</strong>
+                            </div>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span style="font-family: var(--font-mono); font-size: 1.15rem; font-weight: 800; color: ${badgeColor}; min-width: 48px; text-align: right;">${item.score}</span>
+                            <span style="font-size: 0.72rem; font-weight: 800; padding: 4px 10px; border-radius: 8px; background: ${badgeBg}; border: 1px solid ${badgeBorder}; color: ${badgeColor}; white-space: nowrap;">${statusText}</span>
+                        </div>
+                    </div>
+                `;
+            });
+
+            const avgScoreAll = topicCount > 0 ? Math.round(totalScoreSum / topicCount) : 0;
+            const isAvgPass = avgScoreAll >= 80;
+
+            topicSummaryCard.innerHTML = `
+                <div style="background: rgba(15, 23, 42, 0.75); border: 1.5px solid rgba(99, 102, 241, 0.35); border-radius: 14px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.3);">
+                    <div style="background: linear-gradient(135deg, rgba(99,102,241,0.2), rgba(168,85,247,0.15)); padding: 12px 16px; border-bottom: 1px solid rgba(99,102,241,0.3); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <span style="font-size: 1.4rem;">🎯</span>
+                            <div>
+                                <div style="font-weight: 800; font-size: 0.95rem; color: #a5b4fc;">Rekapitulasi Penguasaan per Materi (Tryout 60 Soal)</div>
+                                <div style="font-size: 0.72rem; color: var(--text-muted);">Akumulasi otomatis per 10 butir soal tiap kompetensi materi</div>
+                            </div>
+                        </div>
+                        <div style="font-size: 0.75rem; background: rgba(0,0,0,0.35); padding: 4px 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); color: #cbd5e1;">
+                            Standar KKM: <strong>80</strong>
+                        </div>
+                    </div>
+                    <div style="display: flex; flex-direction: column;">
+                        ${rowsHtml}
+                    </div>
+                    <div style="background: rgba(15, 23, 42, 0.92); padding: 12px 16px; border-top: 1.5px solid rgba(99, 102, 241, 0.4); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+                        <div style="font-size: 0.82rem; color: #cbd5e1; font-weight: 700;">
+                            📊 Total Ketepatan Jawaban: <span style="color: #38bdf8;">${totalCorrectAll} dari ${totalQAll} Soal</span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <span style="font-size: 0.85rem; color: #e2e8f0; font-weight: 800;">Rata-rata 6 Materi:</span>
+                            <span style="font-family: var(--font-mono); font-size: 1.25rem; font-weight: 900; color: ${isAvgPass ? '#34d399' : '#fb7185'};">${avgScoreAll} / 100</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        } else {
+            topicSummaryCard.style.display = 'none';
+            topicSummaryCard.innerHTML = '';
+        }
     }
 
     // 🔁 Kontrol Tampilan Tombol & Card Remedial Adaptif (Sesuai Pengaturan Guru)
@@ -2755,16 +3085,17 @@ function buildReview() {
     if (!list) return;
     list.innerHTML = '';
 
-    const isPostponed = (typeof isReviewPostponed === 'function') 
+    const activeModId = currentActiveModule ? currentActiveModule.id : (window.QuizManager ? QuizManager.getActiveModuleId() : 'modul_detektif_fakta');
+    const isTryoutSession = (activeModId === 'modul_tryout_terpadu');
+    const isPostponed = !isTryoutSession && ((typeof isReviewPostponed === 'function') 
         ? isReviewPostponed() 
-        : (localStorage.getItem('quizmaster_review_release_mode') !== 'open');
+        : (localStorage.getItem('quizmaster_review_release_mode') !== 'open'));
 
     if (isPostponed) {
         return; // Seluruh DOM review dinonaktifkan tuntas saat mode tunda aktif
     }
 
     // Cek apakah modul saat ini adalah Modul Ujian Keamanan Jaringan dan status kunci jawaban ujian aktif
-    const activeModId = currentActiveModule ? currentActiveModule.id : (window.QuizManager ? QuizManager.getActiveModuleId() : 'modul_detektif_fakta');
     const isExamModule = (activeModId === 'modul_jaringan_keamanan');
     const accessSettings = (typeof loadAccessSettings === 'function') ? loadAccessSettings() : { lockAnswersDuringExam: true };
     const isAnswersLocked = isExamModule && (accessSettings.lockAnswersDuringExam !== false);
@@ -2848,9 +3179,11 @@ function buildReview() {
 
 let reviewVisible = false;
 function toggleReview() {
-    const isPostponed = (typeof isReviewPostponed === 'function') 
+    const activeModId = (currentActiveModule && currentActiveModule.id) || (typeof QuizManager !== 'undefined' && QuizManager.getActiveModuleId ? QuizManager.getActiveModuleId() : 'modul_detektif_fakta');
+    const isTryoutSession = (activeModId === 'modul_tryout_terpadu');
+    const isPostponed = !isTryoutSession && ((typeof isReviewPostponed === 'function') 
         ? isReviewPostponed() 
-        : (localStorage.getItem('quizmaster_review_release_mode') !== 'open');
+        : (localStorage.getItem('quizmaster_review_release_mode') !== 'open'));
 
     if (isPostponed) {
         if (typeof showToast === 'function') {
@@ -2935,13 +3268,20 @@ function startDeliveryRetry(record, pill, detailEl) {
 }
 window.startDeliveryRetry = startDeliveryRetry;
 
+let activePendingRemedialRecord = null;
 function openRemedialOffer(name, cls, moduleTitle, rec) {
+    activePendingRemedialRecord = rec || null;
+    window.__pendingRemedialRec = rec || null;
+    if (rec) {
+        remedialSourceRecord = rec;
+        window.remedialSourceRecord = rec;
+    }
     const modal = document.getElementById('remedial-offer-modal');
     if (!modal) { showToast('Remedial tersedia, namun jendela pilihan tidak ditemukan.', '⚠️'); return; }
     const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
     set('rem-offer-name', name);
     set('rem-offer-class', `Kelas: ${cls}`);
-    set('rem-offer-module', moduleTitle || '-');
+    set('rem-offer-module', moduleTitle || (rec && rec.moduleTitle) || '-');
     set('rem-offer-score', `Nilai Tercatat: ${Number(rec && rec.score) || 0} / 100`);
     set('rem-offer-kkm', 'KKM 80');
     modal.classList.add('active');
@@ -2953,11 +3293,38 @@ function closeRemedialOffer() {
     if (modal) modal.classList.remove('active');
 }
 
-function confirmRemedialStart() {
+async function confirmRemedialStart() {
     const modal = document.getElementById('remedial-offer-modal');
     if (modal) modal.classList.remove('active');
     window.__remedialConfirmed = true;
-    initiateQuiz();
+    const rec = window.__pendingRemedialRec || remedialSourceRecord || activePendingRemedialRecord;
+    if (rec) {
+        remedialSourceRecord = rec;
+        window.remedialSourceRecord = rec;
+        studentName = rec.name;
+        studentClass = rec.class;
+        const clsSelect = document.getElementById('input-class');
+        const nameSelect = document.getElementById('input-name');
+        const moduleSelect = document.getElementById('input-module');
+        if (clsSelect) {
+            clsSelect.value = rec.class;
+            if (typeof onHomeClassChanged === 'function') {
+                try { onHomeClassChanged(); } catch (e) {}
+            }
+        }
+        if (nameSelect) {
+            nameSelect.value = rec.name;
+        }
+        const targetMod = (typeof normalizeModuleId === 'function') ? normalizeModuleId(rec.moduleId, rec.id, rec.date) : rec.moduleId;
+        if (moduleSelect) {
+            moduleSelect.value = targetMod;
+        }
+        if (window.QuizManager) {
+            QuizManager.setActiveModuleId(targetMod, true);
+        }
+        try { sessionStorage.setItem('user_chosen_module_id', targetMod); } catch(e) {}
+    }
+    await initiateQuiz();
 }
 
 function triggerRemedialFromCard() {
@@ -3029,6 +3396,8 @@ function simulateDemoRemedialResult(targetScore = 70) {
             pointsEarned: isCorr ? pointsPerQ : 0,
             maxPoints: pointsPerQ,
             selected: isCorr ? 0 : 1,
+            selectedIndices: isCorr ? [0] : [1],
+            selectedText: [isCorr ? 'Jawaban Benar' : 'Jawaban Salah'],
             correctAnswers: [0],
             timeSpent: 2
         });

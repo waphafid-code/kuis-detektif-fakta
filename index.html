@@ -37,9 +37,9 @@
         }
     </script>
     <!-- QuizMaster Modern Design System & UI Styling -->
-<link rel="stylesheet" href="css/style.css?v=20261122-v3046-tryout-terpadu">
+<link rel="stylesheet" href="css/style.css?v=20261123-v3070-smart-demo-matrix">
     <!-- Cyber Guardian Sentinel Protocol & Gemini Teacher AI Assistant Styling -->
-    <link rel="stylesheet" href="css/guardian_and_chatbot.css?v=20261122-v3046-tryout-terpadu">
+    <link rel="stylesheet" href="css/guardian_and_chatbot.css?v=20261123-v3070-smart-demo-matrix">
 
 
 </head>
@@ -1228,6 +1228,7 @@
                 <div style="display: flex; gap: 8px; align-items: center; justify-content: space-between; flex-wrap: wrap; margin-bottom: 14px;">
                     <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
                         <div id="q-badge" class="q-badge"></div>
+                        <div id="q-topic-badge" class="q-badge" style="display:none; background: rgba(99,102,241,0.18); border: 1px solid rgba(99,102,241,0.45); color: #c7d2fe; font-weight: 700;"></div>
                         <div id="q-diff-badge" class="q-badge"></div>
                         <div id="q-points-badge" class="q-points-badge" style="display:none;"></div>
                     </div>
@@ -1251,8 +1252,8 @@
             </div>
 
             <div class="q-actions">
-                <button class="btn btn-primary" id="btn-check" onclick="checkAnswer()">Cek Jawaban ✔️</button>
-                <button class="btn btn-accent" id="btn-next" style="display:none;" onclick="nextQuestion()">Lanjut Soal ➡️</button>
+                <button class="btn btn-primary" id="btn-check" style="display:none;" onclick="checkAnswer()">Cek Jawaban ✔️</button>
+                <button class="btn btn-accent" id="btn-next" onclick="handleSingleNextAction()">Lanjut Soal Berikutnya ➔</button>
             </div>
         </div>
     </div>
@@ -1329,6 +1330,9 @@
                     <div class="lbl">Max Streak</div>
                 </div>
             </div>
+
+            <!-- 🎯 TABEL REKAPITULASI PENGUASAAN MATERI TRYOUT 60 SOAL (RESPONSIF ANDROID/HP) -->
+            <div id="tryout-topic-summary-card" class="tryout-topic-summary-card" style="display:none; margin: 18px 0; text-align: left;"></div>
 
             <!-- 🔒 KARTU INFORMASI PENUNDAAN RAPOR & PEMBAHASAN SOAL OLEH GURU -->
             <div id="review-postponed-card" class="review-postponed-card" style="display:none;">
@@ -1728,6 +1732,14 @@
                             <span class="seg-desc">Evaluasi komprehensif kedua kuis</span>
                         </div>
                         <span class="seg-badge" id="badge-cnt-all-mod">300 Data</span>
+                    </button>
+                                        <button type="button" class="module-seg-btn" id="btn-mod-filter-tryout" onclick="selectModuleSegment('modul_tryout_terpadu')" title="Tampilkan Rekapitulasi Tryout Terpadu 60 Soal (Nilai M1 s.d M6 Sekaligus)">
+                        <span class="seg-icon">🎯</span>
+                        <div class="seg-info">
+                            <span class="seg-title">Tryout Terpadu (6 Materi)</span>
+                            <span class="seg-desc">Tengok Rekap Nilai M1–M6 Sekaligus</span>
+                        </div>
+                        <span class="seg-badge" id="badge-cnt-tryout-mod">0 Data</span>
                     </button>
                     <button type="button" class="module-seg-btn" id="btn-mod-filter-jaringan" onclick="selectModuleSegment('modul_jaringan_keamanan')" title="Tampilkan hanya data Penilaian Harian Infrastruktur Jaringan &amp; Keamanan Digital">
                         <span class="seg-icon">🛡️</span>
@@ -2307,29 +2319,29 @@
 <!-- ============================================================ -->
 <!-- 🧩 MODULAR JAVASCRIPT LIBRARIES & ENGINES                   -->
 <!-- ============================================================ -->
-<script src="js/student_roster.js?v=20261122-v3046-tryout-terpadu"></script>
-<script src="js/default_records.js?v=20261122-v3046-tryout-terpadu"></script>
-<script src="js/default_questions.js?v=20261122-v3046-tryout-terpadu"></script>
-<script src="js/doc_parser.js?v=20261122-v3046-tryout-terpadu"></script>
-<script src="js/ai_nemotron.js?v=20261122-v3046-tryout-terpadu"></script>
-<script src="js/quiz_manager.js?v=20261122-v3046-tryout-terpadu"></script>
-<script src="js/question_editor.js?v=20261122-v3046-tryout-terpadu"></script>
-<script src="js/firebase_sync.js?v=20261122-v3046-tryout-terpadu"></script>
-<script src="js/deviceTier.js?v=20261122-v3046-tryout-terpadu"></script>
-<script src="js/storage.js?v=20261122-v3046-tryout-terpadu"></script>
-<script src="js/audio.js?v=20261122-v3046-tryout-terpadu"></script>
-<script src="js/particles.js?v=20261122-v3046-tryout-terpadu"></script>
-<script src="js/quiz_engine.js?v=20261122-v3046-tryout-terpadu"></script>
-<script src="js/rapor_excel.js?v=20261122-v3046-tryout-terpadu"></script>
-<script src="js/dashboard.js?v=20261122-v3046-tryout-terpadu"></script>
-<script src="js/export_reports.js?v=20261122-v3046-tryout-terpadu"></script>
-<script src="js/ai_studio.js?v=20261122-v3046-tryout-terpadu"></script>
-<script src="js/diagnostics.js?v=20261122-v3046-tryout-terpadu"></script>
-<script src="js/learning_hub.js?v=20261122-v3046-tryout-terpadu"></script>
-<script src="js/mini_games.js?v=20261122-v3046-tryout-terpadu"></script>
-<script src="js/teacher_chatbot.js?v=20261122-v3046-tryout-terpadu"></script>
-<script src="js/cyber_guardian_game.js?v=20261122-v3046-tryout-terpadu"></script>
-<script src="js/app.js?v=20261122-v3046-tryout-terpadu"></script>
+<script src="js/student_roster.js?v=20261123-v3070-smart-demo-matrix"></script>
+<script src="js/default_records.js?v=20261123-v3070-smart-demo-matrix"></script>
+<script src="js/default_questions.js?v=20261123-v3070-smart-demo-matrix"></script>
+<script src="js/doc_parser.js?v=20261123-v3070-smart-demo-matrix"></script>
+<script src="js/ai_nemotron.js?v=20261123-v3070-smart-demo-matrix"></script>
+<script src="js/quiz_manager.js?v=20261123-v3070-smart-demo-matrix"></script>
+<script src="js/question_editor.js?v=20261123-v3070-smart-demo-matrix"></script>
+<script src="js/firebase_sync.js?v=20261123-v3070-smart-demo-matrix"></script>
+<script src="js/deviceTier.js?v=20261123-v3070-smart-demo-matrix"></script>
+<script src="js/storage.js?v=20261123-v3070-smart-demo-matrix"></script>
+<script src="js/audio.js?v=20261123-v3070-smart-demo-matrix"></script>
+<script src="js/particles.js?v=20261123-v3070-smart-demo-matrix"></script>
+<script src="js/quiz_engine.js?v=20261123-v3070-smart-demo-matrix"></script>
+<script src="js/rapor_excel.js?v=20261123-v3070-smart-demo-matrix"></script>
+<script src="js/dashboard.js?v=20261123-v3070-smart-demo-matrix"></script>
+<script src="js/export_reports.js?v=20261123-v3070-smart-demo-matrix"></script>
+<script src="js/ai_studio.js?v=20261123-v3070-smart-demo-matrix"></script>
+<script src="js/diagnostics.js?v=20261123-v3070-smart-demo-matrix"></script>
+<script src="js/learning_hub.js?v=20261123-v3070-smart-demo-matrix"></script>
+<script src="js/mini_games.js?v=20261123-v3070-smart-demo-matrix"></script>
+<script src="js/teacher_chatbot.js?v=20261123-v3070-smart-demo-matrix"></script>
+<script src="js/cyber_guardian_game.js?v=20261123-v3070-smart-demo-matrix"></script>
+<script src="js/app.js?v=20261123-v3070-smart-demo-matrix"></script>
 
 </body>
 </html>

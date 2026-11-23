@@ -65,6 +65,7 @@ function snapshotAttempt(x, asRemedial) {
     return {
         score: asRemedial ? Number((x.remedialScore !== undefined && x.remedialScore !== null) ? x.remedialScore : x.score) : Number(x.score),
         correct: x.correct, total: x.total, partialCount: x.partialCount,
+        topicBreakdown: x.topicBreakdown || null,
         wrongQuestions: Array.isArray(x.wrongQuestions) ? x.wrongQuestions : [],
         detailedAnswers: hasReal ? x.detailedAnswers : null,
         studentAnswers: hasAns ? x.studentAnswers : null,
@@ -103,7 +104,7 @@ function mergeRecordsList(existingList, incomingList) {
             const item = {
                 ...r,
                 moduleId: modId,
-                moduleTitle: r.moduleTitle || (modId === 'modul_jaringan_keamanan' ? 'Penilaian Harian: Infrastruktur Jaringan & Keamanan Digital' : 'Misi Detektif Fakta')
+                moduleTitle: r.moduleTitle || (modId === 'modul_tryout_terpadu' ? 'Tryout Terpadu 60 Soal (6 Materi)' : (modId === 'modul_jaringan_keamanan' ? 'Penilaian Harian: Infrastruktur Jaringan & Keamanan Digital' : 'Misi Detektif Fakta'))
             };
             map.set(makeKey(item), item);
         }
@@ -115,7 +116,7 @@ function mergeRecordsList(existingList, incomingList) {
         const item = {
             ...r,
             moduleId: modId,
-            moduleTitle: r.moduleTitle || (modId === 'modul_jaringan_keamanan' ? 'Penilaian Harian: Infrastruktur Jaringan & Keamanan Digital' : 'Misi Detektif Fakta')
+            moduleTitle: r.moduleTitle || (modId === 'modul_tryout_terpadu' ? 'Tryout Terpadu 60 Soal (6 Materi)' : (modId === 'modul_jaringan_keamanan' ? 'Penilaian Harian: Infrastruktur Jaringan & Keamanan Digital' : 'Misi Detektif Fakta'))
         };
         const k = makeKey(item);
         if (!map.has(k)) {
@@ -151,6 +152,7 @@ function mergeRecordsList(existingList, incomingList) {
                 originalScore: (isRem || adj) ? origScore : (cur.originalScore ?? item.originalScore ?? null),
                 remedialScore: (isRem || adj) ? (bestRemScore || finalScore) : null,
                 correct: higher.correct !== undefined ? higher.correct : (item.correct !== undefined ? item.correct : cur.correct),
+                topicBreakdown: higher.topicBreakdown || item.topicBreakdown || cur.topicBreakdown || null,
                 wrongQuestions: higher.wrongQuestions || item.wrongQuestions || cur.wrongQuestions,
                 detailedAnswers: higher.detailedAnswers || item.detailedAnswers || cur.detailedAnswers,
                 studentAnswers: higher.studentAnswers || item.studentAnswers || cur.studentAnswers,
@@ -492,8 +494,12 @@ async function saveRecord(record) {
             proofId: proofCode,
             isRemedial: !!record.isRemedial,
             originalScore: record.isRemedial ? (record.originalScore ?? null) : null,
-            remedialScore: record.isRemedial ? (record.remedialScore ?? null) : null
+            remedialScore: record.isRemedial ? (record.remedialScore ?? null) : null,
+            topicBreakdown: record.topicBreakdown || null,
+            detailedAnswers: Array.isArray(record.detailedAnswers) ? record.detailedAnswers : null
         },
+        topic_breakdown: record.topicBreakdown || null,
+        detailed_answers: Array.isArray(record.detailedAnswers) ? record.detailedAnswers : null,
         duration: record.duration,
         time_str: record.time,
         quiz_date: record.date
