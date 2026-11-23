@@ -3921,6 +3921,18 @@ function renderDashboard() {
                     }).sort((a, b) => (b.score - a.score) || ((b.timestamp || 0) - (a.timestamp || 0)));
                     const bestFakta = attemptsFakta[0] || null;
 
+                    const attemptsPanduan = demoRecords.filter(r => {
+                        const mod = (typeof normalizeModuleId === 'function') ? normalizeModuleId(r.moduleId, r.id, r.date) : r.moduleId;
+                        return mod === modPanduanId && nameMatches(r.name);
+                    }).sort((a, b) => (b.score - a.score) || ((b.timestamp || 0) - (a.timestamp || 0)));
+                    const bestPanduan = attemptsPanduan[0] || null;
+
+                    const attemptsPrivasi = demoRecords.filter(r => {
+                        const mod = (typeof normalizeModuleId === 'function') ? normalizeModuleId(r.moduleId, r.id, r.date) : r.moduleId;
+                        return mod === modPrivasiId && nameMatches(r.name);
+                    }).sort((a, b) => (b.score - a.score) || ((b.timestamp || 0) - (a.timestamp || 0)));
+                    const bestPrivasi = attemptsPrivasi[0] || null;
+
                     const attemptsJaringan = demoRecords.filter(r => {
                         const mod = (typeof normalizeModuleId === 'function') ? normalizeModuleId(r.moduleId, r.id, r.date) : r.moduleId;
                         return mod === modJaringanId && nameMatches(r.name);
@@ -3930,7 +3942,7 @@ function renderDashboard() {
                     const hasTryout = !!bestTryout;
                     const hasFakta = !!bestFakta;
                     const hasJaringan = !!bestJaringan;
-                    const hasSubmitted = isTryoutView ? hasTryout : (filterModule === modJaringanId ? hasJaringan : (filterModule === modFaktaId ? hasFakta : (hasFakta || hasJaringan || hasTryout)));
+                    const hasSubmitted = isTryoutView ? hasTryout : (filterModule === modJaringanId ? hasJaringan : (filterModule === modFaktaId ? hasFakta : (hasFakta || hasJaringan || hasPanduan || hasPrivasi || hasTryout)));
 
                     if (hasSubmitted) {
                         const activeRecord = isTryoutView ? bestTryout : (filterModule === modJaringanId ? bestJaringan : (filterModule === modFaktaId ? bestFakta : (bestTryout || bestJaringan || bestFakta)));
@@ -3947,7 +3959,7 @@ function renderDashboard() {
                                 class: 'KELAS DEMO',
                                 hasSubmitted: true,
                                 record: activeRecord,
-                                attemptsCount: (attemptsFakta.length + attemptsJaringan.length + attemptsTryout.length),
+                                attemptsCount: (attemptsFakta.length + attemptsJaringan.length + attemptsPanduan.length + attemptsPrivasi.length + attemptsTryout.length),
                                 score: isTryoutView ? (bestTryout ? bestTryout.score : -1) : (filterModule === modJaringanId ? (bestJaringan ? bestJaringan.score : -1) : (filterModule === modFaktaId ? (bestFakta ? bestFakta.score : -1) : avgScore)),
                                 timestamp: activeRecord ? (activeRecord.timestamp || 0) : 0,
                                 hasFakta: hasFakta,
@@ -3956,6 +3968,12 @@ function renderDashboard() {
                                 hasJaringan: hasJaringan,
                                 recordJaringan: bestJaringan,
                                 scoreJaringan: bestJaringan ? bestJaringan.score : null,
+                                hasPanduan: !!bestPanduan,
+                                recordPanduan: bestPanduan,
+                                scorePanduan: bestPanduan ? bestPanduan.score : null,
+                                hasPrivasi: !!bestPrivasi,
+                                recordPrivasi: bestPrivasi,
+                                scorePrivasi: bestPrivasi ? bestPrivasi.score : null,
                                 hasTryout: hasTryout,
                                 recordTryout: bestTryout,
                                 scoreTryout: bestTryout ? bestTryout.score : null,
@@ -4056,7 +4074,7 @@ function renderDashboard() {
         if (displayList.length === 0) {
             tbody.innerHTML = `
                 <tr>
-                    <td colspan="${isTryoutView ? 13 : (isSingleModuleView ? 9 : 8)}">
+                    <td colspan="${isTryoutView ? 13 : (isSingleModuleView ? 9 : 10)}">
                         <div class="empty-state">
                             <div class="empty-icon">📭</div>
                             <p>Tidak ada data siswa yang cocok dengan filter aktif:<br>
@@ -4265,7 +4283,7 @@ function renderDashboard() {
 
                     // Aksi Bar
                     let actionHtml = '';
-                    if (item.hasFakta || item.hasJaringan || item.hasTryout) {
+                    if (item.hasFakta || item.hasJaringan || item.hasPanduan || item.hasPrivasi || item.hasTryout) {
                         actionHtml = `
                             <div style="display: flex; align-items: center; justify-content: center; gap: 5px; flex-wrap: wrap;">
                                 <button type="button" class="btn-delete-row" onclick="openDeleteStudentModuleModal('${escapeHtml(item.name)}', '${escapeHtml(item.class)}')" style="padding: 4px 8px; font-size: 0.72rem; border-radius: 6px; font-weight: 700;" title="Pilih modul & hapus nilai untuk siswa ini">
