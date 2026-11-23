@@ -24,6 +24,22 @@ const rootEngine = fs.readFileSync('js/quiz_engine.js', 'utf8');
 const srcEngine = fs.readFileSync('src/js/quiz_engine.js', 'utf8');
 const rootHtml = fs.readFileSync('index.html', 'utf8');
 const srcHtml = fs.readFileSync('src/index.html', 'utf8');
+const nemotron = fs.readFileSync('js/ai_nemotron.js', 'utf8');
+const hkiBank = JSON.parse(fs.readFileSync('bank_soal/modul_hki_profesi_budaya.json', 'utf8'));
+const privacyBank = JSON.parse(fs.readFileSync('bank_soal/modul_etika_privasi_keamanan.json', 'utf8'));
+const tryoutBank = JSON.parse(fs.readFileSync('bank_soal/modul_tryout_terpadu.json', 'utf8'));
+
+function scoreComplex(answer, selected, maxPoints = 5) {
+    const correct = new Set(answer);
+    const chosen = new Set(selected);
+    let matched = 0;
+    let wrong = 0;
+    chosen.forEach(index => correct.has(index) ? matched++ : wrong++);
+    if (correct.size === 0) return 0;
+    let earned = Math.round((matched / correct.size) * maxPoints);
+    if (wrong > 0) earned = Math.max(0, earned - (wrong * Math.floor(maxPoints / correct.size)));
+    return earned;
+}
 
 test('1. Root & src/js/quiz_engine.js 100% identik', () => {
     assert.strictEqual(rootEngine, srcEngine, 'js/quiz_engine.js dan src/js/quiz_engine.js harus identik');
@@ -34,9 +50,9 @@ test('2. Root & src/index.html 100% identik', () => {
 });
 
 test('3. index.html: btn-check disembunyikan & btn-next memanggil handleSingleNextAction()', () => {
-    assert(rootHtml.includes('id="btn-check" style="display:none;"'), 'btn-check harus disembunyikan via style display:none');
+    assert(!rootHtml.includes('id="btn-check"'), 'Tombol Cek Jawaban terpisah harus dihapus dari HTML');
     assert(rootHtml.includes('id="btn-next" onclick="handleSingleNextAction()"'), 'btn-next harus memanggil handleSingleNextAction()');
-    assert(rootHtml.includes('Lanjut Soal Berikutnya ➔'), 'btn-next default text harus Lanjut Soal Berikutnya ➔');
+    assert(rootHtml.includes('Periksa Jawaban &amp; Lanjutkan ➔'), 'Tombol tunggal harus memeriksa jawaban pada klik pertama');
 });
 
 test('4. quiz_engine.js: handleSingleNextAction terdefinisi dan terekspor ke window', () => {
@@ -44,7 +60,7 @@ test('4. quiz_engine.js: handleSingleNextAction terdefinisi dan terekspor ke win
     assert(rootEngine.includes('window.handleSingleNextAction = handleSingleNextAction;'), 'handleSingleNextAction harus diekspor ke window');
 });
 
-test('5. quiz_engine.js: loadQuestion hanya menampilkan tombol lanjut soal', () => {
+test('5. quiz_engine.js: loadQuestion menampilkan satu tombol untuk periksa lalu lanjut', () => {
     assert(rootEngine.includes("checkBtn.style.display = 'none';"), 'loadQuestion harus menyembunyikan checkBtn');
     assert(rootEngine.includes("nextBtn.style.display = 'inline-flex';"), 'loadQuestion harus menampilkan nextBtn');
     assert(rootEngine.includes("nextBtn.innerHTML = isFinalQ ? '🏁 Selesai & Kirim Jawaban ➔' : 'Lanjut Soal Berikutnya ➔';"), 'loadQuestion harus mengatur teks tombol tunggal');
@@ -64,3 +80,26 @@ test('7. quiz_engine.js: nextQuestion memiliki guard jika jawaban belum terkunci
 console.log('════════════════════════════════════════════════════════════════');
 console.log(`🎉 ALL ${passed}/7 TESTS PASSED SUCCESSFULLY!`);
 console.log('════════════════════════════════════════════════════════════════');
+
+
+test('8. Kedua modul terbaru memiliki soal pilihan ganda kompleks yang dinilai parsial', () => {
+    assert(hkiBank.questions.some(q => q.type === 'checkbox'), 'Modul HKI harus memiliki soal checkbox');
+    assert(privacyBank.questions.some(q => q.type === 'checkbox'), 'Modul Etika/Privasi harus memiliki soal checkbox');
+    assert(nemotron.includes('isPartial: !isFull && earned > 0'), 'Nemotron harus mengembalikan status poin parsial');
+    assert(rootEngine.includes('window.NemotronAI.calculateQuestionPoints'), 'quiz_engine harus memakai kalkulator poin untuk soal kompleks');
+});
+
+test('9. Tryout mendukung aturan yang sama jika soal kompleks ditambahkan', () => {
+    assert(Array.isArray(tryoutBank), 'Bank tryout harus berupa daftar soal');
+    assert(rootEngine.includes("data.type === 'mcq' || data.type === 'tf'"), 'Engine memisahkan pilihan tunggal dari tipe kompleks');
+    assert(rootEngine.includes('window.NemotronAI.calculateQuestionPoints'), 'Semua tipe kompleks memakai kalkulator poin generik');
+});
+
+test('10. Poin parsial proporsional dan penalti opsi salah berjalan fair', () => {
+    const key = [0, 2, 3];
+    assert.strictEqual(scoreComplex(key, [0]), 2, '1 dari 3 opsi benar tetap memperoleh 2/5 poin');
+    assert.strictEqual(scoreComplex(key, [0, 2]), 3, '2 dari 3 opsi benar memperoleh 3/5 poin');
+    assert.strictEqual(scoreComplex(key, [0, 2, 3]), 5, 'Semua opsi benar memperoleh nilai penuh');
+    assert.strictEqual(scoreComplex(key, [0, 2, 3, 4]), 4, 'Memilih opsi salah mengurangi poin');
+    assert.strictEqual(scoreComplex(key, [4]), 0, 'Hanya memilih opsi salah tidak mendapat poin');
+});
