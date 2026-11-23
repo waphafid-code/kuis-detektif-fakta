@@ -675,6 +675,16 @@ window.addEventListener('blur', () => {
 });
 
 // 📱 DETEKSI SPLIT SCREEN / RESIZE ANOMALI SAAT UJIAN & DEVTOOLS DOCKED
+// Browser zoom levels represented as outer/inner viewport ratios.
+// Includes common Chrome/Edge zoom steps; a 4% tolerance handles CSS-pixel rounding.
+let _lastIntegrityDpr = null;
+const BROWSER_ZOOM_LEVELS = [0.25, 0.33, 0.5, 0.67, 0.75, 0.8, 0.9, 1, 1.1, 1.25, 1.5, 1.75, 2, 2.5, 3, 4, 5];
+function isBrowserZoomRatio(outer, inner) {
+    if (!inner || !outer) return false;
+    const ratio = outer / inner;
+    return BROWSER_ZOOM_LEVELS.some(level => Math.abs(ratio - level) / level <= 0.04);
+}
+
 function checkScreenIntegrity() {
     if (!isQuizActive() || isCheatWarningActive || isQuizFinishing) return;
     if (typeof isCurrentStudentDemo === 'function' && isCurrentStudentDemo()) return;
@@ -692,6 +702,23 @@ function checkScreenIntegrity() {
         if (!isMobileOrTouchDevice()) {
             const widthDiff = window.outerWidth - window.innerWidth;
             const heightDiff = window.outerHeight - window.innerHeight;
+            const dpr = window.devicePixelRatio || 1;
+
+            // Perubahan DPR biasanya menandakan zoom/display-scale berubah. Lewati satu siklus
+            // agar resize akibat zoom tidak langsung dianggap sebagai DevTools.
+            if (_lastIntegrityDpr !== null && Math.abs(dpr - _lastIntegrityDpr) > 0.01) {
+                _lastIntegrityDpr = dpr;
+                return;
+            }
+            _lastIntegrityDpr = dpr;
+
+            // Zoom browser standar mengubah rasio outer/inner. Toleransi 4% untuk variasi
+            // pembulatan CSS pixel lintas browser dan skala tampilan.
+            if (isBrowserZoomRatio(window.outerWidth, window.innerWidth) ||
+                isBrowserZoomRatio(window.outerHeight, window.innerHeight)) {
+                return;
+            }
+
             if (widthDiff > 160 || heightDiff > 160) {
                 handleAntiCheatEvent('🛠️ Developer Tools / Inspector Terdeteksi Terbuka');
                 return;
@@ -2589,7 +2616,7 @@ async function finishQuiz() {
 
     const isPassed = displayScore >= KKM;
     const activeModuleMeta = currentActiveModule || (window.QuizManager && typeof QuizManager.getActiveModule === 'function' ? QuizManager.getActiveModule() : null);
-    const activeModTitle = (activeModuleMeta && activeModuleMeta.title) || (activeModId === 'modul_jaringan_keamanan' ? 'Penilaian Harian: Infrastruktur Jaringan & Keamanan Digital' : 'Misi Detektif Fakta'));
+    const activeModTitle = (activeModuleMeta && activeModuleMeta.title) || (activeModId === 'modul_jaringan_keamanan' ? 'Penilaian Harian: Infrastruktur Jaringan & Keamanan Digital' : 'Misi Detektif Fakta');
 
     // 📊 Hitung Nilai Rinci Per Materi (Khusus Modul Tryout Terpadu 6 Materi)
     let topicBreakdown = null;
