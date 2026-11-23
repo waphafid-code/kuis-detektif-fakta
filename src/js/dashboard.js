@@ -3520,6 +3520,8 @@ function renderDashboard() {
 
     const modFaktaId = 'modul_detektif_fakta';
     const modJaringanId = 'modul_jaringan_keamanan';
+    const modPanduanId = 'modul_hki_profesi_budaya';
+    const modPrivasiId = 'modul_etika_privasi_keamanan';
 
     // 🛡️ ISOLASI TOTAL: Pisahkan records resmi (216 siswa SMAN 4 Padang) dari records demo
     const officialRecords = allRecords.filter(r => !(typeof isClassEquivalent === 'function' ? isClassEquivalent(r.class, 'KELAS DEMO') : r.class === 'KELAS DEMO'));
@@ -3587,6 +3589,14 @@ function renderDashboard() {
         const mod = (typeof normalizeModuleId === 'function') ? normalizeModuleId(r.moduleId, r.id, r.date) : (r.moduleId || modFaktaId);
         return mod === modJaringanId;
     });
+    const recordsPanduan = activePoolRecords.filter(r => {
+        const mod = (typeof normalizeModuleId === 'function') ? normalizeModuleId(r.moduleId, r.id, r.date) : (r.moduleId || modFaktaId);
+        return mod === modPanduanId;
+    });
+    const recordsPrivasi = activePoolRecords.filter(r => {
+        const mod = (typeof normalizeModuleId === 'function') ? normalizeModuleId(r.moduleId, r.id, r.date) : (r.moduleId || modFaktaId);
+        return mod === modPrivasiId;
+    });
     const recordsTryout = activePoolRecords.filter(r => {
         const mod = (typeof normalizeModuleId === 'function') ? normalizeModuleId(r.moduleId, r.id, r.date) : (r.moduleId || modFaktaId);
         return mod === modTryoutId;
@@ -3632,6 +3642,16 @@ function renderDashboard() {
                 nameMatches(r.name) && classMatches(r.class)
             ).sort((a, b) => (b.score - a.score) || ((b.timestamp || 0) - (a.timestamp || 0)));
             const bestJaringan = attemptsJaringan[0] || null;
+
+            // Attempts Panduan Generasi Digital (Teknologi Digital, Profesi, Budaya & HKI)
+            const attemptsPanduan = recordsPanduan.filter(r => nameMatches(r.name) && classMatches(r.class))
+                .sort((a, b) => (b.score - a.score) || ((b.timestamp || 0) - (a.timestamp || 0)));
+            const bestPanduan = attemptsPanduan[0] || null;
+
+            // Attempts Privasi dan Keamanan Digital
+            const attemptsPrivasi = recordsPrivasi.filter(r => nameMatches(r.name) && classMatches(r.class))
+                .sort((a, b) => (b.score - a.score) || ((b.timestamp || 0) - (a.timestamp || 0)));
+            const bestPrivasi = attemptsPrivasi[0] || null;
 
             // Attempts Tryout Terpadu 60 Soal
             const attemptsTryout = recordsTryout.filter(r => 
@@ -3717,6 +3737,12 @@ function renderDashboard() {
                 hasJaringan: hasJaringan,
                 recordJaringan: bestJaringan,
                 scoreJaringan: bestJaringan ? bestJaringan.score : null,
+                hasPanduan: !!bestPanduan,
+                recordPanduan: bestPanduan,
+                scorePanduan: bestPanduan ? bestPanduan.score : null,
+                hasPrivasi: !!bestPrivasi,
+                recordPrivasi: bestPrivasi,
+                scorePrivasi: bestPrivasi ? bestPrivasi.score : null,
                 hasTryout: hasTryout,
                 recordTryout: bestTryout,
                 scoreTryout: bestTryout ? bestTryout.score : null,
@@ -3895,6 +3921,18 @@ function renderDashboard() {
                     }).sort((a, b) => (b.score - a.score) || ((b.timestamp || 0) - (a.timestamp || 0)));
                     const bestFakta = attemptsFakta[0] || null;
 
+                    const attemptsPanduan = demoRecords.filter(r => {
+                        const mod = (typeof normalizeModuleId === 'function') ? normalizeModuleId(r.moduleId, r.id, r.date) : r.moduleId;
+                        return mod === modPanduanId && nameMatches(r.name);
+                    }).sort((a, b) => (b.score - a.score) || ((b.timestamp || 0) - (a.timestamp || 0)));
+                    const bestPanduan = attemptsPanduan[0] || null;
+
+                    const attemptsPrivasi = demoRecords.filter(r => {
+                        const mod = (typeof normalizeModuleId === 'function') ? normalizeModuleId(r.moduleId, r.id, r.date) : r.moduleId;
+                        return mod === modPrivasiId && nameMatches(r.name);
+                    }).sort((a, b) => (b.score - a.score) || ((b.timestamp || 0) - (a.timestamp || 0)));
+                    const bestPrivasi = attemptsPrivasi[0] || null;
+
                     const attemptsJaringan = demoRecords.filter(r => {
                         const mod = (typeof normalizeModuleId === 'function') ? normalizeModuleId(r.moduleId, r.id, r.date) : r.moduleId;
                         return mod === modJaringanId && nameMatches(r.name);
@@ -3904,7 +3942,7 @@ function renderDashboard() {
                     const hasTryout = !!bestTryout;
                     const hasFakta = !!bestFakta;
                     const hasJaringan = !!bestJaringan;
-                    const hasSubmitted = isTryoutView ? hasTryout : (filterModule === modJaringanId ? hasJaringan : (filterModule === modFaktaId ? hasFakta : (hasFakta || hasJaringan || hasTryout)));
+                    const hasSubmitted = isTryoutView ? hasTryout : (filterModule === modJaringanId ? hasJaringan : (filterModule === modFaktaId ? hasFakta : (hasFakta || hasJaringan || hasPanduan || hasPrivasi || hasTryout)));
 
                     if (hasSubmitted) {
                         const activeRecord = isTryoutView ? bestTryout : (filterModule === modJaringanId ? bestJaringan : (filterModule === modFaktaId ? bestFakta : (bestTryout || bestJaringan || bestFakta)));
@@ -3921,7 +3959,7 @@ function renderDashboard() {
                                 class: 'KELAS DEMO',
                                 hasSubmitted: true,
                                 record: activeRecord,
-                                attemptsCount: (attemptsFakta.length + attemptsJaringan.length + attemptsTryout.length),
+                                attemptsCount: (attemptsFakta.length + attemptsJaringan.length + attemptsPanduan.length + attemptsPrivasi.length + attemptsTryout.length),
                                 score: isTryoutView ? (bestTryout ? bestTryout.score : -1) : (filterModule === modJaringanId ? (bestJaringan ? bestJaringan.score : -1) : (filterModule === modFaktaId ? (bestFakta ? bestFakta.score : -1) : avgScore)),
                                 timestamp: activeRecord ? (activeRecord.timestamp || 0) : 0,
                                 hasFakta: hasFakta,
@@ -3930,6 +3968,12 @@ function renderDashboard() {
                                 hasJaringan: hasJaringan,
                                 recordJaringan: bestJaringan,
                                 scoreJaringan: bestJaringan ? bestJaringan.score : null,
+                                hasPanduan: !!bestPanduan,
+                                recordPanduan: bestPanduan,
+                                scorePanduan: bestPanduan ? bestPanduan.score : null,
+                                hasPrivasi: !!bestPrivasi,
+                                recordPrivasi: bestPrivasi,
+                                scorePrivasi: bestPrivasi ? bestPrivasi.score : null,
                                 hasTryout: hasTryout,
                                 recordTryout: bestTryout,
                                 scoreTryout: bestTryout ? bestTryout.score : null,
@@ -3992,6 +4036,8 @@ function renderDashboard() {
                     <th style="width: 80px;">Kelas</th>
                     <th style="text-align: center; width: 145px;" title="Kuis 1: Detektif Fakta">🕵️ Kuis 1: Fakta</th>
                     <th style="text-align: center; width: 145px;" title="Kuis 2: Keamanan Jaringan">🛡️ Kuis 2: Jaringan</th>
+                    <th style="text-align: center; width: 145px;" title="Panduan Generasi Digital (Teknologi Digital, Profesi, Budaya & HKI)">📘 Panduan Generasi Digital</th>
+                    <th style="text-align: center; width: 145px;" title="Privasi dan Keamanan Digital">🔐 Privasi & Keamanan</th>
                     <th style="text-align: center; width: 165px;" title="Tryout Terpadu 60 Soal (6 Materi Sekaligus)">🎯 Tryout (6 Materi)</th>
                     <th style="text-align: center; width: 90px; cursor: pointer;" onclick="toggleSort('score')" title="Urutkan Nilai Rata-Rata">Rata-Rata ⇅</th>
                     <th style="text-align: center; width: 140px;">Status Pengerjaan</th>
@@ -4028,7 +4074,7 @@ function renderDashboard() {
         if (displayList.length === 0) {
             tbody.innerHTML = `
                 <tr>
-                    <td colspan="${isTryoutView ? 13 : (isSingleModuleView ? 9 : 8)}">
+                    <td colspan="${isTryoutView ? 13 : (isSingleModuleView ? 9 : 10)}">
                         <div class="empty-state">
                             <div class="empty-icon">📭</div>
                             <p>Tidak ada data siswa yang cocok dengan filter aktif:<br>
@@ -4186,6 +4232,16 @@ function renderDashboard() {
                         kuis2Html = `<span class="quiz-score-subpill waiting">⏳ Belum</span>`;
                     }
 
+                    const renderModuleScore = (record, moduleId, label) => {
+                        if (!record) return '<span class="quiz-score-subpill waiting">⏳ BELUM MENGERJAKAN</span>';
+                        const idx = window.currentRenderedRecords.length;
+                        window.currentRenderedRecords.push(record);
+                        const pass = Number(record.score) >= 80;
+                        return `<div style="display:flex;align-items:center;justify-content:center;gap:4px;flex-wrap:wrap;"><span class="quiz-score-subpill ${pass ? 'pass' : 'remedy'}" title="Nilai asli hasil pengumpulan siswa">${record.score}</span><button type="button" class="btn-detail-row" style="padding:2px 7px;font-size:0.7rem;" onclick="openStudentDetailModal(window.currentRenderedRecords[${idx}])" title="Periksa hasil ${label}">🔍</button><button type="button" class="btn-delete-row" style="padding:2px 6px;font-size:0.7rem;border-radius:4px;" onclick="openDeleteStudentModuleModal('${escapeHtml(item.name)}','${escapeHtml(item.class)}','${moduleId}',${record.score})" title="Hapus nilai ${label}">🗑️</button></div>`;
+                    };
+                    const panduanHtml = renderModuleScore(item.recordPanduan, 'modul_hki_profesi_budaya', 'Panduan Generasi Digital');
+                    const privasiHtml = renderModuleScore(item.recordPrivasi, 'modul_etika_privasi_keamanan', 'Privasi & Keamanan Digital');
+
                     let tryoutHtml = '';
                     if (item.hasTryout && item.recordTryout) {
                         const recTO = item.recordTryout;
@@ -4227,7 +4283,7 @@ function renderDashboard() {
 
                     // Aksi Bar
                     let actionHtml = '';
-                    if (item.hasFakta || item.hasJaringan || item.hasTryout) {
+                    if (item.hasFakta || item.hasJaringan || item.hasPanduan || item.hasPrivasi || item.hasTryout) {
                         actionHtml = `
                             <div style="display: flex; align-items: center; justify-content: center; gap: 5px; flex-wrap: wrap;">
                                 <button type="button" class="btn-delete-row" onclick="openDeleteStudentModuleModal('${escapeHtml(item.name)}', '${escapeHtml(item.class)}')" style="padding: 4px 8px; font-size: 0.72rem; border-radius: 6px; font-weight: 700;" title="Pilih modul & hapus nilai untuk siswa ini">
@@ -4254,6 +4310,8 @@ function renderDashboard() {
                         <td><span style="font-family: var(--font-mono); color: var(--accent); font-size: 0.85rem;">${escapeHtml(item.class)}</span></td>
                         <td style="text-align: center;">${kuis1Html}</td>
                         <td style="text-align: center;">${kuis2Html}</td>
+                        <td style="text-align: center;">${panduanHtml}</td>
+                        <td style="text-align: center;">${privasiHtml}</td>
                         <td style="text-align: center;">${tryoutHtml}</td>
                         <td style="text-align: center;">${avgPill}</td>
                         <td style="text-align: center;">${crossBadge}</td>
