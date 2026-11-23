@@ -1450,6 +1450,35 @@ function handleSingleNextAction() {
 
     const nextBtn = document.getElementById('btn-next');
 
+    // Jangan nilai jawaban kosong dari klik manual. Periksa semua baris matriks
+    // agar siswa tahu bagian mana yang masih harus diisi.
+    const questionData = quizData[origQIdx];
+    const optionsGrid = document.getElementById('options-grid');
+    if (optionsGrid && questionData.type === 'matrix_tf') {
+        const rows = optionsGrid.querySelectorAll('tr[data-stmt-idx]');
+        const incompleteRows = [];
+        rows.forEach((row, index) => {
+            const selected = row.querySelector('input[type="radio"]:checked') ||
+                ((row.querySelector('.true-btn.active, .false-btn.active') || {}).querySelector
+                    ? row.querySelector('.true-btn.active, .false-btn.active').querySelector('input')
+                    : null);
+            if (!selected) incompleteRows.push(index + 1);
+        });
+        if (incompleteRows.length) {
+            showToast('Pilih jawaban terlebih dahulu pada semua pernyataan.', '⚠️');
+            const firstRow = optionsGrid.querySelector(`tr[data-stmt-idx="${incompleteRows[0] - 1}"]`);
+            if (firstRow && typeof firstRow.scrollIntoView === 'function') {
+                firstRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+            return;
+        }
+    } else if (optionsGrid && !optionsGrid.querySelector('input[name="q-opt"]:checked')) {
+        showToast('Pilih jawaban terlebih dahulu sebelum melanjutkan.', '⚠️');
+        const firstOption = optionsGrid.querySelector('input[name="q-opt"]');
+        if (firstOption && typeof firstOption.focus === 'function') firstOption.focus({ preventScroll: true });
+        return;
+    }
+
     // Klik kedua: hasil sudah disimpan, lanjut ke soal berikutnya.
     if (detailedAnswers && detailedAnswers[origQIdx]) {
         nextQuestion();
@@ -1684,69 +1713,32 @@ window.toggleQuestionHint = toggleQuestionHint;
 // 🎯 TRI-PILLAR PEDAGOGICAL FEEDBACK FORMATTER
 // ═══════════════════════════════════════════════════════════════
 function formatPedagogicalFeedback(explanation) {
-    if (!explanation) return '<p>Penjelasan untuk butir soal ini belum tersedia.</p>';
+    if (!explanation) return '<p>Penjelasan singkat belum tersedia.</p>';
 
-    let concept = '';
-    let distractor = '';
-    let insight = '';
-
-    if (explanation.includes('🎯') || explanation.includes('🔍') || explanation.includes('💡') || explanation.includes('|')) {
-        const parts = explanation.split(/\s*\|\s*|\n+/);
-        parts.forEach(p => {
-            const trimmed = p.trim();
-            if (trimmed.includes('🎯') || /konsep\s*inti/i.test(trimmed)) {
-                concept = trimmed.replace(/^🎯\s*(konsep\s*inti\s*:\s*)?/i, '').trim();
-            } else if (trimmed.includes('🔍') || /bedah\s*pengecoh|miskonsepsi/i.test(trimmed)) {
-                distractor = trimmed.replace(/^🔍\s*(bedah\s*pengecoh\s*(dan\s*miskonsepsi)?\s*:\s*)?/i, '').trim();
-            } else if (trimmed.includes('💡') || /mutiara\s*pedagogis|kesimpulan/i.test(trimmed)) {
-                insight = trimmed.replace(/^💡\s*(mutiara\s*pedagogis\s*:\s*)?/i, '').trim();
-            } else if (!concept) {
-                concept = trimmed;
-            } else if (!distractor) {
-                distractor = trimmed;
-            } else {
-                insight = trimmed;
-            }
-        });
-    } else {
-        const sentences = explanation.split(/(?<=[.!?])\s+/);
-        if (sentences.length >= 2) {
-            concept = sentences[0];
-            distractor = sentences.slice(1, -1).join(' ') || sentences[1];
-            insight = sentences.length > 2 ? sentences[sentences.length - 1] : 'Selalu terapkan prinsip kritis verifikasi fakta sebelum mempercayai atau membagikan suatu klaim.';
-        } else {
-            concept = explanation;
-            insight = 'Kembangkan kebiasaan memeriksa keabsahan sumber informasi demi menjaga kejernihan berpikir di era digital.';
-        }
+    // Ringkas pembahasan menjadi inti konsep + satu alasan, agar koreksi
+    // tidak memaksa siswa menggulir terlalu jauh di layar ponsel.
+    const plain = String(explanation)
+        .replace(/🎯|🔍|💡/g, '')
+        .replace(/konsep\s*inti\s*:|bedah\s*pengecoh(?:\s*dan\s*miskonsepsi)?\s*:|mutiara\s*pedagogis\s*:|kesimpulan\s*:/gi, '')
+        .replace(/\s*\|\s*/g, '. ')
+        .replace(/\s+/g, ' ')
+        .trim();
+    const sentences = plain.split(/(?<=[.!?])\s+/).filter(Boolean);
+    let summary = sentences.slice(0, 2).join(' ');
+    const maxLength = 240;
+    if (summary.length > maxLength) {
+        summary = summary.slice(0, maxLength - 1).replace(/\s+\S*$/, '') + '…';
     }
-
-    let html = '<div class="tri-pillar-feedback">';
-    if (concept) {
-        html += `
-            <div class="pillar-card pillar-concept">
-                <div class="pillar-card-title">🎯 Konsep Inti &amp; Landasan Fakta</div>
-                <p class="pillar-card-desc">${concept}</p>
-            </div>
-        `;
-    }
-    if (distractor) {
-        html += `
-            <div class="pillar-card pillar-distractor">
-                <div class="pillar-card-title">🔍 Bedah Pengecoh &amp; Miskonsepsi Umum</div>
-                <p class="pillar-card-desc">${distractor}</p>
-            </div>
-        `;
-    }
-    if (insight) {
-        html += `
-            <div class="pillar-card pillar-insight">
-                <div class="pillar-card-title">💡 Mutiara Pedagogis / Refleksi Nalar</div>
-                <p class="pillar-card-desc">${insight}</p>
-            </div>
-        `;
-    }
-    html += '</div>';
-    return html;
+    if (!summary) summary = plain.slice(0, maxLength).trim();
+    const safeSummary = typeof escapeHtml === 'function'
+        ? escapeHtml(summary)
+        : summary.replace(/[&<>"']/g, ch => ({
+            '&': '&amp;', '<': '&lt;', '>': '&gt;',
+            '"': '&quot;', "'": '&#39;'
+        }[ch]));
+    return `<div class="compact-question-explanation" style="margin-top:8px;padding:9px 11px;border-radius:10px;background:rgba(99,102,241,.10);font-size:.88rem;line-height:1.45;">
+        <strong>💡 Alasan singkat:</strong> ${safeSummary}
+    </div>`;
 }
 window.formatPedagogicalFeedback = formatPedagogicalFeedback;
 
