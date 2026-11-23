@@ -104,3 +104,29 @@ test('10. Poin parsial proporsional dan penalti opsi salah berjalan fair', () =>
     assert.strictEqual(scoreComplex(key, [0, 2, 3, 4]), 4, 'Memilih opsi salah mengurangi poin');
     assert.strictEqual(scoreComplex(key, [4]), 0, 'Hanya memilih opsi salah tidak mendapat poin');
 });
+
+
+test('11. Tombol satu aksi tidak menimpa state setelah checkAnswer dan memakai guard', () => {
+    const handler = rootEngine.slice(rootEngine.indexOf('function handleSingleNextAction() {'), rootEngine.indexOf('window.handleSingleNextAction = handleSingleNextAction;'));
+    assert(handler.includes('if (detailedAnswers && detailedAnswers[origQIdx]) {\\n        nextQuestion();'), 'Klik kedua harus pindah setelah jawaban terkunci');
+    assert(handler.includes("'⏳ Memeriksa Jawaban...'"), 'Klik pertama menampilkan status pemeriksaan');
+    assert(handler.includes(": 'Lanjutkan ➔';"), 'Setelah pemeriksaan tombol berubah menjadi Lanjutkan');
+    assert(!handler.includes('Periksa Jawaban & Lanjutkan ➔'), 'Handler tidak boleh menimpa label hasil dari checkAnswer');
+    assert(handler.includes('isTransitioningQuestion || isCheckingAnswer'), 'Klik ganda dicegah saat proses aktif');
+});
+
+test('12. Long-press, copy, paste, cut, dan context menu tidak menghasilkan anti-cheat strike', () => {
+    assert(!rootEngine.includes("document.addEventListener('copy'"), 'Event copy tidak boleh diberi strike');
+    assert(!rootEngine.includes("document.addEventListener('paste'"), 'Event paste tidak boleh diberi strike');
+    assert(!rootEngine.includes("document.addEventListener('contextmenu'"), 'Long-press/context menu tidak boleh diberi strike');
+    assert(!rootEngine.includes("document.addEventListener('selectstart'"), 'Seleksi teks untuk long-press diperbolehkan');
+    assert(!rootEngine.includes("handleAntiCheatEvent('📋 Percobaan Clipboard"), 'Shortcut clipboard tidak boleh menghasilkan strike');
+});
+
+test('13. Screenshot dan perpindahan halaman tetap memiliki deteksi yang tersedia', () => {
+    assert(rootEngine.includes("e.key === 'PrintScreen'"), 'PrintScreen tetap terdeteksi');
+    assert(rootEngine.includes('Gesture Usap 3 Jari'), 'Gesture screenshot 3 jari tetap terdeteksi jika browser melaporkannya');
+    assert(rootEngine.includes("document.addEventListener('visibilitychange'"), 'Pindah tab/aplikasi tetap dipantau');
+    assert(rootEngine.includes("window.addEventListener('beforeunload'"), 'Keluar/reload halaman tetap diberi konfirmasi');
+    assert(rootEngine.includes('isMobileOrTouchDevice() ? 2500 : 1800'), 'Grace period mobile dipersingkat untuk deteksi meninggalkan browser');
+});
