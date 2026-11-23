@@ -2595,52 +2595,6 @@ function nextQuestion() {
     return true;
 }
 
-    if (isTransitioningQuestion) return;
-    isTransitioningQuestion = true;
-
-    if (singleActionTransitionTimer) {
-        clearTimeout(singleActionTransitionTimer);
-        singleActionTransitionTimer = null;
-    }
-
-    const origQIdx = shuffledQuizOrder[currentQ];
-    if (quizData && quizData[origQIdx] && !detailedAnswers[origQIdx]) {
-        checkAnswer(false);
-    }
-
-    const isFinalQ = (currentQ >= quizData.length - 1);
-    if (isFinalQ) {
-        // ⚡ INSTANT FINISH: Langsung panggil finishQuiz() seketika tanpa penundaan setTimeout!
-        const nextBtn = document.getElementById('btn-next');
-        if (nextBtn) {
-            nextBtn.disabled = true;
-            nextBtn.innerHTML = '⚡ Mengirim Nilai...';
-        }
-        sfxClick();
-        finishQuiz();
-        return;
-    }
-
-    const nextBtn = document.getElementById('btn-next');
-    if (nextBtn) nextBtn.disabled = true;
-    sfxClick();
-    const qContent = document.getElementById('q-content');
-    if (qContent) {
-        qContent.classList.remove('slide-in');
-        qContent.classList.add('slide-out');
-    }
-
-    setTimeout(() => {
-        currentQ++;
-        if (currentQ < quizData.length) {
-            loadQuestion(currentQ);
-        } else {
-            finishQuiz();
-        }
-        isTransitioningQuestion = false;
-    }, 180);
-}
-
 async function finishQuiz() {
     if (isQuizFinishing) return;
     isQuizFinishing = true;
