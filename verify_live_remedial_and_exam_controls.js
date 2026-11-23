@@ -5,6 +5,7 @@
 const fs = require('fs');
 const path = require('path');
 const assert = require('assert');
+const vm = require('vm');
 
 const root = fs.readFileSync(path.join(__dirname, 'js/quiz_engine.js'), 'utf8');
 const src = fs.readFileSync(path.join(__dirname, 'src/js/quiz_engine.js'), 'utf8');
@@ -101,7 +102,31 @@ test('Remedial raw score and official reconciled score remain separately recorde
     assert(root.includes('remedialScore: isRemedialSession ? finalScore : null'));
     assert(root.includes('score: displayScore'));
     assert(audio.includes('remedialScore: record.isRemedial ? (record.remedialScore ?? null) : null'));
-    assert(audio.includes('const bestRemScore ='));
+    assert(audio.includes('const recordedRemedialScores ='));
+    assert(audio.includes('hasRecordedRemedialScore ? bestRemScore'));
+});
+
+test('Remedial merge keeps raw remedial score even when it is lower than original', () => {
+    const context = {
+        window: { addEventListener() {}, removeEventListener() {}, dispatchEvent() {} },
+        localStorage: { getItem() { return null; }, setItem() {} },
+        console: { log() {}, warn() {}, error() {} }
+    };
+    context.window.window = context.window;
+    context.window.localStorage = context.localStorage;
+    vm.createContext(context);
+    vm.runInContext(audio, context);
+    const merge = context.mergeRecordsList || context.window.mergeRecordsList;
+    const original = { name: 'HANIFA ZAHFALETA ROLIA', class: 'X E 4', moduleId: 'modul_detektif_fakta', score: 79, isRemedial: false };
+    const failedRemedial = { name: original.name, class: original.class, moduleId: original.moduleId, score: 79, isRemedial: true, originalScore: 79, remedialScore: 60 };
+    const mergedFailed = merge([original], [failedRemedial])[0];
+    assert.strictEqual(mergedFailed.score, 79, 'Official score preserves the better original grade');
+    assert.strictEqual(mergedFailed.remedialScore, 60, 'Raw remedial achievement must remain 60, not be replaced by 79');
+
+    const passedRemedial = { ...failedRemedial, score: 80, remedialScore: 92 };
+    const mergedPassed = merge([original], [passedRemedial])[0];
+    assert.strictEqual(mergedPassed.score, 80, 'Official remedial grade remains capped at KKM 80');
+    assert.strictEqual(mergedPassed.remedialScore, 92, 'Raw remedial achievement remains 92');
 });
 
 console.log('All 12 live remedial / exam-control regression checks passed.');
