@@ -184,7 +184,7 @@ test('18. Semua bank soal resmi menyediakan pembahasan untuk koreksi langsung', 
 
 test('19. Klik manual tanpa jawaban tidak memanggil pemeriksaan dan memberi instruksi', () => {
     const start = rootEngine.indexOf('function handleSingleNextAction() {');
-    const end = rootEngine.indexOf('\\nwindow.handleSingleNextAction', start);
+    const end = rootEngine.indexOf('\nwindow.handleSingleNextAction', start);
     const body = rootEngine.slice(start, end);
     assert(body.includes('input[name="q-opt"]:checked'), 'Pilihan ganda harus dicek sebelum dinilai');
     assert(body.includes('Pilih jawaban terlebih dahulu sebelum melanjutkan.'), 'Siswa mendapat instruksi saat belum memilih');
@@ -194,7 +194,7 @@ test('19. Klik manual tanpa jawaban tidak memanggil pemeriksaan dan memberi inst
 
 test('20. Pembahasan langsung ringkas dan tidak dirender dua kali', () => {
     const start = rootEngine.indexOf('function formatPedagogicalFeedback(explanation) {');
-    const end = rootEngine.indexOf('\\nwindow.formatPedagogicalFeedback', start);
+    const end = rootEngine.indexOf('\nwindow.formatPedagogicalFeedback', start);
     const body = rootEngine.slice(start, end);
     assert(body.includes('const maxLength = 240'), 'Pembahasan dibatasi maksimal 240 karakter');
     assert(body.includes('sentences.slice(0, 2)'), 'Hanya dua kalimat inti yang ditampilkan');
