@@ -15,6 +15,8 @@ function showToast(text, icon = 'ℹ️') {
 function normalizeModuleId(modId, id, date) {
     if (modId) {
         const s = String(modId).toLowerCase();
+        // ID resmi lain dikembalikan apa adanya (mencegah Etika "keamanan" tercampur dengan Jaringan)
+        if (s === 'modul_etika_privasi_keamanan' || s === 'modul_hki_profesi_budaya' || s === 'modul_tryout_terpadu') return s;
         if (s === 'modul_jaringan_keamanan' || s === 'modul_keamanan_jaringan' || s.includes('jaringan') || s.includes('keamanan')) {
             return 'modul_jaringan_keamanan';
         }

@@ -764,6 +764,15 @@ function closeDeleteModal() {
 }
 
 // 🎯 BUKA MODAL PILIH HAPUS NILAI SPESIFIK PER MODUL
+// Daftar modul yang dapat dihapus nilainya oleh guru (urutan tampil di modal)
+const DELETE_MODULE_CHOICES = [
+    { id: 'modul_tryout_terpadu', label: '🎯 Tryout Terpadu (60 Soal • 6 Materi)' },
+    { id: 'modul_detektif_fakta', label: '🕵️ Modul Detektif Fakta' },
+    { id: 'modul_jaringan_keamanan', label: '🛡️ Modul Keamanan Jaringan' },
+    { id: 'modul_hki_profesi_budaya', label: '⚖️ Modul Teknologi, Budaya & HKI' },
+    { id: 'modul_etika_privasi_keamanan', label: '🔒 Modul Etika, Privasi & Keamanan' }
+];
+
 function openDeleteStudentModuleModal(name, cls, preselectedModuleId = null, specificScore = null) {
     if (!isTeacherAuthValid()) {
         sfxWrong();
@@ -774,8 +783,6 @@ function openDeleteStudentModuleModal(name, cls, preselectedModuleId = null, spe
 
     sfxWrong();
     const allRecords = loadRecords();
-    const modFaktaId = 'modul_detektif_fakta';
-    const modJaringanId = 'modul_jaringan_keamanan';
 
     const nameMatches = (typeof isNameEquivalent === 'function') 
         ? (recName) => isNameEquivalent(recName, name)
@@ -784,18 +791,28 @@ function openDeleteStudentModuleModal(name, cls, preselectedModuleId = null, spe
         ? (recClass) => isClassEquivalent(recClass, cls)
         : (recClass) => (recClass || '').replace(/\s+/g, '').toUpperCase() === (cls || '').replace(/\s+/g, '').toUpperCase();
 
-    const recsFakta = allRecords.filter(r => nameMatches(r.name) && classMatches(r.class) && normalizeModuleId(r.moduleId, r.id, r.date) === modFaktaId);
-    const recsJaringan = allRecords.filter(r => nameMatches(r.name) && classMatches(r.class) && normalizeModuleId(r.moduleId, r.id, r.date) === modJaringanId);
+    const studentRecs = allRecords.filter(r => nameMatches(r.name) && classMatches(r.class));
+    const bestByModule = {};
+    DELETE_MODULE_CHOICES.forEach(m => {
+        const list = studentRecs
+            .filter(r => normalizeModuleId(r.moduleId, r.id, r.date) === m.id)
+            .sort((x, y) => (y.score - x.score));
+        bestByModule[m.id] = list[0] || null;
+    });
 
-    const bestFakta = recsFakta.sort((a,b) => (b.score - a.score))[0] || null;
-    const bestJaringan = recsJaringan.sort((a,b) => (b.score - a.score))[0] || null;
+    let defaultChoice = 'all';
+    if (preselectedModuleId && bestByModule[preselectedModuleId]) {
+        defaultChoice = preselectedModuleId;
+    } else {
+        const withData = DELETE_MODULE_CHOICES.filter(m => bestByModule[m.id]);
+        if (withData.length === 1) defaultChoice = withData[0].id;
+    }
 
     targetDeleteRecord = {
         name: name,
         cls: cls,
-        preselectedModule: preselectedModuleId || (bestJaringan && !bestFakta ? modJaringanId : (bestFakta && !bestJaringan ? modFaktaId : 'all')),
-        recordFakta: bestFakta,
-        recordJaringan: bestJaringan
+        preselectedModule: defaultChoice,
+        bestByModule: bestByModule
     };
 
     const elName = document.getElementById('del-student-name');
@@ -805,49 +822,40 @@ function openDeleteStudentModuleModal(name, cls, preselectedModuleId = null, spe
 
     const container = document.getElementById('del-module-options-container');
     if (container) {
-        let defaultChoice = targetDeleteRecord.preselectedModule;
-        if (defaultChoice === modJaringanId && !bestJaringan && bestFakta) defaultChoice = modFaktaId;
-        if (defaultChoice === modFaktaId && !bestFakta && bestJaringan) defaultChoice = modJaringanId;
+        const rows = DELETE_MODULE_CHOICES.map(m => {
+            const rec = bestByModule[m.id];
+            const checked = defaultChoice === m.id;
+            const status = rec
+                ? `Status: <strong>${rec.score >= 80 ? 'LULUS KKM' : 'REMEDIAL'}</strong> · Waktu: ${escapeHtml(rec.date || '-')}`
+                : '⏳ <em>Siswa belum memiliki nilai pada modul ini</em>';
+            const pill = rec
+                ? `<span class="quiz-score-subpill ${rec.score >= 80 ? 'pass' : 'remedy'}" style="font-size: 0.72rem; padding: 2px 6px;">Skor: ${rec.score}</span>`
+                : '';
+            return `
+            <label style="display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: rgba(255,255,255,0.03); border: 1px solid ${checked ? 'var(--primary)' : 'rgba(255,255,255,0.1)'}; border-radius: 10px; cursor: ${rec ? 'pointer' : 'not-allowed'}; opacity: ${rec ? '1' : '0.55'};">
+                <input type="radio" name="del-module-choice" value="${m.id}" ${checked ? 'checked' : ''} ${rec ? '' : 'disabled'}>
+                <div style="flex: 1;">
+                    <div style="font-weight: 800; font-size: 0.9rem; color: ${rec ? 'var(--text)' : 'var(--text-muted)'}; display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+                        <span>${m.label}</span>${pill}
+                    </div>
+                    <div style="font-size: 0.76rem; color: var(--text-secondary); margin-top: 2px;">${status}</div>
+                </div>
+            </label>`;
+        }).join('');
 
         container.innerHTML = `
             <div style="font-weight: 700; font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 6px;">
                 Pilih nilai modul mana yang ingin Anda hapus:
             </div>
-            
-            <label style="display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: rgba(255,255,255,0.03); border: 1px solid ${defaultChoice === modFaktaId ? 'var(--primary)' : 'var(--glass-border)'}; border-radius: 10px; cursor: pointer; transition: 0.2s;">
-                <input type="radio" name="del-module-choice" value="modul_detektif_fakta" ${defaultChoice === modFaktaId ? 'checked' : ''} ${!bestFakta ? 'disabled' : ''}>
-                <div style="flex: 1;">
-                    <div style="font-weight: 800; font-size: 0.9rem; color: ${bestFakta ? 'var(--text)' : 'var(--text-muted)'}; display: flex; align-items: center; gap: 6px;">
-                        <span>🕵️ Modul Detektif Fakta (Kuis 1)</span>
-                        ${bestFakta ? `<span class="quiz-score-subpill ${bestFakta.score >= 80 ? 'pass' : 'remedy'}" style="font-size: 0.72rem; padding: 2px 6px;">Skor: ${bestFakta.score}</span>` : ''}
-                    </div>
-                    <div style="font-size: 0.76rem; color: var(--text-secondary); margin-top: 2px;">
-                        ${bestFakta ? `Status: <strong>${bestFakta.score >= 80 ? 'LULUS KKM' : 'REMEDIAL'}</strong> · Waktu: ${bestFakta.date || '-'}` : '⏳ <em>Siswa belum memiliki nilai pada modul ini</em>'}
-                    </div>
-                </div>
-            </label>
-
-            <label style="display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: rgba(255,255,255,0.03); border: 1px solid ${defaultChoice === modJaringanId ? 'var(--primary)' : 'var(--glass-border)'}; border-radius: 10px; cursor: pointer; transition: 0.2s;">
-                <input type="radio" name="del-module-choice" value="modul_jaringan_keamanan" ${defaultChoice === modJaringanId ? 'checked' : ''} ${!bestJaringan ? 'disabled' : ''}>
-                <div style="flex: 1;">
-                    <div style="font-weight: 800; font-size: 0.9rem; color: ${bestJaringan ? 'var(--text)' : 'var(--text-muted)'}; display: flex; align-items: center; gap: 6px;">
-                        <span>🛡️ Modul Keamanan Jaringan (Kuis 2)</span>
-                        ${bestJaringan ? `<span class="quiz-score-subpill ${bestJaringan.score >= 80 ? 'pass' : 'remedy'}" style="font-size: 0.72rem; padding: 2px 6px;">Skor: ${bestJaringan.score}</span>` : ''}
-                    </div>
-                    <div style="font-size: 0.76rem; color: var(--text-secondary); margin-top: 2px;">
-                        ${bestJaringan ? `Status: <strong>${bestJaringan.score >= 80 ? 'LULUS KKM' : 'REMEDIAL'}</strong> · Waktu: ${bestJaringan.date || '-'}` : '⏳ <em>Siswa belum memiliki nilai pada modul ini</em>'}
-                    </div>
-                </div>
-            </label>
-
-            <label style="display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: rgba(244,63,94,0.08); border: 1px solid rgba(244,63,94,0.3); border-radius: 10px; cursor: pointer; transition: 0.2s;">
+            ${rows}
+            <label style="display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: rgba(244,63,94,0.08); border: 1px solid rgba(244,63,94,0.3); border-radius: 10px; cursor: pointer;">
                 <input type="radio" name="del-module-choice" value="all" ${defaultChoice === 'all' ? 'checked' : ''}>
                 <div style="flex: 1;">
                     <div style="font-weight: 800; font-size: 0.9rem; color: var(--danger);">
-                        ⚠️ Hapus Nilai KEDUA Modul (Hapus Total Siswa Ini)
+                        ⚠️ Hapus Nilai SEMUA Modul (Hapus Total Siswa Ini)
                     </div>
                     <div style="font-size: 0.76rem; color: var(--text-secondary); margin-top: 2px;">
-                        Menghapus seluruh nilai Kuis 1 & Kuis 2 siswa ini. Siswa dapat memulai ulang dari nol.
+                        Menghapus seluruh nilai kuis dan Tryout siswa ini. Siswa dapat memulai ulang dari nol.
                     </div>
                 </div>
             </label>
@@ -911,14 +919,11 @@ async function confirmDeleteSingle() {
     const normName = target.name.trim().toLowerCase();
     const normCls = (target.cls || '').replace(/\s+/g, '').toUpperCase();
 
-    if (chosenModule === 'all' || chosenModule === 'modul_detektif_fakta') {
-        deletedRecords.push(`${normName}|${normCls}|modul_detektif_fakta`);
-    }
-    if (chosenModule === 'all' || chosenModule === 'modul_jaringan_keamanan') {
-        deletedRecords.push(`${normName}|${normCls}|modul_jaringan_keamanan`);
-    }
     if (chosenModule === 'all') {
+        DELETE_MODULE_CHOICES.forEach(m => deletedRecords.push(`${normName}|${normCls}|${m.id}`));
         deletedRecords.push(`${normName}|${normCls}|all`);
+    } else {
+        deletedRecords.push(`${normName}|${normCls}|${chosenModule}`);
     }
     deletedRecords = Array.from(new Set(deletedRecords));
     localStorage.setItem('quizmaster_deleted_records', JSON.stringify(deletedRecords));
@@ -963,15 +968,18 @@ async function confirmDeleteSingle() {
                 await supabaseClient.from('quiz_results').delete()
                     .eq('student_name', target.name)
                     .eq('student_class', target.cls);
-            } else if (chosenModule === 'modul_jaringan_keamanan') {
+            } else {
                 await supabaseClient.from('quiz_results').delete()
                     .eq('student_name', target.name)
                     .eq('student_class', target.cls)
-                    .eq('wrong_questions->>moduleId', 'modul_jaringan_keamanan');
-            } else if (chosenModule === 'modul_detektif_fakta') {
-                await supabaseClient.from('quiz_results').delete()
-                    .eq('student_name', target.name)
-                    .eq('student_class', target.cls);
+                    .eq('wrong_questions->>moduleId', chosenModule);
+                if (chosenModule === 'modul_detektif_fakta') {
+                    // Baris lama (sebelum ada penanda modul) dianggap milik Detektif Fakta
+                    await supabaseClient.from('quiz_results').delete()
+                        .eq('student_name', target.name)
+                        .eq('student_class', target.cls)
+                        .is('wrong_questions->>moduleId', null);
+                }
             }
         } catch (e) {
             console.warn('Supabase delete error:', e);
@@ -983,17 +991,19 @@ async function confirmDeleteSingle() {
         const cfg = (typeof getSupabaseConfig === 'function') ? getSupabaseConfig() : null;
         if (cfg && cfg.url && cfg.key) {
             let deleteUrl = `${cfg.url.replace(/\/$/, '')}/rest/v1/${cfg.table || 'quiz_results'}?student_name=eq.${encodeURIComponent(target.name)}&student_class=eq.${encodeURIComponent(target.cls)}`;
-            if (chosenModule === 'modul_jaringan_keamanan') {
-                deleteUrl += `&wrong_questions->>moduleId=eq.modul_jaringan_keamanan`;
-            }
-            await fetch(deleteUrl, {
-                method: 'DELETE',
-                headers: {
-                    'apikey': cfg.key,
-                    'Authorization': 'Bearer ' + cfg.key,
-                    'Content-Type': 'application/json'
+            const restHeaders = {
+                'apikey': cfg.key,
+                'Authorization': 'Bearer ' + cfg.key,
+                'Content-Type': 'application/json'
+            };
+            if (chosenModule !== 'all') {
+                await fetch(deleteUrl + `&wrong_questions->>moduleId=eq.${encodeURIComponent(chosenModule)}`, { method: 'DELETE', headers: restHeaders });
+                if (chosenModule === 'modul_detektif_fakta') {
+                    await fetch(deleteUrl + `&wrong_questions->>moduleId=is.null`, { method: 'DELETE', headers: restHeaders });
                 }
-            });
+            } else {
+                await fetch(deleteUrl, { method: 'DELETE', headers: restHeaders });
+            }
         }
     } catch(e) {}
 
@@ -1025,11 +1035,8 @@ async function confirmDeleteSingle() {
     sfxWrong();
     renderDashboard();
 
-    const modLabels = {
-        'modul_detektif_fakta': 'Modul Detektif Fakta (Kuis 1)',
-        'modul_jaringan_keamanan': 'Modul Keamanan Jaringan (Kuis 2)',
-        'all': 'Semua Modul Kuis'
-    };
+    const modLabels = { 'all': 'Semua Modul Kuis & Tryout' };
+    DELETE_MODULE_CHOICES.forEach(m => { modLabels[m.id] = m.label.replace(/^\S+\s/, ''); });
     showToast(`Nilai ${modLabels[chosenModule] || 'modul'} untuk "${target.name}" berhasil dihapus!`, '🗑️');
 }
 window.confirmDeleteSingle = confirmDeleteSingle;
