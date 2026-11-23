@@ -3442,7 +3442,7 @@ function renderDashboard() {
         window._dashFilterInitDone = true;
     }
 
-    const filterModule = filterModuleEl ? filterModuleEl.value : (window.currentDashboardModuleFilter || 'all');
+    let filterModule = filterModuleEl ? filterModuleEl.value : (window.currentDashboardModuleFilter || 'all');
     window.currentDashboardModuleFilter = filterModule;
     const searchNameEl = document.getElementById('filter-search-name');
     const searchName = searchNameEl ? searchNameEl.value.toLowerCase().trim() : '';
@@ -3521,6 +3521,13 @@ function renderDashboard() {
                 });
         }
     }
+    // Opsi inti dapat baru saja dipasang pada inisialisasi pertama; sinkronkan
+    // nilai filter lokal agar render pertama langsung memakai pilihan yang benar.
+    if (filterModuleEl) {
+        filterModule = filterModuleEl.value || window.currentDashboardModuleFilter || 'all';
+        window.currentDashboardModuleFilter = filterModule;
+    }
+
     // Sinkronkan tombol segmented filter modul & teks indikator aktif
     const btnsMap = {
         'all': 'btn-mod-filter-all',
