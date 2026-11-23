@@ -3462,23 +3462,41 @@ function renderDashboard() {
     initActiveExamModuleUi();
     if (typeof updateApplyButtonState === 'function') updateApplyButtonState();
 
-    // Sinkronkan pilihan dropdown filter-module jika ada materi baru
-    if (filterModuleEl && window.QuizManager) {
-        QuizManager.getAllModules().then(mods => {
-            const curVal = filterModuleEl.value || 'all';
-            const extraMods = mods.filter(m => m.id !== 'modul_jaringan_keamanan' && m.id !== 'modul_detektif_fakta');
-            if (filterModuleEl.options && filterModuleEl.options.length !== 3 + extraMods.length) {
-                let opts = `
-                    <option value="all" ${curVal === 'all' ? 'selected' : ''}>📊 Komparasi Semua Modul (Semua Nilai)</option>
-                    <option value="modul_jaringan_keamanan" ${curVal === 'modul_jaringan_keamanan' ? 'selected' : ''}>🛡️ Modul Keamanan Jaringan Saja</option>
-                    <option value="modul_detektif_fakta" ${curVal === 'modul_detektif_fakta' ? 'selected' : ''}>🕵️ Modul Detektif Fakta Saja</option>
-                `;
-                extraMods.forEach(m => {
-                    opts += `<option value="${m.id}" ${curVal === m.id ? 'selected' : ''}>${m.icon || '📚'} ${m.title}</option>`;
-                });
-                filterModuleEl.innerHTML = opts;
-            }
-        });
+    // Sinkronisasi dropdown yang deterministik: selalu sediakan mode komparasi semua
+    // dan seluruh modul inti, terlepas dari jumlah opsi/cache versi HTML sebelumnya.
+    if (filterModuleEl) {
+        const currentValue = filterModuleEl.value || window.currentDashboardModuleFilter || 'all';
+        const coreOptions = [
+            { id: 'all', label: '📊 KOMPARASI SEMUA MODUL (SEMUA NILAI)' },
+            { id: 'modul_tryout_terpadu', label: '🎯 Tryout Terpadu Informatika Kelas X (6 Materi)' },
+            { id: 'modul_jaringan_keamanan', label: '🛡️ Penilaian Harian: Infrastruktur Jaringan & Keamanan Digital' },
+            { id: 'modul_detektif_fakta', label: '🕵️ Misi Detektif Fakta: Uji Validitas Data' },
+            { id: 'modul_hki_profesi_budaya', label: '📘 Panduan Generasi Digital: Teknologi Digital, Profesi, Budaya & HKI' },
+            { id: 'modul_etika_privasi_keamanan', label: '🔐 Etika, Privasi, dan Keamanan Digital' }
+        ];
+        const applyOptions = (modules = []) => {
+            const knownIds = new Set(coreOptions.map(option => option.id));
+            const dynamicOptions = (Array.isArray(modules) ? modules : [])
+                .filter(module => module && module.id && !knownIds.has(module.id))
+                .map(module => ({
+                    id: String(module.id),
+                    label: `${module.icon || '📚'} ${module.title || module.name || module.id}`
+                }));
+            const options = [...coreOptions, ...dynamicOptions];
+            const selectedValue = options.some(option => option.id === currentValue) ? currentValue : 'all';
+            filterModuleEl.innerHTML = options.map(option =>
+                `<option value="${escapeHtml(option.id)}" ${option.id === selectedValue ? 'selected' : ''}>${escapeHtml(option.label)}</option>`
+            ).join('');
+            filterModuleEl.value = selectedValue;
+            window.currentDashboardModuleFilter = selectedValue;
+            try { localStorage.setItem('quizmaster_dashboard_module_filter', selectedValue); } catch (e) {}
+        };
+        applyOptions();
+        if (window.QuizManager && typeof QuizManager.getAllModules === 'function') {
+            QuizManager.getAllModules().then(applyOptions).catch(error => {
+                console.warn('Tidak dapat memuat modul tambahan untuk dropdown dashboard:', error);
+            });
+        }
     }
 
     // Sinkronkan tombol segmented filter modul & teks indikator aktif
@@ -4007,7 +4025,7 @@ function renderDashboard() {
         return (b.score - a.score) || a.name.localeCompare(b.name);
     });
 
-    // 6. Sinkronkan Header Tabel Sesuai Mode Tampilan (Tryout 13 Kolom vs Komparasi 2 Modul vs Modul Tunggal)
+    // 6. Sinkronkan Header Tabel Sesuai Mode Tampilan (Tryout 13 Kolom vs Komparasi Semua Modul vs Modul Tunggal)
     const thead = document.querySelector('.dash-table thead');
     if (thead) {
         if (isTryoutView) {
