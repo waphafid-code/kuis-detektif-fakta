@@ -107,6 +107,19 @@ test('Access Control Manual Lock: Explicit lock (classOverrides[cls] === false) 
     assert.strictEqual(allowed.allowed, true, 'Other classes must remain allowed');
 });
 
+test('Tryout Availability: Tryout Terpadu can start anytime even when the class is manually locked', () => {
+    localStorage.clear();
+    const settings = loadAccessSettings();
+    settings.mode = 'manual';
+    settings.classOverrides['X E 1'] = false;
+    settings.manualOpenedClasses['X E 1'] = false;
+    saveAccessSettings(settings);
+
+    const access = checkClassAccess('X E 1', 'modul_tryout_terpadu');
+    assert.strictEqual(access.allowed, true, 'Tryout Terpadu must be available regardless of class opening state');
+    assert.strictEqual(access.isAlwaysAvailable, true, 'Tryout access should be explicitly marked as always available');
+});
+
 test('Active Exam Immunity: In-progress exam (quizInProgress === true) is NEVER locked out', () => {
     global.window.quizInProgress = true;
     const access = checkClassAccess('X E 3', 'modul_jaringan_keamanan');
