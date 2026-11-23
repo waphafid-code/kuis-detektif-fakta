@@ -2979,7 +2979,7 @@ function selectModuleSegment(moduleId, syncToStudents = false) {
         saveActiveExamModuleSetting(moduleId);
     }
 
-    if (typeof updateApplyButtonState === 'function') updateApplyButtonState(moduleId);
+    if (typeof updateApplyButtonState === 'function') updateApplyButtonState(loadActiveExamModuleSetting());
     renderDashboard();
 }
 window.selectModuleSegment = selectModuleSegment;
