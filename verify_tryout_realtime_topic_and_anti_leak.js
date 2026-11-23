@@ -57,7 +57,7 @@ test('2. Real-time Topic Tracking & Badge Materi pada setiap butir soal', () => 
 // 3. Explanation Visibility & No Auto-Jump Timer
 test('3. Pembahasan tampil dengan tenang tanpa auto-skip 650ms', () => {
     assert(rootEngine.includes('handleSingleNextAction'), 'handleSingleNextAction harus ada');
-    assert(rootEngine.replace(/\r\n/g, '\n').includes('if (detailedAnswers[origQIdx]) {\n        nextQuestion();\n        return;\n    }'), 'Klik pertama mengunci & menampilkan pembahasan, klik kedua baru lanjut');
+    assert(rootEngine.replace(/\r\n/g, '\n').includes('if (detailedAnswers && detailedAnswers[origQIdx]) {\n        nextQuestion();\n        return;\n    }'), 'Klik pertama mengunci & menampilkan pembahasan, klik kedua baru lanjut');
     // Pastikan tidak ada auto-jump timer 650ms pada handleSingleNextAction
     const handleNextFn = rootEngine.slice(rootEngine.indexOf('function handleSingleNextAction'), rootEngine.indexOf('window.handleSingleNextAction'));
     assert(!handleNextFn.includes('setTimeout'), 'handleSingleNextAction tidak boleh otomatis melompat via setTimeout');
@@ -85,7 +85,7 @@ test('6. Integrasi Firebase RTDB dan Dasbor Guru (Semua Modul & Tryout)', () => 
     assert(rootFb.includes('topicBreakdown: extractedTopicBreakdown'), 'fetchFirebaseRecords harus mengekstrak topicBreakdown');
     assert(rootDash.includes("'modul_tryout_terpadu': 'btn-mod-filter-tryout'"), 'btnsMap selectModuleSegment harus menyertakan tryout');
     assert(rootDash.includes('🎯 Tryout (6 Materi)'), 'Tabel mode Semua Modul harus menampilkan kolom Tryout');
-    assert(rootDash.includes('hasSubmitted = hasFakta || hasJaringan || hasTryout'), 'Siswa yang sudah Tryout harus terhitung sudah mengumpulkan di mode Semua Modul');
+    assert(rootDash.includes('hasSubmitted = hasFakta || hasJaringan || hasPanduan || hasPrivasi || hasTryout'), 'Mode Semua Modul harus menghitung semua lima modul, termasuk Tryout');
 });
 
 console.log('════════════════════════════════════════════════════════════════');

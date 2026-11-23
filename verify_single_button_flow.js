@@ -2,6 +2,7 @@
 // 🧪 VERIFIKASI FITUR ALUR SATU TOMBOL & AUTO-SALAH KETIKA TIDAK MEMILIH
 // ============================================================
 const fs = require('fs');
+const path = require('path');
 const assert = require('assert');
 
 console.log('════════════════════════════════════════════════════════════════');
@@ -75,7 +76,7 @@ test('6. quiz_engine.js: checkAnswer tidak memblokir siswa saat tidak memilih ja
 });
 
 test('7. quiz_engine.js: nextQuestion memiliki guard jika jawaban belum terkunci', () => {
-    assert(rootEngine.includes('if (quizData && quizData[origQIdx] && !detailedAnswers[origQIdx])') && rootEngine.includes('checkAnswer(false);'), 'nextQuestion harus otomatis mengunci & menilai jika belum dievaluasi');
+    assert(rootEngine.includes('if (!detailedAnswers || !detailedAnswers[origQIdx])') && rootEngine.includes('checkAnswer(false);'), 'nextQuestion harus memeriksa jawaban jika snapshot belum tersedia');
 });
 
 console.log('════════════════════════════════════════════════════════════════');

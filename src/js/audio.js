@@ -134,13 +134,16 @@ function mergeRecordsList(existingList, incomingList) {
             const isRem = !!(cur.isRemedial || item.isRemedial) && (origScore < 80);
             const bestScore = Math.max(Number(cur.score) || 0, Number(item.score) || 0);
             const isSameSubmission = (cur.submissionProofId && item.submissionProofId && cur.submissionProofId === item.submissionProofId) || (cur.id && item.id && cur.id === item.id);
-            const bestRemScore = isSameSubmission
-                ? ((cur.remedialScore !== undefined && cur.remedialScore !== null) ? Number(cur.remedialScore) : ((item.remedialScore !== undefined && item.remedialScore !== null) ? Number(item.remedialScore) : null))
-                : Math.max(
-                    (cur.remedialScore !== undefined && cur.remedialScore !== null) ? Number(cur.remedialScore) : 0,
-                    (item.remedialScore !== undefined && item.remedialScore !== null) ? Number(item.remedialScore) : 0,
-                    isRem ? bestScore : 0
-                );
+            // Simpan capaian remedial mentah apa adanya. Jangan campur dengan
+            // nilai resmi/awal: jika remedial 60 sementara nilai awal 79, kolom
+            // "Nilai Remedial" harus tetap 60, sedangkan nilai rapor resmi 79.
+            const recordedRemedialScores = [cur.remedialScore, item.remedialScore]
+                .filter(value => value !== undefined && value !== null && Number.isFinite(Number(value)))
+                .map(value => Math.max(0, Math.min(100, Number(value))));
+            const hasRecordedRemedialScore = recordedRemedialScores.length > 0;
+            const bestRemScore = hasRecordedRemedialScore
+                ? Math.max(...recordedRemedialScores)
+                : (isRem ? bestScore : 0);
             // 🧑‍🏫 Penyesuaian resmi guru (mis. koreksi kesalahan sistem) selalu menang atas hitungan otomatis
             const adj = [cur, item].find(x => x && x.adjustedByTeacher && x.adjustedScore != null);
             const finalScore = adj ? Number(adj.adjustedScore) : (isRem ? Math.min(80, Math.max(origScore, bestRemScore || 0)) : bestScore);
@@ -152,7 +155,7 @@ function mergeRecordsList(existingList, incomingList) {
                 isRemedial: isRem || !!adj,
                 ...(adj ? { adjustedByTeacher: true, adjustedScore: Number(adj.adjustedScore), adjustmentNote: adj.adjustmentNote || '' } : {}),
                 originalScore: (isRem || adj) ? origScore : (cur.originalScore ?? item.originalScore ?? null),
-                remedialScore: (isRem || adj) ? (bestRemScore || finalScore) : null,
+                remedialScore: (isRem || adj) ? (hasRecordedRemedialScore ? bestRemScore : (isRem ? bestRemScore : finalScore)) : null,
                 correct: higher.correct !== undefined ? higher.correct : (item.correct !== undefined ? item.correct : cur.correct),
                 topicBreakdown: higher.topicBreakdown || item.topicBreakdown || cur.topicBreakdown || null,
                 wrongQuestions: higher.wrongQuestions || item.wrongQuestions || cur.wrongQuestions,
@@ -828,11 +831,14 @@ function applyCloudSharedStateToLocal(state) {
             if (examModSel) examModSel.value = state.activeExamModuleMode;
         }
 
-        let targetActiveId = state.activeModuleId;
+        // Jika guru membuka semua modul, jangan mewarisi HKI/modul lama sebagai
+        // pilihan aktif yang membingungkan. Semua opsi tetap tersedia; jaringan hanya
+        // menjadi pilihan awal netral sampai siswa memilih paket kuisnya sendiri.
+        let targetActiveId = lockedMode === 'all'
+            ? 'modul_jaringan_keamanan'
+            : (state.activeModuleId || lockedMode || 'modul_jaringan_keamanan');
         if (lockedMode && lockedMode !== 'all') {
             targetActiveId = lockedMode;
-        } else if (!targetActiveId) {
-            targetActiveId = 'modul_jaringan_keamanan';
         }
 
         const inQuiz = (typeof isQuizActive === 'function' && isQuizActive()) ||

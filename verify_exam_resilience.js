@@ -43,8 +43,8 @@ test('Android Gesture Trap: popstate intercepts back navigation during active ex
     assert(qe.includes("history.pushState({ inQuiz: true }"), 'Must pushState to trap back button');
 });
 
-test('Mobile Notification Tolerance: blur timeout gives 15s grace on mobile', () => {
-    assert(qe.includes('const graceMs = isMobileOrTouchDevice() ? 15000 : 8000;'), 'Must give 15s grace period on mobile');
+test('Mobile Focus Guard: blur timeout uses the current 3s mobile grace period', () => {
+    assert(qe.includes('const graceMs = isMobileOrTouchDevice() ? 3000 : 1800;'), 'Must use the configured mobile/desktop focus grace period');
 });
 
 test('Offline Resilience: HTML has status banner & CSS provides offline/online styles', () => {

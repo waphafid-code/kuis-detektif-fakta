@@ -5,7 +5,7 @@
  * 2. Individual question points displayed (+5 Poin / 0 Poin), cumulative total score hidden during quiz.
  * 3. Strict Anti-Cheating:
  *    - 3-strike warning policy.
- *    - Copy, paste, cut, contextmenu, selectstart blocked.
+ *    - Copy, paste, cut, contextmenu, selectstart allowed to avoid false warnings.
  *    - Screenshot (PrintScreen, Win+Shift+S, Cmd+Shift+3/4) blocked.
  *    - Tab switch & blur detection with tightened grace period.
  *    - Akun demo tetap bypass agar guru bisa menguji bebas.
@@ -37,12 +37,12 @@ console.log('══════════════════════�
     assert(code.includes('Peringatan Keras Toleransi (#2 dari 3)') || code.includes('#2 dari 3'), `${filePath}: Harus ada peringatan #2`);
     assert(code.includes('triggerCheatPenalty'), `${filePath}: Harus ada penalti diskualifikasi pada strike ke-3`);
 
-    // E. Anti Screenshot & Copy Paste Blocker
+    // E. Screenshot guard tetap aktif, sedangkan clipboard/long-press tidak boleh
+    // memicu strike karena dapat digunakan untuk aksesibilitas dan tidak membuktikan kecurangan.
     assert(code.includes('PrintScreen'), `${filePath}: Harus mendeteksi tombol PrintScreen`);
-    assert(code.includes('copy'), `${filePath}: Harus menangani event copy`);
-    assert(code.includes('paste'), `${filePath}: Harus menangani event paste`);
-    assert(code.includes('contextmenu'), `${filePath}: Harus menangani event contextmenu`);
-    assert(code.includes('selectstart') || code.includes('selectionchange'), `${filePath}: Harus mencegah seleksi teks`);
+    assert(code.includes('Copy, cut, dan paste diperbolehkan'), `${filePath}: Copy/paste harus diperbolehkan`);
+    assert(code.includes('Seleksi teks, long-press, copy, paste, cut, dan menu konteks diperbolehkan.'), `${filePath}: Long-press dan menu konteks tidak boleh memicu false positive`);
+    assert(!code.includes("handleAntiCheatEvent('📋 Percobaan Clipboard / Copy-Paste Shortcut')"), `${filePath}: Clipboard tidak boleh menambah strike`);
 });
 console.log('  ✅ PASS: 1. Kode quiz_engine.js di root dan src/ terverifikasi mendukung umpan balik instan & anti-cheat ketat.');
 
