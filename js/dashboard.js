@@ -1651,7 +1651,19 @@ function checkClassAccess(cls, moduleId) {
         return { allowed: true, reason: 'Sesi kuis sedang berada di layar aktif' };
     }
 
-    // 2. Modul Detektif Fakta (Kuis 1) bebas diakses untuk latihan & pengulangan mandiri
+    // 2. Tryout Terpadu (TO) selalu tersedia 24/7.
+    // Tidak bergantung pada jadwal pelajaran, mode akses, atau tombol buka kelas guru.
+    // Kebijakan percobaan/nilai tetap diperiksa terpisah saat siswa memulai kuis.
+    if (moduleId === 'modul_tryout_terpadu') {
+        return {
+            allowed: true,
+            isManualOpen: true,
+            isAlwaysAvailable: true,
+            reason: 'Tryout Terpadu dapat dikerjakan kapan saja tanpa menunggu kelas dibuka'
+        };
+    }
+
+    // 3. Modul Detektif Fakta (Kuis 1) bebas diakses untuk latihan & pengulangan mandiri
     if (moduleId === 'modul_detektif_fakta') {
         return { allowed: true, reason: 'Modul Latihan Mandiri / Riwayat Bebas Akses' };
     }
