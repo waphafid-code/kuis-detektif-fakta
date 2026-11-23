@@ -111,6 +111,7 @@
             name: String(sName),
             cls: String(sClass),
             moduleTitle: String(modTitle),
+            moduleId: String(modId || ''),
             proofId: String(global.lastSubmittedProofId || (rec && rec.submissionProofId) || '-'),
             kkm: kkm,
             score: score,
