@@ -72,6 +72,7 @@ test('Teacher comparison filter does not silently lock student module access', (
     assert(dashboard.includes('function selectModuleSegment(moduleId, syncToStudents = false)'));
     assert(dashboard.includes('Filter dashboard hanya mengubah tampilan guru'));
     assert(dashboard.includes("saveActiveExamModuleSetting('all')") || dashboard.includes('saveActiveExamModuleSetting(moduleId)'));
+    assert(dashboard.includes('updateApplyButtonState(loadActiveExamModuleSetting())'), 'Apply button must reflect actual applied mode, not the currently browsed filter');
 });
 
 test('Applying all modules clears stale HKI lock and chooses a neutral default', () => {
