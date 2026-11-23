@@ -828,11 +828,14 @@ function applyCloudSharedStateToLocal(state) {
             if (examModSel) examModSel.value = state.activeExamModuleMode;
         }
 
-        let targetActiveId = state.activeModuleId;
+        // Jika guru membuka semua modul, jangan mewarisi HKI/modul lama sebagai
+        // pilihan aktif yang membingungkan. Semua opsi tetap tersedia; jaringan hanya
+        // menjadi pilihan awal netral sampai siswa memilih paket kuisnya sendiri.
+        let targetActiveId = lockedMode === 'all'
+            ? 'modul_jaringan_keamanan'
+            : (state.activeModuleId || lockedMode || 'modul_jaringan_keamanan');
         if (lockedMode && lockedMode !== 'all') {
             targetActiveId = lockedMode;
-        } else if (!targetActiveId) {
-            targetActiveId = 'modul_jaringan_keamanan';
         }
 
         const inQuiz = (typeof isQuizActive === 'function' && isQuizActive()) ||
