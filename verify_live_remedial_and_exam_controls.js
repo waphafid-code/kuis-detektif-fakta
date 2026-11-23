@@ -54,6 +54,8 @@ test('Leaving focus/hidden page still enters the 3-strike warning flow', () => {
     assert(root.includes("window.addEventListener('blur'"));
     assert(root.includes('handleAntiCheatEvent(\'🌐 Berpindah Tab / Meminimalkan Browser\')'));
     assert(root.includes('const MAX_CHEAT_STRIKES = 3'));
+    assert(root.includes('cheatStrikes <= MAX_CHEAT_STRIKES && !isCritical'));
+    assert(root.includes('Peringatan Terakhir Anti-Cheat (#3 dari 3)'));
 });
 
 test('Hanifa Zahfaleta Rolia is present in X E 4 official roster', () => {
