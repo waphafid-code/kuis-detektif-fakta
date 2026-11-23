@@ -116,22 +116,40 @@ async function initModulesCatalog() {
     }
 
     if (filterSelect) {
+        // Gunakan katalog gabungan agar seluruh modul resmi selalu tersedia pada filter guru.
+        // Termasuk Tryout, Jaringan, Detektif Fakta, Panduan Generasi Digital, dan Privasi.
+        const filterModules = mergedModules.filter((m, idx, arr) =>
+            m && m.id && arr.findIndex(x => x && x.id === m.id) === idx
+        );
         const existingFilterVals = Array.from(filterSelect.options || []).map(o => o.value);
-        const targetFilterVals = ['all', ...modules.map(m => m.id)];
+        const targetFilterVals = ['all', ...filterModules.map(m => m.id)];
+        const allOptionLabel = '📊 Komparasi Semua Modul (Semua Nilai)';
         const isFilterIdentical = existingFilterVals.length === targetFilterVals.length &&
-            existingFilterVals.every((val, idx) => val === targetFilterVals[idx]);
+            existingFilterVals.every((val, idx) => val === targetFilterVals[idx]) &&
+            filterSelect.options[0] &&
+            filterSelect.options[0].textContent.trim() === allOptionLabel;
 
+        // Periksa label juga, bukan hanya value. Ini memperbaiki kasus opsi lama
+        // "Komparasi 2 Modul (Lengkap)" yang tetap bertahan meskipun value sudah benar.
         if (!isFilterIdentical) {
-            let opts = '<option value="all">📊 Komparasi 2 Modul (Lengkap)</option>';
-            modules.forEach(m => {
-                opts += `<option value="${m.id}">${m.icon || '📚'} ${m.title}</option>`;
+            filterSelect.innerHTML = '';
+            const allOption = document.createElement('option');
+            allOption.value = 'all';
+            allOption.textContent = allOptionLabel;
+            filterSelect.appendChild(allOption);
+
+            filterModules.forEach(m => {
+                const option = document.createElement('option');
+                option.value = m.id;
+                option.textContent = `${m.icon || '📚'} ${m.title}`;
+                filterSelect.appendChild(option);
             });
-            filterSelect.innerHTML = opts;
         }
-        const currentDashFilter = localStorage.getItem('quizmaster_dashboard_module_filter') || 'modul_jaringan_keamanan';
-        if (filterSelect.value !== currentDashFilter) {
-            filterSelect.value = currentDashFilter;
-        }
+
+        const savedDashFilter = localStorage.getItem('quizmaster_dashboard_module_filter') || 'all';
+        const currentDashFilter = targetFilterVals.includes(savedDashFilter) ? savedDashFilter : 'all';
+        filterSelect.value = currentDashFilter;
+        if (filterSelect.value !== currentDashFilter) filterSelect.value = 'all';
     }
 
     // Sinkronkan elemen dropdown di Settings Panel Dasbor Guru
