@@ -1615,7 +1615,7 @@ function autoSubmitTimeout() {
     if (nextBtn) {
         nextBtn.style.display = 'inline-flex';
         nextBtn.disabled = false;
-        nextBtn.innerHTML = isFinalQ ? '🏁 Kirim Nilai ke Dasbor Guru ➔' : 'Lanjut Soal ➡️';
+        nextBtn.innerHTML = isFinalQ ? '🏁 Kirim Jawaban & Lihat Hasil ➔' : 'Lanjutkan ➔';
     }
 
     const isPotato = (typeof window !== 'undefined') && (
@@ -1895,7 +1895,7 @@ function loadQuestion(index) {
     if (nextBtn) {
         nextBtn.style.display = 'inline-flex';
         nextBtn.disabled = false;
-        nextBtn.innerHTML = isFinalQ ? '🏁 Kirim Jawaban & Lihat Hasil ➔' : 'Lanjutkan ➔';
+        nextBtn.innerHTML = isFinalQ ? '🏁 Periksa & Kirim Jawaban ➔' : 'Periksa Jawaban & Lanjutkan ➔';
     }
 
     const pct = Math.round((index / quizData.length) * 100);
@@ -2488,7 +2488,7 @@ function checkAnswer(isAutoTimeout = false) {
         if (nextBtn) {
             nextBtn.style.display = 'inline-flex';
             nextBtn.disabled = false;
-            nextBtn.innerHTML = isFinalQ ? '🏁 Selesai & Kirim Jawaban ➔' : 'Lanjut Soal Berikutnya ➔';
+            nextBtn.innerHTML = isFinalQ ? '🏁 Kirim Jawaban & Lihat Hasil ➔' : 'Lanjutkan ➔';
         }
         saveCurrentQuizSession();
     } finally {
