@@ -2391,7 +2391,7 @@ function checkAnswer(isAutoTimeout = false) {
 
             if (fb) {
                 fb.className = 'feedback-box correct-fb';
-                fb.innerHTML = `<h4>${isAutoTimeout ? '⏰ Waktu Habis — Pilihan Terkunci & Benar! ✅' : '✅ Jawaban Benar!'} (+${pointRes.pointsEarned} Poin)</h4>${expText ? formatPedagogicalFeedback(expText) : ''}`;
+                fb.innerHTML = `<h4>${isAutoTimeout ? '⏰ Waktu Habis — Pilihan Terkunci & Benar! ✅' : '✅ Jawaban Benar!'} (+${pointRes.pointsEarned} Poin)</h4>`;
             }
 
             const streakEl = document.getElementById('streak-display');
@@ -2409,7 +2409,7 @@ function checkAnswer(isAutoTimeout = false) {
 
             if (fb) {
                 fb.className = 'feedback-box warning-fb';
-                fb.innerHTML = `<h4>🟡 Jawaban Benar Sebagian (+${pointRes.pointsEarned}/${pointRes.maxPoints} Poin)</h4><p style="font-weight: 700; color: #fde047; margin-bottom: 6px;">${pointRes.summary}</p>${expText ? formatPedagogicalFeedback(expText) : ''}`;
+                fb.innerHTML = `<h4>🟡 Jawaban Benar Sebagian (+${pointRes.pointsEarned}/${pointRes.maxPoints} Poin)</h4><p style="font-weight: 700; color: #fde047; margin-bottom: 6px;">${pointRes.summary}</p>`;
             }
 
             if (card) card.classList.remove('streak-on-fire');
@@ -2430,7 +2430,7 @@ function checkAnswer(isAutoTimeout = false) {
 
             if (fb) {
                 fb.className = 'feedback-box wrong-fb';
-                fb.innerHTML = `<h4>${wrongTitle} (0/${pointRes.maxPoints} Poin)</h4>${expText ? formatPedagogicalFeedback(expText) : ''}`;
+                fb.innerHTML = `<h4>${wrongTitle} (0/${pointRes.maxPoints} Poin)</h4>`;
             }
 
             if (card) card.classList.remove('streak-on-fire');
