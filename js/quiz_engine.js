@@ -157,7 +157,8 @@ function stripOptionLetterPrefix(text) {
 window.stripOptionLetterPrefix = stripOptionLetterPrefix;
 
 function computeSessionChecksum(data) {
-    const payload = `${data.studentName || ''}:${data.studentClass || ''}:${data.score || 0}:${data.currentQ || 0}:${data.quizStartTime || 0}:${(data.shuffledQuizOrder || []).join(',')}:${data.earnedPointsTotal || 0}:${data.totalPossiblePoints || 0}:QM_SALT_INTEGRITY_2026`;
+    const strikePart = Object.prototype.hasOwnProperty.call(data, 'cheatStrikes') ? `:${Math.max(0, Number(data.cheatStrikes) || 0)}` : '';
+    const payload = `${data.studentName || ''}:${data.studentClass || ''}:${data.score || 0}:${data.currentQ || 0}:${data.quizStartTime || 0}:${(data.shuffledQuizOrder || []).join(',')}:${data.earnedPointsTotal || 0}:${data.totalPossiblePoints || 0}${strikePart}:QM_SALT_INTEGRITY_2026`;
     let hash = 0;
     for (let i = 0; i < payload.length; i++) {
         hash = ((hash << 5) - hash) + payload.charCodeAt(i);
@@ -185,7 +186,8 @@ function saveCurrentQuizSession() {
             earnedPointsTotal,
             totalPossiblePoints,
             sessionHintsUsedCount,
-            isRemedialSession
+            isRemedialSession,
+            cheatStrikes: Math.max(0, Number(cheatStrikes) || 0)
         };
         sessionData._sig = computeSessionChecksum(sessionData);
         sessionData.savedAt = Date.now();
@@ -261,7 +263,7 @@ async function restoreQuizSession() {
         isQuizFinishing = false;
         isCheatingTriggered = false;
         isCheatWarningActive = false;
-        cheatStrikes = 0;
+        cheatStrikes = Math.max(0, Math.min(MAX_CHEAT_STRIKES - 1, Number(data.cheatStrikes) || 0));
 
         studentName = data.studentName;
         studentClass = data.studentClass;
@@ -509,6 +511,8 @@ function handleAntiCheatEvent(reason = 'Kecurangan / Aktivitas Terlarang', isCri
     lastCheatEventTime = now;
 
     cheatStrikes++;
+    // Simpan jumlah peringatan agar reload yang diizinkan tidak menghapus riwayat strike.
+    try { saveCurrentQuizSession(); } catch (e) {}
 
     if (cheatStrikes < MAX_CHEAT_STRIKES && !isCritical) {
         // ⏸️ TOLERANSI 1 & 2: Pause Kuis & Tampilkan Modal Peringatan Edukatif
@@ -802,14 +806,9 @@ window.addEventListener('keydown', (e) => {
         return;
     }
 
-    // Ctrl+C / Ctrl+X / Ctrl+V
-    if ((e.ctrlKey || e.metaKey) && ['c', 'C', 'x', 'X', 'v', 'V'].includes(e.key)) {
-        e.preventDefault();
-        e.stopPropagation();
-        handleAntiCheatEvent('📋 Percobaan Clipboard / Copy-Paste Shortcut');
-        return;
-    }
-
+    // Copy, cut, dan paste diperbolehkan untuk kebutuhan aksesibilitas siswa.
+    // Shortcut screenshot / DevTools tetap ditangani oleh blok khusus di atas.
+    
     // PrintScreen / Screenshot keydown blocker
     if (e.key === 'PrintScreen' || e.keyCode === 44) {
         e.preventDefault();
@@ -999,12 +998,28 @@ async function initiateQuiz() {
         return;
     }
 
-    // 🛡️ Whitelist Validation: Pastikan nama siswa ada dalam daftar resmi kelas
-    if (window.STUDENT_ROSTER && window.STUDENT_ROSTER[cls]) {
-        const officialNames = window.STUDENT_ROSTER[cls].map(n => n.trim().toLowerCase());
-        if (!officialNames.includes(name.trim().toLowerCase())) {
+    // 🛡️ Whitelist Validation: cocokkan kelas dan nama secara kanonikal.
+    // Mencegah siswa resmi (termasuk Hanifa Zahfaleta Rolia, X E 4) tertolak
+    // hanya karena variasi penulisan kelas seperti "X E.4" / "XE4".
+    if (window.STUDENT_ROSTER) {
+        const rosterClass = Object.keys(window.STUDENT_ROSTER).find(key =>
+            typeof isClassEquivalent === 'function'
+                ? isClassEquivalent(key, cls)
+                : String(key).replace(/[^A-Z0-9]/gi, '').toUpperCase() === String(cls).replace(/[^A-Z0-9]/gi, '').toUpperCase()
+        );
+        if (!rosterClass) {
             if (typeof sfxWrong === 'function') sfxWrong();
-            showToast('Nama siswa tidak terdaftar dalam absensi resmi kelas terpilih!', '⚠️');
+            showToast('Kelas tidak ditemukan dalam daftar resmi. Periksa kembali kelas yang dipilih.', '⚠️');
+            return;
+        }
+        const officialNames = window.STUDENT_ROSTER[rosterClass] || [];
+        const isRegistered = officialNames.some(officialName => {
+            if (typeof isNameEquivalent === 'function') return isNameEquivalent(officialName, name);
+            return String(officialName).trim().toLowerCase() === name.trim().toLowerCase();
+        });
+        if (!isRegistered) {
+            if (typeof sfxWrong === 'function') sfxWrong();
+            showToast('Nama tidak terdaftar pada kelas yang dipilih. Siswa yang tidak terdaftar tidak dapat memulai ujian.', '⚠️');
             return;
         }
     }
@@ -1055,6 +1070,7 @@ async function initiateQuiz() {
                 📅 <strong>Jadwal Resmi Mata Pelajaran (Bpk. Muhammad Hafidh Putra Roshadi, S.Pd.):</strong> ${safeDay}, Pukul <strong>${safeStart} - ${safeEnd} WIB</strong> (${safePeriod})
             `;
             document.getElementById('locked-current-time').textContent = `Waktu Saat Ini: ${access.currentInfo || new Date().toLocaleString('id-ID')}`;
+            if (typeof showToast === 'function' && access.reason) showToast(access.reason, '🔒');
             document.getElementById('access-locked-modal').classList.add('active');
             return;
         }
@@ -3699,16 +3715,21 @@ window.addEventListener('popstate', (e) => {
 
 // 🛡️ AUTO-SAVE ON PAGE HIDE OR ACCIDENTAL UNLOAD
 window.addEventListener('pagehide', () => {
+    // pagehide juga terjadi saat reload. Simpan progres, tetapi jangan menambah strike.
+    clearBlurGraceTimer();
     if (screens.quiz && screens.quiz.classList.contains('active') && !isQuizFinishing && !isCheatingTriggered) {
         saveCurrentQuizSession();
     }
 });
 window.addEventListener('beforeunload', (e) => {
+    // Reload diperbolehkan: tampilkan konfirmasi browser dan pulihkan sesi dari backup.
+    // Navigasi/keluar yang disengaja tetap dipantau lewat visibilitychange/blur.
+    clearBlurGraceTimer();
     if (typeof isCurrentStudentDemo === 'function' && isCurrentStudentDemo()) return; // 🧪 Akun demo bebas keluar kapan saja
     if (screens.quiz && screens.quiz.classList.contains('active') && !isQuizFinishing && !isCheatingTriggered) {
         saveCurrentQuizSession();
         e.preventDefault();
-        e.returnValue = 'Sesi ujian Anda sedang berlangsung! Yakin ingin meninggalkan halaman?';
+        e.returnValue = 'Sesi ujian sedang berlangsung. Reload diperbolehkan dan progres akan dipulihkan; pastikan tidak meninggalkan ujian.';
         return e.returnValue;
     }
 });
