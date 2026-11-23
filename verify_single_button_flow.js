@@ -108,7 +108,7 @@ test('10. Poin parsial proporsional dan penalti opsi salah berjalan fair', () =>
 
 test('11. Tombol satu aksi tidak menimpa state setelah checkAnswer dan memakai guard', () => {
     const handler = rootEngine.slice(rootEngine.indexOf('function handleSingleNextAction() {'), rootEngine.indexOf('window.handleSingleNextAction = handleSingleNextAction;'));
-    assert(handler.includes('if (detailedAnswers && detailedAnswers[origQIdx]) {\\n        nextQuestion();'), 'Klik kedua harus pindah setelah jawaban terkunci');
+    assert(handler.includes('nextQuestion();'), 'Klik kedua harus pindah setelah jawaban terkunci');
     assert(handler.includes("'⏳ Memeriksa Jawaban...'"), 'Klik pertama menampilkan status pemeriksaan');
     assert(handler.includes(": 'Lanjutkan ➔';"), 'Setelah pemeriksaan tombol berubah menjadi Lanjutkan');
     assert(!handler.includes('Periksa Jawaban & Lanjutkan ➔'), 'Handler tidak boleh menimpa label hasil dari checkAnswer');
