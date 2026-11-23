@@ -57,7 +57,7 @@ test('2. Real-time Topic Tracking & Badge Materi pada setiap butir soal', () => 
 // 3. Explanation Visibility & No Auto-Jump Timer
 test('3. Pembahasan tampil dengan tenang tanpa auto-skip 650ms', () => {
     assert(rootEngine.includes('handleSingleNextAction'), 'handleSingleNextAction harus ada');
-    assert(rootEngine.replace(/\r\n/g, '\n').includes('if (detailedAnswers[origQIdx]) {\n        nextQuestion();\n        return;\n    }'), 'Klik pertama mengunci & menampilkan pembahasan, klik kedua baru lanjut');
+    assert(rootEngine.replace(/\r\n/g, '\n').includes('if (detailedAnswers && detailedAnswers[origQIdx]) {\n        nextQuestion();\n        return;\n    }'), 'Klik pertama mengunci & menampilkan pembahasan, klik kedua baru lanjut');
     // Pastikan tidak ada auto-jump timer 650ms pada handleSingleNextAction
     const handleNextFn = rootEngine.slice(rootEngine.indexOf('function handleSingleNextAction'), rootEngine.indexOf('window.handleSingleNextAction'));
     assert(!handleNextFn.includes('setTimeout'), 'handleSingleNextAction tidak boleh otomatis melompat via setTimeout');
