@@ -678,7 +678,7 @@ window.addEventListener('blur', () => {
 // Browser zoom levels represented as outer/inner viewport ratios.
 // Includes common Chrome/Edge zoom steps; a 4% tolerance handles CSS-pixel rounding.
 let _lastIntegrityDpr = null;
-const BROWSER_ZOOM_LEVELS = [0.25, 0.33, 0.5, 0.67, 0.75, 0.8, 0.9, 1, 1.1, 1.25, 1.5, 1.75, 2, 2.5, 3, 4, 5];
+const BROWSER_ZOOM_LEVELS = [0.25, 0.33, 0.5, 0.67, 0.75, 0.8, 0.9, 1.1, 1.25, 1.5, 1.75, 2, 2.5, 3, 4, 5];
 function isBrowserZoomRatio(outer, inner) {
     if (!inner || !outer) return false;
     const ratio = outer / inner;
@@ -714,8 +714,7 @@ function checkScreenIntegrity() {
 
             // Zoom browser standar mengubah rasio outer/inner. Toleransi 4% untuk variasi
             // pembulatan CSS pixel lintas browser dan skala tampilan.
-            if (isBrowserZoomRatio(window.outerWidth, window.innerWidth) ||
-                isBrowserZoomRatio(window.outerHeight, window.innerHeight)) {
+            if (isBrowserZoomRatio(window.outerWidth, window.innerWidth)) {
                 return;
             }
 
