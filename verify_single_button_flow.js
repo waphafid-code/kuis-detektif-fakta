@@ -160,3 +160,23 @@ test('16. Handler tombol menangani error pemeriksaan dan memulihkan tombol', () 
     assert(body.includes('nextQuestion();'), 'Klik kedua tetap meneruskan soal');
     assert(body.includes('isCheckingAnswer = false;'), 'Flag diperbaiki saat error');
 });
+
+
+test('17. Koreksi langsung menampilkan jawaban siswa, kunci, dan alasan benar/salah', () => {
+    const review = rootEngine.slice(rootEngine.indexOf('const correctnessLabel ='), rootEngine.indexOf('// 🎯 Banner Akumulasi Nilai per Materi Real-Time', rootEngine.indexOf('const correctnessLabel =')));
+    assert(review.includes('JAWABAN KAMU'), 'Jawaban yang dipilih siswa harus ditampilkan');
+    assert(review.includes('JAWABAN YANG TEPAT'), 'Kunci jawaban harus ditampilkan');
+    assert(review.includes('Mengapa jawaban ini benar?'), 'Alasan untuk jawaban benar harus ditampilkan');
+    assert(review.includes('Mengapa jawaban ini salah?'), 'Alasan untuk jawaban salah harus ditampilkan');
+    assert(review.includes('formatPedagogicalFeedback(expText)'), 'Pembahasan soal harus tampil langsung');
+    assert(review.includes('Bagian mana yang benar dan perlu diperbaiki?'), 'Jawaban kompleks sebagian mendapat koreksi khusus');
+});
+
+test('18. Semua bank soal resmi menyediakan pembahasan untuk koreksi langsung', () => {
+    for (const bank of ['modul_detektif_fakta','modul_jaringan_keamanan','modul_hki_profesi_budaya','modul_etika_privasi_keamanan','modul_tryout_terpadu']) {
+        assert(fs.existsSync(path.join(__dirname, 'bank_soal', bank + '.json')), 'Bank soal tersedia: ' + bank);
+        const raw = JSON.parse(fs.readFileSync(path.join(__dirname, 'bank_soal', bank + '.json'), 'utf8'));
+        const questions = Array.isArray(raw) ? raw : raw.questions;
+        assert(questions.every(q => String(q.explanation || '').trim().length > 0), 'Semua soal memiliki explanation: ' + bank);
+    }
+});
