@@ -171,8 +171,8 @@ runTest('Bug 16: storage.js cleanupExpiredStorageFiles protects all built-in mod
 // ---------------------------------------------------------------
 runTest('Bug 17: autoSubmitTimeout sets standardized Kirim Nilai button text', () => {
     const code = fs.readFileSync('js/quiz_engine.js', 'utf8');
-    assert(code.includes("nextBtn.innerHTML = isFinalQ ? '🏁 Kirim Nilai ke Dasbor Guru ➔' : 'Lanjut Soal ➡️';"), 'Must use standardized Kirim Nilai button text');
-    assert(!code.includes("nextBtn.innerHTML = isFinalQ ? '🏁 Selesai & Kirim Nilai ➔' : 'Lanjut Soal ➡️';"), 'Old button text must be replaced');
+    assert(code.includes("nextBtn.innerHTML = isFinalQ ? '🏁 Kirim Jawaban & Lihat Hasil ➔' : 'Lanjutkan ➔';"), 'Auto-submit must use the current single-button flow label');
+    assert(!code.includes("nextBtn.innerHTML = isFinalQ ? '🏁 Selesai & Kirim Nilai ➔' : 'Lanjut Soal ➡️';"), 'Legacy two-button label must not return');
 });
 
 // ---------------------------------------------------------------
