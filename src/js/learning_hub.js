@@ -1210,7 +1210,7 @@ const LEARNING_MODULES = {
         title: 'Logika Pseudocode & Mesin IPO',
         badge: 'ATP 4 & 5 • Algoritma Dasar',
         icon: '🧩',
-        gameId: 'robocode',
+        gameId: 'robocode_runner',
         gameTitle: 'RoboCode: Alur Logika Pemrograman',
         summary: 'Dasar alur komputasi programmer untuk siswa SMA: Input, Proses Logika, dan Output. Disertai contoh Pseudocode sederhana.',
         color: '#3b82f6',

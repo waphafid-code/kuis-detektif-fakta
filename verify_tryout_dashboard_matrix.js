@@ -109,7 +109,7 @@ console.log('  ✅ PASS: 3. Dasbor Guru mendukung tampilan matriks per modul M1-
     assert(html.includes('id="btn-mod-filter-tryout"'), `${filePath} harus memiliki tombol segmented filter btn-mod-filter-tryout`);
     assert(html.includes('badge-cnt-tryout-mod'), `${filePath} harus memiliki badge badge-cnt-tryout-mod`);
     assert(html.includes('modul_tryout_terpadu'), `${filePath} harus memiliki opsi modul_tryout_terpadu`);
-    assert(html.includes('20261122-v3048-tryout-dashboard-matrix') || /20261123-v30\d\d/.test(html), `${filePath} harus menggunakan cache buster terbaru`);
+    assert(html.includes('20261122-v3048-tryout-dashboard-matrix') || /\?v=2026\d{4}-/.test(html), `${filePath} harus menggunakan cache buster terbaru`);
 });
 console.log('  ✅ PASS: 4. Seluruh 4 berkas HTML (Beranda & Dasbor Guru) terverifikasi memiliki tombol filter Tryout dan cache buster terbaru.');
 

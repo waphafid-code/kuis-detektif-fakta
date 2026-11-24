@@ -199,7 +199,6 @@ document.addEventListener('keydown', (e) => {
             else if (m.id === 'access-locked-modal' && typeof closeAccessLockedModal === 'function') closeAccessLockedModal();
             else if (m.id === 'already-submitted-modal' && typeof closeAlreadySubmittedModal === 'function') closeAlreadySubmittedModal();
             else if (m.id === 'remedial-offer-modal' && typeof closeRemedialOffer === 'function') closeRemedialOffer();
-            else if (m.id === 'remedial-offer-modal' && typeof closeRemedialOffer === 'function') closeRemedialOffer();
         else if (m.id === 'remedial-confirm-modal' && typeof closeRemedialConfirmModal === 'function') closeRemedialConfirmModal();
             else if (m.id === 'remedial-briefing-modal' && typeof closeRemedialBriefing === 'function') closeRemedialBriefing();
         });
