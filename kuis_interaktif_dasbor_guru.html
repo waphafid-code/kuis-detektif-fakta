@@ -792,7 +792,7 @@
 </div>
 
 <!-- Toast Notification -->
-<div id="toast-msg" style="position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(100px); opacity: 0; background: rgba(15,15,40,0.95); border: 1px solid var(--accent); color: var(--text); padding: 14px 24px; border-radius: 14px; font-weight: 700; z-index: 9999; backdrop-filter: blur(20px); box-shadow: 0 10px 30px rgba(0,0,0,0.5); transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); pointer-events: none; display: flex; align-items: center; gap: 10px;"></div>
+<div id="toast-msg" style="position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(100px); opacity: 0; background: var(--bg-card, #FFFFFF); border: 1px solid var(--accent); color: var(--text, #0F172A); padding: 14px 24px; border-radius: 14px; font-weight: 700; z-index: 9999; backdrop-filter: blur(20px); box-shadow: 0 10px 30px rgba(15,23,42,0.28); transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); pointer-events: none; display: flex; max-width: 92vw; align-items: center; gap: 10px;"></div>
 
 <!-- Countdown Overlay -->
 <div class="countdown-screen" id="countdown-screen">
@@ -1810,7 +1810,7 @@
 
                 <div class="table-container" style="max-height: 420px; overflow: auto; border: 1px solid var(--glass-border); border-radius: 10px;">
                     <table style="font-size: 0.78rem; text-align: center; border-collapse: collapse; min-width: 980px;" id="matrix-table">
-                        <thead style="position: sticky; top: 0; background: rgba(15,15,40,0.96); z-index: 10;">
+                        <thead style="position: sticky; top: 0; background: var(--bg-surface-container, #E2E8F0); z-index: 10;">
                             <tr id="matrix-thead-row">
                                 <th style="text-align: left; min-width: 140px; padding: 10px 12px;">Nama Siswa</th>
                                 <th style="min-width: 60px;">Kelas</th>

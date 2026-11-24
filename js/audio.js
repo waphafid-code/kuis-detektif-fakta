@@ -1,15 +1,19 @@
 //  📂 DATA PERSISTENCE & MYSQL SYNC
 // ============================================================
+let _toastTimer = null;
 function showToast(text, icon = 'ℹ️') {
     const toast = document.getElementById('toast-msg');
     if (!toast) return;
     toast.innerHTML = `<span style="font-size: 1.3rem;">${icon}</span> <span>${text}</span>`;
     toast.style.transform = 'translateX(-50%) translateY(0)';
     toast.style.opacity = '1';
-    setTimeout(() => {
+    // Satu timer saja: toast baru tidak boleh ditutup lebih awal oleh timer toast sebelumnya
+    if (_toastTimer) clearTimeout(_toastTimer);
+    _toastTimer = setTimeout(() => {
         toast.style.transform = 'translateX(-50%) translateY(100px)';
         toast.style.opacity = '0';
-    }, 3000);
+        _toastTimer = null;
+    }, 3200);
 }
 
 function normalizeModuleId(modId, id, date) {
