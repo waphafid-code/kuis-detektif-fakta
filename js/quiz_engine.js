@@ -1468,6 +1468,13 @@ function handleSingleNextAction() {
 
     const nextBtn = document.getElementById('btn-next');
 
+    // Soal yang sudah diperiksa (termasuk waktu habis tanpa memilih) selalu boleh lanjut,
+    // sebelum validasi "pilih jawaban" agar siswa tidak terkunci di soal yang sama.
+    if (detailedAnswers && detailedAnswers[origQIdx]) {
+        nextQuestion();
+        return;
+    }
+
     // Jangan nilai jawaban kosong dari klik manual. Periksa semua baris matriks
     // agar siswa tahu bagian mana yang masih harus diisi.
     const questionData = quizData[origQIdx];
@@ -1494,12 +1501,6 @@ function handleSingleNextAction() {
         showToast('Pilih jawaban terlebih dahulu sebelum melanjutkan.', '⚠️');
         const firstOption = optionsGrid.querySelector('input[name="q-opt"]');
         if (firstOption && typeof firstOption.focus === 'function') firstOption.focus({ preventScroll: true });
-        return;
-    }
-
-    // Klik kedua: hasil sudah disimpan, lanjut ke soal berikutnya.
-    if (detailedAnswers && detailedAnswers[origQIdx]) {
-        nextQuestion();
         return;
     }
 
