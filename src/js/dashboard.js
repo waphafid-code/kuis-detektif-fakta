@@ -3718,6 +3718,8 @@ function renderDashboard() {
             const hasFakta = !!bestFakta;
             const hasJaringan = !!bestJaringan;
             const hasTryout = !!bestTryout;
+            const hasPanduan = !!bestPanduan;
+            const hasPrivasi = !!bestPrivasi;
 
             let completionStatus = 'none'; // 'both', 'only_fakta', 'only_jaringan', 'none'
             if (hasFakta && hasJaringan) completionStatus = 'both';
@@ -4000,6 +4002,8 @@ function renderDashboard() {
                     const hasTryout = !!bestTryout;
                     const hasFakta = !!bestFakta;
                     const hasJaringan = !!bestJaringan;
+                    const hasPanduan = !!bestPanduan;
+                    const hasPrivasi = !!bestPrivasi;
                     const hasSubmitted = isTryoutView ? hasTryout : (filterModule === modJaringanId ? hasJaringan : (filterModule === modFaktaId ? hasFakta : (hasFakta || hasJaringan || hasPanduan || hasPrivasi || hasTryout)));
 
                     if (hasSubmitted) {

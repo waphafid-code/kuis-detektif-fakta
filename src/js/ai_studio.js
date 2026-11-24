@@ -328,12 +328,6 @@ function saveApiKeyFromInput() {
     }
 }
 
-function toggleApiKeyVisibility() {
-    const keyInput = document.getElementById('ai-api-key');
-    if (!keyInput) return;
-    keyInput.type = keyInput.type === 'password' ? 'text' : 'password';
-}
-
 function saveModelChoice() {
     const sel = document.getElementById('ai-model-select');
     if (sel && window.NemotronAI) {
