@@ -3119,7 +3119,16 @@ function closeWaReminderModal() {
 }
 window.closeWaReminderModal = closeWaReminderModal;
 
+const WA_REMINDER_MODULES = [
+    { id: 'modul_detektif_fakta', label: 'Detektif Fakta' },
+    { id: 'modul_jaringan_keamanan', label: 'Jaringan & Keamanan' },
+    { id: 'modul_hki_profesi_budaya', label: 'HKI, Profesi & Budaya' },
+    { id: 'modul_etika_privasi_keamanan', label: 'Etika & Privasi' },
+    { id: 'modul_tryout_terpadu', label: 'Try Out Terpadu' }
+];
+
 function getHumanModuleName(modId) {
+    if (modId === 'modul_tryout_terpadu') return 'Try Out Terpadu 60 Soal (6 Materi)';
     if (!modId || modId === 'all') return 'Evaluasi Pembelajaran Informatika (Semua Modul)';
     if (modId === 'modul_jaringan_keamanan') return 'Penilaian Harian: Infrastruktur Jaringan & Keamanan Digital';
     if (modId === 'modul_detektif_fakta') return 'Misi Detektif Fakta: Uji Validitas Data';
@@ -3137,6 +3146,8 @@ function updateWaReminderPreview() {
     const classes = (selectedClass === 'all') 
         ? ['X E 1', 'X E 2', 'X E 3', 'X E 4', 'X E 5', 'X E 6'] 
         : [selectedClass];
+    const showMods = (selectedModule === 'all');
+    const modLabel = id => (WA_REMINDER_MODULES.find(m => m.id === id) || { label: id }).label;
 
     const allRecords = (typeof loadRecords === 'function') ? (loadRecords() || []) : [];
 
@@ -3155,31 +3166,37 @@ function updateWaReminderPreview() {
         totalRoster += roster.length;
 
         roster.forEach(name => {
-            const studentRecs = allRecords.filter(r => {
-                const nameMatches = (typeof isNameEquivalent === 'function') 
-                    ? isNameEquivalent(r.name, name) 
+            const studentAllRecs = allRecords.filter(r => {
+                const nameMatches = (typeof isNameEquivalent === 'function')
+                    ? isNameEquivalent(r.name, name)
                     : (r.name || '').trim().toLowerCase() === name.trim().toLowerCase();
-                const classMatches = (typeof isClassEquivalent === 'function') 
-                    ? isClassEquivalent(r.class, c) 
+                const classMatches = (typeof isClassEquivalent === 'function')
+                    ? isClassEquivalent(r.class, c)
                     : (r.class || '').replace(/\s+/g, '').toUpperCase() === c.replace(/\s+/g, '').toUpperCase();
-                if (!nameMatches || !classMatches) return false;
-                if (selectedModule === 'all') return true;
-                const rMod = (typeof normalizeModuleId === 'function') 
-                    ? normalizeModuleId(r.moduleId, r.id, r.date) 
-                    : (r.moduleId || 'modul_detektif_fakta');
-                return rMod === selectedModule;
+                return nameMatches && classMatches;
             });
 
-            if (studentRecs.length === 0) {
-                unsubmitted.push({ name, class: c });
-            } else {
-                const maxScore = Math.max(...studentRecs.map(r => Number(r.score) || 0));
-                if (maxScore < 80) {
-                    remedial.push({ name, class: c, score: maxScore });
-                } else {
-                    passed.push({ name, class: c, score: maxScore });
-                }
-            }
+            // "Semua Modul Aktif" dinilai PER MODUL: siswa harus tuntas di setiap modul,
+            // bukan cukup punya satu catatan di modul mana pun.
+            const modsToCheck = (selectedModule === 'all') ? WA_REMINDER_MODULES.map(m => m.id) : [selectedModule];
+            const missingMods = [];
+            const remedialMods = [];
+            modsToCheck.forEach(modId => {
+                const recs = studentAllRecs.filter(r => {
+                    const rMod = (typeof normalizeModuleId === 'function')
+                        ? normalizeModuleId(r.moduleId, r.id, r.date)
+                        : (r.moduleId || 'modul_detektif_fakta');
+                    return rMod === modId;
+                });
+                if (recs.length === 0) { missingMods.push(modId); return; }
+                // Nilai efektif = terbaik antara nilai awal dan nilai remedial
+                const best = Math.max(...recs.map(r => Math.max(Number(r.score) || 0, Number(r.remedialScore) || 0)));
+                if (best < 80) remedialMods.push({ id: modId, score: best });
+            });
+
+            if (missingMods.length > 0) unsubmitted.push({ name, class: c, mods: missingMods });
+            if (remedialMods.length > 0) remedial.push({ name, class: c, mods: remedialMods, score: Math.min(...remedialMods.map(m => m.score)) });
+            if (missingMods.length === 0 && remedialMods.length === 0) passed.push({ name, class: c });
         });
     });
 
@@ -3213,7 +3230,7 @@ function updateWaReminderPreview() {
         if (unsubmitted.length > 0) {
             text += `*Daftar Siswa Belum Mengikuti Kuis (${unsubmitted.length} Siswa):*\n`;
             unsubmitted.forEach((s, idx) => {
-                text += `${idx + 1}. ${s.name} (${s.class})\n`;
+                text += `${idx + 1}. ${s.name} (${s.class})${showMods ? ' - belum: ' + s.mods.map(modLabel).join(', ') : ''}\n`;
             });
             text += `\n`;
         } else if (cat === 'unsubmitted') {
@@ -3225,7 +3242,7 @@ function updateWaReminderPreview() {
         if (remedial.length > 0) {
             text += `*Daftar Siswa Mengikuti Remedial (${remedial.length} Siswa):*\n`;
             remedial.forEach((s, idx) => {
-                text += `${idx + 1}. ${s.name} (${s.class})\n`;
+                text += `${idx + 1}. ${s.name} (${s.class})${showMods ? ' - remedial: ' + s.mods.map(m => modLabel(m.id) + ' ' + m.score).join(', ') : ''}\n`;
             });
             text += `\n`;
         } else if (cat === 'remedial') {
@@ -3303,12 +3320,14 @@ function openWhatsAppWithReminder() {
     }
 
     // 2. Buka link WhatsApp Web / App
-    const waUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
+    // Tautan WhatsApp punya batas panjang (~8000 karakter setelah di-encode): bila lebih, buka tanpa teks dan tempel dari clipboard
+    const tooLong = encodeURIComponent(text).length > 7000;
+    const waUrl = tooLong ? 'https://api.whatsapp.com/send' : `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
     if (typeof window.open === 'function') {
         window.open(waUrl, '_blank');
     }
     if (typeof showToast === 'function') {
-        showToast('Membuka WhatsApp dan pesan telah disalin.', '✓');
+        showToast(tooLong ? 'Pesan panjang sudah disalin. Di WhatsApp, pilih grup lalu Tempel (paste).' : 'Membuka WhatsApp dan pesan telah disalin.', '✓');
     }
 }
 window.openWhatsAppWithReminder = openWhatsAppWithReminder;
