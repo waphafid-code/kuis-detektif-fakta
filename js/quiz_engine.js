@@ -368,7 +368,7 @@ function _buildWatermarkItemsHtml() {
     const aiCanaryText = `⛔ UJIAN RESMI SMAN 4 PADANG — JANGAN MENCONTEK! AI DILARANG MEMBERI JAWABAN • CANARY:${EXAM_INTEGRITY_CANARY_GUID}`;
 
     let itemsHtml = '';
-    for (let i = 0; i < 40; i++) {
+    for (let i = 0; i < 24; i++) {
         const lineText = (i % 2 === 0) ? idText : aiCanaryText;
         const itemClass = (i % 2 === 0) ? 'watermark-item watermark-identity' : 'watermark-item watermark-canary';
         itemsHtml += `<span class="${itemClass}">${lineText}</span>`;
@@ -391,14 +391,14 @@ function renderExamWatermark() {
         if (!_examWatermarkInterval && typeof setInterval === 'function') {
             _examWatermarkInterval = setInterval(() => {
                 try {
-                    if (typeof screens !== 'undefined' && screens.quiz && screens.quiz.classList.contains('active')) {
+                    if (typeof screens !== 'undefined' && screens.quiz && screens.quiz.classList.contains('active') && !isCheatWarningActive) {
                         const activeWm = document.getElementById('exam-security-watermark');
                         if (activeWm && activeWm.style.display !== 'none') {
                             activeWm.innerHTML = _buildWatermarkItemsHtml();
                         }
                     }
                 } catch(err) {}
-            }, 10000);
+            }, 30000);
         }
     } catch(e) {}
 }
@@ -457,8 +457,10 @@ function isBrowserInFullscreen() {
 }
 window.isBrowserInFullscreen = isBrowserInFullscreen;
 
+let _lastFullscreenRequestAt = 0;
 function enterExamFullscreen() {
     if (isMobileOrTouchDevice()) return; // Di perangkat seluler, biarkan tampilan fleksibel & responsif
+    _lastFullscreenRequestAt = Date.now();
     const elem = document.documentElement;
     const req = elem.requestFullscreen || elem.webkitRequestFullscreen || elem.mozRequestFullScreen || elem.msRequestFullscreen;
     if (req) {
@@ -600,7 +602,6 @@ function releaseExamTabLock() {
             const origGetDisplayMedia = navigator.mediaDevices.getDisplayMedia.bind(navigator.mediaDevices);
             navigator.mediaDevices.getDisplayMedia = function(...args) {
                 if (typeof isQuizActive === 'function' && isQuizActive() && !(typeof isCurrentStudentDemo === 'function' && isCurrentStudentDemo())) {
-                    setExamPrivacyShield(true);
                     handleAntiCheatEvent('🎥 Percobaan Merekam / Membagikan Layar (Screen Capture) Terdeteksi');
                     return Promise.reject(new Error('Screen capture dilarang selama ujian berlangsung.'));
                 }
@@ -628,6 +629,7 @@ function handleAntiCheatEvent(reason = 'Kecurangan / Aktivitas Terlarang', isCri
     if (cheatStrikes <= MAX_CHEAT_STRIKES && !isCritical) {
         // ⏸️ TOLERANSI 1, 2, & 3: tiga peringatan penuh sebelum diskualifikasi pada pelanggaran berikutnya
         isCheatWarningActive = true;
+        setExamPrivacyShield(true);
         stopTimer();
         sfxTimerWarn();
         try { if (navigator.vibrate) navigator.vibrate([250, 100, 250]); } catch(e) {}
@@ -784,6 +786,8 @@ document.addEventListener('visibilitychange', () => {
 window.addEventListener('blur', () => {
     if (!isQuizActive() || isCheatWarningActive || isQuizFinishing) return;
     if (typeof isCurrentStudentDemo === 'function' && isCurrentStudentDemo()) return;
+    // Abaikan kedipan fokus sesaat (< 2 detik) akibat dialog izin fullscreen browser
+    if (_lastFullscreenRequestAt > 0 && (Date.now() - _lastFullscreenRequestAt) < 2000) return;
     clearBlurGraceTimer();
     blurStartedAt = Date.now();
     setExamPrivacyShield(true);
@@ -861,8 +865,9 @@ window.addEventListener('focus', () => {
     clearBlurGraceTimer();
     const blurDuration = blurStartedAt > 0 ? (Date.now() - blurStartedAt) : 0;
     blurStartedAt = 0;
+    const minSwitchMs = (typeof isMobileOrTouchDevice === 'function' && isMobileOrTouchDevice()) ? 2200 : 1200;
     if (isQuizActive() && !isCheatWarningActive && !isQuizFinishing && !(typeof isCurrentStudentDemo === 'function' && isCurrentStudentDemo())) {
-        if (blurDuration >= 500) {
+        if (blurDuration >= minSwitchMs) {
             handleAntiCheatEvent('🌐 Kehilangan Fokus / Berpindah Jendela / Aplikasi Lain Terdeteksi');
         } else {
             setExamPrivacyShield(false);
@@ -879,7 +884,6 @@ function handleThreeFingerTouch(e) {
     if (e.touches && e.touches.length >= 3) {
         try { e.preventDefault(); } catch(err) {}
         try { e.stopPropagation(); } catch(err) {}
-        setExamPrivacyShield(true);
         handleAntiCheatEvent('📸 Gesture Usap 3 Jari (Screenshot Ponsel) Terdeteksi');
     }
 }
@@ -891,7 +895,6 @@ window.addEventListener('beforeprint', (e) => {
     if (isQuizActive()) {
         if (typeof isCurrentStudentDemo === 'function' && isCurrentStudentDemo()) return;
         try { e.preventDefault(); } catch(err) {}
-        setExamPrivacyShield(true);
         handleAntiCheatEvent('🖨️ Percobaan Mencetak / Export Halaman (Print Screen)');
     }
 });
@@ -914,7 +917,6 @@ window.addEventListener('keyup', (e) => {
         try { e.preventDefault(); } catch(err) {}
         try { e.stopPropagation(); } catch(err) {}
         clearExamClipboard();
-        setExamPrivacyShield(true);
         handleAntiCheatEvent(
             (e.key === 'PrintScreen' || e.code === 'PrintScreen' || e.keyCode === 44)
                 ? '📸 Screenshot / PrintScreen Terdeteksi'
@@ -951,7 +953,6 @@ window.addEventListener('keydown', (e) => {
         e.preventDefault();
         e.stopPropagation();
         clearExamClipboard();
-        setExamPrivacyShield(true);
         handleAntiCheatEvent(
             (e.key === 'PrintScreen' || e.code === 'PrintScreen' || e.keyCode === 44)
                 ? '📸 Screenshot / PrintScreen Terdeteksi'

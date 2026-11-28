@@ -2835,6 +2835,15 @@ body.exam-mode-active #screen-quiz img {
     user-select: none !important;
 }
 
+body.exam-mode-active #screen-quiz button,
+body.exam-mode-active #screen-quiz label,
+body.exam-mode-active #screen-quiz input,
+body.exam-mode-active #screen-quiz .option-btn,
+body.exam-mode-active #screen-quiz .option-card {
+    pointer-events: auto;
+    touch-action: manipulation;
+}
+
 /* 🔒 PRIVACY SHIELD KETIKA FOKUS HILANG / SCREENSHOT TERDETEKSI */
 body.exam-mode-active.exam-privacy-blur #screen-quiz {
     filter: blur(22px) brightness(0.35) !important;
@@ -8850,39 +8859,48 @@ body.dark-theme .modal-cheat-desc {
     left: -20vw;
     width: 140vw;
     height: 140vh;
-    pointer-events: none;
-    user-select: none;
-    -webkit-user-select: none;
+    pointer-events: none !important;
+    touch-action: none !important;
+    user-select: none !important;
+    -webkit-user-select: none !important;
     z-index: 9999;
     display: none;
     flex-wrap: wrap;
     align-content: space-around;
     justify-content: space-around;
     overflow: hidden;
-    opacity: 0.115;
+    opacity: 0.065;
     transform: rotate(-16deg);
-    background-image: repeating-linear-gradient(
-        45deg,
-        rgba(239, 68, 68, 0.14) 0px,
-        rgba(239, 68, 68, 0.14) 1px,
-        transparent 1px,
-        transparent 22px
-    );
+}
+
+[data-theme="light"] .exam-security-watermark {
+    opacity: 0.055;
 }
 
 .watermark-item {
-    font-size: 0.92rem;
-    font-weight: 800;
-    letter-spacing: 1.5px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    letter-spacing: 1.4px;
     color: #ef4444;
     white-space: nowrap;
-    padding: 14px 20px;
+    padding: 20px 26px;
 }
 
 .watermark-item.watermark-canary {
-    font-size: 0.78rem;
-    letter-spacing: 1px;
-    color: #f59e0b;
+    font-size: 0.72rem;
+    letter-spacing: 0.8px;
+    color: #dc2626;
+}
+
+@media (max-width: 640px) {
+    .watermark-item {
+        font-size: 0.74rem;
+        padding: 16px 18px;
+    }
+    .watermark-item.watermark-canary {
+        font-size: 0.65rem;
+        padding: 14px 16px;
+    }
 }
 
 /* 🖨️ ANTI-PRINT / EXPORT BLOCKER DALAM MODE UJIAN */
