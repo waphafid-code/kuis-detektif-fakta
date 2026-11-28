@@ -116,36 +116,40 @@ test('11. Tombol satu aksi tidak menimpa state setelah checkAnswer dan memakai g
     assert(handler.includes('isTransitioningQuestion || isCheckingAnswer'), 'Klik ganda dicegah saat proses aktif');
 });
 
-test('12. Long-press, copy, paste, cut, dan context menu tidak menghasilkan anti-cheat strike', () => {
-    assert(!rootEngine.includes("document.addEventListener('copy'"), 'Event copy tidak boleh diberi strike');
-    assert(!rootEngine.includes("document.addEventListener('paste'"), 'Event paste tidak boleh diberi strike');
-    assert(!rootEngine.includes("document.addEventListener('contextmenu'"), 'Long-press/context menu tidak boleh diberi strike');
-    assert(!rootEngine.includes("document.addEventListener('selectstart'"), 'Seleksi teks untuk long-press diperbolehkan');
-    assert(!rootEngine.includes("handleAntiCheatEvent('📋 Percobaan Clipboard"), 'Shortcut clipboard tidak boleh menghasilkan strike');
+test('12. Copy, paste, cut, select, context menu, dan shortcut clipboard memicu peringatan anti-cheat', () => {
+    assert(rootEngine.includes("document.addEventListener('copy'"), 'Event copy harus memicu anti-cheat');
+    assert(rootEngine.includes("document.addEventListener('paste'"), 'Event paste harus memicu anti-cheat');
+    assert(rootEngine.includes("document.addEventListener('cut'"), 'Event cut harus memicu anti-cheat');
+    assert(rootEngine.includes("document.addEventListener('contextmenu'"), 'Klik kanan/context menu harus memicu anti-cheat');
+    assert(rootEngine.includes("document.addEventListener('selectstart'"), 'Seleksi teks saat ujian harus diblokir');
+    assert(rootEngine.includes("handleAntiCheatEvent('📋 Percobaan Clipboard / Copy-Paste Shortcut Terdeteksi')"), 'Shortcut clipboard harus menghasilkan peringatan anti-cheat');
 });
 
-test('13. Screenshot dan perpindahan halaman tetap memiliki deteksi yang tersedia', () => {
-    assert(rootEngine.includes("e.key === 'PrintScreen'"), 'PrintScreen tetap terdeteksi');
-    assert(rootEngine.includes('Gesture Usap 3 Jari'), 'Gesture screenshot 3 jari tetap terdeteksi jika browser melaporkannya');
-    assert(rootEngine.includes("document.addEventListener('visibilitychange'"), 'Pindah tab/aplikasi tetap dipantau');
+test('13. Screenshot dan perpindahan halaman memiliki deteksi instan dan ketat', () => {
+    assert(rootEngine.includes("e.key === 'PrintScreen'"), 'PrintScreen harus terdeteksi');
+    assert(rootEngine.includes('Gesture Usap 3 Jari'), 'Gesture screenshot 3 jari harus terdeteksi');
+    assert(rootEngine.includes('getDisplayMedia'), 'API screen capture harus diblokir selama ujian');
+    assert(rootEngine.includes("document.addEventListener('visibilitychange'"), 'Pindah tab/aplikasi harus dipantau');
     assert(rootEngine.includes("window.addEventListener('beforeunload'"), 'Keluar/reload halaman tetap diberi konfirmasi');
-    assert(rootEngine.includes('isMobileOrTouchDevice() ? 2500 : 1800'), 'Grace period mobile dipersingkat untuk deteksi meninggalkan browser');
+    assert(rootEngine.includes('setExamPrivacyShield(true)'), 'Privacy shield harus aktif saat fokus hilang/screenshot');
 });
 
 
 test('14. checkAnswer mendeklarasikan activeModId di scope sendiri', () => {
-    const start = rootEngine.indexOf('function checkAnswer(isAutoTimeout = false) {');
-    const end = rootEngine.indexOf('\nfunction nextQuestion() {', start);
-    const body = rootEngine.slice(start, end);
+    const normalizedRoot = rootEngine.replace(/\r\n/g, '\n');
+    const start = normalizedRoot.indexOf('function checkAnswer(isAutoTimeout = false) {');
+    const end = normalizedRoot.indexOf('\nfunction nextQuestion() {', start);
+    const body = normalizedRoot.slice(start, end);
     assert(body.includes('const activeModId ='), 'activeModId harus tersedia di dalam checkAnswer');
     assert(body.includes('detailedAnswers[origQIdx] ='), 'Snapshot jawaban disimpan sebelum topic metadata dipakai');
     assert(body.includes('finally {\n        isCheckingAnswer = false;'), 'Flag pemeriksaan harus selalu direset');
 });
 
 test('15. nextQuestion selalu melepas guard transisi jika pemuatan soal gagal', () => {
-    const start = rootEngine.indexOf('function nextQuestion() {');
-    const end = rootEngine.indexOf('\nasync function finishQuiz()', start);
-    const body = rootEngine.slice(start, end);
+    const normalizedRoot = rootEngine.replace(/\r\n/g, '\n');
+    const start = normalizedRoot.indexOf('function nextQuestion() {');
+    const end = normalizedRoot.indexOf('\nasync function finishQuiz()', start);
+    const body = normalizedRoot.slice(start, end);
     assert(body.includes('finally {\n            isTransitioningQuestion = false;'), 'Guard transisi wajib direset di finally');
     assert(body.includes('currentQ = previousQ;'), 'Indeks soal dikembalikan jika loadQuestion gagal');
     assert(body.includes('Coba Lanjutkan Lagi'), 'Tombol dipulihkan jika transisi gagal');
@@ -153,9 +157,10 @@ test('15. nextQuestion selalu melepas guard transisi jika pemuatan soal gagal', 
 });
 
 test('16. Handler tombol menangani error pemeriksaan dan memulihkan tombol', () => {
-    const start = rootEngine.indexOf('function handleSingleNextAction() {');
-    const end = rootEngine.indexOf('\nwindow.handleSingleNextAction', start);
-    const body = rootEngine.slice(start, end);
+    const normalizedRoot = rootEngine.replace(/\r\n/g, '\n');
+    const start = normalizedRoot.indexOf('function handleSingleNextAction() {');
+    const end = normalizedRoot.indexOf('\nwindow.handleSingleNextAction', start);
+    const body = normalizedRoot.slice(start, end);
     assert(body.includes('try {\n        checkAnswer(false);'), 'Pemeriksaan harus ditangani dengan try/catch');
     assert(body.includes('catch (error)'), 'Error pemeriksaan tidak boleh mematikan alur');
     assert(body.includes('nextQuestion();'), 'Klik kedua tetap meneruskan soal');

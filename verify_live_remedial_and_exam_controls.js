@@ -42,9 +42,12 @@ test('Reload saves and restores progress without treating pagehide as a strike',
     assert(root.includes('Reload diperbolehkan'));
 });
 
-test('Clipboard copy, cut and paste are allowed; screenshot and DevTools guards remain', () => {
-    assert(root.includes('Copy, cut, dan paste diperbolehkan'));
-    assert(!root.includes("['c', 'C', 'x', 'X', 'v', 'V'].includes(e.key)"));
+test('Clipboard copy, cut, paste, contextmenu, screenshot and DevTools guards all active', () => {
+    assert(root.includes("document.addEventListener('copy'"));
+    assert(root.includes("document.addEventListener('paste'"));
+    assert(root.includes("document.addEventListener('cut'"));
+    assert(root.includes("document.addEventListener('contextmenu'"));
+    assert(root.includes("['c', 'C', 'x', 'X', 'v', 'V'].includes(e.key)"));
     assert(root.includes("e.key === 'PrintScreen'"));
     assert(root.includes("['I', 'i', 'J', 'j', 'C', 'c', 'K', 'k'].includes(e.key)"));
 });

@@ -37,12 +37,13 @@ console.log('══════════════════════�
     assert(code.includes('Peringatan Keras Toleransi (#2 dari 3)') || code.includes('#2 dari 3'), `${filePath}: Harus ada peringatan #2`);
     assert(code.includes('triggerCheatPenalty'), `${filePath}: Harus ada penalti diskualifikasi pada strike ke-3`);
 
-    // E. Screenshot guard tetap aktif, sedangkan clipboard/long-press tidak boleh
-    // memicu strike karena dapat digunakan untuk aksesibilitas dan tidak membuktikan kecurangan.
+    // E. Screenshot, perpindahan halaman, dan clipboard/copy-paste semuanya wajib memicu peringatan anti-cheat.
     assert(code.includes('PrintScreen'), `${filePath}: Harus mendeteksi tombol PrintScreen`);
-    assert(code.includes('Copy, cut, dan paste diperbolehkan'), `${filePath}: Copy/paste harus diperbolehkan`);
-    assert(code.includes('Seleksi teks, long-press, copy, paste, cut, dan menu konteks diperbolehkan.'), `${filePath}: Long-press dan menu konteks tidak boleh memicu false positive`);
-    assert(!code.includes("handleAntiCheatEvent('📋 Percobaan Clipboard / Copy-Paste Shortcut')"), `${filePath}: Clipboard tidak boleh menambah strike`);
+    assert(code.includes('document.addEventListener(\'copy\''), `${filePath}: Harus memblokir event copy dan memberi peringatan`);
+    assert(code.includes('document.addEventListener(\'paste\''), `${filePath}: Harus memblokir event paste dan memberi peringatan`);
+    assert(code.includes('document.addEventListener(\'cut\''), `${filePath}: Harus memblokir event cut dan memberi peringatan`);
+    assert(code.includes('document.addEventListener(\'contextmenu\''), `${filePath}: Harus memblokir menu konteks/klik kanan`);
+    assert(code.includes("handleAntiCheatEvent('📋 Percobaan Clipboard / Copy-Paste Shortcut Terdeteksi')"), `${filePath}: Shortcut Ctrl+C/V/X harus memicu peringatan anti-cheat`);
 });
 console.log('  ✅ PASS: 1. Kode quiz_engine.js di root dan src/ terverifikasi mendukung umpan balik instan & anti-cheat ketat.');
 

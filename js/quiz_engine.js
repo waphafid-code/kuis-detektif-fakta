@@ -286,6 +286,8 @@ async function restoreQuizSession() {
 
         switchScreen('quiz');
         loadQuestion(currentQ);
+        broadcastExamTabLock();
+        setExamPrivacyShield(false);
         setTimeout(startBGM, 200);
         showToast('Sesi kuis berhasil dipulihkan! Lanjutkan misi!', '🚀');
     } catch(e) {
@@ -300,6 +302,8 @@ function discardQuizSession() {
     isCheatingTriggered = false;
     isCheatWarningActive = false;
     cheatStrikes = 0;
+    setExamPrivacyShield(false);
+    releaseExamTabLock();
     sessionStorage.removeItem(SESSION_QUIZ_ACTIVE_KEY);
     localStorage.removeItem('quizmaster_active_exam_session_backup');
     releaseExamWakeLock();
@@ -500,6 +504,71 @@ document.addEventListener('mozfullscreenchange', handleFullscreenChange);
 document.addEventListener('MSFullscreenChange', handleFullscreenChange);
 
 // 🛡️ Sistem Toleransi Anti-Cheat (3-Strike Warning System)
+const EXAM_TAB_ID = 'tab_' + Math.random().toString(36).slice(2) + '_' + Date.now();
+const EXAM_TAB_LOCK_KEY = 'quizmaster_exam_tab_lock';
+
+function setExamPrivacyShield(enabled) {
+    try {
+        if (typeof document === 'undefined' || !document.body) return;
+        if (enabled) {
+            document.body.classList.add('exam-privacy-blur');
+        } else {
+            document.body.classList.remove('exam-privacy-blur');
+        }
+    } catch(e) {}
+}
+window.setExamPrivacyShield = setExamPrivacyShield;
+
+function clearExamClipboard(noticeText = '⚠️ Menyalin soal atau jawaban dilarang selama ujian berlangsung!') {
+    try {
+        if (typeof navigator !== 'undefined' && navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+            navigator.clipboard.writeText(noticeText).catch(() => {});
+        }
+    } catch(e) {}
+}
+
+function broadcastExamTabLock() {
+    try {
+        if (typeof localStorage === 'undefined') return;
+        if (typeof isCurrentStudentDemo === 'function' && isCurrentStudentDemo()) return;
+        localStorage.setItem(EXAM_TAB_LOCK_KEY, JSON.stringify({
+            tabId: EXAM_TAB_ID,
+            studentName: typeof studentName !== 'undefined' ? studentName : '',
+            ts: Date.now()
+        }));
+    } catch(e) {}
+}
+
+function releaseExamTabLock() {
+    try {
+        if (typeof localStorage === 'undefined') return;
+        const raw = localStorage.getItem(EXAM_TAB_LOCK_KEY);
+        if (!raw) return;
+        const parsed = JSON.parse(raw);
+        if (!parsed || parsed.tabId === EXAM_TAB_ID) {
+            localStorage.removeItem(EXAM_TAB_LOCK_KEY);
+        }
+    } catch(e) {}
+}
+
+// 🎥 BLOKIR API SCREEN CAPTURE / RECORDING SAAT UJIAN AKTIF
+(function installScreenCaptureGuard() {
+    try {
+        if (typeof navigator !== 'undefined' && navigator.mediaDevices && typeof navigator.mediaDevices.getDisplayMedia === 'function' && !navigator.mediaDevices.__examGuardInstalled) {
+            const origGetDisplayMedia = navigator.mediaDevices.getDisplayMedia.bind(navigator.mediaDevices);
+            navigator.mediaDevices.getDisplayMedia = function(...args) {
+                if (typeof isQuizActive === 'function' && isQuizActive() && !(typeof isCurrentStudentDemo === 'function' && isCurrentStudentDemo())) {
+                    setExamPrivacyShield(true);
+                    handleAntiCheatEvent('🎥 Percobaan Merekam / Membagikan Layar (Screen Capture) Terdeteksi');
+                    return Promise.reject(new Error('Screen capture dilarang selama ujian berlangsung.'));
+                }
+                return origGetDisplayMedia(...args);
+            };
+            navigator.mediaDevices.__examGuardInstalled = true;
+        }
+    } catch(e) {}
+})();
+
 function handleAntiCheatEvent(reason = 'Kecurangan / Aktivitas Terlarang', isCritical = false) {
     if (typeof isCurrentStudentDemo === 'function' && isCurrentStudentDemo()) return; // 🧪 Akun Demo bebas tanpa anti-cheat
     if (isCheatingTriggered || isCheatWarningActive || isQuizFinishing) return;
@@ -547,6 +616,7 @@ function handleAntiCheatEvent(reason = 'Kecurangan / Aktivitas Terlarang', isCri
 
 function resumeFromCheatWarning() {
     clearFullscreenWarningCountdown();
+    setExamPrivacyShield(false);
     sfxClick();
     const modal = document.getElementById('cheat-warning-modal');
     if (modal) modal.classList.remove('active');
@@ -573,6 +643,8 @@ function triggerCheatPenalty(reason = 'Kecurangan / Buka Tab Lain') {
 
     isCheatingTriggered = true;
     isCheatWarningActive = false;
+    setExamPrivacyShield(false);
+    releaseExamTabLock();
     const warningModal = document.getElementById('cheat-warning-modal');
     if (warningModal) warningModal.classList.remove('active');
     removeExamWatermark();
@@ -623,6 +695,8 @@ function triggerCheatPenalty(reason = 'Kecurangan / Buka Tab Lain') {
 
 function acknowledgeCheatPenalty() {
     clearFullscreenWarningCountdown();
+    setExamPrivacyShield(false);
+    releaseExamTabLock();
     exitExamFullscreen();
     removeExamWatermark();
     document.getElementById('cheat-modal').classList.remove('active');
@@ -636,8 +710,9 @@ function acknowledgeCheatPenalty() {
     goHome();
 }
 
-// 👁️ 1. DETEKSI PERPINDAHAN TAB / KELUAR DARI BROWSER (ANTI-CHEAT DENGAN GRACE PERIOD 8 DETIK UNTUK NOTIFIKASI MOBILE)
+// 👁️ 1. DETEKSI PERPINDAHAN HALAMAN / TAB / JENDELA / APLIKASI LAIN
 let blurGraceTimer = null;
+let blurStartedAt = 0;
 
 function clearBlurGraceTimer() {
     if (blurGraceTimer) {
@@ -649,31 +724,33 @@ function clearBlurGraceTimer() {
 document.addEventListener('visibilitychange', () => {
     if (!isQuizActive() || isCheatWarningActive || isQuizFinishing) {
         clearBlurGraceTimer();
+        if (!isCheatWarningActive) setExamPrivacyShield(false);
         return;
     }
+    if (typeof isCurrentStudentDemo === 'function' && isCurrentStudentDemo()) return;
     if (document.hidden) {
         clearBlurGraceTimer();
-        // Toleransi: 15 detik di ponsel/tablet (notifikasi/panggilan/keyboard), 8 detik di desktop
-        const graceMs = isMobileOrTouchDevice() ? 2500 : 1800;
-        blurGraceTimer = setTimeout(() => {
-            if (document.hidden && isQuizActive() && !isCheatWarningActive && !isQuizFinishing) {
-                handleAntiCheatEvent('🌐 Berpindah Tab / Meminimalkan Browser');
-            }
-            blurGraceTimer = null;
-        }, graceMs);
+        blurStartedAt = 0;
+        setExamPrivacyShield(true);
+        handleAntiCheatEvent('🌐 Berpindah Tab / Meminimalkan Browser');
     } else {
         clearBlurGraceTimer();
+        if (!isCheatWarningActive) setExamPrivacyShield(false);
     }
 });
 
 window.addEventListener('blur', () => {
     if (!isQuizActive() || isCheatWarningActive || isQuizFinishing) return;
+    if (typeof isCurrentStudentDemo === 'function' && isCurrentStudentDemo()) return;
     clearBlurGraceTimer();
+    blurStartedAt = Date.now();
+    setExamPrivacyShield(true);
     // 🛡️ ANTI-CHEAT FLOATING WINDOW & POP-UP APP:
     // Aktifkan timer grace period bahkan saat document.hidden bernilai false (misal aplikasi mengambang / split-screen)
     const graceMs = isMobileOrTouchDevice() ? 3000 : 1800;
     blurGraceTimer = setTimeout(() => {
         if (isQuizActive() && !isCheatWarningActive && !isQuizFinishing) {
+            blurStartedAt = 0;
             handleAntiCheatEvent('🌐 Kehilangan Fokus / Jendela Mengambang (Floating App) Terdeteksi');
         }
         blurGraceTimer = null;
@@ -740,41 +817,74 @@ window.addEventListener('resize', () => {
 
 window.addEventListener('focus', () => {
     clearBlurGraceTimer();
+    const blurDuration = blurStartedAt > 0 ? (Date.now() - blurStartedAt) : 0;
+    blurStartedAt = 0;
+    if (isQuizActive() && !isCheatWarningActive && !isQuizFinishing && !(typeof isCurrentStudentDemo === 'function' && isCurrentStudentDemo())) {
+        if (blurDuration >= 500) {
+            handleAntiCheatEvent('🌐 Kehilangan Fokus / Berpindah Jendela / Aplikasi Lain Terdeteksi');
+        } else {
+            setExamPrivacyShield(false);
+        }
+    } else if (!isCheatWarningActive) {
+        setExamPrivacyShield(false);
+    }
 });
 
 // 📱 GESTURE TANGKAPAN LAYAR 3 JARI (PADA SMARTPHONE ANDROID)
-document.addEventListener('touchstart', (e) => {
+function handleThreeFingerTouch(e) {
     if (!isQuizActive() || isCheatWarningActive || isQuizFinishing) return;
     if (typeof isCurrentStudentDemo === 'function' && isCurrentStudentDemo()) return;
     if (e.touches && e.touches.length >= 3) {
         try { e.preventDefault(); } catch(err) {}
         try { e.stopPropagation(); } catch(err) {}
+        setExamPrivacyShield(true);
         handleAntiCheatEvent('📸 Gesture Usap 3 Jari (Screenshot Ponsel) Terdeteksi');
     }
-}, { passive: false });
+}
+document.addEventListener('touchstart', handleThreeFingerTouch, { passive: false, capture: true });
+document.addEventListener('touchmove', handleThreeFingerTouch, { passive: false, capture: true });
 
 // 🖨️ DETEKSI PERCOBAAN PRINT / CETAK HALAMAN
 window.addEventListener('beforeprint', (e) => {
     if (isQuizActive()) {
         if (typeof isCurrentStudentDemo === 'function' && isCurrentStudentDemo()) return;
         try { e.preventDefault(); } catch(err) {}
+        setExamPrivacyShield(true);
         handleAntiCheatEvent('🖨️ Percobaan Mencetak / Export Halaman (Print Screen)');
     }
 });
 
 // 📸 2. DETEKSI SCREENSHOT / TANGKAPAN LAYAR / SNIPPING TOOL
+function isScreenshotKeyEvent(e) {
+    if (!e) return false;
+    if (e.key === 'PrintScreen' || e.code === 'PrintScreen' || e.keyCode === 44) return true;
+    const isSnipMacOrWin = (e.ctrlKey || e.metaKey) && e.shiftKey && (
+        ['S', 's', '3', '4', '5', '6', '#', '$', '%', '^'].includes(e.key) ||
+        ['KeyS', 'Digit3', 'Digit4', 'Digit5', 'Digit6'].includes(e.code)
+    );
+    return isSnipMacOrWin;
+}
+
 window.addEventListener('keyup', (e) => {
     if (!isQuizActive()) return;
-    if (e.key === 'PrintScreen' || e.keyCode === 44) {
-        e.preventDefault();
-        try { navigator.clipboard.writeText(''); } catch(err) {}
-        handleAntiCheatEvent('📸 Screenshot / PrintScreen Terdeteksi');
+    if (typeof isCurrentStudentDemo === 'function' && isCurrentStudentDemo()) return;
+    if (isScreenshotKeyEvent(e)) {
+        try { e.preventDefault(); } catch(err) {}
+        try { e.stopPropagation(); } catch(err) {}
+        clearExamClipboard();
+        setExamPrivacyShield(true);
+        handleAntiCheatEvent(
+            (e.key === 'PrintScreen' || e.code === 'PrintScreen' || e.keyCode === 44)
+                ? '📸 Screenshot / PrintScreen Terdeteksi'
+                : '📸 Screenshot / Snipping Tool Terdeteksi'
+        );
     }
-});
+}, true);
 
-// 🔒 3. SECURITY HARDENING: DEVTOOLS, SHORTCUTS, SNIPPING TOOL, PRINT & VIEW SOURCE BLOCKER
+// 🔒 3. SECURITY HARDENING: DEVTOOLS, SHORTCUTS, SNIPPING TOOL, CLIPBOARD, PRINT & VIEW SOURCE BLOCKER
 window.addEventListener('keydown', (e) => {
-    if (!isQuizActive()) return;
+    if (!screens.quiz || !screens.quiz.classList.contains('active') || isCheatingTriggered || isQuizFinishing) return;
+    if (typeof isCurrentStudentDemo === 'function' && isCurrentStudentDemo()) return;
 
     // F12 (Developer Tools)
     if (e.key === 'F12' || e.keyCode === 123) {
@@ -784,11 +894,27 @@ window.addEventListener('keydown', (e) => {
         return;
     }
 
-    // Ctrl+Shift+I / Ctrl+Shift+J / Ctrl+Shift+C (Inspect / Console)
-    if ((e.ctrlKey || e.metaKey) && e.shiftKey && ['I', 'i', 'J', 'j', 'C', 'c', 'K', 'k'].includes(e.key)) {
+    // Ctrl+Shift+I/J/C/K atau Cmd+Option+I/J/C/U (Inspect / Console)
+    const isWinDevTools = (e.ctrlKey || e.metaKey) && e.shiftKey && ['I', 'i', 'J', 'j', 'C', 'c', 'K', 'k'].includes(e.key);
+    const isMacDevTools = e.metaKey && e.altKey && ['I', 'i', 'J', 'j', 'C', 'c', 'U', 'u'].includes(e.key);
+    if (isWinDevTools || isMacDevTools) {
         e.preventDefault();
         e.stopPropagation();
         handleAntiCheatEvent('🛠️ Percobaan Inspect Element / DevTools');
+        return;
+    }
+
+    // Windows Snipping Tool (Win+Shift+S), Ctrl+Shift+S, Mac Screenshot (Cmd+Shift+3/4/5/6), PrintScreen
+    if (isScreenshotKeyEvent(e)) {
+        e.preventDefault();
+        e.stopPropagation();
+        clearExamClipboard();
+        setExamPrivacyShield(true);
+        handleAntiCheatEvent(
+            (e.key === 'PrintScreen' || e.code === 'PrintScreen' || e.keyCode === 44)
+                ? '📸 Screenshot / PrintScreen Terdeteksi'
+                : '📸 Screenshot / Snipping Tool Terdeteksi'
+        );
         return;
     }
 
@@ -801,43 +927,97 @@ window.addEventListener('keydown', (e) => {
     }
 
     // Ctrl+A / Cmd+A (Select All Blocker)
-    if ((e.ctrlKey || e.metaKey) && ['a', 'A'].includes(e.key)) {
+    if ((e.ctrlKey || e.metaKey) && (['a', 'A'].includes(e.key) || e.code === 'KeyA')) {
         e.preventDefault();
         e.stopPropagation();
-        showToast('⚠️ Tindakan dilarang: Memilih seluruh teks dinonaktifkan demi integritas asesmen!', '🔒');
+        handleAntiCheatEvent('📋 Percobaan Memilih Semua Teks (Ctrl+A) Terdeteksi');
         return;
     }
 
-    // Copy, cut, dan paste diperbolehkan untuk kebutuhan aksesibilitas siswa.
-    // Shortcut screenshot / DevTools tetap ditangani oleh blok khusus di atas.
-    
-    // PrintScreen / Screenshot keydown blocker
-    if (e.key === 'PrintScreen' || e.keyCode === 44) {
-        e.preventDefault();
-        try { navigator.clipboard.writeText(''); } catch(err) {}
-        handleAntiCheatEvent('📸 Screenshot / PrintScreen Terdeteksi');
-        return;
-    }
-
-    // Windows Snipping tool (Win+Shift+S), Mac Screenshot (Cmd+Shift+3/4/5)
-    if ((e.ctrlKey || e.metaKey) && e.shiftKey && ['S', 's', '3', '4', '5'].includes(e.key)) {
+    // Ctrl+C / Ctrl+X / Ctrl+V (Copy / Cut / Paste Shortcut Blocker)
+    if ((e.ctrlKey || e.metaKey) && (['c', 'C', 'x', 'X', 'v', 'V'].includes(e.key) || ['KeyC', 'KeyX', 'KeyV'].includes(e.code))) {
         e.preventDefault();
         e.stopPropagation();
-        try { navigator.clipboard.writeText(''); } catch(err) {}
-        handleAntiCheatEvent('📸 Screenshot / Snipping Tool Terdeteksi');
+        clearExamClipboard();
+        handleAntiCheatEvent('📋 Percobaan Clipboard / Copy-Paste Shortcut Terdeteksi');
         return;
     }
-});
+}, true);
 
 // 📋 4. DETEKSI & PENCEGAHAN COPY - PASTE - CUT - KLIK KANAN - DRAG - SELECT
-// Seleksi teks, long-press, copy, paste, cut, dan menu konteks diperbolehkan.
-// Browser/Android dapat mengirim event ini untuk gesture normal; jangan jadikan strike.
-// Deteksi screenshot yang tersedia (PrintScreen / shortcut / gesture 3 jari) tetap aktif.
+function isQuizCopyPasteBlocked() {
+    if (!screens.quiz || !screens.quiz.classList.contains('active') || isCheatingTriggered || isQuizFinishing) return false;
+    if (typeof isCurrentStudentDemo === 'function' && isCurrentStudentDemo()) return false;
+    return true;
+}
 
-document.addEventListener('dragstart', (e) => {
-    if (isQuizActive() && e.target && e.target.closest && e.target.closest('.question-content')) {
+document.addEventListener('copy', (e) => {
+    if (!isQuizCopyPasteBlocked()) return;
+    e.preventDefault();
+    e.stopPropagation();
+    try {
+        if (e.clipboardData && typeof e.clipboardData.setData === 'function') {
+            e.clipboardData.setData('text/plain', '⚠️ Menyalin soal ujian dilarang demi integritas asesmen!');
+        }
+    } catch(err) {}
+    clearExamClipboard();
+    handleAntiCheatEvent('📋 Percobaan Copy Teks Ujian Terdeteksi');
+}, true);
+
+document.addEventListener('cut', (e) => {
+    if (!isQuizCopyPasteBlocked()) return;
+    e.preventDefault();
+    e.stopPropagation();
+    clearExamClipboard();
+    handleAntiCheatEvent('✂️ Percobaan Cut Teks Ujian Terdeteksi');
+}, true);
+
+document.addEventListener('paste', (e) => {
+    if (!isQuizCopyPasteBlocked()) return;
+    e.preventDefault();
+    e.stopPropagation();
+    handleAntiCheatEvent('📋 Percobaan Paste / Menempel Teks Terdeteksi');
+}, true);
+
+document.addEventListener('contextmenu', (e) => {
+    if (!isQuizCopyPasteBlocked()) return;
+    e.preventDefault();
+    e.stopPropagation();
+    handleAntiCheatEvent('🖱️ Klik Kanan / Menu Konteks (Copy) Terdeteksi');
+}, true);
+
+document.addEventListener('selectstart', (e) => {
+    if (!isQuizCopyPasteBlocked()) return;
+    const tag = e.target && e.target.tagName ? e.target.tagName.toUpperCase() : '';
+    if (tag !== 'INPUT' && tag !== 'TEXTAREA') {
         e.preventDefault();
     }
+}, true);
+
+document.addEventListener('dragstart', (e) => {
+    if (isQuizCopyPasteBlocked()) {
+        e.preventDefault();
+    }
+}, true);
+
+document.addEventListener('drop', (e) => {
+    if (isQuizCopyPasteBlocked()) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+}, true);
+
+// 📑 4B. DETEKSI MULTI-TAB UJIAN BERSAMAAN (CROSS-TAB LOCK)
+window.addEventListener('storage', (e) => {
+    if (!e || e.key !== EXAM_TAB_LOCK_KEY || !e.newValue) return;
+    if (!isQuizActive() || isCheatWarningActive || isQuizFinishing) return;
+    if (typeof isCurrentStudentDemo === 'function' && isCurrentStudentDemo()) return;
+    try {
+        const lock = JSON.parse(e.newValue);
+        if (lock && lock.tabId && lock.tabId !== EXAM_TAB_ID) {
+            handleAntiCheatEvent('📑 Terdeteksi Membuka Lebih Dari 1 Tab Ujian Bersamaan');
+        }
+    } catch(err) {}
 });
 
 // 📱 5. DETEKSI SPLIT SCREEN / LAYAR TERBELAH / RESIZE DRASTIS DI HP & DESKTOP
@@ -1404,6 +1584,8 @@ function startQuizActual() {
     renderExamWatermark();
     loadQuestion(0);
     saveCurrentQuizSession();
+    broadcastExamTabLock();
+    setExamPrivacyShield(false);
     setTimeout(startBGM, 200);
     requestExamWakeLock();
     try { history.pushState({ inQuiz: true }, '', window.location.href); } catch(e) {}
@@ -2683,6 +2865,8 @@ async function finishQuiz() {
     try {
         clearFullscreenWarningCountdown();
         clearBlurGraceTimer();
+        setExamPrivacyShield(false);
+        releaseExamTabLock();
         isCheatWarningActive = false;
         removeExamWatermark();
         const warningModal = document.getElementById('cheat-warning-modal');
