@@ -160,7 +160,7 @@ async function saveRecordToFirebase(record, proofCode) {
             list: Array.isArray(record.wrongQuestions) ? record.wrongQuestions : [],
             ans: Array.isArray(record.studentAnswers) ? record.studentAnswers : [],
             moduleId: modId,
-            moduleTitle: record.moduleTitle || (modId === 'modul_tryout_terpadu' ? 'Tryout Terpadu 60 Soal (6 Materi)' : (modId === 'modul_jaringan_keamanan' ? 'Penilaian Harian: Infrastruktur Jaringan & Keamanan Digital' : 'Misi Detektif Fakta')),
+            moduleTitle: record.moduleTitle || (typeof moduleTitleFor === 'function' ? moduleTitleFor(modId) : 'Misi Detektif Fakta'),
             proofId: proofCode || record.submissionProofId || '',
             isRemedial: !!record.isRemedial,
             originalScore: record.isRemedial ? (record.originalScore ?? null) : null,
@@ -174,28 +174,37 @@ async function saveRecordToFirebase(record, proofCode) {
         time_str: record.time || '00:00',
         quiz_date: record.date || new Date().toLocaleDateString('id-ID'),
         submission_proof_id: proofCode || record.submissionProofId || '',
-        submitted_at: Date.now()
+        submitted_at: Number(record.submittedAt) || Date.now()
     };
 
     let rtdbSuccess = false;
 
-    // 1. Simpan ke Firebase Realtime Database via REST API (Ultra-cepat, sub-millisecond)
-    try {
-        const controller = new AbortController();
-        const tId = setTimeout(() => controller.abort(), 8000);
-        const res = await fetch(`${dbUrl}/quiz_results/${encodeURIComponent(key)}.json`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload),
-            signal: controller.signal
-        });
-        clearTimeout(tId);
-        if (res.ok) {
-            rtdbSuccess = true;
-            console.log('🔥 [Firebase RTDB] Nilai siswa berhasil disimpan:', record.name, 'Key:', key);
+    // 1. Simpan ke Firebase Realtime Database via REST API.
+    // Dicoba hingga 3x dengan jeda acak (jitter) agar lonjakan ratusan siswa yang selesai bersamaan tidak membuat nilai hilang.
+    for (let attempt = 0; attempt < 3 && !rtdbSuccess; attempt++) {
+        if (attempt > 0) await new Promise(r => setTimeout(r, 600 * attempt + Math.random() * 900));
+        let tId = null;
+        try {
+            const controller = new AbortController();
+            tId = setTimeout(() => controller.abort(), 7000);
+            const res = await fetch(`${dbUrl}/quiz_results/${encodeURIComponent(key)}.json`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload),
+                signal: controller.signal
+            });
+            if (res.ok) {
+                rtdbSuccess = true;
+                console.log('🔥 [Firebase RTDB] Nilai siswa berhasil disimpan:', record.name, 'Key:', key);
+            } else {
+                console.warn('Firebase RTDB save HTTP', res.status, 'percobaan', attempt + 1);
+                if (res.status >= 400 && res.status < 500 && res.status !== 408 && res.status !== 429) break;
+            }
+        } catch (e) {
+            console.warn('Firebase RTDB save warning:', e.message);
+        } finally {
+            if (tId) clearTimeout(tId);
         }
-    } catch (e) {
-        console.warn('Firebase RTDB save warning:', e.message);
     }
 
     // 2. Simpan juga ke Cloud Firestore jika aktif (non-blocking)
@@ -213,17 +222,8 @@ window.saveRecordToFirebase = saveRecordToFirebase;
 /**
  * Mengambil seluruh data nilai dari Firebase Realtime Database (atau Firestore)
  */
-async function fetchFirebaseRecords() {
-    const cfg = getFirebaseConfig();
-    const dbUrl = (cfg && cfg.databaseURL) ? cfg.databaseURL.replace(/\/$/, '') : 'https://kuis-informatika-c8781-default-rtdb.firebaseio.com';
-
-    // 1. Ambil dari Realtime Database REST API (Tercepat & 100% Bebas Kuota)
-    try {
-        const res = await fetch(`${dbUrl}/quiz_results.json`);
-        if (res.ok) {
-            const data = await res.json();
-            if (data && typeof data === 'object') {
-                const records = [];
+function mapFirebaseRows(data) {
+    const records = [];
                 Object.entries(data).forEach(([key, r]) => {
                     if (!r || typeof r !== 'object') return;
                     const sName = String(r.student_name || '');
@@ -249,6 +249,7 @@ async function fetchFirebaseRecords() {
                                     localDels.push(wq.deletedKey);
                                     localStorage.setItem('quizmaster_deleted_records', JSON.stringify(localDels));
                                 }
+                                if (typeof markDeletedAt === 'function') markDeletedAt(wq.deletedKey, wq.timestamp);
                                 if (typeof purgeStudentFromLocalStorage === 'function') {
                                     purgeStudentFromLocalStorage(wq.deletedName, wq.deletedClass, wq.deletedModule);
                                 }
@@ -287,6 +288,7 @@ async function fetchFirebaseRecords() {
 
                     records.push({
                         id: key,
+                        submittedAt: Number(r.submitted_at) || 0,
                         name: r.student_name || 'Siswa',
                         class: r.student_class || '-',
                         score: Number(r.score) || 0,
@@ -300,11 +302,56 @@ async function fetchFirebaseRecords() {
                         time: r.time_str || '00:00',
                         date: r.quiz_date || '',
                         moduleId: modId,
-                        moduleTitle: extractedModTitle || (modId === 'modul_tryout_terpadu' ? 'Tryout Terpadu 60 Soal (6 Materi)' : (modId === 'modul_jaringan_keamanan' ? 'Penilaian Harian: Infrastruktur Jaringan & Keamanan Digital' : 'Misi Detektif Fakta')),
+                        moduleTitle: extractedModTitle || (typeof moduleTitleFor === 'function' ? moduleTitleFor(modId) : 'Misi Detektif Fakta'),
                         submissionProofId: r.submission_proof_id || (r.wrong_questions ? r.wrong_questions.proofId : '') || key,
                         ...((r.wrong_questions && r.wrong_questions.isRemedial) ? { isRemedial: true, originalScore: r.wrong_questions.originalScore, remedialScore: r.wrong_questions.remedialScore } : {})
                     });
                 });
+
+    return records;
+}
+
+// Ambil HANYA catatan satu siswa: daftar kunci (shallow, ringan) -> saring -> unduh kunci yang cocok.
+// Menggantikan unduhan seluruh basis data di setiap HP siswa.
+async function fetchFirebaseRecordsForStudent(name, cls) {
+    const cfg = getFirebaseConfig();
+    const dbUrl = (cfg && cfg.databaseURL) ? cfg.databaseURL.replace(/\/$/, '') : 'https://kuis-informatika-c8781-default-rtdb.firebaseio.com';
+    const squash = v => String(v || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+    const nm = squash(name), cl = squash(cls);
+    if (!nm) return [];
+    const res = await fetch(`${dbUrl}/quiz_results.json?shallow=true`);
+    if (!res.ok) return [];
+    const keysObj = await res.json();
+    if (!keysObj || typeof keysObj !== 'object') return [];
+    const hits = Object.keys(keysObj).filter(k => {
+        if (!k.startsWith('rec_')) return false;
+        const sk = squash(k.slice(4));
+        return sk.includes(nm) && (!cl || sk.includes(cl));
+    }).slice(0, 40);
+    const out = [];
+    await Promise.all(hits.map(async key => {
+        try {
+            const r = await fetch(`${dbUrl}/quiz_results/${encodeURIComponent(key)}.json`);
+            if (!r.ok) return;
+            const d = await r.json();
+            if (d && typeof d === 'object') out.push(...mapFirebaseRows({ [key]: d }));
+        } catch (e) {}
+    }));
+    return out;
+}
+window.fetchFirebaseRecordsForStudent = fetchFirebaseRecordsForStudent;
+
+async function fetchFirebaseRecords() {
+    const cfg = getFirebaseConfig();
+    const dbUrl = (cfg && cfg.databaseURL) ? cfg.databaseURL.replace(/\/$/, '') : 'https://kuis-informatika-c8781-default-rtdb.firebaseio.com';
+
+    // 1. Ambil dari Realtime Database REST API (Tercepat & 100% Bebas Kuota)
+    try {
+        const res = await fetch(`${dbUrl}/quiz_results.json`);
+        if (res.ok) {
+            const data = await res.json();
+            if (data && typeof data === 'object') {
+                const records = mapFirebaseRows(data);
 
                 console.log(`🔥 [Firebase RTDB] Berhasil memuat ${records.length} data siswa.`);
                 return records;
@@ -383,7 +430,7 @@ async function uploadAllRecordsToFirebase(recordsToUpload = null) {
                 list: Array.isArray(r.wrongQuestions) ? r.wrongQuestions : [],
                 ans: Array.isArray(r.studentAnswers) ? r.studentAnswers : [],
                 moduleId: modId,
-                moduleTitle: r.moduleTitle || (modId === 'modul_tryout_terpadu' ? 'Tryout Terpadu 60 Soal (6 Materi)' : (modId === 'modul_jaringan_keamanan' ? 'Penilaian Harian: Infrastruktur Jaringan & Keamanan Digital' : 'Misi Detektif Fakta')),
+                moduleTitle: r.moduleTitle || (typeof moduleTitleFor === 'function' ? moduleTitleFor(modId) : 'Misi Detektif Fakta'),
                 proofId: proofCode,
                 topicBreakdown: r.topicBreakdown || null,
                 detailedAnswers: Array.isArray(r.detailedAnswers) ? r.detailedAnswers : null
@@ -421,6 +468,8 @@ let _rtdbSubscribedUrl = null;
 let _rtdbSyncDebounceTimer = null;
 
 function initFirebaseRealtime() {
+    // Stream realtime seluruh node hanya untuk perangkat guru (batas koneksi simultan Firebase & beban unduh)
+    if (typeof isTeacherSyncContext !== 'function' || !isTeacherSyncContext()) return;
     const cfg = getFirebaseConfig();
     const dbUrl = (cfg && cfg.databaseURL) ? cfg.databaseURL.replace(/\/$/, '') : 'https://kuis-informatika-c8781-default-rtdb.firebaseio.com';
 
@@ -449,7 +498,7 @@ function initFirebaseRealtime() {
                     if (typeof syncWithBackend === 'function') {
                         syncWithBackend(false);
                     }
-                }, 1200);
+                }, 4000);
             };
             rtdbEventSource.addEventListener('put', () => scheduleRealtimeSync(true));
             rtdbEventSource.addEventListener('patch', () => scheduleRealtimeSync(false));
@@ -703,6 +752,7 @@ function purgeStudentFromLocalStorage(studentName, studentClass, targetModuleId)
         if (!delList.includes(key)) delList.push(key);
         if (modId === 'all' && !delList.includes(keyAll)) delList.push(keyAll);
         localStorage.setItem('quizmaster_deleted_records', JSON.stringify(delList));
+        if (typeof markDeletedAt === 'function') markDeletedAt(modId === 'all' ? [key, keyAll] : [key], Date.now());
     } catch(e) {}
 
     // 4. Hapus sesi kuis aktif jika ada

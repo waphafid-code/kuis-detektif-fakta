@@ -166,6 +166,14 @@ window.addEventListener('DOMContentLoaded', () => {
     }
 });
 
+// 📦 Antrean nilai yang belum terkirim dicoba ulang otomatis tiap 25 detik (jaringan sekolah padat / sinyal lemah)
+setInterval(() => {
+    try {
+        if (document.hidden) return;
+        if (typeof getPendingRecords === 'function' && getPendingRecords().length > 0 && typeof flushPendingRecords === 'function') flushPendingRecords();
+    } catch (e) {}
+}, 25000);
+
 // 🌐 Penanganan Koneksi Multi-Perangkat: Otomatis sinkron saat internet kembali menyala
 window.addEventListener('online', () => {
     console.log('🌐 [Network] Perangkat online! Menyinkronkan database...');

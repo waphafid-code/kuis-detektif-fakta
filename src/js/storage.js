@@ -303,9 +303,20 @@ function queueRecordForSync(record) {
 }
 window.queueRecordForSync = queueRecordForSync;
 
+let _flushPendingBusy = false;
 async function flushPendingRecords() {
+    if (_flushPendingBusy) return 0; // cegah pengiriman ganda saat dipicu bersamaan
     const queue = getPendingRecords();
     if (!queue || queue.length === 0) return 0;
+    _flushPendingBusy = true;
+    try {
+        return await _flushPendingRecordsInner(queue);
+    } finally {
+        _flushPendingBusy = false;
+    }
+}
+
+async function _flushPendingRecordsInner(queue) {
 
     console.log(`⏳ Memulai sinkronisasi ${queue.length} data nilai yang tertunda ke Cloud Supabase...`);
     const cfg = getSupabaseConfig();
@@ -331,7 +342,7 @@ async function flushPendingRecords() {
                 isRemedial: !!r.isRemedial,
                 originalScore: r.isRemedial ? (r.originalScore ?? null) : null,
                 remedialScore: r.isRemedial ? (r.remedialScore ?? null) : null,
-                moduleTitle: r.moduleTitle || (modId === 'modul_jaringan_keamanan' ? 'Penilaian Harian: Infrastruktur Jaringan & Keamanan Digital' : 'Misi Detektif Fakta')
+                moduleTitle: r.moduleTitle || (typeof moduleTitleFor === 'function' ? moduleTitleFor(modId) : 'Misi Detektif Fakta')
             },
             duration: r.duration || '0m',
             time_str: r.time || '00:00',
@@ -374,7 +385,9 @@ async function flushPendingRecords() {
     }
 
     if (successfulIndices.length > 0) {
-        const remaining = queue.filter((_, idx) => !successfulIndices.includes(idx));
+        // Baca antrean TERKINI (nilai baru bisa masuk antrean saat proses kirim berjalan) agar tidak tertimpa
+        const sentStamps = new Set(successfulIndices.map(i => queue[i].queuedAt));
+        const remaining = getPendingRecords().filter(it => !sentStamps.has(it.queuedAt));
         localStorage.setItem(PENDING_SYNC_KEY, JSON.stringify(remaining));
         if (typeof showToast === 'function') {
             showToast(`🌐 ${successfulIndices.length} data nilai offline berhasil disinkronkan ke Cloud Supabase!`, '☁️');
