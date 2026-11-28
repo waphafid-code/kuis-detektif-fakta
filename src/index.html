@@ -552,9 +552,24 @@
                 ⏱️ Harap kembali ke mode layar penuh dalam <span id="fullscreen-countdown-num" style="font-size: 1.15rem; color: #f43f5e; font-family: 'JetBrains Mono', monospace;">15</span> detik agar ujian tetap fokus!
             </div>
         </div>
-        <div class="modal-actions" style="justify-content: center;">
+        <div id="cheat-approval-wait-box" style="display: none; background: rgba(244,63,94,0.12); border: 1.5px solid rgba(244,63,94,0.45); border-radius: 12px; padding: 14px 16px; margin-bottom: 18px; text-align: left;">
+            <div style="color: #fb7185; font-weight: 800; font-size: 0.92rem; margin-bottom: 6px;">🔒 AKSES KUIS DIKUNCI — WAJIB PERSETUJUAN GURU</div>
+            <p style="font-size: 0.84rem; color: var(--text-secondary); line-height: 1.5; margin: 0 0 8px 0;">
+                Anda telah mencapai batas pelanggaran anti-cheat. Untuk melanjutkan pengerjaan kuis, <strong>harap hubungi Guru</strong> agar menyetujui pembukaan akses melalui <strong>Dasbor Guru</strong>.
+            </p>
+            <div id="cheat-approval-status-text" style="font-size: 0.8rem; font-weight: 700; color: #fde047;">
+                ⏳ Menunggu persetujuan Guru di Dasbor Guru...
+            </div>
+        </div>
+        <div class="modal-actions" style="justify-content: center; gap: 10px; flex-wrap: wrap;">
             <button class="btn btn-accent" id="btn-resume-exam" style="padding: 12px 30px; font-weight: 800;" onclick="resumeFromCheatWarning()">
                 Saya Mengerti & Kembali ke Layar Penuh 🖥️
+            </button>
+            <button class="btn btn-primary" id="btn-check-teacher-approval" style="display: none; padding: 12px 22px; font-weight: 800;" onclick="checkTeacherApprovalAndResume(true)">
+                🔄 Cek Persetujuan Guru
+            </button>
+            <button class="btn btn-secondary" id="btn-exit-locked-exam" style="display: none; padding: 10px 18px; font-weight: 700;" onclick="exitLockedExamToHome()">
+                🏠 Kembali ke Beranda (Terkunci)
             </button>
         </div>
     </div>
@@ -580,8 +595,12 @@
             <div>• Seluruh jawaban yang telah dipilih <strong>dibatalkan & dihapus</strong>.</div>
             <div>• Status Hasil: <span class="kkm-pill remedial" style="font-size: 0.7rem; padding: 2px 6px;">DISKUALIFIKASI (SKOR 0 - REMEDIAL)</span></div>
             <div>• Pelanggaran & jenis kecurangan telah dicatat di Dasbor Guru secara real-time.</div>
+            <div>• Jika ingin melanjutkan ujian kembali, <strong>harap hubungi Guru</strong> untuk persetujuan pembukaan akses di <strong>Dasbor Guru</strong>.</div>
         </div>
-        <div class="modal-actions" style="justify-content: center;">
+        <div class="modal-actions" style="justify-content: center; gap: 10px; flex-wrap: wrap;">
+            <button class="btn btn-primary" id="btn-check-approval-from-cheat" style="padding: 10px 20px; font-weight: 800;" onclick="checkTeacherApprovalAndResume(true)">
+                🔄 Cek Persetujuan Guru
+            </button>
             <button class="btn btn-danger" style="background: var(--danger); color: white; padding: 10px 24px; font-weight: 800;" onclick="acknowledgeCheatPenalty()">
                 Saya Mengerti & Keluar
             </button>
@@ -1540,6 +1559,15 @@
                     </div>
 
                     <div class="setting-row">
+                        <label for="setting-demo-anticheat" style="font-weight: 700; font-size: 0.88rem; color: var(--text);">🛡️ Anti-Cheat di Akun Demo:</label>
+                        <select id="setting-demo-anticheat" onchange="saveDemoAntiCheatSetting(this.value)" class="form-select-modern" style="font-size: 0.85rem;">
+                            <option value="enabled" selected>🔒 Aktif Penuh di Demo (Bisa Uji Peringatan &amp; Kunci)</option>
+                            <option value="bypass">🧪 Nonaktif di Demo (QA Cepat Tanpa Peringatan)</option>
+                        </select>
+                        <span class="setting-saved" id="demo-anticheat-saved-msg" style="display:none; color:var(--success); font-weight:700; font-size:0.8rem;">✅ Tersimpan!</span>
+                    </div>
+
+                    <div class="setting-row">
                         <label for="setting-exam-token-mode" style="font-weight: 700; font-size: 0.88rem; color: var(--text);">🔑 Token Ujian Masuk (Anti-Joki Jarak Jauh):</label>
                         <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
                             <select id="setting-exam-token-mode" onchange="saveExamTokenSetting()" class="form-select-modern" style="font-size: 0.85rem; min-width: 170px;">
@@ -1669,6 +1697,22 @@
                     <div class="matrix-grid" id="class-schedule-matrix">
                         <!-- Rendered via JS -->
                     </div>
+                </div>
+            </div>
+
+            <!-- ANTREAN PERSETUJUAN LANJUT KUIS (ANTI-CHEAT APPROVAL GATE) -->
+            <div class="settings-panel" id="teacher-approval-queue-panel" style="margin-bottom: 16px; border-color: rgba(244, 63, 94, 0.4);">
+                <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 10px;">
+                    <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                        <h4 style="margin: 0; color: #fb7185;">🔐 Persetujuan Lanjut Kuis (Terkunci Anti-Cheat)</h4>
+                        <span id="approval-queue-count-badge" style="font-size: 0.74rem; font-weight: 800; padding: 3px 10px; border-radius: 999px; background: rgba(16,185,129,0.14); color: #34d399; border: 1px solid rgba(16,185,129,0.35);">0 Menunggu</span>
+                    </div>
+                    <button type="button" class="btn btn-secondary" onclick="refreshTeacherApprovalQueue()" style="padding: 5px 12px; font-size: 0.76rem; border-radius: 8px;">
+                        🔄 Cek Permintaan Baru
+                    </button>
+                </div>
+                <div id="teacher-approval-queue-list" style="display: flex; flex-direction: column; gap: 8px;">
+                    <div style="font-size: 0.82rem; color: var(--text-muted); padding: 6px 2px;">🛡️ Tidak ada siswa yang sedang terkunci menunggu persetujuan.</div>
                 </div>
             </div>
 

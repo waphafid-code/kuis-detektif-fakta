@@ -898,6 +898,30 @@ function applyCloudSharedStateToLocal(state) {
             }
         }
 
+        // 4b2. Sinkronisasi Mode Anti-Cheat pada Akun Demo
+        if (state.demoAntiCheat !== undefined) {
+            localStorage.setItem('quizmaster_demo_anticheat', state.demoAntiCheat);
+            const demoAcSel = document.getElementById('setting-demo-anticheat');
+            if (demoAcSel) demoAcSel.value = state.demoAntiCheat;
+        }
+
+        // 4d. Sinkronisasi Antrean Kunci Anti-Cheat & Persetujuan Guru
+        if (state.cheatLockRequests && typeof state.cheatLockRequests === 'object') {
+            try {
+                const existingLocks = (typeof loadLocalCheatLocks === 'function') ? loadLocalCheatLocks() : {};
+                localStorage.setItem('quizmaster_cloud_cheat_locks', JSON.stringify({ ...existingLocks, ...state.cheatLockRequests }));
+            } catch (e) {}
+        }
+        if (state.teacherApprovals && typeof state.teacherApprovals === 'object') {
+            try {
+                const existingApprovals = (typeof loadLocalTeacherApprovals === 'function') ? loadLocalTeacherApprovals() : {};
+                localStorage.setItem('quizmaster_cloud_teacher_approvals', JSON.stringify({ ...existingApprovals, ...state.teacherApprovals }));
+            } catch (e) {}
+        }
+        if (typeof window.onCloudApprovalsUpdated === 'function') {
+            try { window.onCloudApprovalsUpdated(); } catch (e) {}
+        }
+
         // 4c. Sinkronisasi Pengaturan Anti-Joki (Token Ujian)
         if (state.examTokenMode !== undefined || state.examTokenCode !== undefined) {
             if (state.examTokenMode !== undefined) localStorage.setItem('quizmaster_exam_token_mode', state.examTokenMode);

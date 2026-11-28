@@ -208,12 +208,23 @@ async function runTest() {
     assert.strictEqual(context.isCurrentStudentDemo(), true, 'GURU PENGUJI (TEST REMEDIAL) di KELAS DEMO harus terdeteksi demo');
     console.log('  ✅ PASS: 4. isCurrentStudentDemo() mengenali akun demo');
 
-    // TEST 4B: Anti-cheat bypass untuk akun demo
+    // TEST 4B: Anti-cheat aktif secara default di akun demo (agar Guru bisa uji), dan dapat di-bypass jika mode QA bypass diaktifkan
+    elements['screen-quiz'].classList.add('active');
     const initialStrikes = vm.runInContext('cheatStrikes', context);
     context.handleAntiCheatEvent('Mencoba buka tab lain', false);
-    const strikesAfter = vm.runInContext('cheatStrikes', context);
-    assert.strictEqual(initialStrikes, strikesAfter, 'Anti-cheat event tidak boleh menambah strike untuk akun demo!');
-    console.log('  ✅ PASS: 5. Anti-cheat sepenuhnya dibypass untuk akun demo (bebas buka tab/jendela)');
+    const strikesDefaultDemo = vm.runInContext('cheatStrikes', context);
+    assert.strictEqual(strikesDefaultDemo, initialStrikes + 1, 'Anti-cheat default harus aktif di akun demo agar dapat diuji langsung');
+
+    vm.runInContext(`
+        isCheatWarningActive = false;
+        cheatStrikes = 0;
+        lastCheatEventTime = 0;
+        localStorage.setItem('quizmaster_demo_anticheat', 'bypass');
+    `, context);
+    context.handleAntiCheatEvent('Mencoba buka tab lain', false);
+    const strikesBypass = vm.runInContext('cheatStrikes', context);
+    assert.strictEqual(strikesBypass, 0, 'Anti-cheat harus dibypass ketika setting demo anticheat = bypass');
+    console.log('  ✅ PASS: 5. Anti-cheat aktif penuh di akun demo (default) dan mendukung mode bypass QA');
 
     // TEST 4C: exitDemoQuiz('home') menghentikan ujian dan kembali ke beranda
     context.exitDemoQuiz('home');

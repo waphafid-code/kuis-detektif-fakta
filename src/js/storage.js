@@ -94,6 +94,40 @@ initSupabaseClient();
 const CLOUD_STATE_ROW_NAME = '__QUIZMASTER_SHARED_STATE__';
 const CLOUD_STATE_ROW_CLASS = '__SYSTEM_CONFIG__';
 const PENDING_SYNC_KEY = 'quizmaster_pending_sync_records_v1';
+const CLOUD_CHEAT_LOCKS_KEY = 'quizmaster_cloud_cheat_locks';
+const CLOUD_TEACHER_APPROVALS_KEY = 'quizmaster_cloud_teacher_approvals';
+
+function getCheatApprovalKey(name, cls, moduleId) {
+    const mod = (typeof normalizeModuleId === 'function')
+        ? normalizeModuleId(moduleId)
+        : (moduleId || 'modul_detektif_fakta');
+    const cNorm = String(cls || '-').replace(/\s+/g, ' ').trim().toUpperCase();
+    const nNorm = String(name || '-').replace(/\s+/g, ' ').trim().toUpperCase();
+    return `${mod}::${cNorm}::${nNorm}`;
+}
+window.getCheatApprovalKey = getCheatApprovalKey;
+
+function loadLocalCheatLocks() {
+    try {
+        const raw = localStorage.getItem(CLOUD_CHEAT_LOCKS_KEY);
+        const parsed = raw ? JSON.parse(raw) : {};
+        return (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) ? parsed : {};
+    } catch (e) {
+        return {};
+    }
+}
+window.loadLocalCheatLocks = loadLocalCheatLocks;
+
+function loadLocalTeacherApprovals() {
+    try {
+        const raw = localStorage.getItem(CLOUD_TEACHER_APPROVALS_KEY);
+        const parsed = raw ? JSON.parse(raw) : {};
+        return (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) ? parsed : {};
+    } catch (e) {
+        return {};
+    }
+}
+window.loadLocalTeacherApprovals = loadLocalTeacherApprovals;
 
 async function fetchCloudSharedState() {
     const cfg = getSupabaseConfig();
@@ -122,6 +156,18 @@ async function saveCloudSharedState(partialState) {
     const cfg = getSupabaseConfig();
     const baseUrl = `${cfg.url.replace(/\/$/, '')}/rest/v1/${cfg.table || 'quiz_results'}`;
 
+    // Simpan perubahan cheat lock / approval secara lokal terlebih dahulu agar instan di perangkat ini
+    try {
+        if (partialState && partialState.cheatLockRequests && typeof partialState.cheatLockRequests === 'object') {
+            const mergedLocks = { ...loadLocalCheatLocks(), ...partialState.cheatLockRequests };
+            localStorage.setItem(CLOUD_CHEAT_LOCKS_KEY, JSON.stringify(mergedLocks));
+        }
+        if (partialState && partialState.teacherApprovals && typeof partialState.teacherApprovals === 'object') {
+            const mergedApprovals = { ...loadLocalTeacherApprovals(), ...partialState.teacherApprovals };
+            localStorage.setItem(CLOUD_TEACHER_APPROVALS_KEY, JSON.stringify(mergedApprovals));
+        }
+    } catch (e) {}
+
     // Gabungkan dengan state yang sudah tersimpan
     let currentState = {};
     try {
@@ -136,6 +182,19 @@ async function saveCloudSharedState(partialState) {
         ...partialState,
         updatedAt: Date.now()
     };
+
+    if (partialState && partialState.cheatLockRequests && typeof partialState.cheatLockRequests === 'object') {
+        mergedState.cheatLockRequests = {
+            ...((currentState && currentState.cheatLockRequests && typeof currentState.cheatLockRequests === 'object') ? currentState.cheatLockRequests : {}),
+            ...partialState.cheatLockRequests
+        };
+    }
+    if (partialState && partialState.teacherApprovals && typeof partialState.teacherApprovals === 'object') {
+        mergedState.teacherApprovals = {
+            ...((currentState && currentState.teacherApprovals && typeof currentState.teacherApprovals === 'object') ? currentState.teacherApprovals : {}),
+            ...partialState.teacherApprovals
+        };
+    }
 
     // 🛡️ ANTI-REVERSION SERVER GUARD: Jangan biarkan state tersimpan di cloud kembali ke detektif fakta jika mode ujian terkunci
     const lockedExamMode = partialState.activeExamModuleMode || currentState.activeExamModuleMode || localStorage.getItem('quizmaster_active_exam_module_mode') || 'modul_jaringan_keamanan';

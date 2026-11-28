@@ -1387,6 +1387,290 @@ function initDemoVisibilitySettingUi() {
 }
 window.initDemoVisibilitySettingUi = initDemoVisibilitySettingUi;
 
+// 🛡️ KONTROL ANTI-CHEAT AKUN DEMO (DEFAULT AKTIF PENUH UNTUK PENGUJIAN GURU)
+const DEMO_ANTICHEAT_KEY = 'quizmaster_demo_anticheat';
+
+function loadDemoAntiCheatSetting() {
+    try {
+        const val = localStorage.getItem(DEMO_ANTICHEAT_KEY);
+        return (val === 'bypass') ? 'bypass' : 'enabled';
+    } catch (e) {
+        return 'enabled';
+    }
+}
+window.loadDemoAntiCheatSetting = loadDemoAntiCheatSetting;
+
+function saveDemoAntiCheatSetting(val = null, broadcast = true) {
+    const sel = document.getElementById('setting-demo-anticheat');
+    const settingVal = val || (sel ? sel.value : 'enabled');
+    const normalized = (settingVal === 'bypass') ? 'bypass' : 'enabled';
+    try {
+        localStorage.setItem(DEMO_ANTICHEAT_KEY, normalized);
+    } catch (e) {}
+    if (sel) sel.value = normalized;
+    const msg = document.getElementById('demo-anticheat-saved-msg');
+    if (msg) {
+        msg.style.display = 'inline';
+        setTimeout(() => { if (msg) msg.style.display = 'none'; }, 2500);
+    }
+    if (typeof sfxCorrect === 'function') sfxCorrect();
+    if (broadcast && typeof saveCloudSharedState === 'function') {
+        saveCloudSharedState({ demoAntiCheat: normalized });
+    }
+    if (typeof showToast === 'function') {
+        showToast(
+            normalized === 'enabled'
+                ? '🛡️ Anti-cheat AKTIF PENUH di Akun Demo untuk pengujian nyata!'
+                : '🧪 Anti-cheat dinonaktifkan khusus Akun Demo (Mode QA Cepat).',
+            normalized === 'enabled' ? '🛡️' : '🧪'
+        );
+    }
+}
+window.saveDemoAntiCheatSetting = saveDemoAntiCheatSetting;
+
+function initDemoAntiCheatSettingUi() {
+    const sel = document.getElementById('setting-demo-anticheat');
+    if (sel) sel.value = loadDemoAntiCheatSetting();
+}
+window.initDemoAntiCheatSettingUi = initDemoAntiCheatSettingUi;
+
+// 🔐 ANTREAN PERSETUJUAN GURU UNTUK LANJUT KUIS (SISWA TERKUNCI ANTI-CHEAT)
+function _buildApprovalKeySafe(name, cls, modId) {
+    if (typeof getCheatApprovalKey === 'function') return getCheatApprovalKey(name, cls, modId);
+    const mod = (typeof normalizeModuleId === 'function') ? normalizeModuleId(modId) : (modId || 'modul_detektif_fakta');
+    return `${mod}::${String(cls || '-').replace(/\s+/g, ' ').trim().toUpperCase()}::${String(name || '-').replace(/\s+/g, ' ').trim().toUpperCase()}`;
+}
+
+function getPendingCheatApprovalItems() {
+    const locks = (typeof loadLocalCheatLocks === 'function') ? loadLocalCheatLocks() : (() => {
+        try { return JSON.parse(localStorage.getItem('quizmaster_cloud_cheat_locks') || '{}') || {}; } catch (e) { return {}; }
+    })();
+    const approvals = (typeof loadLocalTeacherApprovals === 'function') ? loadLocalTeacherApprovals() : (() => {
+        try { return JSON.parse(localStorage.getItem('quizmaster_cloud_teacher_approvals') || '{}') || {}; } catch (e) { return {}; }
+    })();
+
+    const itemsMap = new Map();
+    Object.keys(locks).forEach(k => {
+        const lk = locks[k];
+        if (!lk || lk.status !== 'pending') return;
+        const ap = approvals[k];
+        const lockTs = Number(lk.lockedAt) || 0;
+        const apTs = ap ? Math.max(Number(ap.approvedAt) || 0, Number(ap.rejectedAt) || 0) : 0;
+        if (ap && apTs >= lockTs) return;
+        itemsMap.set(k, lk);
+    });
+
+    // Sertakan juga siswa dengan status diskualifikasi terbaru yang belum mendapat persetujuan setelahnya
+    try {
+        const records = typeof loadRecords === 'function' ? loadRecords() : [];
+        records.forEach(r => {
+            if (!r || !r.isCheated) return;
+            const modId = (typeof normalizeModuleId === 'function') ? normalizeModuleId(r.moduleId, r.id, r.date) : (r.moduleId || 'modul_detektif_fakta');
+            const k = _buildApprovalKeySafe(r.name, r.class, modId);
+            if (itemsMap.has(k)) return;
+            const ap = approvals[k];
+            const recTs = Number(r.timestamp) || 0;
+            const apTs = ap ? Math.max(Number(ap.approvedAt) || 0, Number(ap.rejectedAt) || 0) : 0;
+            if (ap && apTs >= recTs) return;
+            itemsMap.set(k, {
+                key: k,
+                name: r.name,
+                class: r.class || '-',
+                moduleId: modId,
+                moduleTitle: r.moduleTitle || modId,
+                reason: r.cheatReason || r.statusNote || 'Diskualifikasi Anti-Cheat',
+                strikes: Math.max(3, Number(r.tabSwitchCount) || 3),
+                disqualified: true,
+                status: 'pending',
+                lockedAt: recTs || Date.now()
+            });
+        });
+    } catch (e) {}
+
+    return Array.from(itemsMap.values()).sort((a, b) => (Number(b.lockedAt) || 0) - (Number(a.lockedAt) || 0));
+}
+window.getPendingCheatApprovalItems = getPendingCheatApprovalItems;
+
+function renderTeacherApprovalQueue() {
+    const listEl = document.getElementById('teacher-approval-queue-list');
+    const badgeEl = document.getElementById('approval-queue-count-badge');
+    if (!listEl) return;
+
+    const pending = getPendingCheatApprovalItems();
+    if (badgeEl) {
+        badgeEl.textContent = `${pending.length} Menunggu`;
+        badgeEl.style.background = pending.length > 0 ? 'rgba(244,63,94,0.18)' : 'rgba(16,185,129,0.14)';
+        badgeEl.style.color = pending.length > 0 ? '#fb7185' : '#34d399';
+        badgeEl.style.borderColor = pending.length > 0 ? 'rgba(244,63,94,0.45)' : 'rgba(16,185,129,0.35)';
+    }
+
+    if (pending.length === 0) {
+        listEl.innerHTML = '<div style="font-size: 0.82rem; color: var(--text-muted); padding: 6px 2px;">🛡️ Tidak ada siswa yang sedang terkunci menunggu persetujuan.</div>';
+        return;
+    }
+
+    listEl.innerHTML = pending.map(item => {
+        const timeStr = item.lockedAt ? new Date(item.lockedAt).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) + ' WIB' : '-';
+        const safeKey = encodeURIComponent(item.key);
+        const safeName = encodeURIComponent(item.name || '');
+        const safeClass = encodeURIComponent(item.class || '');
+        const safeMod = encodeURIComponent(item.moduleId || '');
+        return `
+            <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; padding: 10px 14px; border-radius: 12px; background: rgba(244,63,94,0.08); border: 1px solid rgba(244,63,94,0.35);">
+                <div style="flex: 1; min-width: 220px;">
+                    <div style="font-weight: 800; color: var(--text); font-size: 0.9rem;">
+                        🔒 ${escapeHtml(item.name)} <span style="color: var(--accent); font-family: var(--font-mono);">(${escapeHtml(item.class)})</span>
+                    </div>
+                    <div style="font-size: 0.78rem; color: #fda4af; margin-top: 2px;">
+                        ${escapeHtml(item.reason)} · <strong>${escapeHtml(item.moduleTitle || item.moduleId)}</strong> · ${escapeHtml(timeStr)}
+                    </div>
+                </div>
+                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                    <button type="button" class="btn btn-primary" style="padding: 6px 14px; font-size: 0.78rem; font-weight: 800; background: linear-gradient(135deg, #059669, #10b981); border: none;" onclick="approveStudentContinueQuiz(decodeURIComponent('${safeKey}'), decodeURIComponent('${safeName}'), decodeURIComponent('${safeClass}'), decodeURIComponent('${safeMod}'))">
+                        ✅ Setujui Lanjut Kuis
+                    </button>
+                    <button type="button" class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.78rem; font-weight: 700; color: #fb7185; border-color: rgba(244,63,94,0.4);" onclick="rejectStudentContinueQuiz(decodeURIComponent('${safeKey}'), decodeURIComponent('${safeName}'), decodeURIComponent('${safeClass}'), decodeURIComponent('${safeMod}'))">
+                        ❌ Tolak
+                    </button>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+window.renderTeacherApprovalQueue = renderTeacherApprovalQueue;
+
+async function approveStudentContinueQuiz(approvalKey, sName, sClass, modId) {
+    if (typeof isTeacherAuthValid === 'function' && !isTeacherAuthValid()) {
+        if (typeof showToast === 'function') showToast('🔒 Otoritas ditolak. Silakan login PIN Guru terlebih dahulu.', '🔒');
+        return;
+    }
+    const key = approvalKey || _buildApprovalKeySafe(sName, sClass, modId);
+    const nowTs = Date.now();
+    const approvalPayload = {
+        key,
+        name: sName,
+        class: sClass,
+        moduleId: modId,
+        status: 'approved',
+        approvedAt: nowTs
+    };
+    const resolvedLock = {
+        key,
+        name: sName,
+        class: sClass,
+        moduleId: modId,
+        status: 'approved',
+        resolvedAt: nowTs
+    };
+
+    try {
+        const locks = (typeof loadLocalCheatLocks === 'function') ? loadLocalCheatLocks() : {};
+        const prevLock = locks[key] || {};
+        locks[key] = { ...prevLock, ...resolvedLock };
+        localStorage.setItem('quizmaster_cloud_cheat_locks', JSON.stringify(locks));
+
+        const approvals = (typeof loadLocalTeacherApprovals === 'function') ? loadLocalTeacherApprovals() : {};
+        approvals[key] = approvalPayload;
+        localStorage.setItem('quizmaster_cloud_teacher_approvals', JSON.stringify(approvals));
+    } catch (e) {}
+
+    // Hapus catatan skor 0 diskualifikasi agar siswa tidak terblokir batas pengerjaan
+    try {
+        const cleanMod = (typeof normalizeModuleId === 'function') ? normalizeModuleId(modId) : modId;
+        const matchFn = (r) => {
+            if (!r || !r.isCheated) return false;
+            const nOk = (typeof isNameEquivalent === 'function') ? isNameEquivalent(r.name, sName) : (String(r.name || '').trim().toLowerCase() === String(sName || '').trim().toLowerCase());
+            const cOk = (typeof isClassEquivalent === 'function') ? isClassEquivalent(r.class, sClass) : (String(r.class || '').replace(/\s+/g, '').toUpperCase() === String(sClass || '').replace(/\s+/g, '').toUpperCase());
+            const rMod = (typeof normalizeModuleId === 'function') ? normalizeModuleId(r.moduleId, r.id, r.date) : (r.moduleId || 'modul_detektif_fakta');
+            return nOk && cOk && rMod === cleanMod;
+        };
+        const updated = loadRecords().filter(r => !matchFn(r));
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+    } catch (e) {}
+
+    if (typeof saveCloudSharedState === 'function') {
+        try {
+            await saveCloudSharedState({
+                teacherApprovals: { [key]: approvalPayload },
+                cheatLockRequests: { [key]: resolvedLock }
+            });
+        } catch (e) {}
+    }
+
+    if (typeof sfxCorrect === 'function') sfxCorrect();
+    renderTeacherApprovalQueue();
+    renderDashboard();
+    if (typeof showToast === 'function') {
+        showToast(`✅ Disetujui! ${sName} (${sClass}) kini dapat melanjutkan kuis.`, '🔓');
+    }
+}
+window.approveStudentContinueQuiz = approveStudentContinueQuiz;
+
+async function rejectStudentContinueQuiz(approvalKey, sName, sClass, modId) {
+    if (typeof isTeacherAuthValid === 'function' && !isTeacherAuthValid()) {
+        if (typeof showToast === 'function') showToast('🔒 Otoritas ditolak. Silakan login PIN Guru terlebih dahulu.', '🔒');
+        return;
+    }
+    const key = approvalKey || _buildApprovalKeySafe(sName, sClass, modId);
+    const nowTs = Date.now();
+    const rejectionPayload = {
+        key,
+        name: sName,
+        class: sClass,
+        moduleId: modId,
+        status: 'rejected',
+        rejectedAt: nowTs
+    };
+    const resolvedLock = {
+        key,
+        name: sName,
+        class: sClass,
+        moduleId: modId,
+        status: 'rejected',
+        resolvedAt: nowTs
+    };
+
+    try {
+        const locks = (typeof loadLocalCheatLocks === 'function') ? loadLocalCheatLocks() : {};
+        const prevLock = locks[key] || {};
+        locks[key] = { ...prevLock, ...resolvedLock };
+        localStorage.setItem('quizmaster_cloud_cheat_locks', JSON.stringify(locks));
+
+        const approvals = (typeof loadLocalTeacherApprovals === 'function') ? loadLocalTeacherApprovals() : {};
+        approvals[key] = rejectionPayload;
+        localStorage.setItem('quizmaster_cloud_teacher_approvals', JSON.stringify(approvals));
+    } catch (e) {}
+
+    if (typeof saveCloudSharedState === 'function') {
+        try {
+            await saveCloudSharedState({
+                teacherApprovals: { [key]: rejectionPayload },
+                cheatLockRequests: { [key]: resolvedLock }
+            });
+        } catch (e) {}
+    }
+
+    if (typeof sfxClick === 'function') sfxClick();
+    renderTeacherApprovalQueue();
+    renderDashboard();
+    if (typeof showToast === 'function') {
+        showToast(`❌ Permintaan ${sName} ditolak (status tetap terkunci / diskualifikasi).`, '🔒');
+    }
+}
+window.rejectStudentContinueQuiz = rejectStudentContinueQuiz;
+
+async function refreshTeacherApprovalQueue() {
+    if (typeof fetchCloudSharedState === 'function' && typeof applyCloudSharedStateToLocal === 'function') {
+        try {
+            const state = await fetchCloudSharedState();
+            if (state && typeof state === 'object') applyCloudSharedStateToLocal(state);
+        } catch (e) {}
+    }
+    renderTeacherApprovalQueue();
+    if (typeof showToast === 'function') showToast('🔄 Daftar persetujuan anti-cheat diperbarui.', '🛡️');
+}
+window.refreshTeacherApprovalQueue = refreshTeacherApprovalQueue;
+
 // 🔑 ANTI-JOKI: TOKEN UJIAN KELAS DINAMIS
 const EXAM_TOKEN_MODE_KEY = 'quizmaster_exam_token_mode';
 const EXAM_TOKEN_CODE_KEY = 'quizmaster_exam_token_code';
@@ -3502,6 +3786,8 @@ function renderDashboard() {
     initFullscreenSettingUi();
     initReviewReleaseSettingUi();
     initDemoVisibilitySettingUi();
+    if (typeof initDemoAntiCheatSettingUi === 'function') initDemoAntiCheatSettingUi();
+    if (typeof renderTeacherApprovalQueue === 'function') renderTeacherApprovalQueue();
     initExamTokenSettingUi();
     initActiveExamModuleUi();
     if (typeof updateApplyButtonState === 'function') updateApplyButtonState();
@@ -4274,6 +4560,7 @@ function renderDashboard() {
                                 <button class="btn-detail-row" title="Periksa Lembar Jawaban 60 Soal & Analisis Tiap Materi" onclick="openStudentDetailModal(window.currentRenderedRecords[${recordIdx}])">
                                     🔍 Periksa
                                 </button>
+                                ${r.isCheated ? `<button class="btn-detail-row" style="color: #34d399; border-color: rgba(16,185,129,0.4);" title="Setujui siswa melanjutkan kuis kembali" onclick="approveStudentContinueQuiz('', '${escapeHtml(item.name)}', '${escapeHtml(item.class)}', 'modul_tryout_terpadu')">✅ Setujui</button>` : ''}
                                 <button class="btn-delete-row" title="Hapus nilai Tryout siswa ini" onclick="openDeleteStudentModuleModal('${escapeHtml(item.name)}', '${escapeHtml(item.class)}', 'modul_tryout_terpadu', ${r.score})">
                                     🗑️
                                 </button>
@@ -4490,6 +4777,7 @@ function renderDashboard() {
                                 <button class="btn-detail-row" title="Periksa Lembar Jawaban & Analisis Kesalahan" onclick="openStudentDetailModal(window.currentRenderedRecords[${recordIdx}])">
                                     🔍 Periksa
                                 </button>
+                                ${r.isCheated ? `<button class="btn-detail-row" style="color: #34d399; border-color: rgba(16,185,129,0.4);" title="Setujui siswa melanjutkan kuis kembali" onclick="approveStudentContinueQuiz('', '${escapeHtml(item.name)}', '${escapeHtml(item.class)}', '${filterModule}')">✅ Setujui</button>` : ''}
                                 <button class="btn-delete-row" title="Hapus nilai siswa ini pada modul ini" onclick="openDeleteStudentModuleModal('${escapeHtml(item.name)}', '${escapeHtml(item.class)}', '${filterModule}', ${r.score})">
                                     🗑️ Hapus
                                 </button>
