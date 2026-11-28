@@ -8859,17 +8859,30 @@ body.dark-theme .modal-cheat-desc {
     align-content: space-around;
     justify-content: space-around;
     overflow: hidden;
-    opacity: 0.055;
+    opacity: 0.115;
     transform: rotate(-16deg);
+    background-image: repeating-linear-gradient(
+        45deg,
+        rgba(239, 68, 68, 0.14) 0px,
+        rgba(239, 68, 68, 0.14) 1px,
+        transparent 1px,
+        transparent 22px
+    );
 }
 
 .watermark-item {
-    font-size: 1rem;
+    font-size: 0.92rem;
     font-weight: 800;
-    letter-spacing: 2px;
+    letter-spacing: 1.5px;
     color: #ef4444;
     white-space: nowrap;
-    padding: 16px 24px;
+    padding: 14px 20px;
+}
+
+.watermark-item.watermark-canary {
+    font-size: 0.78rem;
+    letter-spacing: 1px;
+    color: #f59e0b;
 }
 
 /* 🖨️ ANTI-PRINT / EXPORT BLOCKER DALAM MODE UJIAN */
