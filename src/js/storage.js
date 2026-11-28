@@ -342,7 +342,7 @@ async function _flushPendingRecordsInner(queue) {
                 isRemedial: !!r.isRemedial,
                 originalScore: r.isRemedial ? (r.originalScore ?? null) : null,
                 remedialScore: r.isRemedial ? (r.remedialScore ?? null) : null,
-                moduleTitle: r.moduleTitle || (modId === 'modul_jaringan_keamanan' ? 'Penilaian Harian: Infrastruktur Jaringan & Keamanan Digital' : 'Misi Detektif Fakta')
+                moduleTitle: r.moduleTitle || (typeof moduleTitleFor === 'function' ? moduleTitleFor(modId) : 'Misi Detektif Fakta')
             },
             duration: r.duration || '0m',
             time_str: r.time || '00:00',

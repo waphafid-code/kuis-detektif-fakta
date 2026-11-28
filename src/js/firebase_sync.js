@@ -160,7 +160,7 @@ async function saveRecordToFirebase(record, proofCode) {
             list: Array.isArray(record.wrongQuestions) ? record.wrongQuestions : [],
             ans: Array.isArray(record.studentAnswers) ? record.studentAnswers : [],
             moduleId: modId,
-            moduleTitle: record.moduleTitle || (modId === 'modul_tryout_terpadu' ? 'Tryout Terpadu 60 Soal (6 Materi)' : (modId === 'modul_jaringan_keamanan' ? 'Penilaian Harian: Infrastruktur Jaringan & Keamanan Digital' : 'Misi Detektif Fakta')),
+            moduleTitle: record.moduleTitle || (typeof moduleTitleFor === 'function' ? moduleTitleFor(modId) : 'Misi Detektif Fakta'),
             proofId: proofCode || record.submissionProofId || '',
             isRemedial: !!record.isRemedial,
             originalScore: record.isRemedial ? (record.originalScore ?? null) : null,
@@ -302,7 +302,7 @@ function mapFirebaseRows(data) {
                         time: r.time_str || '00:00',
                         date: r.quiz_date || '',
                         moduleId: modId,
-                        moduleTitle: extractedModTitle || (modId === 'modul_tryout_terpadu' ? 'Tryout Terpadu 60 Soal (6 Materi)' : (modId === 'modul_jaringan_keamanan' ? 'Penilaian Harian: Infrastruktur Jaringan & Keamanan Digital' : 'Misi Detektif Fakta')),
+                        moduleTitle: extractedModTitle || (typeof moduleTitleFor === 'function' ? moduleTitleFor(modId) : 'Misi Detektif Fakta'),
                         submissionProofId: r.submission_proof_id || (r.wrong_questions ? r.wrong_questions.proofId : '') || key,
                         ...((r.wrong_questions && r.wrong_questions.isRemedial) ? { isRemedial: true, originalScore: r.wrong_questions.originalScore, remedialScore: r.wrong_questions.remedialScore } : {})
                     });
@@ -430,7 +430,7 @@ async function uploadAllRecordsToFirebase(recordsToUpload = null) {
                 list: Array.isArray(r.wrongQuestions) ? r.wrongQuestions : [],
                 ans: Array.isArray(r.studentAnswers) ? r.studentAnswers : [],
                 moduleId: modId,
-                moduleTitle: r.moduleTitle || (modId === 'modul_tryout_terpadu' ? 'Tryout Terpadu 60 Soal (6 Materi)' : (modId === 'modul_jaringan_keamanan' ? 'Penilaian Harian: Infrastruktur Jaringan & Keamanan Digital' : 'Misi Detektif Fakta')),
+                moduleTitle: r.moduleTitle || (typeof moduleTitleFor === 'function' ? moduleTitleFor(modId) : 'Misi Detektif Fakta'),
                 proofId: proofCode,
                 topicBreakdown: r.topicBreakdown || null,
                 detailedAnswers: Array.isArray(r.detailedAnswers) ? r.detailedAnswers : null

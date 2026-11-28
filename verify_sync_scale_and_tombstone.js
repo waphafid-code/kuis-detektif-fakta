@@ -28,4 +28,5 @@ delete store.quizmaster_deleted_at;
 out=filterDeletedRecords([mk(90,0),mk(64,Date.parse('2026-11-20T10:00:00+07:00')),mk(64,T),mk(80,T+1000)]);
 ok(out.length===2&&out.every(r=>r.timestamp>=T),'tombstone lama: nilai baru tampil, lama tersembunyi');
 store.quizmaster_deleted_records=JSON.stringify(['__ALL__']);ok(filterDeletedRecords([mk(64,T)]).length===0,'__ALL__ tetap menghapus semua');
+ok(/function moduleTitleFor/.test(a)&&!/modId === 'modul_jaringan_keamanan' \? 'Penilaian Harian/.test(a),'judul modul terpusat (Etika/HKI tidak lagi berlabel Detektif Fakta)');
 console.log('fails='+f);process.exit(f?1:0);

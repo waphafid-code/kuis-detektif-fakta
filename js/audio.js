@@ -16,6 +16,16 @@ function showToast(text, icon = 'ℹ️') {
     }, 3200);
 }
 
+const MODULE_TITLE_BY_ID = {
+    modul_detektif_fakta: 'Misi Detektif Fakta',
+    modul_jaringan_keamanan: 'Penilaian Harian: Infrastruktur Jaringan & Keamanan Digital',
+    modul_hki_profesi_budaya: 'Penilaian Harian: Teknologi Digital, Profesi, Budaya & HKI',
+    modul_etika_privasi_keamanan: 'Penilaian Harian: Etika, Privasi, dan Keamanan Digital',
+    modul_tryout_terpadu: 'Tryout Terpadu 60 Soal (6 Materi)'
+};
+function moduleTitleFor(modId) { return MODULE_TITLE_BY_ID[modId] || 'Misi Detektif Fakta'; }
+window.moduleTitleFor = moduleTitleFor;
+
 function normalizeModuleId(modId, id, date) {
     if (modId) {
         const s = String(modId).toLowerCase();
@@ -110,7 +120,7 @@ function mergeRecordsList(existingList, incomingList) {
             const item = {
                 ...r,
                 moduleId: modId,
-                moduleTitle: r.moduleTitle || (modId === 'modul_tryout_terpadu' ? 'Tryout Terpadu 60 Soal (6 Materi)' : (modId === 'modul_jaringan_keamanan' ? 'Penilaian Harian: Infrastruktur Jaringan & Keamanan Digital' : 'Misi Detektif Fakta'))
+                moduleTitle: r.moduleTitle || moduleTitleFor(modId)
             };
             map.set(makeKey(item), item);
         }
@@ -122,7 +132,7 @@ function mergeRecordsList(existingList, incomingList) {
         const item = {
             ...r,
             moduleId: modId,
-            moduleTitle: r.moduleTitle || (modId === 'modul_tryout_terpadu' ? 'Tryout Terpadu 60 Soal (6 Materi)' : (modId === 'modul_jaringan_keamanan' ? 'Penilaian Harian: Infrastruktur Jaringan & Keamanan Digital' : 'Misi Detektif Fakta'))
+            moduleTitle: r.moduleTitle || moduleTitleFor(modId)
         };
         const k = makeKey(item);
         if (!map.has(k)) {
@@ -501,9 +511,7 @@ async function saveRecord(record) {
     const modId = normalizeModuleId(record.moduleId, record.id, record.date);
     record.moduleId = modId;
     if (!record.moduleTitle) {
-        record.moduleTitle = (modId === 'modul_jaringan_keamanan') 
-            ? 'Penilaian Harian: Infrastruktur Jaringan & Keamanan Digital' 
-            : 'Misi Detektif Fakta';
+        record.moduleTitle = moduleTitleFor(modId);
     }
 
     // 🛡️ BUKTI OTENTIKASI & VERIFIKASI PENGERJAAN RESMI (SUBMISSION RECEIPT CODE)
@@ -1258,7 +1266,7 @@ async function syncWithBackend(showFeedback = false) {
             }
 
             const modId = normalizeModuleId(extractedModId || r.moduleId || r.module_id, r.id, r.quiz_date || r.date);
-            const modTitle = extractedModTitle || r.moduleTitle || (modId === 'modul_jaringan_keamanan' ? 'Penilaian Harian: Infrastruktur Jaringan & Keamanan Digital' : 'Misi Detektif Fakta');
+            const modTitle = extractedModTitle || r.moduleTitle || moduleTitleFor(modId);
 
             return {
                 id: r.id,
@@ -1572,7 +1580,7 @@ async function uploadAllLocalRecordsToSupabase() {
                 wrong_questions: {
                     list: Array.isArray(r.wrongQuestions) ? r.wrongQuestions : [],
                     moduleId: modId,
-                    moduleTitle: r.moduleTitle || (modId === 'modul_jaringan_keamanan' ? 'Penilaian Harian: Infrastruktur Jaringan & Keamanan Digital' : 'Misi Detektif Fakta')
+                    moduleTitle: r.moduleTitle || moduleTitleFor(modId)
                 },
                 duration: r.duration || '-',
                 time_str: r.time || '-',

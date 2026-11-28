@@ -3298,7 +3298,7 @@ async function finishQuiz() {
 
     const isPassed = displayScore >= KKM;
     const activeModuleMeta = currentActiveModule || (window.QuizManager && typeof QuizManager.getActiveModule === 'function' ? QuizManager.getActiveModule() : null);
-    const activeModTitle = (activeModuleMeta && activeModuleMeta.title) || (activeModId === 'modul_jaringan_keamanan' ? 'Penilaian Harian: Infrastruktur Jaringan & Keamanan Digital' : 'Misi Detektif Fakta');
+    const activeModTitle = (activeModuleMeta && activeModuleMeta.title) || (typeof moduleTitleFor === 'function' ? moduleTitleFor(activeModId) : 'Misi Detektif Fakta');
 
     // 📊 Hitung Nilai Rinci Per Materi (Khusus Modul Tryout Terpadu 6 Materi)
     let topicBreakdown = null;
