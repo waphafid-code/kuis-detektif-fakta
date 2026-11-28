@@ -9667,6 +9667,26 @@ const OFFICIAL_EXAM_RESULTS = [
     "tabSwitchCount": 0,
     "isCheated": false,
     "statusNote": null
+  },
+  {
+    "id": "official-detektif-aisyah-alifah-dhaniel",
+    "moduleId": "modul_detektif_fakta",
+    "moduleTitle": "Misi Detektif Fakta",
+    "name": "AISYAH ALIFAH DHANIEL",
+    "class": "X E 2",
+    "score": 100,
+    "pointsEarned": 100,
+    "totalPoints": 100,
+    "correct": 20,
+    "total": 20,
+    "wrongQuestions": [],
+    "time": "08:30 WIB",
+    "duration": "5m 40s",
+    "date": "28/11/2026",
+    "timestamp": 1795829400000,
+    "tabSwitchCount": 0,
+    "isCheated": false,
+    "statusNote": null
   }
 ];
 

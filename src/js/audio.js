@@ -220,7 +220,7 @@ function filterDeletedRecords(list) {
 window.filterDeletedRecords = filterDeletedRecords;
 
 const OFFICIAL_DATA_SYNC_KEY = 'quizmaster_official_pdf_sync_ver';
-const CURRENT_OFFICIAL_VERSION = '20261122_official_remedial_authentic_v12';
+const CURRENT_OFFICIAL_VERSION = '20261128_official_remedial_fix_v13';
 
 function getCleanOfficialBaseline() {
     const raw = (typeof OFFICIAL_EXAM_RESULTS !== 'undefined' && Array.isArray(OFFICIAL_EXAM_RESULTS))
@@ -236,46 +236,79 @@ function getCleanDemoBaseline() {
     return rawDemo;
 }
 
-// 🛡️ CLOUD STUDENT SUBMISSION VERIFIER (MENCEGAH BYPASS VIA INCOGNITO / HAPUS CACHE)
+// 🛡️ CLOUD STUDENT SUBMISSION VERIFIER (MENCEGAH BYPASS VIA INCOGNITO / HAPUS CACHE & MENEMUKAN NILAI REMEDIAL)
 async function checkCloudStudentSubmission(name, cls, targetModId) {
     if (!name || !cls) return [];
     const results = [];
+    const seenKeys = new Set();
 
-    // 1. Cek dari Cloud Supabase
-    try {
-        const cfg = (typeof getSupabaseConfig === 'function') ? getSupabaseConfig() : { table: 'quiz_results' };
-        const client = window.supabaseClient || (typeof initSupabaseClient === 'function' ? initSupabaseClient() : null);
-        if (client) {
+    const pushIfMatch = (rName, rCls, rModRaw, id, date, payload) => {
+        const cMatch = (typeof isClassEquivalent === 'function')
+            ? isClassEquivalent(rCls, cls)
+            : (rCls || '').replace(/\s+/g, '').toUpperCase() === cls.replace(/\s+/g, '').toUpperCase();
+        const nMatch = (typeof isNameEquivalent === 'function')
+            ? isNameEquivalent(rName, name)
+            : (rName || '').trim().toLowerCase() === name.trim().toLowerCase();
+        const rMod = (typeof normalizeModuleId === 'function')
+            ? normalizeModuleId(rModRaw, id, date)
+            : (rModRaw || 'modul_detektif_fakta');
+        if (cMatch && nMatch && rMod === targetModId) {
+            const sig = `${payload.score}|${payload.date || ''}|${payload.isRemedial ? 1 : 0}|${payload.remedialScore ?? ''}`;
+            if (!seenKeys.has(sig)) {
+                seenKeys.add(sig);
+                results.push(payload);
+            }
+        }
+    };
+
+    const withTimeout = (promise, ms = 3000) => Promise.race([
+        promise,
+        new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), ms))
+    ]);
+
+    await Promise.allSettled([
+        // 1. Cek dari Cloud Supabase
+        withTimeout((async () => {
+            const cfg = (typeof getSupabaseConfig === 'function') ? getSupabaseConfig() : { table: 'quiz_results' };
+            const client = window.supabaseClient || (typeof initSupabaseClient === 'function' ? initSupabaseClient() : null);
+            if (!client) return;
             const { data, error } = await client
                 .from(cfg.table || 'quiz_results')
                 .select('id, student_name, student_class, score, quiz_date, time_str, duration, wrong_questions')
                 .ilike('student_name', name.trim())
-                .limit(10);
+                .limit(15);
 
             if (!error && Array.isArray(data)) {
                 data.forEach(r => {
-                    const cMatch = (typeof isClassEquivalent === 'function') ? isClassEquivalent(r.student_class, cls) : (r.student_class || '').replace(/\s+/g,'').toUpperCase() === cls.replace(/\s+/g,'').toUpperCase();
-                    const nMatch = (typeof isNameEquivalent === 'function') ? isNameEquivalent(r.student_name, name) : (r.student_name || '').trim().toLowerCase() === name.trim().toLowerCase();
                     const wq = (r.wrong_questions && typeof r.wrong_questions === 'object' && !Array.isArray(r.wrong_questions)) ? r.wrong_questions : {};
-                    const rMod = (typeof normalizeModuleId === 'function') ? normalizeModuleId(wq.moduleId || r.module_id, r.id, r.quiz_date) : (wq.moduleId || r.module_id);
-                    if (cMatch && nMatch && rMod === targetModId) {
-                        results.push({
-                            name: r.student_name,
-                            class: r.student_class,
-                            score: Number(r.score) || 0,
-                            date: r.quiz_date,
-                            time: r.time_str,
-                            duration: r.duration,
-                            moduleId: rMod,
-                            isRemedial: !!wq.isRemedial,
-                            originalScore: wq.originalScore,
-                            remedialScore: wq.remedialScore
-                        });
-                    }
+                    pushIfMatch(r.student_name, r.student_class, wq.moduleId || r.module_id, r.id, r.quiz_date, {
+                        id: r.id,
+                        name: r.student_name,
+                        class: r.student_class,
+                        score: Number(r.score) || 0,
+                        date: r.quiz_date,
+                        time: r.time_str,
+                        duration: r.duration,
+                        moduleId: targetModId,
+                        moduleTitle: wq.moduleTitle || '',
+                        isRemedial: !!wq.isRemedial,
+                        originalScore: wq.originalScore,
+                        remedialScore: wq.remedialScore
+                    });
                 });
             }
-        }
-    } catch(e) {}
+        })(), 3000),
+        // 2. Cek juga dari Firebase RTDB agar riwayat remedial / kuis tidak pernah terlewat
+        withTimeout((async () => {
+            if (typeof fetchFirebaseRecords !== 'function') return;
+            const fbList = await fetchFirebaseRecords();
+            if (!Array.isArray(fbList)) return;
+            fbList.forEach(r => {
+                if (!r) return;
+                pushIfMatch(r.name, r.class, r.moduleId, r.id, r.date, r);
+            });
+        })(), 3000)
+    ]);
 
     return results;
 }
@@ -891,6 +924,10 @@ window.applyCloudSharedStateToLocal = applyCloudSharedStateToLocal;
 
 // ⚡ REAL-TIME SUPABASE SUBSCRIPTION (SEKETIKA UPDATE SAAT ADA NILAI / PERUBAHAN BARU)
 let realtimeChannel = null;
+let _supabaseSyncDebounceTimer = null;
+let _syncInFlightPromise = null;
+let _lastSyncAt = 0;
+let _lastSyncedFingerprint = '';
 
 function initSupabaseRealtime() {
     if (realtimeChannel) return;
@@ -905,8 +942,11 @@ function initSupabaseRealtime() {
             .channel('quizmaster_multi_device_sync')
             .on('postgres_changes', { event: '*', schema: 'public', table: tableName }, (payload) => {
                 console.log('⚡ [Real-time Supabase Event]:', payload.eventType);
-                // Sinkronisasi data di latar belakang secara otomatis
-                syncWithBackend(false);
+                if (_supabaseSyncDebounceTimer) clearTimeout(_supabaseSyncDebounceTimer);
+                _supabaseSyncDebounceTimer = setTimeout(() => {
+                    _supabaseSyncDebounceTimer = null;
+                    syncWithBackend(false);
+                }, 1200);
             })
             .subscribe((status) => {
                 console.log('📡 [Supabase Realtime Channel Status]:', status);
@@ -917,15 +957,34 @@ function initSupabaseRealtime() {
 }
 window.initSupabaseRealtime = initSupabaseRealtime;
 
+function computeRecordsFingerprint(list) {
+    if (!Array.isArray(list) || list.length === 0) return '0';
+    let sum = 0;
+    let remSum = 0;
+    for (let i = 0; i < list.length; i++) {
+        const r = list[i];
+        sum += Number(r && r.score) || 0;
+        if (r && r.isRemedial) remSum += (Number(r.remedialScore) || Number(r.score) || 0) + 1;
+    }
+    return `${list.length}:${sum}:${remSum}`;
+}
+
 async function syncWithBackend(showFeedback = false) {
     // 🛡️ QUIZ FOCUS PROTECTION: Jika siswa sedang aktif di tengah ujian kuis,
     // tunda sinkronisasi riwayat nilai orang lain agar thread CPU & memori HP siswa 100% lancar tanpa lag/freeze
     if (!showFeedback) {
-        if (typeof isQuizActive === 'function' && isQuizActive()) return;
+        if (typeof isQuizActive === 'function' && isQuizActive()) return false;
         const quizEl = (typeof document !== 'undefined') ? document.getElementById('screen-quiz') : null;
-        if (quizEl && quizEl.classList && quizEl.classList.contains('active')) return;
+        if (quizEl && quizEl.classList && quizEl.classList.contains('active')) return false;
+        // 🛡️ COOLDOWN GUARD: Hindari badai sinkronisasi berulang dalam rentang < 4 detik
+        if ((Date.now() - _lastSyncAt) < 4000) return true;
     }
 
+    if (_syncInFlightPromise) {
+        return _syncInFlightPromise;
+    }
+
+    _syncInFlightPromise = (async () => {
     const cfg = (typeof getSupabaseConfig === 'function') ? getSupabaseConfig() : { url: DEFAULT_SUPABASE_URL, key: DEFAULT_SUPABASE_ANON_KEY, table: 'quiz_results' };
     const tableName = cfg.table || 'quiz_results';
 
@@ -1054,9 +1113,15 @@ async function syncWithBackend(showFeedback = false) {
 
     if (isAnyOnline || combinedCloud.length > 0) {
         const finalRecords = filterDeletedRecords(purgeFakeJkiRecords(mergeRecordsList(mergedBaseline, combinedCloud)));
+        const nextFingerprint = computeRecordsFingerprint(finalRecords);
+        const hasChanges = nextFingerprint !== _lastSyncedFingerprint;
+        _lastSyncedFingerprint = nextFingerprint;
+        _lastSyncAt = Date.now();
 
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(finalRecords));
-        localStorage.setItem(OFFICIAL_DATA_SYNC_KEY, CURRENT_OFFICIAL_VERSION);
+        if (hasChanges) {
+            safeLocalStorageSet(STORAGE_KEY, JSON.stringify(finalRecords));
+        }
+        safeLocalStorageSet(OFFICIAL_DATA_SYNC_KEY, CURRENT_OFFICIAL_VERSION);
 
         isBackendOnline = true;
         updateDbBadge(true, finalRecords.length);
@@ -1070,12 +1135,16 @@ async function syncWithBackend(showFeedback = false) {
             initFirebaseRealtime();
         }
 
-        if (typeof renderDashboard === 'function') renderDashboard();
+        const teacherScreenActive = (typeof screens !== 'undefined' && screens && screens.teacher && screens.teacher.classList && screens.teacher.classList.contains('active'));
+        if (teacherScreenActive && (hasChanges || showFeedback) && typeof renderDashboard === 'function') {
+            renderDashboard();
+        }
         if (showFeedback) {
             showToast(`✅ Basis data Cloud tersinkronisasi! (Total: ${finalRecords.length} Siswa)`, '🔥');
         }
         return true;
     } else {
+        _lastSyncAt = Date.now();
         if (showFeedback) {
             showToast('⚠️ Sedang offline atau server cloud sedang sibuk. Menggunakan data lokal.', '⚠️');
         }
@@ -1089,13 +1158,21 @@ async function syncWithBackend(showFeedback = false) {
             if (Array.isArray(dbRecords) && dbRecords.length > 0) {
                 const current = loadRecords();
                 const merged = mergeRecordsList(current, dbRecords);
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
-                if (typeof renderDashboard === 'function') renderDashboard();
+                safeLocalStorageSet(STORAGE_KEY, JSON.stringify(merged));
+                const teacherScreenActive = (typeof screens !== 'undefined' && screens && screens.teacher && screens.teacher.classList && screens.teacher.classList.contains('active'));
+                if (teacherScreenActive && typeof renderDashboard === 'function') renderDashboard();
             }
         }
     } catch (e) {}
 
     return false;
+    })();
+
+    try {
+        return await _syncInFlightPromise;
+    } finally {
+        _syncInFlightPromise = null;
+    }
 }
 window.syncWithBackend = syncWithBackend;
 

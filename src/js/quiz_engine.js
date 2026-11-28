@@ -1058,23 +1058,22 @@ async function initiateQuiz() {
         // 📦 Tentukan Modul Pembelajaran Terpilih terlebih dahulu
         const targetModId = moduleId || (currentActiveModule ? currentActiveModule.id : (window.QuizManager ? QuizManager.getActiveModuleId() : 'modul_detektif_fakta'));
 
-        // 🔒 Verifikasi Akses Jadwal Guru Muhammad Hafidh Putra Roshadi, S.Pd. & Pengaturan Akses
-        const access = checkClassAccess(cls, targetModId);
-        if (!access.allowed) {
-            if (typeof sfxWrong === 'function') sfxWrong();
-            const schedule = access.schedule || (typeof getClassSchedule === 'function' ? getClassSchedule(cls) : (SCHEDULE_RINI_SYAFITRI[cls] || {}));
-            const safeDay = typeof escapeHtml === 'function' ? escapeHtml(schedule.dayName || '-') : (schedule.dayName || '-');
-            const safeStart = typeof escapeHtml === 'function' ? escapeHtml(schedule.start || '-') : (schedule.start || '-');
-            const safeEnd = typeof escapeHtml === 'function' ? escapeHtml(schedule.end || '-') : (schedule.end || '-');
-            const safePeriod = typeof escapeHtml === 'function' ? escapeHtml(schedule.period || '-') : (schedule.period || '-');
-            document.getElementById('locked-class-name').textContent = `Kelas ${cls}`;
-            document.getElementById('locked-class-schedule').innerHTML = `
-                📅 <strong>Jadwal Resmi Mata Pelajaran (Bpk. Muhammad Hafidh Putra Roshadi, S.Pd.):</strong> ${safeDay}, Pukul <strong>${safeStart} - ${safeEnd} WIB</strong> (${safePeriod})
-            `;
-            document.getElementById('locked-current-time').textContent = `Waktu Saat Ini: ${access.currentInfo || new Date().toLocaleString('id-ID')}`;
-            if (typeof showToast === 'function' && access.reason) showToast(access.reason, '🔒');
-            document.getElementById('access-locked-modal').classList.add('active');
-            return;
+        // 🌐 Pastikan pengaturan cloud terbaru (termasuk Mode Remedial & Batas Respon) tersedia jika cache lokal kosong/lama
+        if (typeof fetchCloudSharedState === 'function' && typeof applyCloudSharedStateToLocal === 'function') {
+            const hasLocalRem = localStorage.getItem('quizmaster_remedial_enabled') !== null;
+            const lastSharedSync = Number(window.__lastSharedStateSyncAt || 0);
+            if (!hasLocalRem || (Date.now() - lastSharedSync > 15000)) {
+                try {
+                    const cloudState = await Promise.race([
+                        fetchCloudSharedState(),
+                        new Promise(res => setTimeout(() => res(null), 1500))
+                    ]);
+                    if (cloudState && typeof cloudState === 'object') {
+                        applyCloudSharedStateToLocal(cloudState);
+                        window.__lastSharedStateSyncAt = Date.now();
+                    }
+                } catch (e) {}
+            }
         }
 
         // 🔄 Verifikasi Batas Respon Siswa (Submission Policy) & Integritas Ujian
@@ -1091,7 +1090,7 @@ async function initiateQuiz() {
 
         // 🛡️ ANTI-INCOGNITO & ANTI-CLEAR CACHE BYPASS GUARD:
         // Jika di memori lokal perangkat kosong, cek ke Cloud apakah siswa ini sebenarnya sudah pernah submit
-        if (previousAttempts.length === 0 && (policy === 'single_only' || policy === 'allow_remedy') && typeof checkCloudStudentSubmission === 'function') {
+        if (previousAttempts.length === 0 && (policy === 'single_only' || policy === 'allow_remedy' || policy === 'allow_twice_highest') && typeof checkCloudStudentSubmission === 'function') {
             try {
                 const cloudSubmissions = await checkCloudStudentSubmission(name, cls, targetModId);
                 if (Array.isArray(cloudSubmissions) && cloudSubmissions.length > 0) {
@@ -1127,15 +1126,20 @@ async function initiateQuiz() {
         let blockMessage = '';
 
         // 🔁 ALUR REMEDIAL BARU: siswa bernilai tercatat < KKM + remedial dibuka guru => tawarkan remedial
-        // (bukan popup "nilai sudah tercatat"). Hanya 1x remedial per modul; nilai akhir = tertinggi, maks KKM.
+        // (bukan popup "nilai sudah tercatat" dan TIDAK terblokir meski akses ujian reguler kelas ditutup).
         const REMEDIAL_KKM = 80;
         const lastRecordsForRem = previousAttempts.filter(r => !r.isCheated || Number(r.score) > 0);
         // Remedial yang dikerjakan sebelum 21/11/2026 dinilai dengan kunci jawaban lama yang keliru,
         // sehingga TIDAK menghabiskan jatah remedial (hanya berlaku bila nilai masih < KKM).
         const isPreFixRemedial = (r) => {
-            const m = String((r && r.date) || '').match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
-            if (!m) return false;
-            return Date.UTC(+m[3], +m[2] - 1, +m[1]) < Date.UTC(2026, 10, 21);
+            if (!r) return false;
+            const dStr = String(r.date || r.quiz_date || '');
+            const mSlash = dStr.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+            if (mSlash) return Date.UTC(+mSlash[3], +mSlash[2] - 1, +mSlash[1]) < Date.UTC(2026, 10, 21);
+            const mIso = dStr.match(/(\d{4})-(\d{1,2})-(\d{1,2})/);
+            if (mIso) return Date.UTC(+mIso[1], +mIso[2] - 1, +mIso[3]) < Date.UTC(2026, 10, 21);
+            if (r.timestamp) return Number(r.timestamp) < Date.UTC(2026, 10, 21);
+            return false;
         };
         const alreadyRemedialed = !isCurrentStudentDemo() && lastRecordsForRem.some(r => r.isRemedial && !isPreFixRemedial(r));
         const remedialEligible = isRemedialAllowed && (policy !== 'allow_multiple' || isCurrentStudentDemo())
@@ -1144,8 +1148,30 @@ async function initiateQuiz() {
         window.__remedialConfirmed = false;
         let pendingRemedialSource = null;
 
-        if (remedialEligible) {
-            const sorted = [...lastRecordsForRem].sort((a, b) => (Number(b.score) || 0) - (Number(a.score) || 0) || (Number(b.timestamp) || 0) - (Number(a.timestamp) || 0));
+        // 🔒 Verifikasi Akses Jadwal Guru Muhammad Hafidh Putra Roshadi, S.Pd. & Pengaturan Akses
+        // Siswa yang memenuhi syarat remedial (< 80, belum remedial, remedial dibuka guru) tidak terblokir meski kelas reguler dikunci.
+        const access = checkClassAccess(cls, targetModId);
+        if (!access.allowed && !remedialEligible && !remedialConfirmed) {
+            if (typeof sfxWrong === 'function') sfxWrong();
+            const schedule = access.schedule || (typeof getClassSchedule === 'function' ? getClassSchedule(cls) : (SCHEDULE_RINI_SYAFITRI[cls] || {}));
+            const safeDay = typeof escapeHtml === 'function' ? escapeHtml(schedule.dayName || '-') : (schedule.dayName || '-');
+            const safeStart = typeof escapeHtml === 'function' ? escapeHtml(schedule.start || '-') : (schedule.start || '-');
+            const safeEnd = typeof escapeHtml === 'function' ? escapeHtml(schedule.end || '-') : (schedule.end || '-');
+            const safePeriod = typeof escapeHtml === 'function' ? escapeHtml(schedule.period || '-') : (schedule.period || '-');
+            document.getElementById('locked-class-name').textContent = `Kelas ${cls}`;
+            document.getElementById('locked-class-schedule').innerHTML = `
+                📅 <strong>Jadwal Resmi Mata Pelajaran (Bpk. Muhammad Hafidh Putra Roshadi, S.Pd.):</strong> ${safeDay}, Pukul <strong>${safeStart} - ${safeEnd} WIB</strong> (${safePeriod})
+            `;
+            document.getElementById('locked-current-time').textContent = `Waktu Saat Ini: ${access.currentInfo || new Date().toLocaleString('id-ID')}`;
+            if (typeof showToast === 'function' && access.reason) showToast(access.reason, '🔒');
+            document.getElementById('access-locked-modal').classList.add('active');
+            return;
+        }
+
+        if (remedialEligible || (remedialConfirmed && activeRemRec)) {
+            const sorted = lastRecordsForRem.length > 0
+                ? [...lastRecordsForRem].sort((a, b) => (Number(b.score) || 0) - (Number(a.score) || 0) || (Number(b.timestamp) || 0) - (Number(a.timestamp) || 0))
+                : [activeRemRec];
             if (!remedialConfirmed) {
                 if (typeof sfxClick === 'function') sfxClick();
                 let offerTitle = sorted[0].moduleTitle || '';
@@ -1159,7 +1185,7 @@ async function initiateQuiz() {
                 openRemedialOffer(name, cls, offerTitle, sorted[0]);
                 return;
             }
-            pendingRemedialSource = sorted[0];
+            pendingRemedialSource = sorted[0] || activeRemRec;
         }
 
         if (pendingRemedialSource) {
@@ -3155,9 +3181,14 @@ async function finishQuiz() {
 
     const wrongList = record.wrongQuestions || [];
     const isPreFixRem = (r) => {
-        const m = String((r && r.date) || '').match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
-        if (!m) return false;
-        return Date.UTC(+m[3], +m[2] - 1, +m[1]) < Date.UTC(2026, 10, 21);
+        if (!r) return false;
+        const dStr = String(r.date || r.quiz_date || '');
+        const mSlash = dStr.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+        if (mSlash) return Date.UTC(+mSlash[3], +mSlash[2] - 1, +mSlash[1]) < Date.UTC(2026, 10, 21);
+        const mIso = dStr.match(/(\d{4})-(\d{1,2})-(\d{1,2})/);
+        if (mIso) return Date.UTC(+mIso[1], +mIso[2] - 1, +mIso[3]) < Date.UTC(2026, 10, 21);
+        if (r.timestamp) return Number(r.timestamp) < Date.UTC(2026, 10, 21);
+        return false;
     };
     const hasAlreadyRemedialed = !isCurrentStudentDemo() && prevStudentAttempts.some(r => r.isRemedial && !isPreFixRem(r));
     const canOfferRemedial = !isPassed && !isRemedialSession && isRemedialConfigEnabled && !hasAlreadyRemedialed && submissionPolicy !== 'allow_multiple';

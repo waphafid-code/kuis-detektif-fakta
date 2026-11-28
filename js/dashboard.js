@@ -649,7 +649,6 @@ function grantTeacherAccess(authMethod = 'PIN') {
     const mgTimerInp = document.getElementById('setting-minigames-timer');
     if (mgTimerInp) mgTimerInp.value = mgSaved;
 
-    checkBackendStatus();
     switchScreen('teacher');
     if (window.targetTeacherTabAfterPin && typeof switchTeacherTab === 'function') {
         switchTeacherTab(window.targetTeacherTabAfterPin);
@@ -658,6 +657,10 @@ function grantTeacherAccess(authMethod = 'PIN') {
         switchTeacherTab('records');
     }
     startDashboardAutoRefresh();
+    // 🌐 Tunda ping jaringan ke frame berikutnya agar animasi masuk Dasbor Guru mulus 60fps tanpa nge-lag
+    setTimeout(() => {
+        if (typeof checkBackendStatus === 'function') checkBackendStatus();
+    }, 80);
 
     if (authMethod === 'Biometric') {
         showToast('Akses Sidik Jari / Face ID Terverifikasi 🔓', '👆');
@@ -2818,40 +2821,55 @@ function closeStudentDetailModal() {
 //  📊 TEACHER DASHBOARD
 // ============================================================
 let dashRefreshInterval = null;
+let _prevDashFingerprint = '';
+
+function _dashRecordsFingerprint(records) {
+    if (!Array.isArray(records) || records.length === 0) return '0';
+    let sum = 0;
+    for (let i = 0; i < records.length; i++) {
+        sum += Number(records[i] && records[i].score) || 0;
+    }
+    return `${records.length}:${sum}`;
+}
 
 function startDashboardAutoRefresh() {
     if (dashRefreshInterval) clearInterval(dashRefreshInterval);
-    prevRecordCount = loadRecords().length;
+    const initial = loadRecords();
+    prevRecordCount = initial.length;
+    _prevDashFingerprint = _dashRecordsFingerprint(initial);
     dashRefreshInterval = setInterval(async () => {
         if (screens.teacher && screens.teacher.classList.contains('active')) {
-            // Tarik pembaruan nilai terkini dari Cloud Supabase secara otomatis
+            if (typeof document !== 'undefined' && document.hidden) return;
+            // Tarik pembaruan nilai terkini dari Cloud Supabase secara otomatis (jeda 12 dtk agar bebas lag)
             if (typeof syncWithBackend === 'function') {
                 await syncWithBackend(false);
             }
             const records = loadRecords();
-            if (records.length !== prevRecordCount) {
-                sfxNewData();
+            const fp = _dashRecordsFingerprint(records);
+            if (fp !== _prevDashFingerprint) {
+                if (records.length > prevRecordCount) sfxNewData();
                 prevRecordCount = records.length;
+                _prevDashFingerprint = fp;
                 renderDashboard();
             }
         } else {
             clearInterval(dashRefreshInterval);
             dashRefreshInterval = null;
         }
-    }, 4500);
+    }, 12000);
 }
 
 function renderClassMatrix(records) {
     const tbody = document.getElementById('matrix-tbody');
     if (!tbody) return;
-    tbody.innerHTML = '';
 
     const activeQuestions = getActiveQuizData();
     const totalQ = activeQuestions.length > 0 ? activeQuestions.length : 20;
 
     // Sinkronisasi header matriks (S1..S20) secara dinamis jika jumlah soal berbeda
     const theadRow = document.getElementById('matrix-thead-row');
-    if (theadRow) {
+    if (theadRow && Number(theadRow.dataset.totalQ || 0) !== totalQ) {
+        theadRow.dataset.totalQ = String(totalQ);
         let thHtml = `
             <th style="text-align: left; min-width: 140px; padding: 10px 12px;">Nama Siswa</th>
             <th style="min-width: 60px;">Kelas</th>
@@ -2871,9 +2889,9 @@ function renderClassMatrix(records) {
 
     const sorted = [...records].sort((a, b) => b.score - a.score || (a.timestamp || 0) - (b.timestamp || 0));
     const qCorrectCounts = new Array(totalQ).fill(0);
+    const matrixRowsHtml = [];
 
     sorted.forEach((r, rowIdx) => {
-        const tr = document.createElement('tr');
         const detailedList = reconstructStudentAnswers(r);
 
         let questionCells = '';
@@ -2890,7 +2908,7 @@ function renderClassMatrix(records) {
             `;
         }
 
-        tr.innerHTML = `
+        matrixRowsHtml.push(`<tr>
             <td style="text-align: left; font-weight: 700; padding: 8px 12px;">${escapeHtml(r.name)}</td>
             <td><span style="font-family: var(--font-mono); color: var(--accent); font-size: 0.75rem;">${escapeHtml(r.class || '-')}</span></td>
             <td><span class="score-pill ${r.score >= 80 ? 'high' : (r.score >= 60 ? 'mid' : 'low')}" style="padding: 2px 6px; font-size: 0.75rem;">${r.score}</span></td>
@@ -2900,13 +2918,10 @@ function renderClassMatrix(records) {
                     🔍 Detail
                 </button>
             </td>
-        `;
-        tbody.appendChild(tr);
+        </tr>`);
     });
 
     // Summary row: % Ketuntasan Soal
-    const summaryTr = document.createElement('tr');
-    summaryTr.style.cssText = 'background: rgba(139,92,246,0.12); font-weight: 800; border-top: 2px solid var(--primary);';
     let summaryCells = '';
     for (let qIdx = 0; qIdx < totalQ; qIdx++) {
         const count = qCorrectCounts[qIdx] || 0;
@@ -2919,14 +2934,15 @@ function renderClassMatrix(records) {
         `;
     }
 
-    summaryTr.innerHTML = `
+    matrixRowsHtml.push(`<tr style="background: rgba(139,92,246,0.12); font-weight: 800; border-top: 2px solid var(--primary);">
         <td colspan="3" style="text-align: left; padding: 8px 12px; color: var(--accent); font-size: 0.75rem;">
             📈 % Ketuntasan Kelas
         </td>
         ${summaryCells}
         <td style="font-size: 0.7rem; color: var(--text-muted);">-</td>
-    `;
-    tbody.appendChild(summaryTr);
+    </tr>`);
+
+    tbody.innerHTML = matrixRowsHtml.join('');
 }
 
 let currentSortColumn = 'score';
@@ -3654,16 +3670,29 @@ function renderDashboard() {
         }
     }
 
-    // Pisahkan records per modul kuis dengan normalisasi otomatis
+    // Pisahkan records per modul kuis dalam sekali iterasi & indeks berdasarkan kelas untuk lookup O(1)
     const modTryoutId = 'modul_tryout_terpadu';
-    const recordsFakta = activePoolRecords.filter(r => {
+    const recordsFakta = [];
+    const recordsJaringan = [];
+    const recordsTryout = [];
+    const recordsByClassAndMod = new Map();
+    const normClsFast = (c) => (typeof normalizeClassName === 'function' ? normalizeClassName(c) : String(c || '').replace(/\./g, ' ').replace(/\s+/g, ' ').trim().toUpperCase());
+
+    for (let idx = 0; idx < activePoolRecords.length; idx++) {
+        const r = activePoolRecords[idx];
         const mod = (typeof normalizeModuleId === 'function') ? normalizeModuleId(r.moduleId, r.id, r.date) : (r.moduleId || modFaktaId);
-        return mod === modFaktaId;
-    });
-    const recordsJaringan = activePoolRecords.filter(r => {
-        const mod = (typeof normalizeModuleId === 'function') ? normalizeModuleId(r.moduleId, r.id, r.date) : (r.moduleId || modFaktaId);
-        return mod === modJaringanId;
-    });
+        if (mod === modFaktaId) recordsFakta.push(r);
+        else if (mod === modJaringanId) recordsJaringan.push(r);
+        else if (mod === modTryoutId) recordsTryout.push(r);
+
+        const bucketKey = `${normClsFast(r.class)}|${mod}`;
+        let bucket = recordsByClassAndMod.get(bucketKey);
+        if (!bucket) {
+            bucket = [];
+            recordsByClassAndMod.set(bucketKey, bucket);
+        }
+        bucket.push(r);
+    }
     const recordsPanduan = activePoolRecords.filter(r => {
         const mod = (typeof normalizeModuleId === 'function') ? normalizeModuleId(r.moduleId, r.id, r.date) : (r.moduleId || modFaktaId);
         return mod === modPanduanId;
@@ -3671,10 +3700,6 @@ function renderDashboard() {
     const recordsPrivasi = activePoolRecords.filter(r => {
         const mod = (typeof normalizeModuleId === 'function') ? normalizeModuleId(r.moduleId, r.id, r.date) : (r.moduleId || modFaktaId);
         return mod === modPrivasiId;
-    });
-    const recordsTryout = activePoolRecords.filter(r => {
-        const mod = (typeof normalizeModuleId === 'function') ? normalizeModuleId(r.moduleId, r.id, r.date) : (r.moduleId || modFaktaId);
-        return mod === modTryoutId;
     });
 
     // Update counter pada badge tombol segmented modul
@@ -3693,45 +3718,41 @@ function renderDashboard() {
     const isSingleModuleView = (filterModule === modJaringanId || filterModule === modFaktaId || (filterModule !== 'all' && !isTryoutView));
     const activeSingleModId = isSingleModuleView ? filterModule : (isTryoutView ? modTryoutId : null);
 
-    // Bangun daftar siswa terdaftar & cross-reference dengan submission untuk kedua kuis
+    // Bangun daftar siswa terdaftar & cross-reference dengan submission untuk seluruh modul
+    const byScoreDesc = (a, b) => (b.score - a.score) || ((b.timestamp || 0) - (a.timestamp || 0));
     const rosterStudentItems = [];
     targetClasses.forEach(cls => {
         const roster = (typeof STUDENT_ROSTER !== 'undefined' && STUDENT_ROSTER[cls]) ? STUDENT_ROSTER[cls] : [];
+        const clsNorm = normClsFast(cls);
+        const clsFakta = recordsByClassAndMod.get(`${clsNorm}|${modFaktaId}`) || [];
+        const clsJaringan = recordsByClassAndMod.get(`${clsNorm}|${modJaringanId}`) || [];
+        const clsPanduan = recordsByClassAndMod.get(`${clsNorm}|${modPanduanId}`) || [];
+        const clsPrivasi = recordsByClassAndMod.get(`${clsNorm}|${modPrivasiId}`) || [];
+        const clsTryout = recordsByClassAndMod.get(`${clsNorm}|${modTryoutId}`) || [];
+        const clsCustom = (filterModule !== 'all' && !isTryoutView && filterModule !== modFaktaId && filterModule !== modJaringanId && filterModule !== modPanduanId && filterModule !== modPrivasiId)
+            ? (recordsByClassAndMod.get(`${clsNorm}|${filterModule}`) || [])
+            : [];
+
         roster.forEach(studentName => {
             const cleanName = studentName.trim().toLowerCase();
             const nameMatches = (typeof isNameEquivalent === 'function') 
                 ? (recName) => isNameEquivalent(recName, studentName)
                 : (recName) => (recName || '').trim().toLowerCase() === cleanName;
-            const classMatches = (typeof isClassEquivalent === 'function')
-                ? (recClass) => isClassEquivalent(recClass, cls)
-                : (recClass) => (recClass || '').replace(/\s+/g, '').toUpperCase() === cls.replace(/\s+/g, '').toUpperCase();
 
-            // Attempts Kuis 1 (Fakta)
-            const attemptsFakta = recordsFakta.filter(r => 
-                nameMatches(r.name) && classMatches(r.class)
-            ).sort((a, b) => (b.score - a.score) || ((b.timestamp || 0) - (a.timestamp || 0)));
+            // Attempts per modul (hanya memindai kelas yang sama = ~36 siswa, bukan 250+ semua kelas)
+            const attemptsFakta = clsFakta.filter(r => nameMatches(r.name)).sort(byScoreDesc);
             const bestFakta = attemptsFakta[0] || null;
 
-            // Attempts Kuis 2 (Jaringan)
-            const attemptsJaringan = recordsJaringan.filter(r => 
-                nameMatches(r.name) && classMatches(r.class)
-            ).sort((a, b) => (b.score - a.score) || ((b.timestamp || 0) - (a.timestamp || 0)));
+            const attemptsJaringan = clsJaringan.filter(r => nameMatches(r.name)).sort(byScoreDesc);
             const bestJaringan = attemptsJaringan[0] || null;
 
-            // Attempts Panduan Generasi Digital (Teknologi Digital, Profesi, Budaya & HKI)
-            const attemptsPanduan = recordsPanduan.filter(r => nameMatches(r.name) && classMatches(r.class))
-                .sort((a, b) => (b.score - a.score) || ((b.timestamp || 0) - (a.timestamp || 0)));
+            const attemptsPanduan = clsPanduan.filter(r => nameMatches(r.name)).sort(byScoreDesc);
             const bestPanduan = attemptsPanduan[0] || null;
 
-            // Attempts Privasi dan Keamanan Digital
-            const attemptsPrivasi = recordsPrivasi.filter(r => nameMatches(r.name) && classMatches(r.class))
-                .sort((a, b) => (b.score - a.score) || ((b.timestamp || 0) - (a.timestamp || 0)));
+            const attemptsPrivasi = clsPrivasi.filter(r => nameMatches(r.name)).sort(byScoreDesc);
             const bestPrivasi = attemptsPrivasi[0] || null;
 
-            // Attempts Tryout Terpadu 60 Soal
-            const attemptsTryout = recordsTryout.filter(r => 
-                nameMatches(r.name) && classMatches(r.class)
-            ).sort((a, b) => (b.score - a.score) || ((b.timestamp || 0) - (a.timestamp || 0)));
+            const attemptsTryout = clsTryout.filter(r => nameMatches(r.name)).sort(byScoreDesc);
             const bestTryout = attemptsTryout[0] || null;
 
             const hasFakta = !!bestFakta;
@@ -3782,11 +3803,20 @@ function renderDashboard() {
                 activeScore = bestFakta ? bestFakta.score : -1;
                 activeAttempts = attemptsFakta.length;
                 activeTimestamp = bestFakta ? (bestFakta.timestamp || 0) : 0;
+            } else if (filterModule === modPanduanId) {
+                hasSubmitted = hasPanduan;
+                activeRecord = bestPanduan;
+                activeScore = bestPanduan ? bestPanduan.score : -1;
+                activeAttempts = attemptsPanduan.length;
+                activeTimestamp = bestPanduan ? (bestPanduan.timestamp || 0) : 0;
+            } else if (filterModule === modPrivasiId) {
+                hasSubmitted = hasPrivasi;
+                activeRecord = bestPrivasi;
+                activeScore = bestPrivasi ? bestPrivasi.score : -1;
+                activeAttempts = attemptsPrivasi.length;
+                activeTimestamp = bestPrivasi ? (bestPrivasi.timestamp || 0) : 0;
             } else if (filterModule !== 'all') {
-                const attemptsMod = activePoolRecords.filter(r => {
-                    const mod = (typeof normalizeModuleId === 'function') ? normalizeModuleId(r.moduleId, r.id, r.date) : (r.moduleId || modFaktaId);
-                    return mod === filterModule && nameMatches(r.name) && classMatches(r.class);
-                }).sort((a, b) => (b.score - a.score) || ((b.timestamp || 0) - (a.timestamp || 0)));
+                const attemptsMod = clsCustom.filter(r => nameMatches(r.name)).sort(byScoreDesc);
                 const bestMod = attemptsMod[0] || null;
                 hasSubmitted = !!bestMod;
                 activeRecord = bestMod;
@@ -4144,14 +4174,12 @@ function renderDashboard() {
         }
     }
 
-    // 7. Render Data Tabel Dasbor
+    // 7. Render Data Tabel Dasbor (single-pass batch innerHTML agar nol layout thrashing)
     const tbody = document.getElementById('dash-tbody');
     window.currentRenderedRecords = [];
     window.currentWaitingItems = [];
 
     if (tbody) {
-        tbody.innerHTML = '';
-
         if (displayList.length === 0) {
             tbody.innerHTML = `
                 <tr>
@@ -4168,8 +4196,10 @@ function renderDashboard() {
                 </tr>
             `;
         } else {
+            const tbodyRowsHtml = [];
             displayList.forEach((item, i) => {
-                const tr = document.createElement('tr');
+                let rowStyle = '';
+                let rowInnerHtml = '';
 
                 if (isTryoutView) {
                     // ──── RENDER MODE TRYOUT TERPADU (6 MATERI SEKALIGUS) ────
@@ -4222,7 +4252,7 @@ function renderDashboard() {
                         const m5Cell = renderTopicCell('M5', 'Infrastruktur Jaringan & Siber');
                         const m6Cell = renderTopicCell('M6', 'Aplikasi Perkantoran Word & Excel');
 
-                        tr.innerHTML = `
+                        rowInnerHtml = `
                             <td style="font-family: var(--font-mono); color: var(--text-muted);">${i + 1}</td>
                             <td style="font-weight: 700;">
                                 <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
@@ -4251,8 +4281,8 @@ function renderDashboard() {
                         `;
                     } else {
                         // Siswa belum mengerjakan Tryout
-                        tr.style.opacity = '0.85';
-                        tr.innerHTML = `
+                        rowStyle = ' style="opacity: 0.85;"';
+                        rowInnerHtml = `
                             <td style="font-family: var(--font-mono); color: var(--text-muted);">${i + 1}</td>
                             <td style="font-weight: 600; color: var(--text-secondary);">
                                 <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
@@ -4385,7 +4415,7 @@ function renderDashboard() {
                         `;
                     }
 
-                    tr.innerHTML = `
+                    rowInnerHtml = `
                         <td style="font-family: var(--font-mono); color: var(--text-muted);">${i + 1}</td>
                         <td style="font-weight: 700;">${escapeHtml(item.name)}</td>
                         <td><span style="font-family: var(--font-mono); color: var(--accent); font-size: 0.85rem;">${escapeHtml(item.class)}</span></td>
@@ -4412,7 +4442,6 @@ function renderDashboard() {
 
                         const isPass = r.score >= 80 && !r.isCheated;
                         const remMeta = getRemedialMeta(r);
-                        const isRemedial = !!r.isRemedial;
                         const badgeCls = remMeta.state === 'tuntas' ? 'badge-remedial-tuntas' : (remMeta.state === 'belum' ? 'badge-remedial-gagal' : 'badge-remedial-needed');
                         const remedialBadge = remMeta.label
                             ? `<span class="${badgeCls}" title="${escapeHtml(remMeta.title || '')}">${remMeta.label}</span>`
@@ -4443,7 +4472,7 @@ function renderDashboard() {
                             tryoutMiniChip = `<div style="font-size: 0.65rem; color: #a5b4fc; font-family: var(--font-mono); margin-top: 3px;">6 Materi (Klik Periksa)</div>`;
                         }
 
-                        tr.innerHTML = `
+                        rowInnerHtml = `
                             <td style="font-family: var(--font-mono); color: var(--text-muted);">${i + 1}</td>
                             <td style="font-weight: 700;">
                                 <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
@@ -4468,9 +4497,8 @@ function renderDashboard() {
                         `;
                     } else {
                         // Siswa belum mengerjakan kuis pada modul tunggal ini
-                        tr.style.opacity = '0.85';
-                        const modLabel = filterModule === modJaringanId ? 'Kuis Keamanan Jaringan' : 'Kuis Detektif Fakta';
-                        tr.innerHTML = `
+                        rowStyle = ' style="opacity: 0.85;"';
+                        rowInnerHtml = `
                             <td style="font-family: var(--font-mono); color: var(--text-muted);">${i + 1}</td>
                             <td style="font-weight: 600; color: var(--text-secondary);">
                                 <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
@@ -4493,13 +4521,20 @@ function renderDashboard() {
                     }
                 }
 
-                tbody.appendChild(tr);
+                tbodyRowsHtml.push(`<tr${rowStyle}>${rowInnerHtml}</tr>`);
             });
+            tbody.innerHTML = tbodyRowsHtml.join('');
         }
     }
 
-    renderClassMatrix(submittedRecords);
-    renderQuestionAnalytics(allRecords);
+    // Defer rendering of heavy matrix (up to 4,300+ cells) & analytics so admin login & table stay instant
+    window._dashDeferredRenderToken = (window._dashDeferredRenderToken || 0) + 1;
+    const renderToken = window._dashDeferredRenderToken;
+    setTimeout(() => {
+        if (window._dashDeferredRenderToken !== renderToken) return;
+        renderClassMatrix(submittedRecords);
+        renderQuestionAnalytics(allRecords);
+    }, 30);
 }
 
 // ============================================================
@@ -4524,7 +4559,6 @@ window.addEventListener('quizmaster_new_record', (e) => {
 function renderQuestionAnalytics(records) {
     const container = document.getElementById('q-analytics');
     if (!container) return;
-    container.innerHTML = '';
     if (records.length === 0) {
         container.innerHTML = '<p style="color: var(--text-muted); font-size: 0.85rem;">Belum ada data untuk dianalisis.</p>';
         return;
@@ -4535,7 +4569,7 @@ function renderQuestionAnalytics(records) {
         return; 
     }
     const activeQuestions = getActiveQuizData();
-    activeQuestions.forEach((q, i) => {
+    const itemsHtml = activeQuestions.map((q, i) => {
         const wrongCount = attempts.filter(r => r.wrongQuestions.includes(i)).length;
         const correctCount = attempts.length - wrongCount;
         const pct = Math.round((correctCount / attempts.length) * 100);
@@ -4543,18 +4577,17 @@ function renderQuestionAnalytics(records) {
         if (pct < 50) barClass = 'bad';
         else if (pct < 75) barClass = 'medium';
         const diff = q.difficulty || 'Medium';
-        let diffBadgeStr = diff === 'Easy' ? '🟢 Mudah' : (diff === 'Hard' ? '🔴 Sulit' : '🟡 Sedang');
+        const diffBadgeStr = diff === 'Easy' ? '🟢 Mudah' : (diff === 'Hard' ? '🔴 Sulit' : '🟡 Sedang');
 
-        const item = document.createElement('div');
-        item.className = 'q-analytics-item';
-        item.title = (q.q || '').substring(0, 100);
-        item.innerHTML = `
-            <span class="q-label">Soal ${i + 1} (${diffBadgeStr})</span>
-            <div class="q-analytics-bar"><div class="q-analytics-fill ${barClass}" style="width: ${pct}%"></div></div>
-            <span class="q-analytics-pct" style="color: var(--${barClass === 'good' ? 'success' : barClass === 'medium' ? 'warning' : 'danger'})">${pct}%</span>
+        return `
+            <div class="q-analytics-item" title="${escapeHtml((q.q || '').substring(0, 100))}">
+                <span class="q-label">Soal ${i + 1} (${diffBadgeStr})</span>
+                <div class="q-analytics-bar"><div class="q-analytics-fill ${barClass}" style="width: ${pct}%"></div></div>
+                <span class="q-analytics-pct" style="color: var(--${barClass === 'good' ? 'success' : barClass === 'medium' ? 'warning' : 'danger'})">${pct}%</span>
+            </div>
         `;
-        container.appendChild(item);
     });
+    container.innerHTML = itemsHtml.join('');
 }
 
 function pickBestRecord(list) {

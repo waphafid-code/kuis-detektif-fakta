@@ -417,27 +417,42 @@ window.uploadAllRecordsToFirebase = uploadAllRecordsToFirebase;
  * Berlangganan Live Stream Real-Time (Server-Sent Events) dari Firebase RTDB
  * Saat siswa menyelesaikan kuis di HP/laptop lain, dasbor guru seketika terupdate tanpa refresh
  */
+let _rtdbSubscribedUrl = null;
+let _rtdbSyncDebounceTimer = null;
+
 function initFirebaseRealtime() {
     const cfg = getFirebaseConfig();
     const dbUrl = (cfg && cfg.databaseURL) ? cfg.databaseURL.replace(/\/$/, '') : 'https://kuis-informatika-c8781-default-rtdb.firebaseio.com';
 
+    // 🛡️ SINGLETON GUARD: Jangan tutup & buka ulang EventSource jika URL sama dan koneksi masih aktif/connecting!
+    // Pembukaan ulang EventSource memicu Firebase mengirim event 'put' penuh -> syncWithBackend -> loop tak berujung (lag).
+    if (rtdbEventSource && rtdbEventSource.readyState !== 2 && _rtdbSubscribedUrl === dbUrl) {
+        return;
+    }
+
     if (rtdbEventSource) {
         try { rtdbEventSource.close(); } catch(e) {}
+        rtdbEventSource = null;
     }
 
     try {
         if (typeof EventSource !== 'undefined') {
+            const openedAt = Date.now();
+            _rtdbSubscribedUrl = dbUrl;
             rtdbEventSource = new EventSource(`${dbUrl}/quiz_results.json`);
-            rtdbEventSource.addEventListener('put', (event) => {
-                if (typeof syncWithBackend === 'function') {
-                    syncWithBackend(false);
-                }
-            });
-            rtdbEventSource.addEventListener('patch', (event) => {
-                if (typeof syncWithBackend === 'function') {
-                    syncWithBackend(false);
-                }
-            });
+            const scheduleRealtimeSync = (isInitialPut) => {
+                // Abaikan snapshot awal 'put' sesaat setelah EventSource terhubung karena sync awal sudah berjalan
+                if (isInitialPut && (Date.now() - openedAt) < 2000) return;
+                if (_rtdbSyncDebounceTimer) clearTimeout(_rtdbSyncDebounceTimer);
+                _rtdbSyncDebounceTimer = setTimeout(() => {
+                    _rtdbSyncDebounceTimer = null;
+                    if (typeof syncWithBackend === 'function') {
+                        syncWithBackend(false);
+                    }
+                }, 1200);
+            };
+            rtdbEventSource.addEventListener('put', () => scheduleRealtimeSync(true));
+            rtdbEventSource.addEventListener('patch', () => scheduleRealtimeSync(false));
             console.log('📡 [Firebase RTDB SSE] Live stream listener aktif 24/7.');
         }
     } catch(e) {
