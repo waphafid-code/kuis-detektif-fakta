@@ -916,6 +916,20 @@ window.onCloudApprovalsUpdated = function() {
     } catch(e) {}
 })();
 
+function getCheatToleranceLimit() {
+    try {
+        if (typeof localStorage !== 'undefined') {
+            const raw = localStorage.getItem('quizmaster_cheat_tolerance_limit');
+            if (raw !== null && raw !== '') {
+                const n = parseInt(raw, 10);
+                if (Number.isFinite(n)) return Math.max(0, Math.min(50, n));
+            }
+        }
+    } catch (e) {}
+    return MAX_CHEAT_STRIKES;
+}
+window.getCheatToleranceLimit = getCheatToleranceLimit;
+
 function handleAntiCheatEvent(reason = 'Kecurangan / Aktivitas Terlarang', isCritical = false) {
     if (shouldBypassAntiCheat()) return; // Hanya dilewati bila Guru mengatur Akun Demo ke mode bypass QA
     if (isCheatingTriggered || isCheatWarningActive || isQuizFinishing || isLockedForTeacherApproval) return;
@@ -930,9 +944,12 @@ function handleAntiCheatEvent(reason = 'Kecurangan / Aktivitas Terlarang', isCri
     // Simpan jumlah peringatan agar reload yang diizinkan tidak menghapus riwayat strike.
     try { saveCurrentQuizSession(); } catch (e) {}
 
-    if (cheatStrikes <= MAX_CHEAT_STRIKES && !isCritical) {
-        // ⏸️ TOLERANSI 1 & 2: peringatan mandiri agar tidak menyusahkan siswa bila tak sengaja.
-        // 🔒 PELANGGARAN #3 (MAX_CHEAT_STRIKES): kuis dikunci & WAJIB persetujuan Guru di Dasbor Guru!
+    const configuredTolerance = getCheatToleranceLimit();
+    const lockThreshold = Math.max(1, configuredTolerance);
+
+    if (cheatStrikes <= lockThreshold && !isCritical) {
+        // ⏸️ TOLERANSI MANDIRI (1..lockThreshold-1): memberi kesempatan bila tak sengaja.
+        // 🔒 MENCAPAI BATAS TOLERANSI (cheatStrikes >= lockThreshold): kuis dikunci & WAJIB persetujuan Guru di Dasbor Guru!
         isCheatWarningActive = true;
         setExamPrivacyShield(true);
         stopTimer();
@@ -945,21 +962,26 @@ function handleAntiCheatEvent(reason = 'Kecurangan / Aktivitas Terlarang', isCri
         const modal = document.getElementById('cheat-warning-modal');
 
         if (titleEl) {
-            titleEl.textContent = cheatStrikes === 1
-                ? '⚠️ Peringatan Toleransi Anti-Cheat (#1 dari 3)'
-                : (cheatStrikes === 2
-                    ? '🚨 Peringatan Keras Toleransi (#2 dari 3)'
-                    : '⛔ Peringatan Terakhir Anti-Cheat (#3 dari 3) — Ujian Dikunci');
+            if (configuredTolerance === 0) {
+                titleEl.textContent = '⛔ Pelanggaran Anti-Cheat (#1) — Ujian Dikunci';
+            } else if (cheatStrikes >= lockThreshold) {
+                titleEl.textContent = `⛔ Peringatan Terakhir Anti-Cheat (#${cheatStrikes} dari ${lockThreshold}) — Ujian Dikunci`;
+            } else if (cheatStrikes === 1) {
+                titleEl.textContent = `⚠️ Peringatan Toleransi Anti-Cheat (#1 dari ${lockThreshold})`;
+            } else {
+                titleEl.textContent = `🚨 Peringatan Keras Toleransi (#${cheatStrikes} dari ${lockThreshold})`;
+            }
         }
         if (reasonEl) reasonEl.textContent = `Penyebab: ${reason}`;
 
-        if (cheatStrikes >= MAX_CHEAT_STRIKES) {
+        if (cheatStrikes >= lockThreshold) {
             isLockedForTeacherApproval = true;
             lastCheatLockReason = reason;
             registerCheatLockRequest(reason, false);
             try { saveCurrentQuizSession(); } catch (e) {}
             if (chancesEl) {
-                chancesEl.innerHTML = '• Batas toleransi tercapai (<strong style="color: #f43f5e;">3/3 pelanggaran</strong>). Sesi kuis dikunci sementara sampai Guru menyetujui melalui Dasbor Guru.';
+                const tolLabel = configuredTolerance === 0 ? 'mode ketat penuh (0 toleransi)' : `${cheatStrikes}/${lockThreshold} pelanggaran`;
+                chancesEl.innerHTML = `• Batas toleransi tercapai (<strong style="color: #f43f5e;">${tolLabel}</strong>). Sesi kuis dikunci sementara sampai Guru menyetujui melalui Dasbor Guru.`;
             }
             setCheatWarningLockUI(true, false);
             startTeacherApprovalPolling();
@@ -967,14 +989,14 @@ function handleAntiCheatEvent(reason = 'Kecurangan / Aktivitas Terlarang', isCri
             isLockedForTeacherApproval = false;
             setCheatWarningLockUI(false, false);
             if (chancesEl) {
-                const rem = Math.max(0, MAX_CHEAT_STRIKES - cheatStrikes);
-                chancesEl.innerHTML = `• Sisa Toleransi Mandiri: <strong style="color: ${rem <= 1 ? '#f43f5e' : '#fde047'}; font-size: 0.95rem;">${rem} kali lagi</strong>. Pelanggaran ke-3 akan mengunci kuis dan mewajibkan persetujuan Guru.`;
+                const rem = Math.max(0, lockThreshold - cheatStrikes);
+                chancesEl.innerHTML = `• Sisa Toleransi Mandiri: <strong style="color: ${rem <= 1 ? '#f43f5e' : '#fde047'}; font-size: 0.95rem;">${rem} kali lagi</strong>. Pelanggaran ke-${lockThreshold} akan mengunci kuis dan mewajibkan persetujuan Guru.`;
             }
         }
         if (modal) modal.classList.add('active');
     } else {
         // 🚨 STRIKE > 3 ATAU KRITIS: Diskualifikasi Penuh (tetap butuh persetujuan Guru untuk mengulang)
-        triggerCheatPenalty(`${reason} (Mencapai Batas Maksimal 3x Pelanggaran)`);
+        triggerCheatPenalty(`${reason} (Mencapai Batas Maksimal ${lockThreshold}x Pelanggaran)`);
     }
 }
 
@@ -1087,6 +1109,7 @@ function acknowledgeCheatPenalty() {
 // 👁️ 1. DETEKSI PERPINDAHAN HALAMAN / TAB / JENDELA / APLIKASI LAIN
 let blurGraceTimer = null;
 let blurStartedAt = 0;
+let _lastMetaShiftKeyAt = 0;
 
 function clearBlurGraceTimer() {
     if (blurGraceTimer) {
@@ -1116,6 +1139,14 @@ document.addEventListener('visibilitychange', () => {
 window.addEventListener('blur', () => {
     if (!isQuizActive() || isCheatWarningActive || isQuizFinishing) return;
     if (shouldBypassAntiCheat()) return;
+    // 📸 Deteksi cepat Win+Shift+S (OS mengambil alih fokus tepat saat Meta+Shift ditekan)
+    if (_lastMetaShiftKeyAt > 0 && (Date.now() - _lastMetaShiftKeyAt) < 1800) {
+        _lastMetaShiftKeyAt = 0;
+        clearBlurGraceTimer();
+        clearExamClipboard();
+        handleAntiCheatEvent('📸 Screenshot / Snipping Tool (Win+Shift+S) Terdeteksi');
+        return;
+    }
     // Abaikan kedipan fokus sesaat (< 2 detik) akibat dialog izin fullscreen browser
     if (_lastFullscreenRequestAt > 0 && (Date.now() - _lastFullscreenRequestAt) < 2000) return;
     clearBlurGraceTimer();
@@ -1259,6 +1290,11 @@ window.addEventListener('keyup', (e) => {
 window.addEventListener('keydown', (e) => {
     if (!screens.quiz || !screens.quiz.classList.contains('active') || isCheatingTriggered || isQuizFinishing) return;
     if (shouldBypassAntiCheat()) return;
+
+    // Lacak kombo Meta+Shift (Win+Shift pada Windows Snipping Tool sebelum OS merebut fokus)
+    if ((e.metaKey || e.key === 'Meta' || e.key === 'OS') && e.shiftKey) {
+        _lastMetaShiftKeyAt = Date.now();
+    }
 
     // F12 (Developer Tools)
     if (e.key === 'F12' || e.keyCode === 123) {

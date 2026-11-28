@@ -118,6 +118,18 @@ function loadLocalCheatLocks() {
 }
 window.loadLocalCheatLocks = loadLocalCheatLocks;
 
+function loadVisibleExamModules() {
+    try {
+        const raw = localStorage.getItem('quizmaster_visible_exam_modules');
+        if (!raw) return [];
+        const parsed = JSON.parse(raw);
+        return Array.isArray(parsed) ? parsed.filter(id => typeof id === 'string' && id.trim().length > 0) : [];
+    } catch (e) {
+        return [];
+    }
+}
+window.loadVisibleExamModules = loadVisibleExamModules;
+
 function loadLocalTeacherApprovals() {
     try {
         const raw = localStorage.getItem(CLOUD_TEACHER_APPROVALS_KEY);
@@ -198,7 +210,16 @@ async function saveCloudSharedState(partialState) {
 
     // 🛡️ ANTI-REVERSION SERVER GUARD: Jangan biarkan state tersimpan di cloud kembali ke detektif fakta jika mode ujian terkunci
     const lockedExamMode = partialState.activeExamModuleMode || currentState.activeExamModuleMode || localStorage.getItem('quizmaster_active_exam_module_mode') || 'modul_jaringan_keamanan';
-    if (lockedExamMode && lockedExamMode !== 'all') {
+    if (lockedExamMode === 'custom') {
+        mergedState.activeExamModuleMode = 'custom';
+        const customList = Array.isArray(partialState.visibleExamModules)
+            ? partialState.visibleExamModules
+            : (Array.isArray(currentState.visibleExamModules) ? currentState.visibleExamModules : loadVisibleExamModules());
+        mergedState.visibleExamModules = customList;
+        mergedState.activeModuleId = (customList && customList.length > 0)
+            ? customList[0]
+            : (currentState.activeModuleId || 'modul_jaringan_keamanan');
+    } else if (lockedExamMode && lockedExamMode !== 'all') {
         mergedState.activeExamModuleMode = lockedExamMode;
         mergedState.activeModuleId = lockedExamMode;
     }

@@ -2271,7 +2271,16 @@ const QuizManager = {
     getActiveModuleId() {
         try {
             const examMode = localStorage.getItem('quizmaster_active_exam_module_mode');
-            if (examMode && examMode !== 'all') {
+            if (examMode === 'custom') {
+                const visible = (typeof loadVisibleExamModules === 'function')
+                    ? loadVisibleExamModules()
+                    : (() => {
+                        try { return JSON.parse(localStorage.getItem('quizmaster_visible_exam_modules') || '[]') || []; } catch(e) { return []; }
+                    })();
+                const storedActive = localStorage.getItem(this.ACTIVE_MODULE_KEY);
+                if (storedActive && visible.includes(storedActive)) return storedActive;
+                if (Array.isArray(visible) && visible.length > 0) return visible[0];
+            } else if (examMode && examMode !== 'all') {
                 return examMode;
             }
         } catch(e) {}

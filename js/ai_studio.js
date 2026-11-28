@@ -17,7 +17,7 @@ window.getActiveExamModuleSetting = loadActiveExamModuleSetting;
 function setActiveExamModuleSetting(mode, broadcast = true) {
     try {
         localStorage.setItem(ACTIVE_EXAM_MODULE_SETTING_KEY, mode);
-        if (mode !== 'all') {
+        if (mode !== 'all' && mode !== 'custom') {
             localStorage.setItem('quizmaster_dashboard_module_filter', mode);
             window.currentDashboardModuleFilter = mode;
             if (window.QuizManager) {
@@ -28,9 +28,14 @@ function setActiveExamModuleSetting(mode, broadcast = true) {
     } catch(e) {}
 
     if (broadcast && typeof saveCloudSharedState === 'function') {
-        saveCloudSharedState({ 
+        const visibleList = (typeof loadVisibleExamModules === 'function') ? loadVisibleExamModules() : [];
+        const resolvedId = (mode === 'custom')
+            ? (visibleList[0] || (window.QuizManager ? QuizManager.getActiveModuleId() : 'modul_jaringan_keamanan'))
+            : (mode === 'all' ? (window.QuizManager ? QuizManager.getActiveModuleId() : 'modul_jaringan_keamanan') : mode);
+        saveCloudSharedState({
             activeExamModuleMode: mode,
-            activeModuleId: (mode === 'all' ? (window.QuizManager ? QuizManager.getActiveModuleId() : 'modul_jaringan_keamanan') : mode)
+            activeModuleId: resolvedId,
+            ...(mode === 'custom' ? { visibleExamModules: visibleList } : {})
         });
     }
 }
@@ -62,24 +67,35 @@ async function initModulesCatalog() {
         }
     });
 
-    const activeExamMode = loadActiveExamModuleSetting(); // 'modul_jaringan_keamanan', 'all', 'modul_detektif_fakta'
-    
-    // Filter modul yang tampil ke siswa jika guru memilih mengunci satu modul
-    const visibleModules = (activeExamMode && activeExamMode !== 'all')
-        ? mergedModules.filter(m => m.id === activeExamMode)
-        : mergedModules;
+    const activeExamMode = loadActiveExamModuleSetting(); // 'modul_jaringan_keamanan', 'all', 'custom', dsb.
+    const customVisibleIds = (typeof loadVisibleExamModules === 'function') ? loadVisibleExamModules() : [];
+
+    // Filter modul yang tampil ke siswa sesuai pengaturan guru (Semua / Kustom Multi-Modul / 1 Modul)
+    let visibleModules = mergedModules;
+    if (activeExamMode === 'custom') {
+        visibleModules = customVisibleIds.length > 0
+            ? mergedModules.filter(m => customVisibleIds.includes(m.id))
+            : mergedModules;
+    } else if (activeExamMode && activeExamMode !== 'all') {
+        visibleModules = mergedModules.filter(m => m.id === activeExamMode);
+    }
 
     const listToRender = (visibleModules && visibleModules.length > 0) ? visibleModules : mergedModules;
 
     let activeId;
-    if (activeExamMode && activeExamMode !== 'all') {
+    if (activeExamMode && activeExamMode !== 'all' && activeExamMode !== 'custom') {
         activeId = activeExamMode;
         QuizManager.setActiveModuleId(activeId, false);
         try { sessionStorage.removeItem('user_chosen_module_id'); } catch(e) {}
     } else {
         const sessionChosenId = sessionStorage.getItem('user_chosen_module_id');
         const currentHomeVal = (homeSelect && homeSelect.value && listToRender.some(m => m.id === homeSelect.value)) ? homeSelect.value : null;
-        activeId = sessionChosenId || currentHomeVal || QuizManager.getActiveModuleId() || 'modul_jaringan_keamanan';
+        const candidateActive = (sessionChosenId && listToRender.some(m => m.id === sessionChosenId))
+            ? sessionChosenId
+            : (currentHomeVal || QuizManager.getActiveModuleId());
+        activeId = (candidateActive && listToRender.some(m => m.id === candidateActive))
+            ? candidateActive
+            : (listToRender[0] ? listToRender[0].id : 'modul_jaringan_keamanan');
         QuizManager.setActiveModuleId(activeId, false);
     }
 

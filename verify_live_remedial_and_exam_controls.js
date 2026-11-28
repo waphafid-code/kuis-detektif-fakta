@@ -52,13 +52,13 @@ test('Clipboard copy, cut, paste, contextmenu, screenshot and DevTools guards al
     assert(root.includes("['I', 'i', 'J', 'j', 'C', 'c', 'K', 'k'].includes(e.key)"));
 });
 
-test('Leaving focus/hidden page still enters the 3-strike warning flow', () => {
+test('Leaving focus/hidden page still enters the configurable warning flow (default 3 strikes)', () => {
     assert(root.includes("document.addEventListener('visibilitychange'"));
     assert(root.includes("window.addEventListener('blur'"));
     assert(root.includes('handleAntiCheatEvent(\'🌐 Berpindah Tab / Meminimalkan Browser\')'));
     assert(root.includes('const MAX_CHEAT_STRIKES = 3'));
-    assert(root.includes('cheatStrikes <= MAX_CHEAT_STRIKES && !isCritical'));
-    assert(root.includes('Peringatan Terakhir Anti-Cheat (#3 dari 3)'));
+    assert(root.includes('cheatStrikes <= lockThreshold && !isCritical'));
+    assert(root.includes('Peringatan Terakhir Anti-Cheat (#${cheatStrikes} dari ${lockThreshold})'));
 });
 
 test('Hanifa Zahfaleta Rolia is present in X E 4 official roster', () => {

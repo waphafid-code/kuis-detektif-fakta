@@ -31,11 +31,11 @@ console.log('══════════════════════�
     // C. Poin per butir soal ditampilkan (+X Poin / 0 Poin)
     assert(code.includes('Jawaban Benar') && code.includes('Poin'), `${filePath}: Harus menampilkan status Benar dan poin per butir soal`);
 
-    // D. Aturan 3x Peringatan Anti-Cheat
-    assert(code.includes('MAX_CHEAT_STRIKES = 3') || code.includes('MAX_CHEAT_STRIKES=3') || code.includes('cheatStrikes < MAX_CHEAT_STRIKES'), `${filePath}: Harus menerapkan batas maksimal 3 kali peringatan`);
-    assert(code.includes('Peringatan Toleransi Anti-Cheat (#1 dari 3)') || code.includes('#1 dari 3'), `${filePath}: Harus ada peringatan #1`);
-    assert(code.includes('Peringatan Keras Toleransi (#2 dari 3)') || code.includes('#2 dari 3'), `${filePath}: Harus ada peringatan #2`);
-    assert(code.includes('triggerCheatPenalty'), `${filePath}: Harus ada penalti diskualifikasi pada strike ke-3`);
+    // D. Aturan Peringatan Anti-Cheat (Default 3x, Dapat Dikonfigurasi Guru via getCheatToleranceLimit)
+    assert(code.includes('MAX_CHEAT_STRIKES = 3') && code.includes('getCheatToleranceLimit'), `${filePath}: Harus menerapkan default batas 3 kali peringatan yang dapat dikonfigurasi Guru`);
+    assert(code.includes('Peringatan Toleransi Anti-Cheat (#1 dari ${lockThreshold})'), `${filePath}: Harus ada peringatan #1`);
+    assert(code.includes('Peringatan Keras Toleransi (#${cheatStrikes} dari ${lockThreshold})'), `${filePath}: Harus ada peringatan #2+`);
+    assert(code.includes('triggerCheatPenalty'), `${filePath}: Harus ada penalti diskualifikasi jika melebihi batas`);
 
     // E. Screenshot, perpindahan halaman, dan clipboard/copy-paste semuanya wajib memicu peringatan anti-cheat.
     assert(code.includes('PrintScreen'), `${filePath}: Harus mendeteksi tombol PrintScreen`);

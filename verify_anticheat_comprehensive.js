@@ -427,7 +427,7 @@ test('Debounced accidental touch/print after resuming never leaves quiz screen b
 });
 
 test('Dashboard Teacher Approval Queue UI, approval/rejection handlers & root/src parity exist', () => {
-    for (const rel of ['index.html', 'js/storage.js', 'js/audio.js', 'js/dashboard.js', 'js/quiz_engine.js']) {
+    for (const rel of ['index.html', 'js/storage.js', 'js/audio.js', 'js/quiz_manager.js', 'js/ai_studio.js', 'js/dashboard.js', 'js/quiz_engine.js']) {
         const a = fs.readFileSync(path.join(__dirname, rel), 'utf8');
         const b = fs.readFileSync(path.join(__dirname, 'src', rel), 'utf8');
         assert.strictEqual(a, b, `${rel} and src/${rel} must be identical`);
@@ -440,6 +440,50 @@ test('Dashboard Teacher Approval Queue UI, approval/rejection handlers & root/sr
     assert(dash.includes('function renderTeacherApprovalQueue()'), 'dashboard.js must implement renderTeacherApprovalQueue');
     assert(dash.includes('async function approveStudentContinueQuiz('), 'dashboard.js must implement approveStudentContinueQuiz');
     assert(dash.includes('async function rejectStudentContinueQuiz('), 'dashboard.js must implement rejectStudentContinueQuiz');
+    assert(html.includes('id="input-custom-timer-value"'), 'Dashboard must provide custom timer input');
+    assert(html.includes('id="custom-visible-modules-box"'), 'Dashboard must provide custom multi-module checklist');
+    assert(html.includes('id="setting-cheat-tolerance"'), 'Dashboard must provide configurable cheat tolerance setting');
+});
+
+test('Win+Shift followed by OS blur immediately triggers Snipping Tool warning', () => {
+    const env = createFakeDomSandbox();
+    env.emitWin('keydown', { metaKey: true, shiftKey: true, key: 'Shift' });
+    env.advanceTime(120);
+    env.emitWin('blur');
+    assert(env.warningModal.classList.contains('active'), 'Win+Shift + OS blur must immediately pop screenshot warning');
+    assert(env.doc.getElementById('cheat-warning-reason').textContent.includes('Snipping Tool'));
+});
+
+test('Configurable cheat tolerance limit (0 = strict immediate lock, 5 = generous lock on #5)', () => {
+    const envStrict = createFakeDomSandbox();
+    envStrict.sandbox.localStorage.setItem('quizmaster_cheat_tolerance_limit', '0');
+    envStrict.emitWin('keydown', { key: 'PrintScreen', code: 'PrintScreen', keyCode: 44 });
+    assert(envStrict.warningModal.classList.contains('active'));
+    assert.strictEqual(envStrict.doc.getElementById('btn-resume-exam').style.display, 'none', 'Tolerance 0 must lock immediately on strike 1');
+    assert.strictEqual(envStrict.doc.getElementById('cheat-approval-wait-box').style.display, 'block');
+
+    const envFlex = createFakeDomSandbox();
+    envFlex.sandbox.localStorage.setItem('quizmaster_cheat_tolerance_limit', '4');
+    for (let s = 1; s <= 3; s++) {
+        envFlex.emitDoc('copy');
+        assert(envFlex.warningModal.classList.contains('active'));
+        assert.notStrictEqual(envFlex.doc.getElementById('btn-resume-exam').style.display, 'none', `Strike #${s} of 4 must still allow self-resume`);
+        envFlex.sandbox.resumeFromCheatWarning();
+        envFlex.advanceTime(2000);
+    }
+    envFlex.emitDoc('copy'); // Strike 4 -> lock!
+    assert.strictEqual(envFlex.doc.getElementById('btn-resume-exam').style.display, 'none', 'Strike #4 of 4 must lock for Teacher Approval');
+});
+
+test('Custom timer input & Custom multi-module selection filter & sync cleanly', async () => {
+    const storageCode = fs.readFileSync(path.join(__dirname, 'js', 'storage.js'), 'utf8');
+    const audioCode = fs.readFileSync(path.join(__dirname, 'js', 'audio.js'), 'utf8');
+    const qmCode = fs.readFileSync(path.join(__dirname, 'js', 'quiz_manager.js'), 'utf8');
+    const aiCode = fs.readFileSync(path.join(__dirname, 'js', 'ai_studio.js'), 'utf8');
+    assert(audioCode.includes('async function applyCustomQuizTimer()'), 'audio.js must implement applyCustomQuizTimer');
+    assert(storageCode.includes("if (lockedExamMode === 'custom')"), 'storage.js must support custom multi-module cloud sync');
+    assert(qmCode.includes("if (examMode === 'custom')"), 'quiz_manager.js getActiveModuleId must support custom multi-module mode');
+    assert(aiCode.includes("if (activeExamMode === 'custom')"), 'ai_studio.js initModulesCatalog must filter by custom visible modules');
 });
 
 runQueuedTests();

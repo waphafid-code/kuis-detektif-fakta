@@ -617,21 +617,61 @@ async function saveRecord(record) {
 
 function loadTimerSetting() {
     const v = localStorage.getItem(TIMER_SETTING_KEY);
-    return v !== null ? parseInt(v) : 30;
+    if (v === null || v === '') return 30;
+    const parsed = parseInt(v, 10);
+    return Number.isFinite(parsed) && parsed >= 0 ? parsed : 30;
 }
 
-async function saveTimerSetting() {
-    const val = parseInt(document.getElementById('setting-timer').value);
+function syncTimerSelectUi(secondsVal) {
+    const val = (typeof secondsVal === 'number' && Number.isFinite(secondsVal) && secondsVal >= 0)
+        ? secondsVal
+        : loadTimerSetting();
+    const sel = document.getElementById('setting-timer');
+    const customInp = document.getElementById('input-custom-timer-value');
+    const customUnit = document.getElementById('input-custom-timer-unit');
+    if (sel) {
+        let optCustom = sel.querySelector('#opt-custom-timer-val');
+        const hasPreset = Array.from(sel.options).some(o => o.id !== 'opt-custom-timer-val' && String(o.value) === String(val));
+        if (hasPreset) {
+            if (optCustom) optCustom.remove();
+            sel.value = String(val);
+        } else {
+            if (!optCustom) {
+                optCustom = document.createElement('option');
+                optCustom.id = 'opt-custom-timer-val';
+                const customTrigger = sel.querySelector('option[value="custom"]');
+                if (customTrigger) sel.insertBefore(optCustom, customTrigger);
+                else sel.appendChild(optCustom);
+            }
+            optCustom.value = String(val);
+            const labelText = (val >= 60 && val % 60 === 0) ? `${val / 60} menit (${val} detik)` : `${val} detik`;
+            optCustom.textContent = `⏱️ Kustom: ${labelText}`;
+            sel.value = String(val);
+        }
+    }
+    if (customInp && val > 0) {
+        if (val >= 60 && val % 60 === 0) {
+            customInp.value = String(val / 60);
+            if (customUnit) customUnit.value = 'menit';
+        } else {
+            customInp.value = String(val);
+            if (customUnit) customUnit.value = 'detik';
+        }
+    }
+}
+window.syncTimerSelectUi = syncTimerSelectUi;
+
+async function _commitQuizTimerValue(val) {
     localStorage.setItem(TIMER_SETTING_KEY, val);
     TIMER_MAX = val;
+    syncTimerSelectUi(val);
     const msg = document.getElementById('timer-saved-msg');
     if (msg) {
         msg.classList.add('show');
         setTimeout(() => msg.classList.remove('show'), 2000);
     }
-    sfxCorrect();
+    if (typeof sfxCorrect === 'function') sfxCorrect();
 
-    // ☁️ Sinkronkan durasi timer ke Cloud Supabase agar berlaku di seluruh HP / Laptop
     if (typeof saveCloudSharedState === 'function') {
         saveCloudSharedState({ timerSeconds: val });
     }
@@ -647,6 +687,37 @@ async function saveTimerSetting() {
         });
     } catch (e) {}
 }
+
+async function saveTimerSetting() {
+    const sel = document.getElementById('setting-timer');
+    if (!sel) return;
+    if (sel.value === 'custom') {
+        const customInp = document.getElementById('input-custom-timer-value');
+        if (customInp) customInp.focus();
+        return;
+    }
+    const val = parseInt(sel.value, 10);
+    if (!Number.isFinite(val) || val < 0) return;
+    await _commitQuizTimerValue(val);
+}
+
+async function applyCustomQuizTimer() {
+    const valInp = document.getElementById('input-custom-timer-value');
+    const unitSel = document.getElementById('input-custom-timer-unit');
+    const rawNum = valInp ? parseInt(valInp.value, 10) : NaN;
+    if (!Number.isFinite(rawNum) || rawNum < 1) {
+        if (typeof showToast === 'function') showToast('⚠️ Masukkan angka waktu yang valid (minimal 1)!', '⚠️');
+        if (valInp) valInp.focus();
+        return;
+    }
+    const unit = unitSel ? unitSel.value : 'detik';
+    const totalSec = Math.min(36000, unit === 'menit' ? (rawNum * 60) : rawNum);
+    await _commitQuizTimerValue(totalSec);
+    if (typeof showToast === 'function') {
+        showToast(`⏱️ Waktu kustom diterapkan: ${rawNum} ${unit} (${totalSec} detik/soal)!`, '✅');
+    }
+}
+window.applyCustomQuizTimer = applyCustomQuizTimer;
 
 // 🎮 MINI-GAMES TIMER SETTING (DURASI ARENA ICE BREAKING)
 const MINIGAMES_TIMER_KEY = 'detektif_fakta_minigames_timer';
@@ -821,11 +892,22 @@ function applyCloudSharedStateToLocal(state) {
         }
 
         // 2. Sinkronisasi Durasi Timer Kuis
-        if (typeof state.timerSeconds === 'number' && state.timerSeconds > 0) {
+        if (typeof state.timerSeconds === 'number' && state.timerSeconds >= 0) {
             localStorage.setItem(TIMER_SETTING_KEY, state.timerSeconds);
             TIMER_MAX = state.timerSeconds;
-            const timerSel = document.getElementById('setting-timer');
-            if (timerSel) timerSel.value = state.timerSeconds;
+            if (typeof syncTimerSelectUi === 'function') {
+                syncTimerSelectUi(state.timerSeconds);
+            } else {
+                const timerSel = document.getElementById('setting-timer');
+                if (timerSel) timerSel.value = state.timerSeconds;
+            }
+        }
+
+        // 2c. Sinkronisasi Batas Toleransi Anti-Cheat
+        if (state.cheatToleranceLimit !== undefined && state.cheatToleranceLimit !== null) {
+            const tol = Math.max(0, Math.min(50, parseInt(state.cheatToleranceLimit, 10) || 0));
+            localStorage.setItem('quizmaster_cheat_tolerance_limit', String(tol));
+            if (typeof syncCheatToleranceUi === 'function') syncCheatToleranceUi(tol);
         }
 
         // 2b. Sinkronisasi Durasi Timer Mini-Games
@@ -859,6 +941,10 @@ function applyCloudSharedStateToLocal(state) {
         }
 
         // 4. Sinkronisasi Modul Ujian Aktif & Visibilitas Modul
+        if (Array.isArray(state.visibleExamModules)) {
+            localStorage.setItem('quizmaster_visible_exam_modules', JSON.stringify(state.visibleExamModules));
+        }
+
         const lockedMode = (state.activeExamModuleMode !== undefined) 
             ? state.activeExamModuleMode 
             : (localStorage.getItem('quizmaster_active_exam_module_mode') || 'all');
@@ -868,13 +954,19 @@ function applyCloudSharedStateToLocal(state) {
             if (examModSel) examModSel.value = state.activeExamModuleMode;
         }
 
+        const customVisibleList = Array.isArray(state.visibleExamModules)
+            ? state.visibleExamModules
+            : ((typeof loadVisibleExamModules === 'function') ? loadVisibleExamModules() : []);
+
         // Jika guru membuka semua modul, jangan mewarisi HKI/modul lama sebagai
         // pilihan aktif yang membingungkan. Semua opsi tetap tersedia; jaringan hanya
         // menjadi pilihan awal netral sampai siswa memilih paket kuisnya sendiri.
         let targetActiveId = lockedMode === 'all'
             ? 'modul_jaringan_keamanan'
-            : (state.activeModuleId || lockedMode || 'modul_jaringan_keamanan');
-        if (lockedMode && lockedMode !== 'all') {
+            : (lockedMode === 'custom'
+                ? ((customVisibleList && customVisibleList[0]) || state.activeModuleId || 'modul_jaringan_keamanan')
+                : (state.activeModuleId || lockedMode || 'modul_jaringan_keamanan'));
+        if (lockedMode && lockedMode !== 'all' && lockedMode !== 'custom') {
             targetActiveId = lockedMode;
         }
 

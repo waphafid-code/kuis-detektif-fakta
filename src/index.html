@@ -1452,7 +1452,16 @@
                             <option value="90">90 detik (1.5 menit)</option>
                             <option value="120">120 detik (2 menit)</option>
                             <option value="0">♾️ Tanpa Batas Waktu</option>
+                            <option value="custom">✏️ Kustom (Input Bebas)...</option>
                         </select>
+                        <div id="custom-timer-box" style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap; margin-top: 6px;">
+                            <input type="number" id="input-custom-timer-value" min="1" max="36000" placeholder="Kustom" class="form-input" style="width: 90px; padding: 5px 8px; font-size: 0.8rem;" title="Masukkan durasi bebas sesuai selera">
+                            <select id="input-custom-timer-unit" class="form-select-modern" style="width: auto; min-width: 85px; padding: 5px 8px; font-size: 0.8rem;">
+                                <option value="detik">Detik</option>
+                                <option value="menit">Menit</option>
+                            </select>
+                            <button type="button" class="btn btn-primary" onclick="applyCustomQuizTimer()" style="padding: 5px 12px; font-size: 0.76rem; font-weight: 700;">Terapkan</button>
+                        </div>
                         <span class="setting-saved" id="timer-saved-msg">✅ Tersimpan!</span>
                     </div>
 
@@ -1475,12 +1484,36 @@
                         <label for="setting-active-exam-module" style="font-weight: 700; font-size: 0.88rem; color: var(--text);">📚 Modul Ujian Ditampilkan:</label>
                         <select id="setting-active-exam-module" onchange="saveActiveExamModuleSetting()" class="form-select-modern" style="font-size: 0.85rem;">
                             <option value="all" selected>🌐 Tampilkan Semua Modul (Siswa Bebas Memilih)</option>
+                            <option value="custom">☑️ Pilih Beberapa Modul (Kustom Multi-Modul)...</option>
+                            <option value="modul_tryout_terpadu">🎯 Hanya Modul Tryout Terpadu (6 Materi)</option>
                             <option value="modul_jaringan_keamanan">🛡️ Hanya Modul Keamanan Jaringan</option>
                             <option value="modul_hki_profesi_budaya">⚖️ Hanya Modul Teknologi, Budaya &amp; HKI</option>
                             <option value="modul_etika_privasi_keamanan">🔒 Hanya Modul Etika, Privasi &amp; Keamanan</option>
                             <option value="modul_detektif_fakta">🕵️ Hanya Modul Detektif Fakta</option>
                         </select>
+                        <div id="custom-visible-modules-box" style="display: none; margin-top: 8px; padding: 10px 12px; border-radius: 10px; background: rgba(56, 189, 248, 0.06); border: 1px solid rgba(56, 189, 248, 0.35);">
+                            <div style="font-size: 0.78rem; font-weight: 700; color: #38bdf8; margin-bottom: 6px;">Centang modul mana saja yang tampil untuk siswa:</div>
+                            <div id="custom-visible-modules-list" style="display: flex; flex-direction: column; gap: 5px; margin-bottom: 8px;"></div>
+                            <button type="button" class="btn btn-primary" onclick="saveCustomVisibleModules()" style="padding: 5px 12px; font-size: 0.76rem; font-weight: 700;">✅ Terapkan Modul Terpilih</button>
+                        </div>
                         <span class="setting-saved" id="active-module-saved-msg" style="display:none; color:var(--success); font-weight:700; font-size:0.8rem;">✅ Tersimpan!</span>
+                    </div>
+
+                    <div class="setting-row">
+                        <label for="setting-cheat-tolerance" style="font-weight: 700; font-size: 0.88rem; color: var(--text);">🚨 Batas Toleransi Anti-Cheat:</label>
+                        <select id="setting-cheat-tolerance" onchange="saveCheatToleranceSetting()" class="form-select-modern" style="font-size: 0.85rem;">
+                            <option value="0">🔒 0 (Ketat Penuh: Pelanggaran Ke-1 Langsung Kunci)</option>
+                            <option value="1">1 Kali (Pelanggaran Ke-1 Mengunci Sesi)</option>
+                            <option value="2">2 Kali (Toleransi 1x, Ke-2 Kunci)</option>
+                            <option value="3" selected>3 Kali (Default: Toleransi 2x, Ke-3 Kunci)</option>
+                            <option value="5">5 Kali (Longgar: Ke-5 Kunci)</option>
+                            <option value="custom">✏️ Kustom Angka Toleransi...</option>
+                        </select>
+                        <div id="custom-cheat-tolerance-box" style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap; margin-top: 6px;">
+                            <input type="number" id="input-custom-cheat-tolerance" min="0" max="50" placeholder="Batas (0-50)" class="form-input" style="width: 105px; padding: 5px 8px; font-size: 0.8rem;">
+                            <button type="button" class="btn btn-primary" onclick="applyCustomCheatTolerance()" style="padding: 5px 12px; font-size: 0.76rem; font-weight: 700;">Terapkan</button>
+                        </div>
+                        <span class="setting-saved" id="cheat-tolerance-saved-msg" style="display:none; color:var(--success); font-weight:700; font-size:0.8rem;">✅ Tersimpan!</span>
                     </div>
 
                     <div class="setting-row">

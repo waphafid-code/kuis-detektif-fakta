@@ -641,8 +641,12 @@ function grantTeacherAccess(authMethod = 'PIN') {
     closeModal();
     initAudio();
     const saved = loadTimerSetting();
-    const timerInp = document.getElementById('setting-timer');
-    if (timerInp) timerInp.value = saved;
+    if (typeof syncTimerSelectUi === 'function') {
+        syncTimerSelectUi(saved);
+    } else {
+        const timerInp = document.getElementById('setting-timer');
+        if (timerInp) timerInp.value = saved;
+    }
     TIMER_MAX = saved;
 
     const mgSaved = (typeof loadMiniGamesTimerSetting === 'function') ? loadMiniGamesTimerSetting() : 30;
@@ -1773,7 +1777,9 @@ function initExamTokenSettingUi() {
 }
 window.initExamTokenSettingUi = initExamTokenSettingUi;
 
-// 📚 KONTROL PENGATURAN MODUL UJIAN DITAMPILKAN KE SISWA
+// 📚 KONTROL PENGATURAN MODUL UJIAN DITAMPILKAN KE SISWA (SINGLE / ALL / KUSTOM MULTI-MODUL)
+const VISIBLE_EXAM_MODULES_KEY = 'quizmaster_visible_exam_modules';
+
 function loadActiveExamModuleSetting() {
     try {
         const v = localStorage.getItem('quizmaster_active_exam_module_mode');
@@ -1784,9 +1790,98 @@ function loadActiveExamModuleSetting() {
 window.loadActiveExamModuleSetting = loadActiveExamModuleSetting;
 window.getActiveExamModuleSetting = loadActiveExamModuleSetting;
 
+async function renderCustomVisibleModulesList() {
+    const listEl = document.getElementById('custom-visible-modules-list');
+    if (!listEl) return;
+
+    let mods = [];
+    if (window.QuizManager && typeof QuizManager.getAllModules === 'function') {
+        try { mods = await QuizManager.getAllModules(); } catch (e) { mods = []; }
+    }
+    if (!Array.isArray(mods) || mods.length === 0) {
+        mods = [
+            { id: 'modul_jaringan_keamanan', icon: '🛡️', title: 'Infrastruktur Jaringan & Keamanan Digital' },
+            { id: 'modul_hki_profesi_budaya', icon: '⚖️', title: 'Teknologi Digital, Profesi, Budaya & HKI' },
+            { id: 'modul_etika_privasi_keamanan', icon: '🔒', title: 'Etika, Privasi, dan Keamanan Digital' },
+            { id: 'modul_detektif_fakta', icon: '🕵️', title: 'Misi Detektif Fakta' },
+            { id: 'modul_tryout_terpadu', icon: '🎯', title: 'Tryout Terpadu (60 Soal)' }
+        ];
+    }
+
+    const savedList = (typeof loadVisibleExamModules === 'function') ? loadVisibleExamModules() : [];
+    const curMode = loadActiveExamModuleSetting();
+    const checkedSet = new Set(
+        savedList.length > 0
+            ? savedList
+            : (curMode !== 'all' && curMode !== 'custom' ? [curMode] : mods.map(m => m.id))
+    );
+
+    listEl.innerHTML = mods.map(m => `
+        <label style="display: flex; align-items: center; gap: 8px; font-size: 0.82rem; color: var(--text); cursor: pointer; padding: 3px 4px;">
+            <input type="checkbox" class="chk-visible-exam-mod" value="${escapeHtml(m.id)}" ${checkedSet.has(m.id) ? 'checked' : ''} style="width: 16px; height: 16px; accent-color: #38bdf8; cursor: pointer;">
+            <span>${escapeHtml(m.icon || '📚')} ${escapeHtml(m.title)}</span>
+        </label>
+    `).join('');
+}
+window.renderCustomVisibleModulesList = renderCustomVisibleModulesList;
+
+function saveCustomVisibleModules() {
+    const checks = Array.from(document.querySelectorAll('.chk-visible-exam-mod'));
+    const selectedIds = checks.filter(c => c.checked).map(c => c.value).filter(Boolean);
+    if (selectedIds.length === 0) {
+        if (typeof showToast === 'function') showToast('⚠️ Centang minimal 1 modul untuk ditampilkan ke siswa!', '⚠️');
+        return;
+    }
+
+    try {
+        localStorage.setItem(VISIBLE_EXAM_MODULES_KEY, JSON.stringify(selectedIds));
+        localStorage.setItem('quizmaster_active_exam_module_mode', 'custom');
+        if (window.QuizManager && typeof QuizManager.setActiveModuleId === 'function') {
+            QuizManager.setActiveModuleId(selectedIds[0], false);
+        }
+        try { sessionStorage.removeItem('user_chosen_module_id'); } catch (e) {}
+    } catch (e) {}
+
+    const sel = document.getElementById('setting-active-exam-module');
+    if (sel) sel.value = 'custom';
+    const msg = document.getElementById('active-module-saved-msg');
+    if (msg) {
+        msg.style.display = 'inline';
+        setTimeout(() => { if (msg) msg.style.display = 'none'; }, 2500);
+    }
+    if (typeof sfxCorrect === 'function') sfxCorrect();
+    showToast(`☑️ ${selectedIds.length} modul terpilih ditampilkan untuk siswa!`, '🎯');
+
+    if (typeof saveCloudSharedState === 'function') {
+        saveCloudSharedState({
+            activeExamModuleMode: 'custom',
+            visibleExamModules: selectedIds,
+            activeModuleId: selectedIds[0]
+        });
+    }
+    if (typeof initModulesCatalog === 'function') initModulesCatalog();
+    if (typeof renderBankSoalModules === 'function') renderBankSoalModules();
+    updateApplyButtonState('custom');
+}
+window.saveCustomVisibleModules = saveCustomVisibleModules;
+
 function saveActiveExamModuleSetting(val) {
     const sel = document.getElementById('setting-active-exam-module');
     const mode = val || (sel ? sel.value : 'modul_jaringan_keamanan');
+    const customBox = document.getElementById('custom-visible-modules-box');
+    if (mode === 'custom') {
+        if (customBox) customBox.style.display = 'block';
+        renderCustomVisibleModulesList().then(() => {
+            // Jika sudah ada pilihan tersimpan sebelumnya, langsung aktifkan mode custom
+            const existing = (typeof loadVisibleExamModules === 'function') ? loadVisibleExamModules() : [];
+            if (existing.length > 0 && !val) {
+                saveCustomVisibleModules();
+            }
+        });
+        return;
+    }
+    if (customBox) customBox.style.display = 'none';
+
     try {
         localStorage.setItem('quizmaster_active_exam_module_mode', mode);
         // Mode "all" harus benar-benar membuka semua modul dan tidak mewarisi
@@ -1811,7 +1906,9 @@ function saveActiveExamModuleSetting(val) {
             ? '⚖️ Hanya Modul Teknologi, Budaya & HKI (Kuis lain disembunyikan)'
             : (mode === 'modul_etika_privasi_keamanan'
                 ? '🔒 Hanya Modul Etika, Privasi & Keamanan (Kuis lain disembunyikan)'
-                : (mode === 'modul_detektif_fakta' ? '🕵️ Hanya Modul Detektif Fakta (Kuis lain disembunyikan)' : '🌐 Semua Modul (Siswa Bebas Memilih)')));
+                : (mode === 'modul_tryout_terpadu'
+                    ? '🎯 Hanya Modul Tryout Terpadu (60 Soal)'
+                    : (mode === 'modul_detektif_fakta' ? '🕵️ Hanya Modul Detektif Fakta (Kuis lain disembunyikan)' : '🌐 Semua Modul (Siswa Bebas Memilih)'))));
 
     showToast(`Tampilan Siswa Diperbarui: ${label}!`, '🎯');
 
@@ -1831,11 +1928,113 @@ window.saveActiveExamModuleSetting = saveActiveExamModuleSetting;
 
 function initActiveExamModuleUi() {
     const sel = document.getElementById('setting-active-exam-module');
+    const mode = loadActiveExamModuleSetting();
     if (sel) {
-        sel.value = loadActiveExamModuleSetting();
+        sel.value = mode;
+    }
+    const customBox = document.getElementById('custom-visible-modules-box');
+    if (customBox) {
+        customBox.style.display = (mode === 'custom') ? 'block' : 'none';
+        if (mode === 'custom') renderCustomVisibleModulesList();
     }
 }
 window.initActiveExamModuleUi = initActiveExamModuleUi;
+
+// 🚨 PENGATURAN BATAS TOLERANSI ANTI-CHEAT OLEH GURU
+const CHEAT_TOLERANCE_KEY = 'quizmaster_cheat_tolerance_limit';
+
+function loadCheatToleranceSetting() {
+    try {
+        const raw = localStorage.getItem(CHEAT_TOLERANCE_KEY);
+        if (raw === null || raw === '') return 3;
+        const parsed = parseInt(raw, 10);
+        return Number.isFinite(parsed) ? Math.max(0, Math.min(50, parsed)) : 3;
+    } catch (e) {
+        return 3;
+    }
+}
+window.loadCheatToleranceSetting = loadCheatToleranceSetting;
+
+function syncCheatToleranceUi(limitVal) {
+    const val = (typeof limitVal === 'number' && Number.isFinite(limitVal))
+        ? Math.max(0, Math.min(50, limitVal))
+        : loadCheatToleranceSetting();
+    const sel = document.getElementById('setting-cheat-tolerance');
+    const inp = document.getElementById('input-custom-cheat-tolerance');
+    if (sel) {
+        let optCustom = sel.querySelector('#opt-custom-cheat-tol');
+        const hasPreset = Array.from(sel.options).some(o => o.id !== 'opt-custom-cheat-tol' && String(o.value) === String(val));
+        if (hasPreset) {
+            if (optCustom) optCustom.remove();
+            sel.value = String(val);
+        } else {
+            if (!optCustom) {
+                optCustom = document.createElement('option');
+                optCustom.id = 'opt-custom-cheat-tol';
+                const customTrigger = sel.querySelector('option[value="custom"]');
+                if (customTrigger) sel.insertBefore(optCustom, customTrigger);
+                else sel.appendChild(optCustom);
+            }
+            optCustom.value = String(val);
+            optCustom.textContent = `🚨 Kustom: ${val} Kali`;
+            sel.value = String(val);
+        }
+    }
+    if (inp) inp.value = String(val);
+}
+window.syncCheatToleranceUi = syncCheatToleranceUi;
+
+function _commitCheatTolerance(val) {
+    const clamped = Math.max(0, Math.min(50, parseInt(val, 10) || 0));
+    try { localStorage.setItem(CHEAT_TOLERANCE_KEY, String(clamped)); } catch (e) {}
+    syncCheatToleranceUi(clamped);
+    const msg = document.getElementById('cheat-tolerance-saved-msg');
+    if (msg) {
+        msg.style.display = 'inline';
+        setTimeout(() => { if (msg) msg.style.display = 'none'; }, 2500);
+    }
+    if (typeof sfxCorrect === 'function') sfxCorrect();
+    if (typeof saveCloudSharedState === 'function') {
+        saveCloudSharedState({ cheatToleranceLimit: clamped });
+    }
+    if (typeof showToast === 'function') {
+        showToast(
+            clamped === 0
+                ? '🔒 Toleransi 0: Pelanggaran ke-1 langsung mengunci kuis (Wajib Persetujuan Guru)!'
+                : `🛡️ Batas toleransi anti-cheat diatur ke ${clamped} kali pelanggaran!`,
+            '🚨'
+        );
+    }
+}
+
+function saveCheatToleranceSetting() {
+    const sel = document.getElementById('setting-cheat-tolerance');
+    if (!sel) return;
+    if (sel.value === 'custom') {
+        const inp = document.getElementById('input-custom-cheat-tolerance');
+        if (inp) inp.focus();
+        return;
+    }
+    _commitCheatTolerance(sel.value);
+}
+window.saveCheatToleranceSetting = saveCheatToleranceSetting;
+
+function applyCustomCheatTolerance() {
+    const inp = document.getElementById('input-custom-cheat-tolerance');
+    const raw = inp ? parseInt(inp.value, 10) : NaN;
+    if (!Number.isFinite(raw) || raw < 0 || raw > 50) {
+        if (typeof showToast === 'function') showToast('⚠️ Masukkan batas toleransi antara 0 sampai 50!', '⚠️');
+        if (inp) inp.focus();
+        return;
+    }
+    _commitCheatTolerance(raw);
+}
+window.applyCustomCheatTolerance = applyCustomCheatTolerance;
+
+function initCheatToleranceSettingUi() {
+    syncCheatToleranceUi(loadCheatToleranceSetting());
+}
+window.initCheatToleranceSettingUi = initCheatToleranceSettingUi;
 
 function applyCurrentSegmentToStudents() {
     const currentFilter = window.currentDashboardModuleFilter || localStorage.getItem('quizmaster_dashboard_module_filter') || 'all';
@@ -3790,6 +3989,8 @@ function renderDashboard() {
     if (typeof renderTeacherApprovalQueue === 'function') renderTeacherApprovalQueue();
     initExamTokenSettingUi();
     initActiveExamModuleUi();
+    if (typeof syncTimerSelectUi === 'function') syncTimerSelectUi(loadTimerSetting());
+    if (typeof initCheatToleranceSettingUi === 'function') initCheatToleranceSettingUi();
     if (typeof updateApplyButtonState === 'function') updateApplyButtonState();
 
     // Bangun opsi dropdown hanya sekali. renderDashboard() dipanggil berulang kali
