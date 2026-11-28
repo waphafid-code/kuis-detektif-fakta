@@ -139,6 +139,40 @@ window.initFirebaseClient = initFirebaseClient;
 /**
  * Menyimpan satu hasil kuis ke Firebase Realtime Database & Cloud Firestore
  */
+// 🔐 Integritas & arsip: setiap pengiriman ditulis juga ke log tambah-saja (submissions_log) berisi cap SHA-256,
+// sehingga penghapusan/penimpaan di quiz_results tidak pernah menghilangkan jejak nilai.
+async function sha256Hex(text) {
+    try {
+        if (typeof crypto !== 'undefined' && crypto.subtle && typeof TextEncoder !== 'undefined') {
+            const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+            return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+    } catch (e) {}
+    return '';
+}
+window.sha256Hex = sha256Hex;
+
+function _logIdFor(proofCode, key) {
+    return String(proofCode || key || ('x' + Date.now())).replace(/[^A-Za-z0-9_-]/g, '_').slice(0, 120);
+}
+
+async function writeSubmissionLog(dbUrl, payload, key, proofCode) {
+    const id = _logIdFor(proofCode, key);
+    const entry = { ...payload, rtdb_key: key, logged_at: Date.now() };
+    entry.integrity = await sha256Hex([payload.student_name, payload.student_class, (payload.wrong_questions || {}).moduleId, payload.score, payload.correct_count, payload.submission_proof_id, payload.submitted_at].join('|'));
+    for (let attempt = 0; attempt < 2; attempt++) {
+        try {
+            // Log tambah-saja: bila sudah ada (hasil kirim ulang) biarkan apa adanya
+            const res = await fetch(`${dbUrl}/submissions_log/${encodeURIComponent(id)}.json`, {
+                method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(entry)
+            });
+            if (res.ok) return true;
+        } catch (e) {}
+        await new Promise(r => setTimeout(r, 400 + Math.random() * 600));
+    }
+    return false;
+}
+
 async function saveRecordToFirebase(record, proofCode) {
     if (!record) return false;
     const cfg = getFirebaseConfig();
@@ -194,8 +228,21 @@ async function saveRecordToFirebase(record, proofCode) {
                 signal: controller.signal
             });
             if (res.ok) {
-                rtdbSuccess = true;
-                console.log('🔥 [Firebase RTDB] Nilai siswa berhasil disimpan:', record.name, 'Key:', key);
+                // ✅ Verifikasi baca-ulang: nilai dianggap terkirim HANYA bila server benar-benar menyimpan bukti yang sama
+                let verified = true;
+                try {
+                    const vr = await fetch(`${dbUrl}/quiz_results/${encodeURIComponent(key)}/submission_proof_id.json`);
+                    if (vr.ok) {
+                        const got = await vr.json();
+                        verified = (got === payload.submission_proof_id);
+                    }
+                } catch (ve) { verified = true; /* PUT sudah 200; jaringan putus saat verifikasi tidak dianggap gagal */ }
+                if (verified) {
+                    rtdbSuccess = true;
+                    console.log('🔥 [Firebase RTDB] Nilai siswa berhasil disimpan & terverifikasi:', record.name, 'Key:', key);
+                } else {
+                    console.warn('Firebase RTDB: verifikasi baca-ulang tidak cocok, mengulang');
+                }
             } else {
                 console.warn('Firebase RTDB save HTTP', res.status, 'percobaan', attempt + 1);
                 if (res.status >= 400 && res.status < 500 && res.status !== 408 && res.status !== 429) break;
@@ -206,6 +253,9 @@ async function saveRecordToFirebase(record, proofCode) {
             if (tId) clearTimeout(tId);
         }
     }
+
+    // 1b. Arsip tambah-saja + cap integritas (tidak menggagalkan penyimpanan utama bila log ditolak)
+    try { await writeSubmissionLog(dbUrl, payload, key, proofCode || record.submissionProofId); } catch (e) {}
 
     // 2. Simpan juga ke Cloud Firestore jika aktif (non-blocking)
     const db = window.firestoreDb;
@@ -313,6 +363,33 @@ function mapFirebaseRows(data) {
 
 // Ambil HANYA catatan satu siswa: daftar kunci (shallow, ringan) -> saring -> unduh kunci yang cocok.
 // Menggantikan unduhan seluruh basis data di setiap HP siswa.
+// 🛟 Pemulihan guru: tarik log pengiriman tambah-saja dan pulihkan nilai yang hilang/tersembunyi dari dasbor.
+async function recoverSubmissionsFromLog(nameFilter) {
+    const cfg = getFirebaseConfig();
+    const dbUrl = (cfg && cfg.databaseURL) ? cfg.databaseURL.replace(/\/$/, '') : 'https://kuis-informatika-c8781-default-rtdb.firebaseio.com';
+    const res = await fetch(`${dbUrl}/submissions_log.json`);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const logObj = await res.json();
+    if (!logObj || typeof logObj !== 'object') return { found: 0, restored: 0, tampered: 0 };
+    const cur = await (await fetch(`${dbUrl}/quiz_results.json?shallow=true`)).json().catch(() => ({})) || {};
+    const want = String(nameFilter || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+    let found = 0, restored = 0, tampered = 0;
+    for (const [id, e] of Object.entries(logObj)) {
+        if (!e || typeof e !== 'object' || !e.rtdb_key) continue;
+        if (want && !String(e.student_name || '').toLowerCase().replace(/[^a-z0-9]/g, '').includes(want)) continue;
+        found++;
+        const expected = await sha256Hex([e.student_name, e.student_class, (e.wrong_questions || {}).moduleId, e.score, e.correct_count, e.submission_proof_id, e.submitted_at].join('|'));
+        if (e.integrity && expected && e.integrity !== expected) { tampered++; continue; }
+        if (cur[e.rtdb_key]) continue;
+        const row = { ...e }; delete row.rtdb_key; delete row.logged_at; delete row.integrity;
+        const put = await fetch(`${dbUrl}/quiz_results/${encodeURIComponent(e.rtdb_key)}.json`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(row) });
+        if (put.ok) restored++;
+    }
+    if (restored > 0 && typeof syncWithBackend === 'function') syncWithBackend(true);
+    return { found, restored, tampered };
+}
+window.recoverSubmissionsFromLog = recoverSubmissionsFromLog;
+
 async function fetchFirebaseRecordsForStudent(name, cls) {
     const cfg = getFirebaseConfig();
     const dbUrl = (cfg && cfg.databaseURL) ? cfg.databaseURL.replace(/\/$/, '') : 'https://kuis-informatika-c8781-default-rtdb.firebaseio.com';
@@ -576,6 +653,13 @@ async function deleteFirebaseRecord(studentName, studentClass, moduleId) {
                     const modMatch = (!moduleId || moduleId === 'all' || itemMod === moduleId);
 
                     if (nameMatch && classMatch && modMatch) {
+                        // 🗄️ Arsipkan salinan sebelum dihapus (bisa dipulihkan guru bila salah hapus)
+                        try {
+                            await fetch(`${dbUrl}/deleted_archive/${encodeURIComponent(key + '_' + Date.now())}.json`, {
+                                method: 'PUT', headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ ...r, archived_at: Date.now(), archived_from: key })
+                            });
+                        } catch (ae) { console.warn('Arsip sebelum hapus gagal:', ae.message); }
                         try {
                             const delRes = await fetch(`${dbUrl}/quiz_results/${encodeURIComponent(key)}.json`, {
                                 method: 'DELETE'

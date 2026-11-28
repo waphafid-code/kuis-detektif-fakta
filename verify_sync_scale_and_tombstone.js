@@ -29,4 +29,9 @@ out=filterDeletedRecords([mk(90,0),mk(64,Date.parse('2026-11-20T10:00:00+07:00')
 ok(out.length===2&&out.every(r=>r.timestamp>=T),'tombstone lama: nilai baru tampil, lama tersembunyi');
 store.quizmaster_deleted_records=JSON.stringify(['__ALL__']);ok(filterDeletedRecords([mk(64,T)]).length===0,'__ALL__ tetap menghapus semua');
 ok(/function moduleTitleFor/.test(a)&&!/modId === 'modul_jaringan_keamanan' \? 'Penilaian Harian/.test(a),'judul modul terpusat (Etika/HKI tidak lagi berlabel Detektif Fakta)');
+ok(/writeSubmissionLog/.test(fb)&&/submissions_log/.test(fb)&&/submission_proof_id\.json/.test(fb),'log tambah-saja + verifikasi baca-ulang');
+ok(/deleted_archive/.test(fb)&&/recoverSubmissionsFromLog/.test(fb)&&/runRecoverSubmissions/.test(d),'arsip sebelum hapus + pemulihan guru');
+ok(/beforeunload/.test(rd('js/app.js')),'peringatan tutup halaman saat antrean');
+ok(rd('kuis_interaktif_dasbor_guru.html')===rd('src/kuis_interaktif_dasbor_guru.html'),'html guru identik');
+ok(fs.existsSync('firebase_database_rules_aman.json')&&JSON.parse(rd('firebase_database_rules_aman.json')).rules.submissions_log,'berkas aturan Firebase valid');
 console.log('fails='+f);process.exit(f?1:0);

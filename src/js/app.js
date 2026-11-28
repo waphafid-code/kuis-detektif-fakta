@@ -174,6 +174,17 @@ setInterval(() => {
     } catch (e) {}
 }, 25000);
 
+// ⚠️ Cegah siswa menutup halaman saat nilai masih mengantre (belum terkonfirmasi cloud)
+window.addEventListener('beforeunload', (e) => {
+    try {
+        if (typeof getPendingRecords === 'function' && getPendingRecords().length > 0) {
+            e.preventDefault();
+            e.returnValue = 'Nilai Anda belum terkirim ke guru. Tetap di halaman sampai terkirim.';
+            return e.returnValue;
+        }
+    } catch (err) {}
+});
+
 // 🌐 Penanganan Koneksi Multi-Perangkat: Otomatis sinkron saat internet kembali menyala
 window.addEventListener('online', () => {
     console.log('🌐 [Network] Perangkat online! Menyinkronkan database...');

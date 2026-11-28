@@ -3837,6 +3837,22 @@ function openWhatsAppWithReminder() {
 }
 window.openWhatsAppWithReminder = openWhatsAppWithReminder;
 
+// 🛟 Tombol guru: pulihkan nilai dari log pengiriman tambah-saja (opsional filter nama)
+async function runRecoverSubmissions() {
+    if (typeof sfxClick === 'function') sfxClick();
+    const nm = window.prompt('Pulihkan nilai dari log pengiriman.\nKetik sebagian nama siswa (kosongkan untuk SEMUA siswa):', '');
+    if (nm === null) return;
+    try {
+        if (typeof showToast === 'function') showToast('Memeriksa log pengiriman...', '🛟');
+        const r = await recoverSubmissionsFromLog(nm);
+        const msg = `Log: ${r.found} pengiriman ditemukan, ${r.restored} dipulihkan` + (r.tampered ? `, ${r.tampered} DITOLAK (cap integritas tidak cocok)` : '') + '.';
+        if (typeof showToast === 'function') showToast(msg, r.tampered ? '⚠️' : '✅');
+    } catch (e) {
+        if (typeof showToast === 'function') showToast('Gagal membaca log: ' + e.message, '⚠️');
+    }
+}
+window.runRecoverSubmissions = runRecoverSubmissions;
+
 function copyUnsubmittedStudentsList() {
     sfxClick();
     const filterClass = document.getElementById('filter-class') ? document.getElementById('filter-class').value : 'all';
