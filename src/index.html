@@ -1371,34 +1371,6 @@
                 <div id="review-list"></div>
             </div>
 
-            <!-- 🪞 LEMBAR REFLEKSI DIRI & METAKOGNISI SISWA (KURIKULUM MERDEKA) -->
-            <div class="student-reflection-card" id="student-reflection-card">
-                <div class="reflection-header">
-                    <span style="font-size: 1.4rem;">🪞</span>
-                    <h4>Lembar Refleksi Pembelajaran Siswa</h4>
-                </div>
-                <div class="reflection-desc">
-                    Tumbuhkan kemandirian belajar Anda! Evaluasi pemahaman konsep diri Anda secara jujur untuk membantu guru memberikan pendampingan yang tepat.
-                </div>
-                
-                <label class="reflection-chips-label">Tingkat Keyakinan Pemahaman Materi:</label>
-                <div class="reflection-chips-group" id="reflection-chips-group">
-                    <div class="reflection-chip active" data-val="Tinggi" onclick="selectReflectionChip(this)">🌟 Sangat Paham &amp; Percaya Diri</div>
-                    <div class="reflection-chip" data-val="Sedang" onclick="selectReflectionChip(this)">🤔 Paham Sebagian (Perlu Latihan)</div>
-                    <div class="reflection-chip" data-val="Ragu" onclick="selectReflectionChip(this)">🧗 Masih Ragu / Butuh Bimbingan</div>
-                </div>
-
-                <label class="reflection-chips-label" for="reflection-student-note">Catatan Refleksi / Pertanyaan untuk Guru (Bpk. Muhammad Hafidh Putra Roshadi, S.Pd.):</label>
-                <textarea class="reflection-textarea" id="reflection-student-note" placeholder="Tuliskan materi atau butir soal yang paling menantang bagi Anda, atau pertanyaan yang ingin Anda diskusikan..."></textarea>
-                
-                <div class="reflection-actions">
-                    <span class="reflection-saved-badge" id="reflection-saved-msg">✅ Refleksi berhasil dikirim ke Dasbor Guru!</span>
-                    <button type="button" class="btn btn-accent" id="btn-submit-reflection" onclick="submitStudentReflection()" style="padding: 8px 18px; font-weight: 700; font-size: 0.85rem;">
-                        Kirim Refleksi ke Guru 📨
-                    </button>
-                </div>
-            </div>
-
             <div class="result-actions" style="margin-top: 24px; display: flex; gap: 10px; flex-wrap: wrap; justify-content: center;">
                 <button class="btn btn-warning pulse-glow" id="btn-start-remedial" style="display:none; min-height:52px; font-weight:800; padding:12px 22px; border-radius:9999px; box-shadow:0 4px 14px rgba(245,158,11,0.4);" onclick="triggerRemedialFromCard()">🔁 Ikuti Kuis Remedial (<span id="remedial-q-count">0</span> Soal)</button>
                 <button class="btn btn-accent" onclick="exportStudentPDF()">📑 Unduh Rapor (PDF)</button>

@@ -37,11 +37,13 @@ test('storage.js defines OFFICIAL_TEACHER_NAME as "Muhammad Hafidh Putra Roshadi
     assert(storageCode.includes('const SCHEDULE_MUHAMMAD_HAFIDH = SCHEDULE_RINI_SYAFITRI'));
 });
 
-test('index.html displays teacher name in modal, header, and reflection note', () => {
+test('index.html displays teacher name in modal and header and removes reflection gimmick', () => {
     assert(indexHtml.includes('MUHAMMAD HAFIDH PUTRA ROSHADI, S.Pd.'));
     assert(indexHtml.includes('Bpk. Muhammad Hafidh Putra Roshadi, S.Pd.'));
     assert(indexHtml.includes('Status Akses Kelas (Berdasarkan Roster Resmi Bpk. Muhammad Hafidh Putra Roshadi, S.Pd.)'));
-    assert(indexHtml.includes('Catatan Refleksi / Pertanyaan untuk Guru (Bpk. Muhammad Hafidh Putra Roshadi, S.Pd.)'));
+    assert(!indexHtml.includes('id="student-reflection-card"'), 'Kartu refleksi harus sudah dihapus');
+    assert(!indexHtml.includes('submitStudentReflection'), 'Tombol kirim refleksi harus sudah dihapus');
+    assert(!quizEngineCode.includes('function submitStudentReflection'), 'Handler submitStudentReflection harus sudah dihapus');
 });
 
 test('dashboard.js exports and signatures use MUHAMMAD HAFIDH PUTRA ROSHADI, S.Pd.', () => {
