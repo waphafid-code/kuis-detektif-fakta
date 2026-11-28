@@ -193,6 +193,37 @@ function purgeFakeJkiRecords(list) {
 window.purgeFakeJkiRecords = purgeFakeJkiRecords;
 
 // 🗑️ Helper filter data yang telah resmi dihapus oleh Guru (Tombstones)
+// Waktu kirim nilai (ms). 0 bila tidak diketahui (mis. data baseline bawaan) sehingga tetap dianggap lama.
+function getRecordSubmitTime(r) {
+    const cands = [r && r.submittedAt, r && r.submitted_at, r && r.timestamp];
+    for (const c of cands) {
+        const n = Number(c);
+        if (Number.isFinite(n) && n > 1e12) return n;
+    }
+    return 0;
+}
+window.getRecordSubmitTime = getRecordSubmitTime;
+
+// Tombstone lama (sebelum ada cap waktu) dianggap dibuat sebelum batas ini; tombstone baru memakai waktu hapus sebenarnya.
+const LEGACY_DELETE_CUTOFF_MS = Date.parse('2026-11-28T00:00:00+07:00');
+const DELETED_AT_KEY = 'quizmaster_deleted_at';
+function getDeletedAtMap() {
+    try {
+        const m = JSON.parse(localStorage.getItem(DELETED_AT_KEY) || '{}');
+        return (m && typeof m === 'object' && !Array.isArray(m)) ? m : {};
+    } catch (e) { return {}; }
+}
+function markDeletedAt(keys, atMs) {
+    try {
+        const m = getDeletedAtMap();
+        const t = Number(atMs) || Date.now();
+        (Array.isArray(keys) ? keys : [keys]).forEach(k => { if (k && !(m[k] >= t)) m[k] = t; });
+        localStorage.setItem(DELETED_AT_KEY, JSON.stringify(m));
+    } catch (e) {}
+}
+window.getDeletedAtMap = getDeletedAtMap;
+window.markDeletedAt = markDeletedAt;
+
 function filterDeletedRecords(list) {
     if (!Array.isArray(list) || list.length === 0) return [];
     let deletedKeys = new Set();
@@ -205,6 +236,7 @@ function filterDeletedRecords(list) {
     if (!deletedKeys.size) return list;
     if (deletedKeys.has('__ALL__')) return [];
 
+    const deletedAt = getDeletedAtMap();
     return list.filter(r => {
         if (!r) return false;
         const normName = (r.name || r.student_name || '').toLowerCase().trim();
@@ -212,7 +244,14 @@ function filterDeletedRecords(list) {
         const modId = normalizeModuleId(r.moduleId || r.module_id, r.id, r.date || r.quiz_date);
         const k = `${normName}|${normCls}|${modId}`;
         const kAll = `${normName}|${normCls}|all`;
-        if (deletedKeys.has(k) || deletedKeys.has(kAll)) return false;
+        const hit = deletedKeys.has(k) ? k : (deletedKeys.has(kAll) ? kAll : null);
+        if (hit) {
+            // ⏱️ Penghapusan hanya berlaku untuk nilai yang dikirim SEBELUM guru menghapus.
+            // Nilai baru (pengerjaan ulang setelah dihapus guru) harus tetap tampil.
+            const delAt = deletedAt[hit] || LEGACY_DELETE_CUTOFF_MS;
+            const subAt = getRecordSubmitTime(r);
+            if (!(subAt && subAt > delAt)) return false;
+        }
         if (r.id && deletedKeys.has(String(r.id))) return false;
         return true;
     });
@@ -300,14 +339,16 @@ async function checkCloudStudentSubmission(name, cls, targetModId) {
         })(), 3000),
         // 2. Cek juga dari Firebase RTDB agar riwayat remedial / kuis tidak pernah terlewat
         withTimeout((async () => {
-            if (typeof fetchFirebaseRecords !== 'function') return;
-            const fbList = await fetchFirebaseRecords();
+            // Hanya ambil catatan siswa ini (bukan seluruh basis data) agar 1000 siswa tidak saling membebani
+            const fbList = (typeof fetchFirebaseRecordsForStudent === 'function')
+                ? await fetchFirebaseRecordsForStudent(name, cls)
+                : (typeof fetchFirebaseRecords === 'function' ? await fetchFirebaseRecords() : []);
             if (!Array.isArray(fbList)) return;
             fbList.forEach(r => {
                 if (!r) return;
                 pushIfMatch(r.name, r.class, r.moduleId, r.id, r.date, r);
             });
-        })(), 3000)
+        })(), 6000)
     ]);
 
     return results;
@@ -470,6 +511,7 @@ async function saveRecord(record) {
     const proofCode = `SMAN4-${safeClsCode}-${record.score}-${Date.now().toString(36).toUpperCase()}`;
     record.submissionProofId = proofCode;
     window.lastSubmittedProofId = proofCode;
+    if (!record.submittedAt) record.submittedAt = Date.now();
 
     // 🛡️ EMERGENCY REDUNDANT BACKUP: Simpan langsung ke cadangan darurat lokal
     try {
@@ -503,8 +545,6 @@ async function saveRecord(record) {
         const dbUrl = (cfgFb && cfgFb.databaseURL) ? cfgFb.databaseURL.replace(/\/$/, '') : 'https://kuis-informatika-c8781-default-rtdb.firebaseio.com';
         const safeKey = `del_${encodeURIComponent(normName).replace(/[^a-zA-Z0-9]/g, '_')}_${encodeURIComponent(normCls).replace(/[^a-zA-Z0-9]/g, '_')}_${encodeURIComponent(curMod).replace(/[^a-zA-Z0-9]/g, '_')}`;
         const safeKeyAll = `del_${encodeURIComponent(normName).replace(/[^a-zA-Z0-9]/g, '_')}_${encodeURIComponent(normCls).replace(/[^a-zA-Z0-9]/g, '_')}_all`;
-        fetch(`${dbUrl}/quiz_results/${safeKey}.json`, { method: 'DELETE' }).catch(() => {});
-        fetch(`${dbUrl}/quiz_results/${safeKeyAll}.json`, { method: 'DELETE' }).catch(() => {});
     } catch(e) {}
 
     const currentRecords = loadRecords();
@@ -570,9 +610,18 @@ async function saveRecord(record) {
     // 2. Cloud Supabase (SDK / REST)
     if (supabaseClient) {
         const spTask = (async () => {
-            const spPromise = supabaseClient.from(cfg.table || 'quiz_results').insert([rowPayload]);
             const spTimeout = new Promise((_, reject) => setTimeout(() => reject(new Error('Supabase timeout')), 8000));
-            const { error } = await Promise.race([spPromise, spTimeout]);
+            let { error } = await Promise.race([supabaseClient.from(cfg.table || 'quiz_results').insert([rowPayload]), spTimeout]);
+            if (error) {
+                // Skema tabel lama tanpa kolom topic_breakdown / detailed_answers menolak SELURUH baris: ulangi tanpa kolom opsional
+                // (datanya tetap ada di dalam wrong_questions).
+                console.warn('Supabase insert ditolak, mencoba ulang tanpa kolom opsional:', error.message || error);
+                const lean = { ...rowPayload };
+                delete lean.topic_breakdown;
+                delete lean.detailed_answers;
+                ({ error } = await Promise.race([supabaseClient.from(cfg.table || 'quiz_results').insert([lean]), spTimeout]));
+                if (error) console.warn('Supabase insert gagal:', error.message || error);
+            }
             if (!error) {
                 savedToSupabase = true;
                 console.log('✅ [Cloud Supabase] Nilai siswa berhasil disimpan! ID Bukti:', proofCode);
@@ -1030,6 +1079,9 @@ function applyCloudSharedStateToLocal(state) {
                 if (!Array.isArray(localDels)) localDels = [];
                 const mergedDels = Array.from(new Set([...localDels, ...state.deletedRecords]));
                 localStorage.setItem('quizmaster_deleted_records', JSON.stringify(mergedDels));
+                if (state.deletedAt && typeof state.deletedAt === 'object') {
+                    Object.keys(state.deletedAt).forEach(k => markDeletedAt(k, state.deletedAt[k]));
+                }
             } catch(e) {}
         }
     } catch(e) {
@@ -1047,6 +1099,7 @@ let _lastSyncedFingerprint = '';
 
 function initSupabaseRealtime() {
     if (realtimeChannel) return;
+    if (!isTeacherSyncContext()) return;
     const client = window.supabaseClient || (typeof initSupabaseClient === 'function' ? initSupabaseClient() : null);
     if (!client || typeof client.channel !== 'function') return;
 
@@ -1085,7 +1138,20 @@ function computeRecordsFingerprint(list) {
     return `${list.length}:${sum}:${remSum}`;
 }
 
+// 🚦 Hanya perangkat GURU yang boleh menarik seluruh basis data & membuka stream realtime.
+// Tanpa ini, 1000 HP siswa masing-masing mengunduh seluruh nilai setiap ada siswa lain yang selesai (O(N^2))
+// dan menghabiskan batas koneksi simultan Firebase, sehingga nilai/dasbor guru tidak ikut terkirim.
+function isTeacherSyncContext() {
+    try {
+        if (typeof isTeacherAuthValid === 'function' && isTeacherAuthValid()) return true;
+        const t = (typeof screens !== 'undefined' && screens && screens.teacher) ? screens.teacher : null;
+        return !!(t && t.classList && t.classList.contains('active'));
+    } catch (e) { return false; }
+}
+window.isTeacherSyncContext = isTeacherSyncContext;
+
 async function syncWithBackend(showFeedback = false) {
+    if (!showFeedback && !isTeacherSyncContext()) return false;
     // 🛡️ QUIZ FOCUS PROTECTION: Jika siswa sedang aktif di tengah ujian kuis,
     // tunda sinkronisasi riwayat nilai orang lain agar thread CPU & memori HP siswa 100% lancar tanpa lag/freeze
     if (!showFeedback) {

@@ -663,6 +663,10 @@ function grantTeacherAccess(authMethod = 'PIN') {
     startDashboardAutoRefresh();
     // 🌐 Tunda ping jaringan ke frame berikutnya agar animasi masuk Dasbor Guru mulus 60fps tanpa nge-lag
     setTimeout(() => {
+        // Guru: aktifkan stream realtime & sinkronisasi penuh (perangkat siswa tidak melakukannya)
+        if (typeof initFirebaseRealtime === 'function') initFirebaseRealtime();
+        if (typeof initSupabaseRealtime === 'function') initSupabaseRealtime();
+        if (typeof syncWithBackend === 'function') syncWithBackend(true);
         if (typeof checkBackendStatus === 'function') checkBackendStatus();
     }, 80);
 
@@ -934,11 +938,13 @@ async function confirmDeleteSingle() {
     }
     deletedRecords = Array.from(new Set(deletedRecords));
     localStorage.setItem('quizmaster_deleted_records', JSON.stringify(deletedRecords));
+    // Cap waktu hapus: nilai yang dikirim siswa SETELAH ini (pengerjaan ulang) tidak boleh ikut tersembunyi
+    if (typeof markDeletedAt === 'function') markDeletedAt(deletedRecords, Date.now());
 
     // Sinkronisasi status penghapusan ke Cloud Shared State jika aktif
     if (typeof saveCloudSharedState === 'function') {
         try {
-            saveCloudSharedState({ deletedRecords: deletedRecords }).catch(() => {});
+            saveCloudSharedState({ deletedRecords: deletedRecords, deletedAt: (typeof getDeletedAtMap === 'function' ? getDeletedAtMap() : {}) }).catch(() => {});
         } catch(e) {}
     }
 
